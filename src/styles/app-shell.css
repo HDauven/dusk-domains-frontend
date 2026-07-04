@@ -1,0 +1,56 @@
+.page {
+  --domain-flow-width: 1060px;
+  --domain-page-gutter: clamp(28px, 8vw, 150px);
+  --panel-surface: rgba(5, 5, 12, 0.5);
+  --panel-surface-soft: rgba(5, 5, 12, 0.46);
+  --panel-surface-strong: rgba(5, 5, 12, 0.58);
+  --panel-surface-solid: rgba(5, 5, 12, 0.88);
+  --panel-row: rgba(5, 5, 12, 0.5);
+  --panel-row-hover: rgba(12, 10, 24, 0.72);
+  --panel-border: rgba(167, 139, 255, 0.085);
+  --panel-border-strong: rgba(167, 139, 255, 0.16);
+  min-height: 100vh;
+  padding: 0;
+  background:
+    radial-gradient(circle at 50% 32%, rgba(115, 83, 255, 0.055), transparent 33%),
+    radial-gradient(circle at 14% 24%, rgba(122, 100, 255, 0.035), transparent 24%),
+    #010207;
+  color: var(--text);
+}
+
+.app-frame {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #010207;
+}
+
+.scene-background {
+  position: fixed;
+  top: 104px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.topbar,
+.brand,
+.brand-type,
+.nav-links,
+.wallet-connect,
+.search-row,
+.availability-banner,
+.includes span,
+.setup-row,
+.policy-notes p,
+.my-names-header,
+.my-name-row,
+.pending-reservation-row {
+  display: flex;
+  align-items: center;
+}

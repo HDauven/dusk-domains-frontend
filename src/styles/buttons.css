@@ -1,0 +1,36 @@
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  min-width: 244px;
+  min-height: 66px;
+  padding: 0 24px;
+  color: #f9fbff;
+  border: 1px solid rgba(167, 139, 255, 0.42);
+  border-radius: 8px;
+  background: #5438c0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 560;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.primary-button:hover {
+  border-color: rgba(167, 139, 255, 0.56);
+  background: #6042d8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.primary-button:active {
+  background: #4d32af;
+  box-shadow: inset 0 2px 8px rgba(19, 8, 55, 0.22);
+  transform: translateY(0);
+}

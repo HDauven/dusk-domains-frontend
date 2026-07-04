@@ -1,0 +1,28 @@
+.runtime-notice {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 36px;
+  border-top: 1px solid rgba(167, 139, 255, 0.08);
+  border-bottom: 1px solid rgba(167, 139, 255, 0.08);
+  background: var(--panel-surface-solid);
+  color: #b8b2c8;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.runtime-notice svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.runtime-notice.danger {
+  color: #ffb2b2;
+}
+
+.runtime-notice.danger svg {
+  color: #ffb2b2;
+}

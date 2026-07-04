@@ -1,0 +1,48 @@
+.nav-links {
+  position: static;
+  height: 104px;
+  transform: none;
+  justify-content: center;
+  gap: clamp(20px, 3vw, 42px);
+}
+
+.nav-links button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 104px;
+  padding: 0;
+  color: var(--muted);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font: inherit;
+  font-size: clamp(17px, 1.5vw, 21px);
+  font-weight: 400;
+  transition:
+    color 160ms ease;
+}
+
+.nav-links button.active {
+  color: #f7f4ff;
+}
+
+.nav-links button:hover {
+  color: #a78bff;
+}
+
+.nav-count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  color: #03070e;
+  border-radius: 999px;
+  background: var(--accent);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 760;
+}

@@ -1,0 +1,203 @@
+@media (max-width: 720px) {
+  .page {
+    padding: 0;
+    --domain-page-gutter: 14px;
+  }
+
+  .topbar {
+    padding: 26px 22px 28px;
+    gap: 22px;
+  }
+
+  .brand {
+    gap: 13px;
+  }
+
+  .names-mark,
+  .names-mark img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .product-name {
+    font-size: clamp(22px, 6.1vw, 25px);
+    letter-spacing: 0.11em;
+  }
+
+  .nav-links {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    justify-content: center;
+  }
+
+  .nav-links button {
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .wallet-connect {
+    width: 100%;
+    min-height: 58px;
+    font-size: 19px;
+  }
+
+  .hero {
+    min-height: 620px;
+    padding: 58px 24px 206px;
+  }
+
+  .hero.checked {
+    padding: 18px 14px 14px;
+  }
+
+  .hero.checked .search-panel {
+    padding: 0;
+  }
+
+  .account-panel,
+  .my-names-panel {
+    width: calc(100% - var(--domain-page-gutter) - var(--domain-page-gutter));
+    padding: 28px 0 22px;
+  }
+
+  .account-card {
+    padding: 20px;
+  }
+
+  .my-names-header {
+    padding: 0 0 18px;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(44px, 14vw, 62px);
+  }
+
+  .hero-copy p {
+    margin-top: 18px;
+    font-size: 25px;
+  }
+
+  .search-panel {
+    padding: 0;
+  }
+
+  .search-row {
+    min-height: auto;
+    overflow: hidden;
+  }
+
+  .name-input {
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+    min-height: 70px;
+    padding: 0 22px;
+    gap: 15px;
+  }
+
+  .name-input input {
+    font-size: 24px;
+  }
+
+  .search-panel .primary-button {
+    min-height: 58px;
+    min-width: 0;
+    border-top: 1px solid rgba(217, 198, 255, 0.18);
+    border-left: 0;
+    font-size: 20px;
+  }
+
+  .hero-examples {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin-top: 20px;
+    font-size: 18px;
+  }
+
+  .hero-examples i {
+    width: 4px;
+    height: 4px;
+  }
+
+  .hero-footnote {
+    display: none;
+  }
+
+  .planet-horizon {
+    height: 230px;
+    opacity: 0.54;
+  }
+
+  .planet-horizon__bloom {
+    stroke-opacity: 0.12;
+  }
+
+  .name-panel {
+    padding: 22px;
+  }
+
+  .registration-heading,
+  .my-names-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .registration-stepper {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-nav {
+    display: grid;
+  }
+
+  .step-action-card {
+    grid-template-columns: 1fr;
+  }
+
+  .step-action-card > .commit-button,
+  .wallet-recovery-button {
+    width: 100%;
+  }
+
+  .my-names-summary {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .my-names-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .my-names-summary div {
+    min-height: 34px;
+    padding: 8px 9px;
+  }
+
+  .my-name-row,
+  .pending-reservation-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .my-name-row > div:first-child {
+    min-width: 0;
+  }
+
+  .claim-review p {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .claim-review strong,
+  .claim-review code {
+    text-align: left;
+  }
+
+  .name-panel h2 {
+    font-size: 34px;
+  }
+}

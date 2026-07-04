@@ -1,0 +1,282 @@
+.records-panel {
+  margin-top: 20px;
+  padding: 24px 26px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-surface);
+}
+
+.record-target-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.45fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.record-batch-editor {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.record-draft-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.5fr) minmax(0, 1fr) minmax(130px, auto);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.record-draft-label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.record-draft-label label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.record-draft-label span,
+.record-draft-help {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.record-draft-row input {
+  width: 100%;
+  min-width: 0;
+}
+
+.record-draft-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.record-wallet-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 11px;
+  color: var(--text);
+  border: 1px solid rgba(167, 139, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(17, 13, 34, 0.8);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.record-wallet-button:not(:disabled):hover,
+.record-wallet-button:not(:disabled):focus {
+  border-color: rgba(197, 181, 255, 0.68);
+  background: rgba(31, 23, 61, 0.9);
+}
+
+.record-wallet-button:disabled {
+  color: rgba(184, 178, 200, 0.48);
+  border-color: rgba(167, 139, 255, 0.11);
+  background: rgba(5, 5, 12, 0.48);
+  cursor: not-allowed;
+}
+
+.record-batch-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(142px, auto);
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 12px;
+}
+
+.record-batch-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.record-batch-summary strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.save-record {
+  min-width: 142px;
+  min-height: 42px;
+  padding: 0 14px;
+  color: var(--text);
+  border-color: rgba(167, 139, 255, 0.34);
+}
+
+.save-record:not(:disabled) {
+  background: rgba(63, 49, 120, 0.5);
+}
+
+.record-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 13px 14px;
+  color: var(--muted);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: 8px;
+  background: var(--panel-row);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.record-warning input {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid rgba(167, 139, 255, 0.38);
+  border-radius: 4px;
+  appearance: none;
+  background: rgba(5, 5, 12, 0.72);
+  cursor: pointer;
+}
+
+.record-warning input::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #a78bff;
+  content: '';
+  opacity: 0;
+  transform: scale(0.72);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.record-warning input:checked {
+  border-color: rgba(197, 181, 255, 0.72);
+  background: rgba(95, 74, 168, 0.22);
+}
+
+.record-warning input:checked::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.record-warning input:focus-visible {
+  outline: 2px solid rgba(167, 139, 255, 0.38);
+  outline-offset: 2px;
+}
+
+.critical-confirm {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.public-warning.record {
+  margin-top: 12px;
+}
+
+.record-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.record-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.75fr) 118px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.48);
+}
+
+.record-row strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.record-row span {
+  width: fit-content;
+  padding: 4px 7px;
+  color: var(--accent);
+  border: 1px solid rgba(167, 139, 255, 0.22);
+  border-radius: 5px;
+  background: rgba(95, 74, 168, 0.16);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.record-row code {
+  min-width: 0;
+  overflow: hidden;
+  color: #d8d1e8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-remove-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  border: 1px solid rgba(167, 139, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.54);
+  cursor: pointer;
+}
+
+.record-remove-button:not(:disabled):hover {
+  color: #ffd8d8;
+  border-color: rgba(255, 110, 110, 0.3);
+  background: rgba(85, 24, 30, 0.22);
+}
+
+.record-remove-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1060px) {
+  .record-target-bar,
+  .record-draft-row,
+  .record-row {
+    grid-template-columns: 1fr;
+  }
+
+  .record-batch-actions {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  .record-draft-control {
+    grid-template-columns: 1fr;
+  }
+
+  .record-batch-actions > .commit-button.save-record {
+    width: 100%;
+    justify-self: stretch;
+    margin-top: 0;
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="128x128" href="/favicon.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" sizes="128x128" href="/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="https://dusk.domains/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="application-name" content="Dusk Domains" />
+    <meta name="apple-mobile-web-app-title" content="Dusk Domains" />
+    <meta name="theme-color" content="#020308" />
+    <meta name="robots" content="index,follow" />
+    <meta
+      name="description"
+      content="Search, register and manage .dusk domains for Dusk wallets, contracts and apps."
+    />
+    <meta property="og:site_name" content="Dusk Domains" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dusk.domains/" />
+    <meta property="og:title" content="Dusk Domains" />
+    <meta
+      property="og:description"
+      content="Search, register and manage .dusk domains for Dusk wallets, contracts and apps."
+    />
+    <meta property="og:image" content="https://dusk.domains/og-image.png" />
+    <meta property="og:image:secure_url" content="https://dusk.domains/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Dusk Domains protocol horizon" />
+    <meta property="og:image" content="https://dusk.domains/og-image-square.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="1200" />
+    <meta property="og:image:alt" content="Dusk Domains protocol horizon" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Dusk Domains" />
+    <meta
+      name="twitter:description"
+      content="Search, register and manage .dusk domains for Dusk wallets, contracts and apps."
+    />
+    <meta name="twitter:image" content="https://dusk.domains/og-image.png" />
+    <meta name="twitter:image:alt" content="Dusk Domains protocol horizon" />
+    <title>Dusk Domains | .dusk domains for Dusk</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Dusk Domains",
+        "url": "https://dusk.domains/",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web",
+        "description": "Search, register and manage .dusk domains for Dusk wallets, contracts and apps.",
+        "image": "https://dusk.domains/og-image.png"
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      ;(() => {
+        const walletRequestPattern = /(?=.*(?:wallet|profile request|dusk_requestProfiles|site is not connected))(?=.*(?:locked|reject|denied|cancel|not connected|unauthori[sz]ed))/i
+        window.addEventListener('unhandledrejection', (event) => {
+          const reason = event.reason
+          const message = reason instanceof Error ? reason.message : String(reason || '')
+          if (!walletRequestPattern.test(message)) return
+
+          event.preventDefault()
+          event.stopImmediatePropagation()
+          window.dispatchEvent(new CustomEvent('dusk-domains:wallet-request-error', {
+            detail: { message },
+          }))
+        }, true)
+      })()
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,50 @@
+.brand {
+  gap: 18px;
+  min-width: 300px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.names-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+}
+
+.names-mark img {
+  display: block;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 7px rgba(122, 102, 255, 0.5))
+    drop-shadow(0 8px 14px rgba(0, 0, 0, 0.28));
+}
+
+.brand-type {
+  display: grid;
+  align-items: center;
+  gap: 1px;
+}
+
+.product-name {
+  color: var(--text);
+  font-size: clamp(22px, 1.85vw, 28px);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.product-domain {
+  display: none;
+}

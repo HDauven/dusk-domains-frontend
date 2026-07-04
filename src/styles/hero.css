@@ -1,0 +1,90 @@
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 104px);
+  padding: clamp(58px, 7.4vh, 88px) clamp(28px, 8vw, 150px) 58px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.hero.checked {
+  min-height: auto;
+  padding: 26px clamp(28px, 8vw, 150px) 22px;
+}
+
+.hero.checked .hero-copy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.004), transparent 18%);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 1040px;
+  margin: 0 auto 36px;
+  text-align: center;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(60px, 6.9vw, 104px);
+  line-height: 1.06;
+  font-weight: 540;
+  letter-spacing: 0;
+  text-shadow: 0 14px 44px rgba(0, 0, 0, 0.42);
+}
+
+.hero-copy h1 span {
+  display: block;
+}
+
+.hero-copy h1 span:last-child {
+  color: #8b6cff;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none;
+}
+
+.hero-copy p {
+  max-width: 560px;
+  margin: 22px auto 0;
+  color: #bbb8bd;
+  font-size: clamp(24px, 2vw, 31px);
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.hero-footnote {
+  position: absolute;
+  right: 24px;
+  bottom: clamp(38px, 6vh, 72px);
+  left: 24px;
+  z-index: 1;
+  margin: 0;
+  color: rgba(206, 201, 210, 0.72);
+  font-size: 21px;
+  text-align: center;
+}
+
+.hero-footnote a {
+  color: rgba(226, 219, 255, 0.88);
+  text-decoration: none;
+}
+
+.hero-footnote a:hover {
+  color: #f5f3ff;
+}

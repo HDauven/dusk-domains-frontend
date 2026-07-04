@@ -1,0 +1,94 @@
+.hero-ambience,
+.hero-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-ambience {
+  background:
+    radial-gradient(ellipse 19% 44% at 50% 31%, rgba(112, 73, 255, 0.15) 0%, rgba(87, 55, 206, 0.065) 39%, transparent 76%),
+    linear-gradient(90deg, transparent 0 42%, rgba(94, 60, 197, 0.028) 48.5%, rgba(94, 60, 197, 0.028) 51.5%, transparent 58%),
+    radial-gradient(ellipse 24% 15% at 50% 52%, rgba(95, 60, 186, 0.032), transparent 78%);
+  opacity: 0.9;
+}
+
+.hero-stars {
+  mask-image: linear-gradient(to bottom, black 0 72%, transparent 94%);
+  opacity: 0.86;
+}
+
+.hero-stars svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-stars circle {
+  mix-blend-mode: screen;
+}
+
+.planet-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  height: clamp(280px, 38vh, 420px);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.planet-horizon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.planet-horizon__dome {
+  opacity: 0.9;
+}
+
+.planet-horizon__grid path {
+  stroke: #c0b8ca;
+  stroke-linecap: round;
+  stroke-width: 0.78;
+}
+
+.planet-horizon__latitude {
+  stroke-opacity: 0.13;
+}
+
+.planet-horizon__longitude {
+  stroke-opacity: 0.108;
+}
+
+.planet-horizon__outer-glow {
+  stroke: #6e4eea;
+  stroke-opacity: 0.22;
+  stroke-width: 14;
+}
+
+.planet-horizon__inner-glow {
+  stroke: #9d83ff;
+  stroke-opacity: 0.3;
+  stroke-width: 5.5;
+}
+
+.planet-horizon__apex-bloom {
+  opacity: 0.82;
+}
+
+.planet-horizon__apex-core {
+  stroke: #d8cbff;
+  stroke-linecap: round;
+  stroke-opacity: 0.54;
+  stroke-width: 9;
+}
+
+.planet-horizon__rim {
+  stroke-linecap: round;
+  stroke-width: 1.45;
+}

@@ -1,0 +1,104 @@
+.registration-progress {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 15px 16px;
+  border: 1px solid rgba(167, 139, 255, 0.22);
+  border-radius: 9px;
+  background:
+    linear-gradient(180deg, rgba(11, 9, 22, 0.84), rgba(5, 5, 12, 0.72));
+}
+
+.registration-progress.executed {
+  border-color: rgba(93, 219, 128, 0.34);
+  background: rgba(52, 154, 83, 0.1);
+}
+
+.registration-progress.failed {
+  border-color: rgba(255, 110, 110, 0.34);
+  background: rgba(132, 35, 35, 0.14);
+}
+
+.registration-progress-header {
+  display: grid;
+  gap: 5px;
+}
+
+.registration-progress-header strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.registration-progress-header span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.registration-progress ol {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.registration-progress li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.registration-progress li > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.registration-progress li.active > svg {
+  color: var(--accent);
+}
+
+.registration-progress li.executed > svg {
+  color: var(--green);
+}
+
+.registration-progress li.failed > svg {
+  color: var(--red);
+}
+
+.registration-progress li > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.registration-progress li strong {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.registration-progress li span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.registration-progress li.failed span {
+  color: #ffb2b2;
+}
+
+.registration-progress code {
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 6px;
+  overflow: hidden;
+  color: var(--accent);
+  border: 1px solid rgba(167, 139, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(5, 5, 12, 0.62);
+  font-size: 11px;
+  text-overflow: ellipsis;
+}

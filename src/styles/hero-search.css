@@ -1,0 +1,218 @@
+.hero.checked .search-panel {
+  width: 100%;
+  max-width: var(--domain-flow-width);
+}
+
+.hero.checked .search-panel label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hero.checked .search-row {
+  min-height: 60px;
+}
+
+.hero.checked .name-input {
+  min-height: 58px;
+  padding: 0 20px;
+}
+
+.hero.checked .name-input input {
+  font-size: 20px;
+}
+
+.hero.checked .search-panel .primary-button {
+  min-width: 180px;
+  min-height: 58px;
+  font-size: 16px;
+}
+
+.hero.checked .hero-examples,
+.hero.checked .hero-footnote {
+  display: none;
+}
+
+.search-panel {
+  position: relative;
+  z-index: 2;
+  max-width: 958px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.search-panel label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.search-row {
+  min-height: 84px;
+  gap: 0;
+  align-items: stretch;
+  border: 1px solid rgba(167, 139, 255, 0.28);
+  border-radius: 14px;
+  background: rgba(3, 4, 10, 0.86);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 18px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.search-row:hover,
+.search-row:focus-within {
+  border-color: rgba(167, 139, 255, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.024),
+    0 22px 68px rgba(0, 0, 0, 0.34);
+  transform: translateY(-1px);
+}
+
+.name-input {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 20px;
+  flex: 1 1 auto;
+  min-height: 84px;
+  padding: 0 30px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: text;
+  transition:
+    background 160ms ease;
+}
+
+.name-input:hover {
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.name-input:focus-within {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.name-input svg {
+  color: rgba(245, 243, 255, 0.58);
+  transition: color 160ms ease;
+}
+
+.name-input:hover svg,
+.name-input:focus-within svg {
+  color: rgba(245, 243, 255, 0.82);
+}
+
+.name-input input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.name-input input::placeholder {
+  color: rgba(184, 178, 200, 0.52);
+}
+
+.name-input button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: rgba(245, 243, 255, 0.52);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.name-input button:hover {
+  color: rgba(245, 243, 255, 0.82);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.search-panel .primary-button {
+  min-width: 236px;
+  min-height: 84px;
+  padding: 0 36px;
+  border: 0;
+  border-left: 1px solid rgba(167, 139, 255, 0.28);
+  border-radius: 0;
+  background: #5438c0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.search-panel .primary-button:hover {
+  border-color: transparent;
+  background: #6042d8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.search-panel .primary-button:active {
+  background: #4d32af;
+  box-shadow: inset 0 2px 8px rgba(19, 8, 55, 0.22);
+}
+
+.hero-examples {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 28px;
+  color: #b9b4c0;
+  font-size: 22px;
+}
+
+.hero-examples button {
+  padding: 0;
+  color: #a780ff;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    color 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.hero-examples button:hover {
+  color: #c8b1ff;
+  text-shadow: 0 0 22px rgba(163, 121, 255, 0.32);
+}
+
+.hero-examples i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #9b77ff;
+  box-shadow: 0 0 14px rgba(155, 119, 255, 0.42);
+}

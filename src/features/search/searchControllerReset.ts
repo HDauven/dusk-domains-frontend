@@ -1,0 +1,96 @@
+import { fallbackManager } from '../../app/appHelpers'
+import type { UseSearchControllerProps } from './searchControllerTypes'
+
+export function resetSearchState({
+  recordSourceContractId,
+  selectedAuthority,
+  setActivityEntries,
+  setActivityLoading,
+  setApiSearchResult,
+  setChecked,
+  setCommitTxState,
+  setCommitted,
+  setConfirmationInput,
+  setCriticalRecordConfirmation,
+  setDelegateManager,
+  setDelegateSubnameNode,
+  setIndexerConfirmation,
+  setIndexerError,
+  setManagementError,
+  setManagementTxState,
+  setPreparedCommit,
+  setPrimaryEndpointValue,
+  setPrimaryError,
+  setPrimaryName,
+  setPrimaryTxState,
+  setPublicRecordAcknowledged,
+  setQuery,
+  setRecordDrafts,
+  setRecordError,
+  setRecordTargetNode,
+  setRecordTxState,
+  setRegisterSetsPrimary,
+  setRegistrationAddressInput,
+  setRegistrationCompletion,
+  setRegistrationStep,
+  setRenewalError,
+  setRenewalTxState,
+  setRenewalYears,
+  setResolverRecordSets,
+  setResultView,
+  setSubnameError,
+  setSubnameExpiryDate,
+  setSubnameExpiryPolicy,
+  setSubnameLabel,
+  setSubnameManager,
+  setSubnameResolver,
+  setSubnameRevocationPolicy,
+  setSubnameTxState,
+  setSubnames,
+  setTxState,
+}: UseSearchControllerProps, nextValue: string) {
+  setQuery(nextValue)
+  setCommitted(false)
+  setPreparedCommit(null)
+  setChecked(false)
+  setRegisterSetsPrimary(true)
+  setRegistrationAddressInput('')
+  setRegistrationStep('duration')
+  setResultView('overview')
+  setTxState(null)
+  setCommitTxState(null)
+  setRegistrationCompletion(null)
+  setManagementTxState(null)
+  setRenewalTxState(null)
+  setRecordTxState(null)
+  setPrimaryTxState(null)
+  setSubnameTxState(null)
+  setManagementError('')
+  setRenewalError('')
+  setRecordError('')
+  setPrimaryError('')
+  setSubnameError('')
+  setConfirmationInput('')
+  setActivityEntries([])
+  setActivityLoading(false)
+  setApiSearchResult(null)
+  setIndexerError('')
+  setIndexerConfirmation('')
+  setResolverRecordSets({})
+  setRecordDrafts({})
+  setRecordTargetNode('')
+  setPublicRecordAcknowledged(false)
+  setCriticalRecordConfirmation('')
+  setPrimaryEndpointValue('')
+  setPrimaryName(null)
+  setSubnames([])
+  setSubnameLabel('settlement')
+  setSubnameManager(selectedAuthority || fallbackManager)
+  setSubnameResolver(recordSourceContractId)
+  setSubnameExpiryPolicy('inherits_parent')
+  setSubnameExpiryDate('')
+  setSubnameRevocationPolicy('parent_revocable')
+  setDelegateSubnameNode('')
+  setDelegateManager(selectedAuthority || '')
+  setRenewalYears(1)
+}

@@ -1,0 +1,235 @@
+.management-panel {
+  margin-top: 20px;
+  padding: 24px 26px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-surface);
+}
+
+.management-header,
+.resolver-diff,
+.confirm-row {
+  display: flex;
+  align-items: center;
+}
+
+.management-header {
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.management-header h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 690;
+}
+
+.management-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.management-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.management-badge {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  color: var(--accent);
+  border: 1px solid rgba(167, 139, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(95, 74, 168, 0.18);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.management-badge.verified {
+  color: var(--green);
+  border-color: rgba(93, 219, 128, 0.28);
+  background: rgba(52, 154, 83, 0.12);
+}
+
+.management-badge.warning {
+  color: var(--amber);
+  border-color: rgba(255, 188, 101, 0.28);
+  background: rgba(129, 82, 24, 0.13);
+}
+
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.control-group {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.control-group label {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.control-group input,
+.control-group select,
+.record-draft-row input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 11px;
+  color: var(--text);
+  border: 1px solid rgba(126, 100, 200, 0.45);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(9, 8, 18, 0.92), rgba(4, 4, 10, 0.94));
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.control-group input:hover,
+.control-group input:focus,
+.control-group select:hover,
+.control-group select:focus,
+.record-draft-row input:hover,
+.record-draft-row input:focus {
+  border-color: rgba(197, 181, 255, 0.82);
+  background: rgba(9, 8, 18, 0.96);
+  box-shadow: 0 0 0 2px rgba(167, 139, 255, 0.12);
+}
+
+.control-group input:disabled,
+.control-group select:disabled,
+.record-draft-row input:disabled {
+  color: rgba(164, 174, 193, 0.58);
+  border-color: rgba(167, 139, 255, 0.07);
+  background: rgba(5, 5, 12, 0.45);
+  cursor: not-allowed;
+}
+
+.record-draft-row input::placeholder {
+  color: rgba(184, 178, 200, 0.52);
+}
+
+.control-group > span,
+.resolver-diff span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.resolver-diff {
+  gap: 8px;
+  min-width: 0;
+}
+
+.resolver-diff code {
+  color: #d8d1e8;
+}
+
+.confirm-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.danger-action {
+  min-width: 190px;
+  min-height: 44px;
+  padding: 0 14px;
+  color: #ffd8d8;
+  border-color: rgba(255, 110, 110, 0.28);
+  background: rgba(85, 24, 30, 0.22);
+}
+
+.danger-action:not(:disabled):hover {
+  border-color: rgba(255, 144, 144, 0.48);
+  background: rgba(111, 35, 42, 0.28);
+}
+
+.renewal-box {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.renewal-box h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.renewal-box p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.renewal-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.renewal-summary span {
+  display: grid;
+  gap: 5px;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.48);
+  font-size: 12px;
+}
+
+.renewal-summary strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.tx-status.management {
+  margin-top: 16px;
+}
+
+@media (max-width: 1060px) {
+  .management-grid,
+  .confirm-row,
+  .renewal-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .danger-action {
+    width: 100%;
+  }
+
+  .management-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 720px) {
+  .management-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

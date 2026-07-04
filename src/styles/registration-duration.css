@@ -1,0 +1,116 @@
+
+.duration-section h3,
+.includes h3 {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.duration-control {
+  display: grid;
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid rgba(167, 139, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.56);
+}
+
+.duration-control-header,
+.duration-calendar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.duration-control-header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.duration-control-header span,
+.duration-calendar span,
+.duration-scale {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.duration-control-header strong,
+.duration-calendar strong {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.duration-control-header output {
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 720;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.duration-slider-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: 10px;
+  align-items: center;
+}
+
+.duration-stepper {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: var(--text);
+  border: 1px solid rgba(167, 139, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.74);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.duration-stepper:not(:disabled):hover {
+  border-color: rgba(167, 139, 255, 0.58);
+  background: rgba(14, 11, 28, 0.86);
+  transform: translateY(-1px);
+}
+
+.duration-stepper:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.duration-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.duration-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.duration-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.duration-calendar {
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+
+.duration-calendar strong {
+  color: var(--muted);
+  font-size: 14px;
+}
+

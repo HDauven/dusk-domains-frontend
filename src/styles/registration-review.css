@@ -1,0 +1,105 @@
+.includes {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.includes span {
+  gap: 12px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.includes svg {
+  color: var(--accent);
+}
+
+.registration-review {
+  display: grid;
+  gap: 20px;
+}
+
+.review-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-list div {
+  display: grid;
+  gap: 7px;
+  min-height: 72px;
+  padding: 13px 14px;
+  border: 1px solid rgba(167, 139, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.46);
+}
+
+.review-list span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-list strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-action-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 15px 16px;
+  border: 1px solid rgba(167, 139, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(8, 7, 17, 0.58);
+}
+
+.step-action-card > div:first-child {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.step-action-card > div:first-child strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.step-action-card > div:first-child span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.step-action-card > .commit-button {
+  min-width: 152px;
+}
+
+.wallet-recovery-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 142px;
+  text-decoration: none;
+}
+
+.step-action-card > .tx-status,
+.step-action-card > .registration-progress {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.purchase-action-card {
+  grid-template-columns: 1fr;
+}
+
+.review-includes {
+  margin-top: 0;
+}

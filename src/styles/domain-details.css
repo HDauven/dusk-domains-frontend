@@ -1,0 +1,205 @@
+.details-panel {
+  margin-top: 14px;
+  gap: 16px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-areas:
+    "status records"
+    "status subnames";
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 12px;
+}
+
+.details-grid > .primary-status {
+  grid-area: status;
+}
+
+.details-grid > .details-records:not(.details-subnames) {
+  grid-area: records;
+}
+
+.details-grid > .details-subnames {
+  grid-area: subnames;
+}
+
+.details-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.details-records {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.details-records > strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.details-records p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.details-records code {
+  min-width: 0;
+  overflow: hidden;
+  color: #d8d1e8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details-subnames p span {
+  min-width: 0;
+  overflow: hidden;
+  color: #d8d1e8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details-actions .commit-button,
+.details-actions .commit-button.save-record,
+.details-actions .commit-button.save-record:not(:disabled) {
+  min-width: 0;
+  min-height: 40px;
+  color: rgba(245, 243, 255, 0.82);
+  border-color: rgba(167, 139, 255, 0.12);
+  background: rgba(5, 5, 12, 0.38);
+  box-shadow: none;
+}
+
+.details-actions .commit-button:not(:disabled):hover {
+  border-color: rgba(167, 139, 255, 0.34);
+  background: rgba(14, 11, 28, 0.74);
+}
+
+.activity-list.compact li {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.45fr);
+}
+
+.activity-list.compact dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.recent-warning-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.recent-warning {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 13px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.recent-warning.danger {
+  border-color: var(--panel-border);
+  background: var(--panel-row);
+}
+
+.recent-warning svg {
+  margin-top: 1px;
+  color: var(--muted);
+}
+
+.recent-warning.danger svg {
+  color: var(--muted);
+}
+
+.recent-warning div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recent-warning strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.recent-warning span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.recent-warning.danger span {
+  color: var(--muted);
+}
+
+.recent-warning code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-warning-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 6px;
+  padding: 11px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.recent-warning-summary div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recent-warning-summary strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.recent-warning-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .details-grid,
+  .recent-warning-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
+    grid-template-areas:
+      "status"
+      "records"
+      "subnames";
+  }
+
+  .details-actions {
+    display: grid;
+  }
+}

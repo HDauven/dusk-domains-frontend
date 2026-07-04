@@ -1,0 +1,72 @@
+.secure-note {
+  margin: 16px 0 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.secure-note.danger {
+  color: #ffb2b2;
+}
+
+.public-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 13px 14px;
+  color: var(--muted);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.public-warning svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.public-warning span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.commit-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.reservation-recovery {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 10px 11px;
+  border: 1px solid rgba(167, 139, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(95, 74, 168, 0.1);
+}
+
+.reservation-recovery svg {
+  color: var(--accent);
+}
+
+.reservation-recovery span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reservation-recovery .commit-button {
+  min-height: 32px;
+  padding: 0 11px;
+}

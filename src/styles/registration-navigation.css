@@ -1,0 +1,14 @@
+.registration-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.registration-nav > span {
+  color: var(--muted);
+  font-size: 13px;
+}

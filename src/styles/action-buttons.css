@@ -1,0 +1,63 @@
+.primary-button.compact {
+  min-width: 216px;
+  min-height: 48px;
+  font-size: 14px;
+}
+
+.commit-button {
+  min-height: 42px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.74);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 670;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    color 160ms ease;
+}
+
+.commit-button.ready {
+  color: var(--green);
+  border-color: rgba(93, 219, 128, 0.36);
+  background: rgba(52, 154, 83, 0.12);
+}
+
+.commit-button:not(:disabled):hover {
+  border-color: rgba(167, 139, 255, 0.58);
+  background: rgba(14, 11, 28, 0.86);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
+}
+
+.commit-button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.primary-button.register {
+  width: 100%;
+}
+
+.primary-button:disabled,
+.commit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.primary-button:disabled {
+  color: rgba(184, 178, 200, 0.62);
+  border-color: rgba(167, 139, 255, 0.16);
+  background: rgba(8, 7, 17, 0.72);
+  box-shadow: none;
+  transform: none;
+}
+
+.primary-button:disabled svg {
+  color: rgba(184, 178, 200, 0.48);
+}

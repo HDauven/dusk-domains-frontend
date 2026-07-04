@@ -1,0 +1,233 @@
+.account-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 14px;
+}
+
+.account-card {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-row);
+}
+
+.account-card > .primary-button,
+.account-card > .commit-button {
+  justify-self: start;
+}
+
+.rewards-account-card.claimable {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+  column-gap: 24px;
+}
+
+.rewards-account-card.claimable .account-card-heading,
+.rewards-account-card.claimable .account-card-intro,
+.rewards-account-card.claimable .account-detail-list,
+.rewards-account-card.claimable .referral-activity-list {
+  grid-column: 1;
+}
+
+.rewards-account-card.claimable .claim-review,
+.rewards-account-card.claimable > .commit-button {
+  grid-column: 2;
+}
+
+.rewards-account-card.claimable .claim-review {
+  grid-row: 1 / span 3;
+  align-self: start;
+}
+
+.primary-account-card {
+  border-color: rgba(167, 139, 255, 0.16);
+  background: var(--panel-row);
+}
+
+.account-card-heading {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.account-card-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.account-card-heading strong {
+  min-width: 0;
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.12;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.account-card-intro {
+  max-width: 52ch;
+  margin: 0;
+  color: rgba(184, 178, 200, 0.82);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-detail-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.account-detail-list p {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.account-detail-list span {
+  color: var(--muted);
+}
+
+.account-detail-list strong,
+.account-detail-list code {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(100%, 34ch);
+  overflow: hidden;
+  color: var(--text);
+  font: inherit;
+  font-weight: 690;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.copy-row input {
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  overflow: hidden;
+  color: var(--text);
+  border: 1px solid rgba(167, 139, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.66);
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-row input::placeholder {
+  color: rgba(184, 178, 200, 0.5);
+}
+
+.treasury-claim-control {
+  display: grid;
+  gap: 12px;
+}
+
+.claim-review {
+  display: grid;
+  gap: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(167, 139, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(5, 5, 12, 0.52);
+}
+
+.claim-review p {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.claim-review p:last-child {
+  border-bottom: 0;
+}
+
+.claim-review span {
+  color: var(--muted);
+}
+
+.claim-review strong,
+.claim-review code {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(100%, 34ch);
+  overflow: hidden;
+  color: var(--text);
+  font: inherit;
+  font-weight: 690;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.treasury-claim-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.treasury-claim-actions > button {
+  flex: 1 1 150px;
+}
+
+.fee-config-card {
+  grid-column: 1 / -1;
+}
+
+.fee-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.fee-config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.referral-activity-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.referral-activity-list p {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.referral-activity-list span {
+  color: var(--muted);
+}
+
+.referral-activity-list strong {
+  color: var(--text);
+  font-weight: 690;
+}
