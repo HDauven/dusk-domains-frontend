@@ -69,7 +69,7 @@ src/
   app/          app composition, runtime state and adapters
   components/   reusable UI, wallet, brand and status components
   features/     search, registration, domains, treasury, referrals and activity views
-  names/        thin re-export boundary to @hdauven/dusk-domains-sdk
+  names/        thin re-export boundary to @duskdomains/sdk and first-party SDK helpers
   styles/       global shell, navigation, layout, notice and responsive styles
   utils/        small formatting helpers
 ```

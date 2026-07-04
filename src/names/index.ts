@@ -1,1 +1,1 @@
-export * from '@hdauven/dusk-domains-sdk'
+export * from '@duskdomains/sdk'

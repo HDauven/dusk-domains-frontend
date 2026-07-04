@@ -13,11 +13,12 @@
   },
   "dependencies": {
     "@dusk/connect": "npm:@jsr/dusk__connect@^0.2.0",
-    "@hdauven/dusk-domains-sdk": "github:HDauven/dusk-domains-sdk#fbb900d81a00",
+    "@hdauven/dusk-domains-sdk": "github:HDauven/dusk-domains-sdk#6ab15a1f9ebe81155583725b06213260daae9304",
     "@noble/hashes": "^2.2.0",
     "lucide-react": "^1.20.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "@duskdomains/sdk": "npm:@jsr/duskdomains__sdk@^0.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
