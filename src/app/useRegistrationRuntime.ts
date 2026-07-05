@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { DuskNamesIndexerClient } from '../names/internal'
+import type { DuskDomainsIndexerClient } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 import { usePendingReservations, type PreparedRegistrationCommit } from '../features/registration/usePendingReservations'
 import { useRegistrationFlowState } from '../features/registration/useRegistrationFlowState'
@@ -10,7 +10,7 @@ export type UseRegistrationRuntimeArgs = {
   canRegister: boolean
   chainId: string
   committed: boolean
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   mainView: AppMainView
   preparedCommit: PreparedRegistrationCommit | null
   registerSetsPrimary: boolean

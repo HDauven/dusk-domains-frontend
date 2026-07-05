@@ -1,4 +1,4 @@
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { CommitWindow } from './flow/types'
@@ -51,7 +51,7 @@ export function RegistrationPurchaseStep({
   selectedAddress: string
   total: number
   txBusy: boolean
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
   walletSetupState: WalletConnectionStatus
 }) {
   const registrationComplete = registrationCompletion?.status === 'executed'

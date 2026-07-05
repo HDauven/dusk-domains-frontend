@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
-import type { DuskNamesIndexerClient, IndexedTreasuryState } from '../../names/internal'
+import type { DuskDomainsIndexerClient, IndexedTreasuryState } from '../../names/internal'
 import { emptyTreasuryUiState } from './treasuryState'
 
-export function useTreasuryAccount(indexerClient: DuskNamesIndexerClient | null) {
+export function useTreasuryAccount(indexerClient: DuskDomainsIndexerClient | null) {
   const [treasuryState, setTreasuryState] = useState<IndexedTreasuryState>(() => emptyTreasuryUiState())
   const [treasuryLoading, setTreasuryLoading] = useState(false)
   const [treasuryError, setTreasuryError] = useState('')

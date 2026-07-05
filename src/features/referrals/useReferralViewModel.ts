@@ -1,6 +1,6 @@
 import {
-  isDuskNameTxBusy,
-  type DuskNameTxState,
+  isDuskDomainTxBusy,
+  type DuskDomainTxState,
   type IndexedReferralState,
 } from '../../names/internal'
 import {
@@ -18,7 +18,7 @@ type UseReferralViewModelArgs = {
   referralLoading: boolean
   referralRewardClaimsAvailable: boolean
   referralState: ReferralState
-  referralTxState: DuskNameTxState | null
+  referralTxState: DuskDomainTxState | null
   selectedAddress: string
   selectedAuthority: string
   selectedReferralKey: string
@@ -42,7 +42,7 @@ export function useReferralViewModel({
   const appliedReferral = activeReferral && referralAttributionEnabled ? activeReferral : null
   const referralRewardsSupported = referralAccountState.supported
   const referralClaimable = referralAccountState.claimableLux > 0
-  const referralBusy = isDuskNameTxBusy(referralTxState)
+  const referralBusy = isDuskDomainTxBusy(referralTxState)
   const referralRewardClaimReady = Boolean(referralRewardClaimsAvailable && selectedIsMoonlightAccount)
   const referralClaimRecipient = selectedAddress || selectedAuthority
   const referralAttributionLabel = appliedReferral ? 'Applied' : activeReferral ? 'Saved' : 'None'

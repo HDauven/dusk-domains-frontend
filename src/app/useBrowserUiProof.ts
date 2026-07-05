@@ -10,7 +10,7 @@ import type { RegistrationCompletionState } from '../features/registration/regis
 import { selectedWalletProviderName } from '../features/wallet/walletStatus'
 import {
   recordBrowserWriteProofUiConfirmation,
-  type DuskNameTxState,
+  type DuskDomainTxState,
   type DuskWalletState,
   type IndexedNameSummary,
   type PendingNameReservation,
@@ -21,25 +21,25 @@ type UseBrowserUiProofArgs = {
   captureUrl: string | undefined
   chainId: string
   checked: boolean
-  commitTxState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
   currentBlockHeight: number | null
   displayName: string
   liveWritesEnabled: boolean
   mainView: AppMainView
-  managementTxState: DuskNameTxState | null
+  managementTxState: DuskDomainTxState | null
   myNamePrimarySummaries: Record<string, MyNamePrimarySummary>
   myNames: IndexedNameSummary[]
   pendingReservations: PendingNameReservation[]
-  primaryTxState: DuskNameTxState | null
-  recordTxState: DuskNameTxState | null
+  primaryTxState: DuskDomainTxState | null
+  recordTxState: DuskDomainTxState | null
   registrationCompletion: RegistrationCompletionState | null
-  renewalTxState: DuskNameTxState | null
+  renewalTxState: DuskDomainTxState | null
   resultView: SearchResultView
   savedReservation: PendingNameReservation | null
   savedReservationWindow: RegistrationCommitWindow | null
   selectedAddress: string
-  subnameTxState: DuskNameTxState | null
-  txState: DuskNameTxState | null
+  subnameTxState: DuskDomainTxState | null
+  txState: DuskDomainTxState | null
   walletState: DuskWalletState
 }
 

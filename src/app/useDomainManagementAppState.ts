@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type {
-  DuskNameTxState,
+  DuskDomainTxState,
   SubnameExpiryPolicy,
   SubnameRevocationPolicy,
   SubnameState,
@@ -13,11 +13,11 @@ import {
 
 export function useDomainManagementAppState(recordSourceContractId: string) {
   const [renewalYears, setRenewalYears] = useState(1)
-  const [managementTxState, setManagementTxState] = useState<DuskNameTxState | null>(null)
-  const [renewalTxState, setRenewalTxState] = useState<DuskNameTxState | null>(null)
-  const [recordTxState, setRecordTxState] = useState<DuskNameTxState | null>(null)
-  const [primaryTxState, setPrimaryTxState] = useState<DuskNameTxState | null>(null)
-  const [subnameTxState, setSubnameTxState] = useState<DuskNameTxState | null>(null)
+  const [managementTxState, setManagementTxState] = useState<DuskDomainTxState | null>(null)
+  const [renewalTxState, setRenewalTxState] = useState<DuskDomainTxState | null>(null)
+  const [recordTxState, setRecordTxState] = useState<DuskDomainTxState | null>(null)
+  const [primaryTxState, setPrimaryTxState] = useState<DuskDomainTxState | null>(null)
+  const [subnameTxState, setSubnameTxState] = useState<DuskDomainTxState | null>(null)
   const [managementError, setManagementError] = useState('')
   const [renewalError, setRenewalError] = useState('')
   const [recordError, setRecordError] = useState('')

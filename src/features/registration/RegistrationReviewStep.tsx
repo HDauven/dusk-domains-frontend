@@ -1,7 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
 import { txStatusCopy } from '../../components/status/txStatus'
-import { REGISTRATION_MIN_REVEAL_WAIT_BLOCKS, type DuskNameTxState } from '../../names/internal'
+import { REGISTRATION_MIN_REVEAL_WAIT_BLOCKS, type DuskDomainTxState } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
 import {
   walletSetupActionCopy,
@@ -30,7 +30,7 @@ export function RegistrationReviewStep({
   canPrepareCommit: boolean
   commitBusy: boolean
   commitStale: boolean
-  commitTxState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
   committed: boolean
   displayName: string
   duration: number

@@ -26,7 +26,7 @@ export function buildSearchRuntimeArgs({
   } = workspace
   const {
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     recordSourceContractId,
   } = appRuntime
   const { currentBlockHeight, nowSeconds, query } = searchState
@@ -95,7 +95,7 @@ export function buildSearchRuntimeArgs({
     currentBlockHeight,
     displayName,
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     loadPendingReservations,
     nowSeconds,
     openSearchView: () => setMainView('search'),

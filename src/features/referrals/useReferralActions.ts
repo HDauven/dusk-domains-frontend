@@ -3,34 +3,34 @@ import {
   treasuryClaimAllReferralRewardsRuntimeCall,
   userFacingMessageFromText,
   waitForConfirmedIndexerRefresh,
-  type DuskNameCallMetadata,
-  type DuskNameTxState,
-  type DuskNamesIndexerClient,
-  type DuskNamesRuntimeConfig,
+  type DuskDomainCallMetadata,
+  type DuskDomainTxState,
+  type DuskDomainsIndexerClient,
+  type DuskDomainsRuntimeConfig,
   type IndexedReferralState,
-  type SubmitDuskNameWriteOptions,
+  type SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 
 type SubmitNameWrite = (
   name: string,
-  call: DuskNameCallMetadata,
-  options?: SubmitDuskNameWriteOptions,
-) => Promise<DuskNameTxState>
+  call: DuskDomainCallMetadata,
+  options?: SubmitDuskDomainWriteOptions,
+) => Promise<DuskDomainTxState>
 
 type UseReferralActionsProps = {
-  indexerClient: DuskNamesIndexerClient | null
-  liveDuskNamesApp: unknown
+  indexerClient: DuskDomainsIndexerClient | null
+  liveDuskDomainsApp: unknown
   loadReferralAccount: () => Promise<boolean>
   referralAccountState: IndexedReferralState
   referralBusy: boolean
   referralClaimable: boolean
   referralRewardClaimReady: boolean
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
   setReferralConfirmation: (message: string) => void
   setReferralError: (message: string) => void
-  setReferralTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setReferralTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   submitNameWrite: SubmitNameWrite
   ensureContractAuthorityForLiveWrite: (
     action: string,
@@ -46,7 +46,7 @@ type UseReferralActionsProps = {
 
 export function useReferralActions({
   indexerClient,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   loadReferralAccount,
   referralAccountState,
   referralBusy,
@@ -71,7 +71,7 @@ export function useReferralActions({
       setReferralError('Connect your wallet first.')
       return
     }
-    if (!referralRewardClaimReady || !liveDuskNamesApp) {
+    if (!referralRewardClaimReady || !liveDuskDomainsApp) {
       setReferralError('Referral reward claims are not available in this deployment.')
       return
     }

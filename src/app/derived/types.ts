@@ -2,7 +2,7 @@ import type { RecordTargetOption } from '../../features/domains/recordTypes'
 import type { RegistrationCompletionState } from '../../features/registration/registrationCompletionState'
 import type { PreparedRegistrationCommit } from '../../features/registration/usePendingReservations'
 import type {
-  DuskNameTxState,
+  DuskDomainTxState,
   PendingNameReservation,
   ResolverRecord,
   SubnameState,
@@ -12,7 +12,7 @@ import type { ManagedNameState } from '../appHelpers'
 export type UseAppDerivedStateArgs = {
   activeRecordTarget: RecordTargetOption | undefined
   canRegister: boolean
-  commitTxState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
   committed: boolean
   confirmationInput: string
   criticalRecordChange: boolean
@@ -21,27 +21,27 @@ export type UseAppDerivedStateArgs = {
   delegateSubnameNode: string
   displayName: string
   managedName: ManagedNameState
-  managementTxState: DuskNameTxState | null
+  managementTxState: DuskDomainTxState | null
   moonlightRecord: ResolverRecord | undefined
   nodeHex: string
   pendingReservations: PendingNameReservation[]
   preparedCommit: PreparedRegistrationCommit | null
   primaryEndpointValue: string
   primaryName: string | null
-  primaryTxState: DuskNameTxState | null
+  primaryTxState: DuskDomainTxState | null
   publicRecordAcknowledged: boolean
   recordDraftErrors: readonly string[]
   recordDraftMutations: readonly unknown[]
-  recordTxState: DuskNameTxState | null
+  recordTxState: DuskDomainTxState | null
   registrationCompletion: RegistrationCompletionState | null
   registrationTargetReady: boolean
-  renewalTxState: DuskNameTxState | null
+  renewalTxState: DuskDomainTxState | null
   selectedAddress: string
   selectedAuthority: string
   subnameLabel: string
   subnameManager: string
   subnames: SubnameState[]
-  subnameTxState: DuskNameTxState | null
-  txState: DuskNameTxState | null
+  subnameTxState: DuskDomainTxState | null
+  txState: DuskDomainTxState | null
   walletSigningReady: boolean
 }

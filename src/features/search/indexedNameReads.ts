@@ -5,7 +5,7 @@ import {
 } from '../../app/appHelpers'
 import type {
   ActivityEntry,
-  DuskNamesIndexerClient,
+  DuskDomainsIndexerClient,
   ForwardResolutionResponse,
   IndexedLifecycleName,
   IndexedSubname,
@@ -28,7 +28,7 @@ export type IndexedNameReadBundle = {
 }
 
 export async function readIndexedName(
-  client: DuskNamesIndexerClient,
+  client: DuskDomainsIndexerClient,
   searchResult: NameResult,
 ): Promise<IndexedNameReadBundle | null> {
   const canonicalName = searchResult.canonical
@@ -67,7 +67,7 @@ export async function readIndexedName(
 }
 
 async function readPrimaryNameForForwardRecord(
-  client: DuskNamesIndexerClient,
+  client: DuskDomainsIndexerClient,
   records: ResolverRecord[] | undefined,
 ) {
   const moonlight = records?.find((record) => record.key === 'moonlight_address')
@@ -81,7 +81,7 @@ async function readPrimaryNameForForwardRecord(
 }
 
 async function readSubnameRecordSets(
-  client: DuskNamesIndexerClient,
+  client: DuskDomainsIndexerClient,
   hydratedSubnames: SubnameState[],
 ) {
   const subnameRecordReads = await Promise.all(hydratedSubnames.map((subname) => (

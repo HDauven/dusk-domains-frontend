@@ -2,14 +2,14 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { ManagedNameState } from '../../app/appHelpers'
 import type {
   CoreFeeConfig,
-  DuskNameCallMetadata,
-  DuskNamesIndexerClient,
-  DuskNamesRuntimeConfig,
-  DuskNameTxState,
+  DuskDomainCallMetadata,
+  DuskDomainsIndexerClient,
+  DuskDomainsRuntimeConfig,
+  DuskDomainTxState,
   NameResult,
   RegistrationCommitWindow,
   ResolverRecord,
-  SubmitDuskNameWriteOptions,
+  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
 import type { RegistrationCompletionState } from './registrationCompletionState'
@@ -18,9 +18,9 @@ import type { PreparedRegistrationCommit } from './usePendingReservations'
 
 export type SubmitNameWrite = (
   name: string,
-  call: DuskNameCallMetadata,
-  options?: SubmitDuskNameWriteOptions,
-) => Promise<DuskNameTxState>
+  call: DuskDomainCallMetadata,
+  options?: SubmitDuskDomainWriteOptions,
+) => Promise<DuskDomainTxState>
 
 export type AppendActivity = (input: {
   eventType: 'registration'
@@ -31,7 +31,7 @@ export type AppendActivity = (input: {
 
 export type ConfirmedWriteFallback = (
   description: string,
-  check?: (client: DuskNamesIndexerClient) => Promise<boolean>,
+  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
 ) => Promise<boolean>
 
 export type UseRegistrationActionsProps = {
@@ -44,9 +44,9 @@ export type UseRegistrationActionsProps = {
   displayName: string
   duration: number
   feeConfig: CoreFeeConfig
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   lifecycleBaseBlockHeight: number
-  liveDuskNamesApp: unknown
+  liveDuskDomainsApp: unknown
   loadPendingReservations: () => void
   nodeHex: string
   preparedCommit: PreparedRegistrationCommit | null
@@ -57,10 +57,10 @@ export type UseRegistrationActionsProps = {
   registrationTargetAddressErrors: string[]
   registrationTargetReady: boolean
   result: NameResult
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
-  setCommitTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setCommitTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setCommitted: Dispatch<SetStateAction<boolean>>
   setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
   setDraftManager: Dispatch<SetStateAction<string>>
@@ -76,7 +76,7 @@ export type UseRegistrationActionsProps = {
   setRegistrationCompletion: Dispatch<SetStateAction<RegistrationCompletionState | null>>
   setRegistrationStep: Dispatch<SetStateAction<RegistrationStepId>>
   setResolverRecordSets: Dispatch<SetStateAction<Record<string, ResolverRecord[]>>>
-  setTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setWalletError: Dispatch<SetStateAction<string>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite

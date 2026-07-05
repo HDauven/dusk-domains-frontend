@@ -1,4 +1,4 @@
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 
 export type RegistrationCompletionStepId = 'complete_registration'
 
@@ -42,7 +42,7 @@ export function createRegistrationCompletionState(): RegistrationCompletionState
 export function updateRegistrationCompletionState(
   current: RegistrationCompletionState | null,
   stepId: RegistrationCompletionStepId,
-  txState: DuskNameTxState,
+  txState: DuskDomainTxState,
 ): RegistrationCompletionState {
   const base = current ?? createRegistrationCompletionState()
   const stepIndex = registrationCompletionStepDefinitions.findIndex((step) => step.id === stepId)
@@ -124,7 +124,7 @@ export function markRegistrationCompletionFailed(
   }
 }
 
-function isFailedTxStatus(status: DuskNameTxState['status']) {
+function isFailedTxStatus(status: DuskDomainTxState['status']) {
   return status === 'failed' || status === 'rejected' || status === 'timeout'
 }
 

@@ -3,9 +3,9 @@ import {
   principalKey,
   typedPrincipalFromWalletAccount,
   type CoreFeeConfig,
-  type DuskNameTxState,
+  type DuskDomainTxState,
   type IndexedTreasuryState,
-  isDuskNameTxBusy,
+  isDuskDomainTxBusy,
 } from '../../names/internal'
 import {
   feeConfigValuesMatch,
@@ -17,14 +17,14 @@ import {
 type UseTreasuryViewModelArgs = {
   feeConfig: CoreFeeConfig
   feeConfigForm: FeeConfigFormState
-  feeConfigTxState: DuskNameTxState | null
+  feeConfigTxState: DuskDomainTxState | null
   liveWritesAvailable: boolean
   selectedAddress: string
   selectedTypedPrincipalKey: string
   treasuryClaimAmount: string
   treasuryLoading: boolean
   treasuryState: IndexedTreasuryState
-  treasuryTxState: DuskNameTxState | null
+  treasuryTxState: DuskDomainTxState | null
 }
 
 export function useTreasuryViewModel({
@@ -48,8 +48,8 @@ export function useTreasuryViewModel({
   const treasuryRecipientMatchesOperator = Boolean(treasuryOperatorKey && treasuryRecipientKey && treasuryOperatorKey === treasuryRecipientKey)
   const treasuryAvailable = treasuryState.availableLux > 0
   const connectedAsTreasuryOperator = Boolean(selectedTypedPrincipalKey && treasuryOperatorKey && selectedTypedPrincipalKey === treasuryOperatorKey)
-  const treasuryBusy = isDuskNameTxBusy(treasuryTxState)
-  const feeConfigBusy = isDuskNameTxBusy(feeConfigTxState)
+  const treasuryBusy = isDuskDomainTxBusy(treasuryTxState)
+  const feeConfigBusy = isDuskDomainTxBusy(feeConfigTxState)
   const parsedFeeConfigForm = useMemo(() => parseFeeConfigForm(feeConfigForm), [feeConfigForm])
   const feeConfigFormError = parsedFeeConfigForm.ok ? '' : parsedFeeConfigForm.error
   const feeConfigChanged = parsedFeeConfigForm.ok ? !feeConfigValuesMatch(feeConfig, parsedFeeConfigForm.config) : false

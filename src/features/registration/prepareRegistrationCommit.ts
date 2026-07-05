@@ -15,7 +15,7 @@ export async function prepareRegistrationCommit({
   displayName,
   duration,
   indexerClient,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   loadPendingReservations,
   nodeHex,
   refreshCommitBlockState,
@@ -62,8 +62,8 @@ export async function prepareRegistrationCommit({
 
     if (finalState.status !== 'executed') return
 
-    const initialBlockHeight = liveDuskNamesApp ? null : 0
-    const initialCurrentBlockHeight = liveDuskNamesApp ? null : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
+    const initialBlockHeight = liveDuskDomainsApp ? null : 0
+    const initialCurrentBlockHeight = liveDuskDomainsApp ? null : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
     const reservationTimestamp = new Date().toISOString()
     setPreparedCommit({
       commitment,
@@ -92,7 +92,7 @@ export async function prepareRegistrationCommit({
     })
     loadPendingReservations()
 
-    if (!liveDuskNamesApp) return
+    if (!liveDuskDomainsApp) return
 
     if (!indexerClient) {
       setIndexerError('Reservation submitted, but confirmation cannot be tracked yet. Refresh again shortly.')

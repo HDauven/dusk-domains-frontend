@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   DEFAULT_FEE_CONFIG,
   type CoreFeeConfig,
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
 } from '../../names/internal'
 
-export function useFeeConfig(indexerClient: DuskNamesIndexerClient | null) {
+export function useFeeConfig(indexerClient: DuskDomainsIndexerClient | null) {
   const [feeConfig, setFeeConfig] = useState<CoreFeeConfig>(DEFAULT_FEE_CONFIG)
   const [feeConfigLoading, setFeeConfigLoading] = useState(false)
   const [feeConfigError, setFeeConfigError] = useState('')

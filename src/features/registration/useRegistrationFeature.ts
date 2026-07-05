@@ -5,7 +5,7 @@ import {
   maxDurationYears,
   minDurationYears,
 } from '../../app/appConstants'
-import type { DuskNameTxState, NameResult } from '../../names/internal'
+import type { DuskDomainTxState, NameResult } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { RegistrationFlowPanelProps } from './RegistrationFlowPanel'
@@ -20,7 +20,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   canRevealRegistration: boolean
   commitBusy: boolean
   commitStale: boolean
-  commitTxState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
   expiryDate: string
   feeConfigError: string
   feeConfigLoading: boolean
@@ -44,7 +44,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   showReservationRecovery: boolean
   total: number
   txBusy: boolean
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
   walletDiscoveryRefreshing: boolean
   walletError: string
   walletSetupState: WalletConnectionStatus

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { currentBlockHeightFromHealth } from '../../app/appHelpers'
 import {
   userFacingErrorMessage,
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
   type IndexedNameSummary,
 } from '../../names/internal'
 import { myNamePrimarySummaryFromIndex } from './domainFormat'
@@ -10,7 +10,7 @@ import { fetchWalletScopedNames } from './myDomainsData'
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
 type UseMyDomainsArgs = {
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   onBlockHeightChange: (height: number | null) => void
   onLoadPendingReservations: () => unknown
   selectedAddress: string

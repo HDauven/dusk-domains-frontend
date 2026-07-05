@@ -1,4 +1,4 @@
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import {
   updateRegistrationCompletionState,
@@ -11,7 +11,7 @@ export function updateRegistrationCompletion(
     setTxState,
   }: UseRegistrationActionsProps,
   step: RegistrationCompletionStepId,
-  state: DuskNameTxState,
+  state: DuskDomainTxState,
 ) {
   setTxState(state)
   setRegistrationCompletion((current) => updateRegistrationCompletionState(current, step, state))

@@ -1,4 +1,4 @@
-import type { DuskNameTxState, IndexedReferralState } from '../../names/internal'
+import type { DuskDomainTxState, IndexedReferralState } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { ReferralState } from './referralState'
 
@@ -26,7 +26,7 @@ export type ReferralsViewProps = {
   referralState: ReferralState
   referralBusy: boolean
   referralConfirmation: string
-  referralTxState: DuskNameTxState | null
+  referralTxState: DuskDomainTxState | null
   selectedAddress: string
   showReferralSummary: boolean
   walletSetupState: WalletConnectionStatus

@@ -16,7 +16,7 @@ type UseEconomicsRuntimeArgs =
 
 export function useEconomicsRuntime({
   indexerClient,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   mainView,
   onOpenWalletConnection,
   runtimeConfig,
@@ -44,7 +44,7 @@ export function useEconomicsRuntime({
     feeConfig,
     feeConfigError,
     feeConfigLoading,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     loadFeeConfig,
     onOpenWalletConnection,
     runtimeConfig,
@@ -63,7 +63,7 @@ export function useEconomicsRuntime({
     resetReferralCopied,
   } = useReferralFeature({
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     onOpenWalletConnection,
     runtimeConfig,
     selectedAuthority,

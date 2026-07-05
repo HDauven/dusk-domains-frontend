@@ -4,8 +4,8 @@ import type {
   ActivityEntry,
   CoreFeeConfig,
   CoreRecordMutationInput,
-  DuskNamesRuntimeConfig,
-  DuskNameTxState,
+  DuskDomainsRuntimeConfig,
+  DuskDomainTxState,
   PrimaryNameDisplayStatus,
   ResolverRecord,
   ResolverRecordKey,
@@ -74,7 +74,7 @@ export type UseDomainManagementFeatureProps = {
   lifecycleBaseBlockHeight: number
   managedName: ManagedNameState
   managementError: string
-  managementTxState: DuskNameTxState | null
+  managementTxState: DuskDomainTxState | null
   maxDurationYears: number
   minDurationYears: number
   moonlightRecord: ResolverRecord | undefined
@@ -84,7 +84,7 @@ export type UseDomainManagementFeatureProps = {
   primaryEndpoint: string
   primaryEndpointValue: string
   primaryError: string
-  primaryTxState: DuskNameTxState | null
+  primaryTxState: DuskDomainTxState | null
   primaryVerification: PrimaryNameDisplayStatus
   publicRecordAcknowledged: boolean
   recordBusy: boolean
@@ -93,16 +93,16 @@ export type UseDomainManagementFeatureProps = {
   recordDraftValues: Partial<Record<ResolverRecordKey, string>>
   recordError: string
   recordTargetOptions: RecordTargetOption[]
-  recordTxState: DuskNameTxState | null
+  recordTxState: DuskDomainTxState | null
   renewalBusy: boolean
   renewalError: string
   renewalFee: number
   renewalPreviewExpiresAt: number
-  renewalTxState: DuskNameTxState | null
+  renewalTxState: DuskDomainTxState | null
   renewalYears: number
   resolverRecords: ResolverRecord[]
   resultLabel: string
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   requestSelectedShieldedAddress: () => Promise<string>
   selectedAddress: string
   selectedAuthority: string
@@ -116,18 +116,18 @@ export type UseDomainManagementFeatureProps = {
   setDraftResolver: SetState<string>
   setManagedName: SetState<ManagedNameState>
   setManagementError: SetState<string>
-  setManagementTxState: SetState<DuskNameTxState | null>
+  setManagementTxState: SetState<DuskDomainTxState | null>
   setPrimaryEndpointValue: SetState<string>
   setPrimaryError: SetState<string>
   setPrimaryName: SetState<string | null>
-  setPrimaryTxState: SetState<DuskNameTxState | null>
+  setPrimaryTxState: SetState<DuskDomainTxState | null>
   setPublicRecordAcknowledged: SetState<boolean>
   setRecordDrafts: SetState<Record<string, string>>
   setRecordError: SetState<string>
   setRecordTargetNode: SetState<string>
-  setRecordTxState: SetState<DuskNameTxState | null>
+  setRecordTxState: SetState<DuskDomainTxState | null>
   setRenewalError: SetState<string>
-  setRenewalTxState: SetState<DuskNameTxState | null>
+  setRenewalTxState: SetState<DuskDomainTxState | null>
   setRenewalYears: SetState<number>
   setResolverRecordSets: SetState<Record<string, ResolverRecord[]>>
   setSubnameError: SetState<string>
@@ -138,7 +138,7 @@ export type UseDomainManagementFeatureProps = {
   setSubnameResolver: SetState<string>
   setSubnameRevocationPolicy: SetState<SubnameRevocationPolicy>
   setSubnames: SetState<SubnameState[]>
-  setSubnameTxState: SetState<DuskNameTxState | null>
+  setSubnameTxState: SetState<DuskDomainTxState | null>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
   subnameError: string
@@ -149,7 +149,7 @@ export type UseDomainManagementFeatureProps = {
   subnameResolver: string
   subnameRevocationPolicy: SubnameRevocationPolicy
   subnames: SubnameState[]
-  subnameTxState: DuskNameTxState | null
+  subnameTxState: DuskDomainTxState | null
   walletAuthorized: boolean
   walletSetupState: WalletConnectionStatus
   ensureContractAuthorityForLiveWrite: EnsureContractAuthorityForLiveWrite

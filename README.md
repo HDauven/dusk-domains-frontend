@@ -25,7 +25,7 @@ Fill `.env.local` with the deployed contracts, node URL, indexer URL and data-dr
 
 ## Environment
 
-The app reads `VITE_DUSK_DOMAINS_*` variables. Legacy `VITE_DUSK_NAMES_*` aliases are still accepted where the SDK supports them.
+The app reads `VITE_DUSK_DOMAINS_*` variables.
 
 Required for live mode:
 

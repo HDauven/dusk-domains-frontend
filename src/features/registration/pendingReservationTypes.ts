@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { DuskNamesIndexerClient } from '../../names/internal'
+import type { DuskDomainsIndexerClient } from '../../names/internal'
 
 export type PreparedRegistrationCommit = {
   commitment: string
@@ -11,7 +11,7 @@ export type PreparedRegistrationCommit = {
 export type UsePendingReservationsArgs = {
   chainId: string
   currentCommitment: string
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   refreshListView: boolean
   selectedAuthority: string
   setCurrentBlockHeight: (height: number | null) => void

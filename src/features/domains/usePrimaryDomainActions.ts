@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from 'react'
 import {
-  type DuskNameCallMetadata,
-  type DuskNameTxState,
-  type DuskNamesIndexerClient,
-  type DuskNamesRuntimeConfig,
-  type SubmitDuskNameWriteOptions,
+  type DuskDomainCallMetadata,
+  type DuskDomainTxState,
+  type DuskDomainsIndexerClient,
+  type DuskDomainsRuntimeConfig,
+  type SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import { clearPrimaryDomainName } from './clearPrimaryDomainName'
@@ -12,9 +12,9 @@ import { setPrimaryDomainName } from './setPrimaryDomainName'
 
 type SubmitNameWrite = (
   name: string,
-  call: DuskNameCallMetadata,
-  options?: SubmitDuskNameWriteOptions,
-) => Promise<DuskNameTxState>
+  call: DuskDomainCallMetadata,
+  options?: SubmitDuskDomainWriteOptions,
+) => Promise<DuskDomainTxState>
 
 type AppendActivity = (input: {
   eventType: 'primary_name'
@@ -25,7 +25,7 @@ type AppendActivity = (input: {
 
 type ConfirmedWriteFallback = (
   description: string,
-  check?: (client: DuskNamesIndexerClient) => Promise<boolean>,
+  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
 ) => Promise<boolean>
 
 export type UsePrimaryDomainActionsProps = {
@@ -35,12 +35,12 @@ export type UsePrimaryDomainActionsProps = {
   displayName: string
   nodeHex: string
   primaryEndpoint: string
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAuthority: string
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
   setPrimaryError: Dispatch<SetStateAction<string>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
-  setPrimaryTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setPrimaryTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
   walletSetupState: WalletConnectionStatus

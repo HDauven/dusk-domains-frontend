@@ -1,11 +1,11 @@
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 import {
   isReadOnlyWalletMessage,
   isRevealTooEarlyMessage,
   userFacingMessageFromText,
 } from '../../names/internal'
 
-export function txStatusCopy(status: DuskNameTxState['status'] | undefined, message = '') {
+export function txStatusCopy(status: DuskDomainTxState['status'] | undefined, message = '') {
   if (status === 'preparing') return 'Preparing request'
   if (status === 'awaiting_approval') return 'Awaiting approval'
   if (status === 'submitted') return 'Transaction submitted'
@@ -19,7 +19,7 @@ export function txStatusCopy(status: DuskNameTxState['status'] | undefined, mess
   return 'Complete registration'
 }
 
-export function userFacingTxMessage(state: DuskNameTxState) {
+export function userFacingTxMessage(state: DuskDomainTxState) {
   const message = state.message?.trim() ?? ''
   if (!message) return ''
   if (isReadOnlyWalletMessage(message)) {
@@ -33,7 +33,7 @@ export function userFacingTxMessage(state: DuskNameTxState) {
   return userFacingMessageFromText(message, 'The wallet could not complete this request. Refresh and try again.')
 }
 
-export function txStatusDataAttrs(state: DuskNameTxState) {
+export function txStatusDataAttrs(state: DuskDomainTxState) {
   return {
     'data-contract': state.call?.contract,
     'data-function-name': state.call?.functionName,

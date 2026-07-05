@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type {
-  DuskNameCallMetadata,
-  DuskNamesIndexerClient,
-  DuskNamesRuntimeConfig,
-  DuskNameTxState,
-  SubmitDuskNameWriteOptions,
+  DuskDomainCallMetadata,
+  DuskDomainsIndexerClient,
+  DuskDomainsRuntimeConfig,
+  DuskDomainTxState,
+  SubmitDuskDomainWriteOptions,
   SubnameExpiryPolicy,
   SubnameRevocationPolicy,
   SubnameState,
@@ -13,9 +13,9 @@ import type { WalletConnectionStatus } from '../wallet/walletStatus'
 
 export type SubmitNameWrite = (
   name: string,
-  call: DuskNameCallMetadata,
-  options?: SubmitDuskNameWriteOptions,
-) => Promise<DuskNameTxState>
+  call: DuskDomainCallMetadata,
+  options?: SubmitDuskDomainWriteOptions,
+) => Promise<DuskDomainTxState>
 
 export type AppendSubdomainActivity = (input: {
   eventType: 'subname_created'
@@ -28,7 +28,7 @@ export type AppendSubdomainActivity = (input: {
 
 export type ConfirmedWriteFallback = (
   description: string,
-  check?: (client: DuskNamesIndexerClient) => Promise<boolean>,
+  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
 ) => Promise<boolean>
 
 export type UseSubdomainActionsProps = {
@@ -41,7 +41,7 @@ export type UseSubdomainActionsProps = {
   displayName: string
   managedNameExpiresAt: number
   nowSeconds: number
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
   selectedDelegatedSubname: SubnameState | undefined
@@ -54,7 +54,7 @@ export type UseSubdomainActionsProps = {
   setRecordTargetNode: Dispatch<SetStateAction<string>>
   setSubnameError: Dispatch<SetStateAction<string>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>
-  setSubnameTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setSubnameTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
   walletSetupState: WalletConnectionStatus

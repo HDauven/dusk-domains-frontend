@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import {
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
 import { refreshPendingReservationsFromIndexer as refreshSavedPendingReservationsFromIndexer } from './pendingReservationSync'
@@ -13,7 +13,7 @@ export function useSavedPendingReservationRefresh({
   setCurrentBlockHeight,
   setNowSeconds,
 }: {
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   loadPendingReservations: () => PendingNameReservation[]
   pendingReservations: PendingNameReservation[]
   refreshListView: boolean

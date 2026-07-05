@@ -3,19 +3,19 @@ import { createDuskConnectKit } from '@dusk/connect/ui'
 import { browserWriteProofUrlFromEnv } from './appEnv'
 import { duskDomainsConnectOptions } from './appConstants'
 import {
-  canUseLiveDuskNamesWrites,
-  createDuskNamesIndexerClient,
-  createDuskNamesLiveApp,
-  createDuskNamesRuntimeConfig,
-  type DuskNamesRuntimeEnv,
+  canUseLiveDuskDomainsWrites,
+  createDuskDomainsIndexerClient,
+  createDuskDomainsLiveApp,
+  createDuskDomainsRuntimeConfig,
+  type DuskDomainsRuntimeEnv,
 } from '../names/internal'
 
-export function useAppRuntime(env: DuskNamesRuntimeEnv) {
-  const runtimeConfig = useMemo(() => createDuskNamesRuntimeConfig(env), [env])
+export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
+  const runtimeConfig = useMemo(() => createDuskDomainsRuntimeConfig(env), [env])
   const browserWriteProofUrl = useMemo(() => browserWriteProofUrlFromEnv(env), [env])
   const recordSourceContractId = runtimeConfig.contracts.core.contractId
   const indexerClient = useMemo(() => (
-    runtimeConfig.indexerUrl ? createDuskNamesIndexerClient({ baseUrl: runtimeConfig.indexerUrl }) : null
+    runtimeConfig.indexerUrl ? createDuskDomainsIndexerClient({ baseUrl: runtimeConfig.indexerUrl }) : null
   ), [runtimeConfig.indexerUrl])
   const connectKit = useMemo(() => createDuskConnectKit({
     modal: {
@@ -25,9 +25,9 @@ export function useAppRuntime(env: DuskNamesRuntimeEnv) {
     },
   }), [])
   const wallet = connectKit.wallet
-  const liveDuskNamesApp = useMemo(() => (
-    canUseLiveDuskNamesWrites(runtimeConfig)
-      ? createDuskNamesLiveApp({ runtimeConfig, wallet, autoConnect: false }).names
+  const liveDuskDomainsApp = useMemo(() => (
+    canUseLiveDuskDomainsWrites(runtimeConfig)
+      ? createDuskDomainsLiveApp({ runtimeConfig, wallet, autoConnect: false }).names
       : null
   ), [runtimeConfig, wallet])
   return {
@@ -35,7 +35,7 @@ export function useAppRuntime(env: DuskNamesRuntimeEnv) {
     connectKit,
     connectOptions: duskDomainsConnectOptions,
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     recordSourceContractId,
     runtimeConfig,
     wallet,

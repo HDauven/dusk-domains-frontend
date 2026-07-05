@@ -3,39 +3,39 @@ import { createPreviewRegistrationApp } from './appHelpers'
 import { selectedWalletProviderName } from '../features/wallet/walletStatus'
 import {
   recordBrowserWriteProof,
-  submitDuskNameWrite as submitDuskNameWriteCall,
+  submitDuskDomainWrite as submitDuskDomainWriteCall,
   type DuskConnectAppLike,
-  type DuskNameCallMetadata,
-  type DuskNameTxState,
+  type DuskDomainCallMetadata,
+  type DuskDomainTxState,
   type DuskWalletState,
-  type SubmitDuskNameWriteOptions,
+  type SubmitDuskDomainWriteOptions,
 } from '../names/internal'
 
-type UseDuskNameWriterArgs = {
+type UseDuskDomainWriterArgs = {
   captureUrl: string | undefined
   chainId: string
-  liveDuskNamesApp: DuskConnectAppLike | null
+  liveDuskDomainsApp: DuskConnectAppLike | null
   liveWritesEnabled: boolean
   selectedAddress: string
   walletState: DuskWalletState
 }
 
-export function useDuskNameWriter({
+export function useDuskDomainWriter({
   captureUrl,
   chainId,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   liveWritesEnabled,
   selectedAddress,
   walletState,
-}: UseDuskNameWriterArgs) {
+}: UseDuskDomainWriterArgs) {
   return useCallback(async (
     name: string,
-    call: DuskNameCallMetadata,
-    options: SubmitDuskNameWriteOptions = {},
-  ): Promise<DuskNameTxState> => {
-    const app = liveDuskNamesApp ?? createPreviewRegistrationApp(name)
+    call: DuskDomainCallMetadata,
+    options: SubmitDuskDomainWriteOptions = {},
+  ): Promise<DuskDomainTxState> => {
+    const app = liveDuskDomainsApp ?? createPreviewRegistrationApp(name)
 
-    return await submitDuskNameWriteCall(app, call, {
+    return await submitDuskDomainWriteCall(app, call, {
       ...options,
       onUpdate: (state) => {
         options.onUpdate?.(state)
@@ -53,7 +53,7 @@ export function useDuskNameWriter({
           // Proof capture must never block the user flow.
         }
       },
-      allowUnsafePreviewCall: !liveDuskNamesApp && options.allowUnsafePreviewCall,
+      allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
     })
-  }, [captureUrl, chainId, liveDuskNamesApp, liveWritesEnabled, selectedAddress, walletState])
+  }, [captureUrl, chainId, liveDuskDomainsApp, liveWritesEnabled, selectedAddress, walletState])
 }

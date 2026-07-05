@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type {
   ActivityEntry,
-  DuskNamesIndexerClient,
+  DuskDomainsIndexerClient,
   NameResult,
   ResolverRecord,
   SubnameState,
@@ -13,7 +13,7 @@ export type ResolverRecordSets = Record<string, ResolverRecord[]>
 export type UseIndexedNameHydrationProps = {
   currentBlockHeight: number | null
   displayName: string
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   nowSeconds: number
   recordSourceContractId: string
   selectedAuthority: string
