@@ -90,7 +90,7 @@ export function useDuskWalletSession(
     setWalletDiscoveryRefreshing(true)
     setWalletError('')
     try {
-      await refreshWalletConnectionState()
+      await refreshWalletConnectionState(1500)
     } catch (error) {
       setWalletError(userFacingErrorMessage(error))
       setWalletState(wallet.state)

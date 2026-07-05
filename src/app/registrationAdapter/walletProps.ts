@@ -22,7 +22,7 @@ export function buildRegistrationWalletProps({
     ensureContractAuthorityForLiveWrite,
     ensurePublicBalanceForLiveWrite,
     onOpenWalletConnection: () => void handleOpenWalletConnection(),
-    onRefreshWalletProviders: () => void handleRefreshWalletProviders(),
+    onRefreshWalletProviders: () => handleRefreshWalletProviders(),
     onViewPendingReservation: () => void mainViewRuntime.handleMainViewChange('my-names'),
     selectedAddress,
     selectedAuthority,

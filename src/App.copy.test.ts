@@ -28,6 +28,7 @@ function readUiSource() {
     'src/features/registration/RegistrationSetupStep.tsx',
     'src/features/registration/RegistrationStepper.tsx',
     'src/features/registration/ReservationRecoveryNotice.tsx',
+    'src/features/registration/setup/RegistrationWalletSetupCard.tsx',
     'src/features/search/AvailabilityBanner.tsx',
     'src/features/search/SearchResultOverview.tsx',
     'src/features/treasury/TreasuryView.tsx',
@@ -76,5 +77,15 @@ describe('App user-facing copy', () => {
     expect(source).toContain('Active referral')
     expect(source).toContain('Applies to your next registration.')
     expect(source).not.toContain('Included when you register.')
+  })
+
+  it('uses explicit missing-wallet recovery copy', () => {
+    const source = readUiSource()
+
+    expect(source).toContain('Install Dusk Wallet')
+    expect(source).toContain('I installed it')
+    expect(source).toContain('Wallet still not detected. Reload this page after installing Dusk Wallet.')
+    expect(source).toContain('Reload page')
+    expect(source).not.toContain('Check for Dusk wallet again')
   })
 })

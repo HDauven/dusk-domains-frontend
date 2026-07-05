@@ -27,7 +27,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   networkFee: number
   onBackToOverview: () => void
   onOpenWalletConnection: () => void
-  onRefreshWalletProviders: () => void
+  onRefreshWalletProviders: () => Promise<unknown> | void
   onSetAddress: () => void
   onViewPendingReservation: () => void
   registrationAddressInput: string

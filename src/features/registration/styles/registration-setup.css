@@ -113,6 +113,12 @@
   align-items: center;
 }
 
+.wallet-setup-actions-stacked {
+  display: grid;
+  justify-items: stretch;
+  min-width: min(100%, 220px);
+}
+
 .wallet-install-button {
   display: inline-flex;
   align-items: center;
@@ -120,6 +126,61 @@
   gap: 8px;
   min-width: 142px;
   text-decoration: none;
+}
+
+.wallet-retry-button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(167, 139, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(8, 7, 17, 0.72);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.wallet-retry-button:hover:not(:disabled) {
+  border-color: rgba(167, 139, 255, 0.42);
+  background: rgba(15, 12, 30, 0.82);
+}
+
+.wallet-retry-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.wallet-install-help {
+  display: grid;
+  gap: 8px;
+  max-width: 280px;
+  padding: 10px;
+  border: 1px solid rgba(167, 139, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.54);
+}
+
+.wallet-install-help span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.wallet-install-help button {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wallet-install-help button:hover {
+  color: var(--text);
 }
 
 .setup-toggle {
@@ -171,4 +232,3 @@
 .field-note.danger {
   color: #ffb2b2;
 }
-

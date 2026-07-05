@@ -23,7 +23,7 @@ export function RegistrationSetupStep({
   installUrl: string
   onAddressInputChange: (value: string) => void
   onOpenWalletConnection: () => void
-  onRefreshWalletProviders: () => void
+  onRefreshWalletProviders: () => Promise<unknown> | void
   onRegisterSetsPrimaryChange: (checked: boolean) => void
   onUseWalletAddress: () => void
   registerSetsPrimary: boolean
