@@ -1,5 +1,5 @@
 export * from '@duskdomains/sdk/internal'
 export * from '@duskdomains/sdk/writes'
 export * from '@duskdomains/sdk/connect'
-export * from '@duskdomains/sdk/local-dev'
+export { installLocalDevDuskWallet } from '@duskdomains/sdk/local-dev'
 export * from '@duskdomains/sdk/write-proof'
