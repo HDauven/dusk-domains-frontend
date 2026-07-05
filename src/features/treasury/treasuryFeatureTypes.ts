@@ -1,7 +1,7 @@
 import type {
   CoreFeeConfig,
-  DuskNamesIndexerClient,
-  DuskNamesRuntimeConfig,
+  DuskDomainsIndexerClient,
+  DuskDomainsRuntimeConfig,
 } from '../../names/internal'
 import type { WalletSessionModel } from '../wallet/walletStatus'
 import type { SubmitNameWrite } from './treasuryActionTypes'
@@ -20,14 +20,14 @@ export type LiveWritePreflight = {
 }
 
 export type UseTreasuryFeatureArgs = {
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   feeConfig: CoreFeeConfig
   feeConfigError: string
   feeConfigLoading: boolean
-  liveDuskNamesApp: unknown
+  liveDuskDomainsApp: unknown
   loadFeeConfig: () => Promise<boolean>
   onOpenWalletConnection: () => void
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedTypedPrincipalKey: string
   submitNameWrite: SubmitNameWrite
   walletSession: WalletSessionModel

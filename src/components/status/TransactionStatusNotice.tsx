@@ -1,4 +1,4 @@
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
 import { txStatusCopy, txStatusDataAttrs, userFacingTxMessage } from './txStatus'
 
@@ -6,7 +6,7 @@ export function TransactionStatusNotice({
   state,
   className = '',
 }: {
-  state: DuskNameTxState
+  state: DuskDomainTxState
   className?: string
 }) {
   const message = userFacingTxMessage(state)

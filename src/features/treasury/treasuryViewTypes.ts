@@ -1,6 +1,6 @@
 import type {
   CoreFeeConfig,
-  DuskNameTxState,
+  DuskDomainTxState,
   IndexedTreasuryState,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
@@ -19,7 +19,7 @@ export type TreasuryViewProps = {
   feeConfigForm: FeeConfigFormState
   feeConfigFormError: string
   feeConfigLoading: boolean
-  feeConfigTxState: DuskNameTxState | null
+  feeConfigTxState: DuskDomainTxState | null
   feeConfigUpdateError: string
   liveWritesAvailable: boolean
   onClaimTreasury: (mode: 'all' | 'partial') => void
@@ -44,7 +44,7 @@ export type TreasuryViewProps = {
   treasuryReviewAmountLux: number | null
   treasuryReviewLabel: string
   treasuryState: IndexedTreasuryState
-  treasuryTxState: DuskNameTxState | null
+  treasuryTxState: DuskDomainTxState | null
   treasuryWalletStatus: string
   walletSetupState: WalletConnectionStatus
 }

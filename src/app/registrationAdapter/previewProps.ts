@@ -9,7 +9,7 @@ export function buildRegistrationPreviewProps({
 }: AppViewModelInputs) {
   const {
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     recordSourceContractId,
     runtimeConfig,
   } = appRuntime
@@ -44,7 +44,7 @@ export function buildRegistrationPreviewProps({
     feeConfigLoading,
     indexerClient,
     lifecycleBaseBlockHeight,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     networkFee,
     nodeHex,
     recordSourceContractId,

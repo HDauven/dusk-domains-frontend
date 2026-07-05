@@ -3,7 +3,7 @@ import {
 } from './registrationCompletionState'
 import {
   removePendingNameReservation,
-  type DuskNameTxState,
+  type DuskDomainTxState,
 } from '../../names/internal'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import type { createCompleteRegistrationRequest } from './completeRegistrationCall'
@@ -34,7 +34,7 @@ export async function applyCompleteRegistrationSuccess(
     finalState,
     request,
   }: {
-    finalState: DuskNameTxState
+    finalState: DuskDomainTxState
     request: ReturnType<typeof createCompleteRegistrationRequest>
   },
 ) {

@@ -1,4 +1,4 @@
-import type { DuskNameTxState, NameResult } from '../../../names/internal'
+import type { DuskDomainTxState, NameResult } from '../../../names/internal'
 import type { ReferralState } from '../../referrals/referralState'
 import type { WalletConnectionStatus } from '../../wallet/walletStatus'
 import type { RegistrationCompletionState } from '../registrationCompletionState'
@@ -41,7 +41,7 @@ export type RegistrationStepPanelProps = {
   canRevealRegistration: boolean
   commitBusy: boolean
   commitStale: boolean
-  commitTxState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
   commitWindow: CommitWindow
   committed: boolean
   displayName: string
@@ -72,7 +72,7 @@ export type RegistrationStepPanelProps = {
   selectedAddress: string
   total: number
   txBusy: boolean
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
   walletDiscoveryRefreshing: boolean
   walletSetupState: WalletConnectionStatus
 }

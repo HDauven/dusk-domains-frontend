@@ -1,12 +1,12 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { DuskNamesIndexerClient, PendingNameReservation } from '../names/internal'
+import type { DuskDomainsIndexerClient, PendingNameReservation } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 import { useAppNavigation } from './useAppNavigation'
 import { useMyDomainsFeature } from '../features/domains/useMyDomainsFeature'
 
 export type UseMainViewRuntimeArgs = {
   currentBlockHeight: number | null
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   loadPendingReservations: () => unknown
   loadReferralAccount: () => Promise<unknown>
   loadTreasuryView: () => Promise<boolean>

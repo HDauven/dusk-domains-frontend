@@ -15,7 +15,7 @@ export async function updateFeeConfig({
   feeConfigBusy,
   feeConfigForm,
   indexerClient,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   loadFeeConfig,
   runtimeConfig,
   selectedAddress,
@@ -39,7 +39,7 @@ export async function updateFeeConfig({
     setFeeConfigUpdateError('This wallet is not the operator.')
     return
   }
-  if (!liveDuskNamesApp) {
+  if (!liveDuskDomainsApp) {
     setFeeConfigUpdateError('Connect a transaction-capable wallet to update pricing.')
     return
   }

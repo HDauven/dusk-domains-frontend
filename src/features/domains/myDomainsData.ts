@@ -1,11 +1,11 @@
-import type { DuskNamesIndexerClient, IndexedNameSummary } from '../../names/internal'
+import type { DuskDomainsIndexerClient, IndexedNameSummary } from '../../names/internal'
 
 export async function fetchWalletScopedNames({
   indexerClient,
   selectedAddress,
   selectedAuthority,
 }: {
-  indexerClient: Pick<DuskNamesIndexerClient, 'getNames'>
+  indexerClient: Pick<DuskDomainsIndexerClient, 'getNames'>
   selectedAddress: string
   selectedAuthority: string
 }): Promise<IndexedNameSummary[]> {

@@ -1,5 +1,5 @@
 import type {
-  DuskNameTxState,
+  DuskDomainTxState,
   SubnameExpiryPolicy,
   SubnameRevocationPolicy,
   SubnameState,
@@ -38,7 +38,7 @@ export type SubdomainsViewProps = {
   subnameResolver: string
   subnameRevocationPolicy: SubnameRevocationPolicy
   subnames: SubnameState[]
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
 }
 
 export type SubdomainCreatePanelProps = Pick<

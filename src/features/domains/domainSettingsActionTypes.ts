@@ -2,19 +2,19 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { ManagedNameState } from '../../app/appHelpers'
 import type {
   CoreFeeConfig,
-  DuskNameCallMetadata,
-  DuskNamesIndexerClient,
-  DuskNamesRuntimeConfig,
-  DuskNameTxState,
-  SubmitDuskNameWriteOptions,
+  DuskDomainCallMetadata,
+  DuskDomainsIndexerClient,
+  DuskDomainsRuntimeConfig,
+  DuskDomainTxState,
+  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 
 export type SubmitNameWrite = (
   name: string,
-  call: DuskNameCallMetadata,
-  options?: SubmitDuskNameWriteOptions,
-) => Promise<DuskNameTxState>
+  call: DuskDomainCallMetadata,
+  options?: SubmitDuskDomainWriteOptions,
+) => Promise<DuskDomainTxState>
 
 export type AppendDomainSettingsActivity = (input: {
   eventType: 'transfer' | 'renewal'
@@ -25,7 +25,7 @@ export type AppendDomainSettingsActivity = (input: {
 
 export type ConfirmedWriteFallback = (
   description: string,
-  check?: (client: DuskNamesIndexerClient) => Promise<boolean>,
+  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
 ) => Promise<boolean>
 
 export type UseDomainSettingsActionsProps = {
@@ -43,15 +43,15 @@ export type UseDomainSettingsActionsProps = {
   nowSeconds: number
   renewalYears: number
   resultLabel: string
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAuthority: string
   setDraftManager: Dispatch<SetStateAction<string>>
   setDraftOwner: Dispatch<SetStateAction<string>>
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setManagementError: Dispatch<SetStateAction<string>>
-  setManagementTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setManagementTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setRenewalError: Dispatch<SetStateAction<string>>
-  setRenewalTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setRenewalTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
   walletSetupState: WalletConnectionStatus

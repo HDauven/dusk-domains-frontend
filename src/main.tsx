@@ -5,7 +5,7 @@ import App from './App.tsx'
 import { installLocalDevDuskWallet } from './names/internal'
 
 const env = import.meta.env
-const domainsEnv = (key: string) => env[`VITE_DUSK_DOMAINS_${key}`] ?? env[`VITE_DUSK_NAMES_${key}`]
+const domainsEnv = (key: string) => env[`VITE_DUSK_DOMAINS_${key}`]
 
 if (env.DEV && domainsEnv('ENABLE_LOCAL_DEV_WALLET') === 'true') {
   installLocalDevDuskWallet({

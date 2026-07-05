@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 import {
   walletSetupActionCopy,
   walletSetupActionTitle,
@@ -35,7 +35,7 @@ export function RegistrationPurchaseAction({
   onSetAddress: () => void
   registrationCompletion: RegistrationCompletionState | null
   txBusy: boolean
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
   walletSetupState: WalletConnectionStatus
 }) {
   const walletReady = walletSetupState === 'connected'

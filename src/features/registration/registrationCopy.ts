@@ -2,7 +2,7 @@ import { txStatusCopy } from '../../components/status/txStatus'
 import {
   REGISTRATION_MIN_REVEAL_WAIT_BLOCKS,
   registrationCommitWindow,
-  type DuskNameTxState,
+  type DuskDomainTxState,
   type PendingNameReservation,
 } from '../../names/internal'
 import type { RegistrationCompletionState } from './registrationCompletionState'
@@ -32,7 +32,7 @@ export function revealButtonCopy(status: CommitWindowStatus, waitBlocks: number)
 export function completeRegistrationButtonCopy(
   progress: RegistrationCompletionState | null,
   txBusy: boolean,
-  txState: DuskNameTxState | null,
+  txState: DuskDomainTxState | null,
   status: CommitWindowStatus,
   waitBlocks: number,
 ) {

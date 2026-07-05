@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react'
 import {
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
 import {
@@ -29,7 +29,7 @@ export function useMyDomainsFeature({
   selectedAuthority,
 }: {
   currentBlockHeight: number | null
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   mainView: string
   onBlockHeightChange: (height: number | null) => void
   onForgetPendingReservation: (reservation: PendingNameReservation) => void

@@ -1,6 +1,6 @@
 import {
-  isDuskNameTxBusy,
-  type DuskNameTxState,
+  isDuskDomainTxBusy,
+  type DuskDomainTxState,
 } from '../../names/internal'
 
 export function deriveBusyState({
@@ -12,21 +12,21 @@ export function deriveBusyState({
   subnameTxState,
   txState,
 }: {
-  commitTxState: DuskNameTxState | null
-  managementTxState: DuskNameTxState | null
-  primaryTxState: DuskNameTxState | null
-  recordTxState: DuskNameTxState | null
-  renewalTxState: DuskNameTxState | null
-  subnameTxState: DuskNameTxState | null
-  txState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
+  managementTxState: DuskDomainTxState | null
+  primaryTxState: DuskDomainTxState | null
+  recordTxState: DuskDomainTxState | null
+  renewalTxState: DuskDomainTxState | null
+  subnameTxState: DuskDomainTxState | null
+  txState: DuskDomainTxState | null
 }) {
   return {
-    commitBusy: isDuskNameTxBusy(commitTxState),
-    managementBusy: isDuskNameTxBusy(managementTxState),
-    primaryBusy: isDuskNameTxBusy(primaryTxState),
-    recordBusy: isDuskNameTxBusy(recordTxState),
-    renewalBusy: isDuskNameTxBusy(renewalTxState),
-    subnameBusy: isDuskNameTxBusy(subnameTxState),
-    txBusy: isDuskNameTxBusy(txState),
+    commitBusy: isDuskDomainTxBusy(commitTxState),
+    managementBusy: isDuskDomainTxBusy(managementTxState),
+    primaryBusy: isDuskDomainTxBusy(primaryTxState),
+    recordBusy: isDuskDomainTxBusy(recordTxState),
+    renewalBusy: isDuskDomainTxBusy(renewalTxState),
+    subnameBusy: isDuskDomainTxBusy(subnameTxState),
+    txBusy: isDuskDomainTxBusy(txState),
   }
 }

@@ -3,7 +3,7 @@ import { currentBlockHeightFromHealth } from '../../app/appHelpers'
 import {
   currentUnixSeconds,
   updatePendingNameReservationBlock,
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
@@ -11,7 +11,7 @@ import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 type RefreshCommitBlockStateArgs = {
   chainId: string
   commitment: string
-  indexerClient: DuskNamesIndexerClient
+  indexerClient: DuskDomainsIndexerClient
   loadPendingReservations: () => PendingNameReservation[]
   selectedAuthority: string
   setCurrentBlockHeight: (height: number | null) => void
@@ -70,7 +70,7 @@ export async function refreshCommitBlockStateFromIndexer({
 }
 
 type RefreshPendingReservationsArgs = {
-  indexerClient: DuskNamesIndexerClient
+  indexerClient: DuskDomainsIndexerClient
   loadPendingReservations: () => PendingNameReservation[]
   pendingReservations: PendingNameReservation[]
   setCurrentBlockHeight: (height: number | null) => void

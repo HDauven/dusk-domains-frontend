@@ -1,6 +1,6 @@
 import {
   isRevealTooEarlyMessage,
-  type DuskNameTxState,
+  type DuskDomainTxState,
 } from '../../names/internal'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 
@@ -11,7 +11,7 @@ export async function handleCompleteRegistrationEarlyReveal(
     refreshCommitBlockState,
     setWalletError,
   }: UseRegistrationActionsProps,
-  finalState: DuskNameTxState,
+  finalState: DuskDomainTxState,
 ) {
   if (!isRevealTooEarlyMessage(finalState.message)) return false
 

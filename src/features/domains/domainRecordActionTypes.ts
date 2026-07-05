@@ -1,21 +1,21 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type {
   CoreRecordMutationInput,
-  DuskNameCallMetadata,
-  DuskNamesIndexerClient,
-  DuskNamesRuntimeConfig,
-  DuskNameTxState,
+  DuskDomainCallMetadata,
+  DuskDomainsIndexerClient,
+  DuskDomainsRuntimeConfig,
+  DuskDomainTxState,
   ResolverRecord,
-  SubmitDuskNameWriteOptions,
+  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { RecordTargetOption } from './recordTypes'
 
 export type SubmitNameWrite = (
   name: string,
-  call: DuskNameCallMetadata,
-  options?: SubmitDuskNameWriteOptions,
-) => Promise<DuskNameTxState>
+  call: DuskDomainCallMetadata,
+  options?: SubmitDuskDomainWriteOptions,
+) => Promise<DuskDomainTxState>
 
 export type AppendDomainRecordActivity = (input: {
   eventType: 'record_update'
@@ -28,7 +28,7 @@ export type AppendDomainRecordActivity = (input: {
 
 export type ConfirmedWriteFallback = (
   description: string,
-  check?: (client: DuskNamesIndexerClient) => Promise<boolean>,
+  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
 ) => Promise<boolean>
 
 export type UseDomainRecordActionsProps = {
@@ -40,7 +40,7 @@ export type UseDomainRecordActionsProps = {
   recordBusy: boolean
   recordDraftErrors: string[]
   recordDraftMutations: CoreRecordMutationInput[]
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
   setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
@@ -48,7 +48,7 @@ export type UseDomainRecordActionsProps = {
   setPublicRecordAcknowledged: Dispatch<SetStateAction<boolean>>
   setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>
-  setRecordTxState: Dispatch<SetStateAction<DuskNameTxState | null>>
+  setRecordTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setResolverRecordSets: Dispatch<SetStateAction<Record<string, ResolverRecord[]>>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite

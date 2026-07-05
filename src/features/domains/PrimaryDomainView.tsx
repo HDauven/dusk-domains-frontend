@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react'
 import { TextField } from '../../components/ui/FormControls'
 import { PanelHeader } from '../../components/ui/PanelHeader'
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
 import { ManagementFeedback } from './ManagementFeedback'
 
@@ -38,7 +38,7 @@ export function PrimaryDomainView({
   placeholder: string
   primaryEndpointValue: string
   primaryVerification: PrimaryVerificationSummary
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
 }) {
   return (
     <section className="primary-panel" aria-labelledby="primary-heading">

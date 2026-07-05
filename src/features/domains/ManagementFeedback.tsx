@@ -1,12 +1,12 @@
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
-import type { DuskNameTxState } from '../../names/internal'
+import type { DuskDomainTxState } from '../../names/internal'
 
 export function ManagementFeedback({
   error,
   txState,
 }: {
   error?: string
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
 }) {
   return (
     <>

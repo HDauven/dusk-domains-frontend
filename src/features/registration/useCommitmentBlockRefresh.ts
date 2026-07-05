@@ -1,7 +1,7 @@
 import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'react'
 import {
   currentUnixSeconds,
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
 import { refreshCommitBlockStateFromIndexer } from './pendingReservationSync'
@@ -19,7 +19,7 @@ export function useCommitmentBlockRefresh({
 }: {
   chainId: string
   currentCommitment: string
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   loadPendingReservations: () => PendingNameReservation[]
   selectedAuthority: string
   setCurrentBlockHeight: (height: number | null) => void

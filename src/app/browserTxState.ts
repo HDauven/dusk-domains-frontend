@@ -1,8 +1,8 @@
 import type { RegistrationCompletionState } from '../features/registration/registrationCompletionState'
-import type { DuskNameTxState } from '../names/internal'
+import type { DuskDomainTxState } from '../names/internal'
 
 export function browserWriteTxStateVisible(
-  states: Array<DuskNameTxState | null>,
+  states: Array<DuskDomainTxState | null>,
   registrationCompletion: RegistrationCompletionState | null,
 ) {
   if (registrationCompletion) return true

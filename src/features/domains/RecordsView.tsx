@@ -1,5 +1,5 @@
 import {
-  type DuskNameTxState,
+  type DuskDomainTxState,
   type ResolverRecord,
   type ResolverRecordKey,
 } from '../../names/internal'
@@ -68,7 +68,7 @@ export function RecordsView({
   recordDraftValues: Partial<Record<ResolverRecordKey, string>>
   recordTargetOptions: RecordTargetOption[]
   resolverRecords: ResolverRecord[]
-  txState: DuskNameTxState | null
+  txState: DuskDomainTxState | null
   walletAddressAvailable: boolean
 }) {
   const targetName = activeRecordTarget?.name ?? displayName

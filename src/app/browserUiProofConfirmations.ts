@@ -7,7 +7,7 @@ import type { RegistrationCompletionState } from '../features/registration/regis
 import {
   recordBrowserWriteProofUiConfirmation,
   registrationCommitWindow,
-  type DuskNameTxState,
+  type DuskDomainTxState,
   type IndexedNameSummary,
   type PendingNameReservation,
   type RegistrationCommitWindow,
@@ -29,18 +29,18 @@ export function myNamesProofConfirmation({
   subnameTxState,
   txState,
 }: {
-  commitTxState: DuskNameTxState | null
+  commitTxState: DuskDomainTxState | null
   currentBlockHeight: number | null
-  managementTxState: DuskNameTxState | null
+  managementTxState: DuskDomainTxState | null
   myNamePrimarySummaries: Record<string, MyNamePrimarySummary>
   myNames: IndexedNameSummary[]
   pendingReservations: PendingNameReservation[]
-  primaryTxState: DuskNameTxState | null
-  recordTxState: DuskNameTxState | null
+  primaryTxState: DuskDomainTxState | null
+  recordTxState: DuskDomainTxState | null
   registrationCompletion: RegistrationCompletionState | null
-  renewalTxState: DuskNameTxState | null
-  subnameTxState: DuskNameTxState | null
-  txState: DuskNameTxState | null
+  renewalTxState: DuskDomainTxState | null
+  subnameTxState: DuskDomainTxState | null
+  txState: DuskDomainTxState | null
 }): { confirmation: ProofConfirmation, name: string } | null {
   const activeName = myNames.find((name) => name.status === 'active')
   const pendingReservationVisible = pendingReservations.length > 0

@@ -1,8 +1,8 @@
 import { useState, type ComponentProps } from 'react'
 import type {
-  DuskNamesIndexerClient,
-  DuskNamesRuntimeConfig,
-  DuskNameTxState,
+  DuskDomainsIndexerClient,
+  DuskDomainsRuntimeConfig,
+  DuskDomainTxState,
   DuskPrincipalResult,
 } from '../../names/internal'
 import type { WalletSessionModel } from '../wallet/walletStatus'
@@ -28,7 +28,7 @@ type LiveWritePreflight = {
 
 export function useReferralFeature({
   indexerClient,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   onOpenWalletConnection,
   runtimeConfig,
   selectedAuthority,
@@ -39,10 +39,10 @@ export function useReferralFeature({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: {
-  indexerClient: DuskNamesIndexerClient | null
-  liveDuskNamesApp: unknown
+  indexerClient: DuskDomainsIndexerClient | null
+  liveDuskDomainsApp: unknown
   onOpenWalletConnection: () => void
-  runtimeConfig: DuskNamesRuntimeConfig
+  runtimeConfig: DuskDomainsRuntimeConfig
   selectedAuthority: string
   selectedReferralKey: string
   selectedTypedPrincipalResult: DuskPrincipalResult | null
@@ -52,7 +52,7 @@ export function useReferralFeature({
   const selectedAddress = walletSession.selectedAddress
   const walletSetupState = walletSession.status
   const [referralConfirmation, setReferralConfirmation] = useState('')
-  const [referralTxState, setReferralTxState] = useState<DuskNameTxState | null>(null)
+  const [referralTxState, setReferralTxState] = useState<DuskDomainTxState | null>(null)
   const {
     referralAccountState,
     referralError,
@@ -80,7 +80,7 @@ export function useReferralFeature({
     referralAttributionEnabled: runtimeConfig.capabilities.referralAttribution,
     referralError,
     referralLoading,
-    referralRewardClaimsAvailable: Boolean(runtimeConfig.capabilities.referralRewardClaims && liveDuskNamesApp),
+    referralRewardClaimsAvailable: Boolean(runtimeConfig.capabilities.referralRewardClaims && liveDuskDomainsApp),
     referralState,
     referralTxState,
     selectedAddress,
@@ -92,7 +92,7 @@ export function useReferralFeature({
     handleClaimReferralRewards,
   } = useReferralActions({
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     loadReferralAccount,
     referralAccountState,
     referralBusy: referralViewModel.referralBusy,

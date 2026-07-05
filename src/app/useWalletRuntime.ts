@@ -1,6 +1,6 @@
 import type { useAppRuntime } from './useAppRuntime'
 import { useCallback } from 'react'
-import { useDuskNameWriter } from './useDuskNameWriter'
+import { useDuskDomainWriter } from './useDuskDomainWriter'
 import { useLiveWritePreflight } from './useLiveWritePreflight'
 import { useDuskWalletSession } from '../features/wallet/useDuskWalletSession'
 import { useSelectedAuthority } from '../features/wallet/useSelectedAuthority'
@@ -10,7 +10,7 @@ type AppRuntime = ReturnType<typeof useAppRuntime>
 
 type UseWalletRuntimeArgs = Pick<
   AppRuntime,
-  'connectKit' | 'connectOptions' | 'liveDuskNamesApp' | 'runtimeConfig' | 'wallet'
+  'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
 > & {
   captureUrl: string | undefined
 }
@@ -19,7 +19,7 @@ export function useWalletRuntime({
   captureUrl,
   connectKit,
   connectOptions,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   runtimeConfig,
   wallet,
 }: UseWalletRuntimeArgs) {
@@ -51,10 +51,10 @@ export function useWalletRuntime({
     selectedTypedPrincipalResult,
   } = selectedAuthorityState
 
-  const submitNameWrite = useDuskNameWriter({
+  const submitNameWrite = useDuskDomainWriter({
     captureUrl,
     chainId: runtimeConfig.chainId,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     liveWritesEnabled: runtimeConfig.liveWritesEnabled,
     selectedAddress,
     walletState,

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import type {
-  DuskNamesIndexerClient,
+  DuskDomainsIndexerClient,
   NameResult,
 } from '../../names/internal'
 import { userFacingErrorMessage } from '../../names/internal'
@@ -19,7 +19,7 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
   } = props
 
   const hydrateNameFromIndexer = useCallback(async (
-    client: DuskNamesIndexerClient,
+    client: DuskDomainsIndexerClient,
     searchResult: NameResult,
   ) => {
     const reads = await readIndexedName(client, searchResult)

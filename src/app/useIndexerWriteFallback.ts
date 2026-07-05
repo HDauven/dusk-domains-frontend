@@ -3,12 +3,12 @@ import {
   waitForConfirmedIndexerRefresh,
   userFacingMessageFromText,
   type DuskConnectAppLike,
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
 } from '../names/internal'
 
 type UseIndexerWriteFallbackArgs = {
-  indexerClient: DuskNamesIndexerClient | null
-  liveDuskNamesApp: DuskConnectAppLike | null
+  indexerClient: DuskDomainsIndexerClient | null
+  liveDuskDomainsApp: DuskConnectAppLike | null
   refreshCurrentNameFromIndexer: () => Promise<boolean>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>
@@ -16,16 +16,16 @@ type UseIndexerWriteFallbackArgs = {
 
 export function useIndexerWriteFallback({
   indexerClient,
-  liveDuskNamesApp,
+  liveDuskDomainsApp,
   refreshCurrentNameFromIndexer,
   setIndexerConfirmation,
   setIndexerError,
 }: UseIndexerWriteFallbackArgs) {
   const shouldApplyPreviewWriteFallback = useCallback(async (
     description = 'the latest change',
-    check?: (client: DuskNamesIndexerClient) => Promise<boolean>,
+    check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
   ) => {
-    if (!liveDuskNamesApp) return true
+    if (!liveDuskDomainsApp) return true
 
     if (!indexerClient) {
       setIndexerError(`Transaction confirmed, but ${description} cannot be refreshed yet. Check again shortly.`)
@@ -57,7 +57,7 @@ export function useIndexerWriteFallback({
     return false
   }, [
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     refreshCurrentNameFromIndexer,
     setIndexerConfirmation,
     setIndexerError,

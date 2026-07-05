@@ -1,4 +1,4 @@
-import type { DuskNameTxState } from '../../../names/internal'
+import type { DuskDomainTxState } from '../../../names/internal'
 
 export type ManagedNameState = {
   owner: string
@@ -22,7 +22,7 @@ export type DomainSettingsViewProps = {
   feeConfigLoading: boolean
   managedName: ManagedNameState
   managementError: string
-  managementTxState: DuskNameTxState | null
+  managementTxState: DuskDomainTxState | null
   maxDurationYears: number
   minDurationYears: number
   nowSeconds: number
@@ -39,7 +39,7 @@ export type DomainSettingsViewProps = {
   renewalError: string
   renewalFee: number
   renewalPreviewExpiresAt: number
-  renewalTxState: DuskNameTxState | null
+  renewalTxState: DuskDomainTxState | null
   renewalYears: number
 }
 

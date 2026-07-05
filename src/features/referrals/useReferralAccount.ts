@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
-import type { DuskNamesIndexerClient, IndexedReferralState } from '../../names/internal'
+import type { DuskDomainsIndexerClient, IndexedReferralState } from '../../names/internal'
 import { emptyReferralUiState } from './referralState'
 
 type UseReferralAccountArgs = {
-  indexerClient: DuskNamesIndexerClient | null
+  indexerClient: DuskDomainsIndexerClient | null
   selectedReferralKey: string
 }
 

@@ -1,6 +1,6 @@
 import { unixSecondsFromIso } from '../features/domains/domainFormat'
 import {
-  type DuskNamesIndexerClient,
+  type DuskDomainsIndexerClient,
   type IndexedSubname,
   type SubnameState,
   userFacingErrorMessage,
@@ -50,7 +50,7 @@ export function indexedSubnameToState(subname: IndexedSubname): SubnameState {
   }
 }
 
-export function currentBlockHeightFromHealth(health: Awaited<ReturnType<DuskNamesIndexerClient['getHealth']>>) {
+export function currentBlockHeightFromHealth(health: Awaited<ReturnType<DuskDomainsIndexerClient['getHealth']>>) {
   return maxNumericValue(
     health.currentBlockHeight,
     health.cursor?.currentBlockHeight,

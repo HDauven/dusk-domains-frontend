@@ -1,4 +1,4 @@
-import type { DuskNamesRuntimeEnv } from '../names/internal'
+import type { DuskDomainsRuntimeEnv } from '../names/internal'
 import { useDomainManagementAppState } from './useDomainManagementAppState'
 import { useEconomicsRuntime } from './useEconomicsRuntime'
 import { useAppRuntime } from './useAppRuntime'
@@ -6,14 +6,14 @@ import { useRegistrationAppState } from './useRegistrationAppState'
 import { useSearchAppState } from './useSearchAppState'
 import { useWalletRuntime } from './useWalletRuntime'
 
-export function useAppCoreRuntimes(env: DuskNamesRuntimeEnv) {
+export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
   const appRuntime = useAppRuntime(env)
   const {
     browserWriteProofUrl,
     connectKit,
     connectOptions,
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     recordSourceContractId,
     runtimeConfig,
     wallet,
@@ -25,7 +25,7 @@ export function useAppCoreRuntimes(env: DuskNamesRuntimeEnv) {
     captureUrl: browserWriteProofUrl,
     connectKit,
     connectOptions,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     runtimeConfig,
     wallet,
   })
@@ -42,7 +42,7 @@ export function useAppCoreRuntimes(env: DuskNamesRuntimeEnv) {
   } = walletRuntime
   const economicsRuntime = useEconomicsRuntime({
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     mainView: searchState.mainView,
     onOpenWalletConnection: () => void handleOpenWalletConnection(),
     runtimeConfig,

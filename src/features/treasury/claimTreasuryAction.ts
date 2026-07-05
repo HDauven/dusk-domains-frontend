@@ -10,7 +10,7 @@ export async function claimTreasury(
   {
     connectedAsTreasuryOperator,
     indexerClient,
-    liveDuskNamesApp,
+    liveDuskDomainsApp,
     loadTreasury,
     resetTreasuryClaimAmount,
     runtimeConfig,
@@ -41,7 +41,7 @@ export async function claimTreasury(
     setTreasuryError('This wallet is not the treasury operator.')
     return
   }
-  if (!liveDuskNamesApp) {
+  if (!liveDuskDomainsApp) {
     setTreasuryError('Connect a transaction-capable wallet to claim.')
     return
   }
