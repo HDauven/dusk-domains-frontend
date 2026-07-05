@@ -14,20 +14,24 @@ describe('fetchWalletScopedNames', () => {
     expect(getNames).not.toHaveBeenCalled()
   })
 
-  it('returns no names when the selected wallet has no authority key', async () => {
-    const getNames = vi.fn()
+  it('derives the owner key from the selected public wallet when needed', async () => {
+    const names = [{ node: 'node-1', canonicalName: 'mine.dusk' }]
+    const getNames = vi.fn(async () => names)
+    const address = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
 
     await expect(fetchWalletScopedNames({
       indexerClient: { getNames },
-      selectedAddress: 'dusk1selected',
+      selectedAddress: address,
       selectedAuthority: '',
-    })).resolves.toEqual([])
+    })).resolves.toEqual(names)
 
-    expect(getNames).not.toHaveBeenCalled()
+    expect(getNames).toHaveBeenCalledWith({
+      owner: '0xb3777fb99a3be2c4c967e87aee3c219a9a166b8ff53b94650c88697ca0b2d6ca',
+    })
   })
 
   it('only calls the owner-filtered name list for My Domains', async () => {
-    const names = [{ canonicalName: 'mine.dusk' }]
+    const names = [{ node: 'node-1', canonicalName: 'mine.dusk' }]
     const owner = `0x${'22'.repeat(32)}`
     const getNames = vi.fn(async () => names)
 
@@ -35,9 +39,36 @@ describe('fetchWalletScopedNames', () => {
       indexerClient: { getNames },
       selectedAddress: 'dusk1selected',
       selectedAuthority: owner,
-    })).resolves.toBe(names)
+    })).resolves.toEqual(names)
 
     expect(getNames).toHaveBeenCalledTimes(1)
     expect(getNames).toHaveBeenCalledWith({ owner })
+  })
+
+  it('falls back to public address records when owner lookup returns nothing', async () => {
+    const address = 'dusk-public-address'
+    const linked = {
+      node: 'node-linked',
+      canonicalName: 'linked.dusk',
+      owner: `0x${'33'.repeat(32)}`,
+      manager: `0x${'33'.repeat(32)}`,
+      records: [{ key: 'moonlight_address', value: address }],
+    }
+    const unrelated = {
+      node: 'node-unrelated',
+      canonicalName: 'other.dusk',
+      owner: `0x${'44'.repeat(32)}`,
+      manager: `0x${'44'.repeat(32)}`,
+      records: [],
+    }
+    const getNames = vi.fn(async (params?: { owner?: string }) => (
+      params?.owner ? [] : [linked, unrelated]
+    ))
+
+    await expect(fetchWalletScopedNames({
+      indexerClient: { getNames },
+      selectedAddress: address,
+      selectedAuthority: `0x${'55'.repeat(32)}`,
+    })).resolves.toEqual([linked])
   })
 })
