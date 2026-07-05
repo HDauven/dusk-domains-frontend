@@ -15,7 +15,7 @@ function registrationProgressTitle(status: RegistrationCompletionState['status']
 }
 
 function registrationProgressCopy(status: RegistrationCompletionState['status']) {
-  if (status === 'executed') return 'Your name is active. Review the records and primary status before sharing it.'
+  if (status === 'executed') return 'Your domain is active.'
   if (status === 'failed') return 'The name is still reserved. Retry when the issue is fixed.'
   return 'Keep the wallet open while this finishes.'
 }
@@ -49,7 +49,7 @@ export function RegistrationCompletionProgress({
 
       {progress.status === 'executed' ? (
         <button className="primary-button compact" type="button" onClick={onSetAddress}>
-          Review setup
+          Open domain
           <ArrowRight size={18} />
         </button>
       ) : null}

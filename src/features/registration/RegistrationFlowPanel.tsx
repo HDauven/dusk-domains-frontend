@@ -15,6 +15,7 @@ export function RegistrationFlowPanel({
   return (
     <RegistrationWizardShell
       activeStep={wizard.registrationStep}
+      complete={wizard.registrationComplete}
       description={wizard.registrationStepDescription}
       displayName={wizard.displayName}
     >
@@ -35,6 +36,7 @@ export function RegistrationFlowPanel({
         }}
         onNext={navigation.onStepChange}
         previousStep={navigation.registrationPreviousStep}
+        registrationComplete={navigation.registrationComplete}
       />
 
       <RegistrationFlowStatus

@@ -52,6 +52,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
 
 export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
   const { handlePrepareCommit, handleRegisterName } = useRegistrationActions(props)
+  const registrationComplete = props.registrationCompletion?.status === 'executed'
 
   const step: RegistrationFlowPanelProps['step'] = {
     activeReferral: props.activeReferral,
@@ -110,6 +111,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
       canContinueRegistrationStep: props.canContinueRegistrationStep,
       onBackToOverview: props.onBackToOverview,
       onStepChange: props.setRegistrationStep,
+      registrationComplete,
       registrationNextStep: props.registrationNextStep,
       registrationPreviousStep: props.registrationPreviousStep,
       registrationStep: props.registrationStep,
@@ -123,6 +125,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     step,
     wizard: {
       displayName: props.displayName,
+      registrationComplete,
       registrationStep: props.registrationStep,
       registrationStepDescription: props.registrationStepDescription,
     },

@@ -5,6 +5,7 @@ import type { RegistrationStepId } from './registrationSteps'
 type RegistrationWizardShellProps = {
   activeStep: RegistrationStepId
   children: ReactNode
+  complete: boolean
   description: string
   displayName: string
 }
@@ -12,6 +13,7 @@ type RegistrationWizardShellProps = {
 export function RegistrationWizardShell({
   activeStep,
   children,
+  complete,
   description,
   displayName,
 }: RegistrationWizardShellProps) {
@@ -25,7 +27,7 @@ export function RegistrationWizardShell({
           </div>
         </div>
 
-        <RegistrationStepper activeStep={activeStep} />
+        <RegistrationStepper activeStep={activeStep} complete={complete} />
 
         {children}
       </section>

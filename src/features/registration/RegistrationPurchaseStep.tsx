@@ -54,6 +54,8 @@ export function RegistrationPurchaseStep({
   txState: DuskNameTxState | null
   walletSetupState: WalletConnectionStatus
 }) {
+  const registrationComplete = registrationCompletion?.status === 'executed'
+
   return (
     <div className="registration-review">
       <RegistrationPurchaseSummary
@@ -72,7 +74,10 @@ export function RegistrationPurchaseStep({
         total={total}
       />
 
-      <RegistrationPurchaseChecklist commitWindow={commitWindow} />
+      <RegistrationPurchaseChecklist
+        commitWindow={commitWindow}
+        registrationComplete={registrationComplete}
+      />
 
       <RegistrationPurchaseAction
         canRevealRegistration={canRevealRegistration}

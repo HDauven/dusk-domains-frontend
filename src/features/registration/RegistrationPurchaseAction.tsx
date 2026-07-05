@@ -39,20 +39,25 @@ export function RegistrationPurchaseAction({
   walletSetupState: WalletConnectionStatus
 }) {
   const walletReady = walletSetupState === 'connected'
-  const actionTitle = walletReady
+  const registrationComplete = registrationCompletion?.status === 'executed'
+  const actionTitle = registrationComplete
+    ? 'Registration complete'
+    : walletReady
     ? commitWindow.status === 'ready' ? 'Complete purchase' : 'Waiting for reveal window'
     : walletSetupActionTitle(walletSetupState)
-  const actionCopy = walletReady
+  const actionCopy = registrationComplete
+    ? 'Your domain is active. Open it to review records and primary status.'
+    : walletReady
     ? commitWindowCopy(commitWindow.status, commitWindow.waitBlocks, commitWindow.staleInBlocks)
     : walletSetupActionCopy(walletSetupState)
 
   return (
-    <div className="step-action-card purchase-action-card">
+    <div className={registrationComplete ? 'step-action-card purchase-action-card complete' : 'step-action-card purchase-action-card'}>
       <div>
         <strong>{actionTitle}</strong>
         <span>{actionCopy}</span>
       </div>
-      {walletReady ? (
+      {registrationComplete ? null : walletReady ? (
         <button
           className="primary-button register"
           disabled={!canRevealRegistration}

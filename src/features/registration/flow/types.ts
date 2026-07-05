@@ -12,6 +12,7 @@ export type CommitWindow = {
 
 export type RegistrationWizardProps = {
   displayName: string
+  registrationComplete: boolean
   registrationStep: RegistrationStepId
   registrationStepDescription: string
 }
@@ -20,6 +21,7 @@ export type RegistrationNavigationProps = {
   canContinueRegistrationStep: boolean
   onBackToOverview: () => void
   onStepChange: (step: RegistrationStepId) => void
+  registrationComplete: boolean
   registrationNextStep: RegistrationStepId | null
   registrationPreviousStep: RegistrationStepId | null
   registrationStep: RegistrationStepId

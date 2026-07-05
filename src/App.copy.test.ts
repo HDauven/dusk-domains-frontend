@@ -18,6 +18,7 @@ function readUiSource() {
     'src/features/referrals/ReferralsView.tsx',
     'src/features/registration/registrationCopy.ts',
     'src/features/registration/RegistrationDurationStep.tsx',
+    'src/features/registration/RegistrationCompletionProgress.tsx',
     'src/features/registration/RegistrationNavigation.tsx',
     'src/features/registration/RegistrationPolicyNotes.tsx',
     'src/features/registration/RegistrationPurchaseAction.tsx',
@@ -87,5 +88,14 @@ describe('App user-facing copy', () => {
     expect(source).toContain('Wallet still not detected. Reload this page after installing Dusk Wallet.')
     expect(source).toContain('Reload page')
     expect(source).not.toContain('Check for Dusk wallet again')
+  })
+
+  it('uses clear completed-registration copy', () => {
+    const source = readUiSource()
+
+    expect(source).toContain('Registration complete.')
+    expect(source).toContain('Domain active')
+    expect(source).toContain('Open domain')
+    expect(source).not.toContain('Review setup')
   })
 })

@@ -2,8 +2,10 @@ import { registrationStepDefinitions, type RegistrationStepId } from './registra
 
 export function RegistrationStepper({
   activeStep,
+  complete = false,
 }: {
   activeStep: RegistrationStepId
+  complete?: boolean
 }) {
   const activeIndex = Math.max(
     0,
@@ -13,7 +15,9 @@ export function RegistrationStepper({
   return (
     <ol className="registration-stepper" aria-label="Registration steps">
       {registrationStepDefinitions.map((step, index) => {
-        const state = index < activeIndex
+        const state = complete
+          ? 'complete'
+          : index < activeIndex
           ? 'complete'
           : index === activeIndex
             ? 'active'

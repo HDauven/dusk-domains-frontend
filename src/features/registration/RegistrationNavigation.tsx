@@ -8,6 +8,7 @@ export function RegistrationNavigation({
   onBack,
   onNext,
   previousStep,
+  registrationComplete,
 }: {
   canContinue: boolean
   currentStep: RegistrationStepId
@@ -15,6 +16,7 @@ export function RegistrationNavigation({
   onBack: () => void
   onNext: (step: RegistrationStepId) => void
   previousStep: RegistrationStepId | null
+  registrationComplete: boolean
 }) {
   return (
     <div className="registration-nav">
@@ -36,7 +38,7 @@ export function RegistrationNavigation({
           <ArrowRight size={18} />
         </button>
       ) : (
-        <span>{currentStep === 'purchase' ? 'Ready to purchase.' : 'Ready to reserve.'}</span>
+        <span>{registrationComplete ? 'Registration complete.' : currentStep === 'purchase' ? 'Ready to purchase.' : 'Ready to reserve.'}</span>
       )}
     </div>
   )
