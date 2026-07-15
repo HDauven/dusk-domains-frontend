@@ -24,7 +24,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
     <AccountPanel className="marketplace-panel" labelledBy="marketplace-heading" panelId="marketplace">
       <AccountViewHeader
         actions={<RefreshButton disabled={loading} loading={loading} onRefresh={onRefresh} />}
-        description="Buy, auction or make an offer on a .dusk domain."
+        description="Buy, sell or bid on .dusk domains."
         heading="Marketplace"
         headingId="marketplace-heading"
       />
