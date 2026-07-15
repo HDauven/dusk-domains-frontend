@@ -1,0 +1,357 @@
+.marketplace-panel {
+  min-height: calc(100vh - 130px);
+}
+
+.marketplace-tabs,
+.marketplace-mode-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.5);
+}
+
+.marketplace-tabs {
+  margin-bottom: 18px;
+}
+
+.marketplace-tabs button,
+.marketplace-mode-control button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.marketplace-tabs button:hover,
+.marketplace-mode-control button:hover {
+  color: var(--text);
+}
+
+.marketplace-tabs button.active,
+.marketplace-mode-control button.active {
+  color: var(--text);
+  background: rgba(95, 74, 168, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 255, 0.16);
+}
+
+.marketplace-sections,
+.marketplace-offers-layout {
+  display: grid;
+  gap: 22px;
+}
+
+.marketplace-section,
+.marketplace-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.marketplace-editor {
+  max-width: 760px;
+  padding: 20px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: var(--panel-row);
+}
+
+.marketplace-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.marketplace-section-heading h2,
+.marketplace-section-heading p {
+  margin: 0;
+}
+
+.marketplace-section-heading h2 {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.marketplace-section-heading p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.marketplace-list {
+  display: grid;
+  gap: 8px;
+}
+
+.marketplace-refund-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(167, 139, 255, 0.2);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.marketplace-refund-bar > div {
+  display: grid;
+  gap: 3px;
+}
+
+.marketplace-refund-bar span,
+.marketplace-order-row span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marketplace-refund-bar strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.marketplace-refund-bar .commit-button {
+  width: auto;
+  min-width: 96px;
+  min-height: 38px;
+}
+
+.marketplace-order-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.25fr) minmax(110px, 0.55fr) minmax(108px, 0.55fr) minmax(160px, 0.78fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 76px;
+  padding: 13px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-row);
+}
+
+.marketplace-order-row > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.marketplace-order-row strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marketplace-order-name strong {
+  font-size: 15px;
+}
+
+.marketplace-order-action {
+  align-items: center;
+}
+
+.marketplace-order-row .primary-button,
+.marketplace-order-row .commit-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  font-size: 13px;
+}
+
+.marketplace-live-label {
+  justify-self: end;
+  color: var(--accent-soft) !important;
+  font-size: 12px !important;
+  font-weight: 650;
+}
+
+.marketplace-bid-control {
+  display: grid;
+  grid-template-columns: minmax(72px, 1fr) 64px;
+  gap: 7px;
+}
+
+.marketplace-bid-control input,
+.marketplace-form input,
+.marketplace-form select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid rgba(126, 100, 200, 0.38);
+  border-radius: 8px;
+  outline: none;
+  color: var(--text);
+  background: rgba(5, 5, 12, 0.66);
+  font: inherit;
+  font-size: 13px;
+}
+
+.marketplace-bid-control input {
+  min-height: 40px;
+}
+
+.marketplace-bid-control input:hover,
+.marketplace-bid-control input:focus,
+.marketplace-form input:hover,
+.marketplace-form input:focus,
+.marketplace-form select:hover,
+.marketplace-form select:focus {
+  border-color: rgba(197, 181, 255, 0.72);
+  background: rgba(9, 8, 18, 0.96);
+  box-shadow: 0 0 0 2px rgba(167, 139, 255, 0.1);
+}
+
+.marketplace-form-view {
+  display: grid;
+}
+
+.marketplace-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.marketplace-form label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.marketplace-form label > span {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.marketplace-field-wide {
+  grid-column: 1 / -1;
+}
+
+.marketplace-input-suffix {
+  position: relative;
+}
+
+.marketplace-input-suffix input {
+  padding-right: 56px;
+}
+
+.marketplace-input-suffix > span {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  color: var(--muted);
+  font-size: 11px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.marketplace-review-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.marketplace-review-line code {
+  color: var(--text);
+}
+
+.marketplace-editor > .commit-button {
+  width: 100%;
+  min-height: 44px;
+}
+
+.text-action {
+  padding: 0;
+  border: 0;
+  color: var(--accent-soft);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 1060px) {
+  .marketplace-order-row {
+    grid-template-columns: minmax(160px, 1.1fr) minmax(100px, 0.55fr) minmax(100px, 0.55fr);
+  }
+
+  .marketplace-order-action {
+    grid-column: 1 / -1;
+  }
+
+  .marketplace-live-label {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 700px) {
+  .marketplace-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+  }
+
+  .marketplace-tabs button {
+    padding: 0 8px;
+  }
+
+  .marketplace-refund-bar,
+  .marketplace-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .marketplace-refund-bar .commit-button {
+    width: 100%;
+  }
+
+  .marketplace-mode-control {
+    width: 100%;
+  }
+
+  .marketplace-mode-control button {
+    flex: 1 1 50%;
+  }
+
+  .marketplace-order-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .marketplace-order-name,
+  .marketplace-order-action {
+    grid-column: 1 / -1;
+  }
+
+  .marketplace-form {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-field-wide {
+    grid-column: auto;
+  }
+
+  .marketplace-editor {
+    padding: 16px;
+  }
+}

@@ -1,6 +1,7 @@
 import type { AppViewModelInputs } from '../appViewTypes'
 
 export function buildRegistrationRuntimeProps({
+  appRuntime,
   derivedState,
   registrationRuntime,
 }: AppViewModelInputs) {
@@ -32,6 +33,7 @@ export function buildRegistrationRuntimeProps({
     commitStale,
     commitWindow,
     loadPendingReservations,
+    getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
     refreshCommitBlockState,
     registrationNextStep,
     registrationPreviousStep,

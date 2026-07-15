@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { DuskDomainsIndexerClient } from '../names/internal'
+import type { CurrentBlockHeightReader } from './duskNodeHeight'
 import type { AppMainView } from './AppTypes'
 import { usePendingReservations, type PreparedRegistrationCommit } from '../features/registration/usePendingReservations'
 import { useRegistrationFlowState } from '../features/registration/useRegistrationFlowState'
@@ -10,6 +11,7 @@ export type UseRegistrationRuntimeArgs = {
   canRegister: boolean
   chainId: string
   committed: boolean
+  getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   mainView: AppMainView
   preparedCommit: PreparedRegistrationCommit | null
@@ -28,6 +30,7 @@ export function useRegistrationRuntime({
   canRegister,
   chainId,
   committed,
+  getCurrentBlockHeight,
   indexerClient,
   mainView,
   preparedCommit,
@@ -54,6 +57,7 @@ export function useRegistrationRuntime({
   const pendingState = usePendingReservations({
     chainId,
     currentCommitment: preparedCommit?.commitment ?? '',
+    getCurrentBlockHeight,
     indexerClient,
     refreshListView: mainView === 'my-names',
     selectedAuthority,

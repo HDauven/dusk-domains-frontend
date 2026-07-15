@@ -4,6 +4,7 @@ import { useAppCoreRuntimes } from './useAppCoreRuntimes'
 import { useAppNavigationRuntimes } from './useAppNavigationRuntimes'
 import { useAppViewProps } from './useAppViewProps'
 import { useNameWorkspaceRuntime } from './useNameWorkspaceRuntime'
+import { useMarketplaceFeature } from '../features/marketplace/useMarketplaceFeature'
 
 export function useDuskDomainsAppModel() {
   const core = useAppCoreRuntimes(import.meta.env)
@@ -13,6 +14,7 @@ export function useDuskDomainsAppModel() {
   useAppBrowserProofCapture({ core, navigation, workspace })
 
   const {
+    appRuntime,
     searchState,
     walletRuntime,
   } = core
@@ -25,6 +27,10 @@ export function useDuskDomainsAppModel() {
   } = searchState
   const {
     handleOpenWalletConnection,
+    ensurePublicBalanceForLiveWrite,
+    selectedAddress,
+    selectedAuthority,
+    submitNameWrite,
     walletSetupState,
     walletState,
   } = walletRuntime
@@ -45,9 +51,27 @@ export function useDuskDomainsAppModel() {
     ...workspace,
     ...navigation,
   })
+  const {
+    marketplaceProps,
+  } = useMarketplaceFeature({
+    ensurePublicBalanceForLiveWrite,
+    duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
+    indexerClient: appRuntime.indexerClient,
+    marketplaceOnChainClient: appRuntime.marketplaceOnChainClient,
+    liveWritesAvailable: Boolean(appRuntime.liveDuskDomainsApp),
+    mainView,
+    onOpenWalletConnection: () => void handleOpenWalletConnection(),
+    runtimeConfig: appRuntime.runtimeConfig,
+    selectedAddress,
+    selectedAuthority,
+    submitNameWrite,
+  })
 
   return {
-    mainContentProps,
+    mainContentProps: {
+      ...mainContentProps,
+      marketplaceProps,
+    },
     shellProps: {
       mainView,
       onMainViewChange: (view: AppMainView) => void handleMainViewChange(view),

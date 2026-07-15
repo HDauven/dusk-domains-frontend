@@ -4,12 +4,14 @@ import {
   type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
+import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import { refreshCommitBlockStateFromIndexer } from './pendingReservationSync'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 
 export function useCommitmentBlockRefresh({
   chainId,
   currentCommitment,
+  getCurrentBlockHeight,
   indexerClient,
   loadPendingReservations,
   selectedAuthority,
@@ -19,6 +21,7 @@ export function useCommitmentBlockRefresh({
 }: {
   chainId: string
   currentCommitment: string
+  getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   loadPendingReservations: () => PendingNameReservation[]
   selectedAuthority: string
@@ -27,11 +30,15 @@ export function useCommitmentBlockRefresh({
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>
 }) {
   const refreshCommitBlockState = useCallback(async (commitment: string) => {
-    if (!indexerClient) return false
+    if (!indexerClient) {
+      setCurrentBlockHeight(await getCurrentBlockHeight())
+      return false
+    }
 
     return refreshCommitBlockStateFromIndexer({
       chainId,
       commitment,
+      getCurrentBlockHeight,
       indexerClient,
       loadPendingReservations,
       selectedAuthority,
@@ -40,6 +47,7 @@ export function useCommitmentBlockRefresh({
     })
   }, [
     chainId,
+    getCurrentBlockHeight,
     indexerClient,
     loadPendingReservations,
     selectedAuthority,
@@ -52,7 +60,7 @@ export function useCommitmentBlockRefresh({
     globalThis.queueMicrotask(() => {
       if (!cancelled) setNowSeconds(currentUnixSeconds())
     })
-    if (!currentCommitment || !indexerClient) {
+    if (!currentCommitment || (!indexerClient && !getCurrentBlockHeight)) {
       return () => {
         cancelled = true
       }
@@ -77,7 +85,7 @@ export function useCommitmentBlockRefresh({
       cancelled = true
       globalThis.clearInterval(intervalId)
     }
-  }, [currentCommitment, indexerClient, refreshCommitBlockState, setNowSeconds])
+  }, [currentCommitment, getCurrentBlockHeight, indexerClient, refreshCommitBlockState, setNowSeconds])
 
   return {
     refreshCommitBlockState,

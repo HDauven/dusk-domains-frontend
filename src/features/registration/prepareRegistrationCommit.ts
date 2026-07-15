@@ -36,6 +36,7 @@ export async function prepareRegistrationCommit({
   submitNameWrite,
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
+  getCurrentBlockHeight,
 }: UseRegistrationActionsProps) {
   if (!canPrepareCommit || !selectedAddress) return
 
@@ -62,8 +63,9 @@ export async function prepareRegistrationCommit({
 
     if (finalState.status !== 'executed') return
 
-    const initialBlockHeight = liveDuskDomainsApp ? null : 0
-    const initialCurrentBlockHeight = liveDuskDomainsApp ? null : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
+    const liveBlockHeight = liveDuskDomainsApp ? await getCurrentBlockHeight() : null
+    const initialBlockHeight = liveDuskDomainsApp ? liveBlockHeight : 0
+    const initialCurrentBlockHeight = liveDuskDomainsApp ? liveBlockHeight : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
     const reservationTimestamp = new Date().toISOString()
     setPreparedCommit({
       commitment,

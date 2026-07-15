@@ -5,6 +5,7 @@ import {
   recordBrowserWriteProof,
   submitDuskDomainWrite as submitDuskDomainWriteCall,
   type DuskConnectAppLike,
+  type DuskDomainContractMap,
   type DuskDomainCallMetadata,
   type DuskDomainTxState,
   type DuskWalletState,
@@ -14,6 +15,7 @@ import {
 type UseDuskDomainWriterArgs = {
   captureUrl: string | undefined
   chainId: string
+  contracts: DuskDomainContractMap
   liveDuskDomainsApp: DuskConnectAppLike | null
   liveWritesEnabled: boolean
   selectedAddress: string
@@ -23,6 +25,7 @@ type UseDuskDomainWriterArgs = {
 export function useDuskDomainWriter({
   captureUrl,
   chainId,
+  contracts,
   liveDuskDomainsApp,
   liveWritesEnabled,
   selectedAddress,
@@ -36,6 +39,7 @@ export function useDuskDomainWriter({
     const app = liveDuskDomainsApp ?? createPreviewRegistrationApp(name)
 
     return await submitDuskDomainWriteCall(app, call, {
+      contracts,
       ...options,
       onUpdate: (state) => {
         options.onUpdate?.(state)
@@ -55,5 +59,5 @@ export function useDuskDomainWriter({
       },
       allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
     })
-  }, [captureUrl, chainId, liveDuskDomainsApp, liveWritesEnabled, selectedAddress, walletState])
+  }, [captureUrl, chainId, contracts, liveDuskDomainsApp, liveWritesEnabled, selectedAddress, walletState])
 }

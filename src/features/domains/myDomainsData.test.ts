@@ -26,7 +26,7 @@ describe('fetchWalletScopedNames', () => {
     })).resolves.toEqual(names)
 
     expect(getNames).toHaveBeenCalledWith({
-      owner: '0xb3777fb99a3be2c4c967e87aee3c219a9a166b8ff53b94650c88697ca0b2d6ca',
+      owner: '0xfa95da9c6c860cc3d5506de45b01ea84b9d2cad24a23be36003e505222d8d644',
     })
   })
 

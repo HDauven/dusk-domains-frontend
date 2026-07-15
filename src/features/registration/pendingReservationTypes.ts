@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { DuskDomainsIndexerClient } from '../../names/internal'
+import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 
 export type PreparedRegistrationCommit = {
   commitment: string
@@ -11,6 +12,7 @@ export type PreparedRegistrationCommit = {
 export type UsePendingReservationsArgs = {
   chainId: string
   currentCommitment: string
+  getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   refreshListView: boolean
   selectedAuthority: string

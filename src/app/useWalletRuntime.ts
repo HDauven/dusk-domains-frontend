@@ -23,6 +23,7 @@ export function useWalletRuntime({
   runtimeConfig,
   wallet,
 }: UseWalletRuntimeArgs) {
+  const expectedWalletChainId = runtimeConfig.liveWritesEnabled ? runtimeConfig.chainId : ''
   const {
     handleOpenWalletConnection,
     handleRefreshWalletProviders,
@@ -33,9 +34,9 @@ export function useWalletRuntime({
     walletDiscoveryRefreshing,
     walletError,
     walletState,
-  } = useDuskWalletSession(connectKit, connectOptions, runtimeConfig.chainId)
+  } = useDuskWalletSession(connectKit, connectOptions, expectedWalletChainId)
 
-  const walletSession = deriveWalletSessionModel(walletState, walletDiscoveryReady, runtimeConfig.chainId)
+  const walletSession = deriveWalletSessionModel(walletState, walletDiscoveryReady, expectedWalletChainId)
   const walletSetupState = walletSession.status
   const selectedAuthorityState = useSelectedAuthority({
     walletSession,
@@ -54,6 +55,7 @@ export function useWalletRuntime({
   const submitNameWrite = useDuskDomainWriter({
     captureUrl,
     chainId: runtimeConfig.chainId,
+    contracts: runtimeConfig.contracts,
     liveDuskDomainsApp,
     liveWritesEnabled: runtimeConfig.liveWritesEnabled,
     selectedAddress,

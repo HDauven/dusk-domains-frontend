@@ -11,6 +11,7 @@
 @import './features/search/styles.css';
 @import './features/registration/styles.css';
 @import './features/domains/styles.css';
+@import './features/marketplace/styles.css';
 @import './features/activity/styles.css';
 @import './styles/responsive-tablet.css';
 @import './styles/responsive-mobile.css';

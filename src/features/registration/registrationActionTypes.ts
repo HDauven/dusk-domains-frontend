@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { ManagedNameState } from '../../app/appHelpers'
+import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import type {
   CoreFeeConfig,
   DuskDomainCallMetadata,
@@ -44,6 +45,7 @@ export type UseRegistrationActionsProps = {
   displayName: string
   duration: number
   feeConfig: CoreFeeConfig
+  getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   lifecycleBaseBlockHeight: number
   liveDuskDomainsApp: unknown

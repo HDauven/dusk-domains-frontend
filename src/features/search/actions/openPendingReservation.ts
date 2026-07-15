@@ -5,6 +5,7 @@ import {
   userFacingErrorMessage,
   type PendingNameReservation,
 } from '../../../names/internal'
+import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
 import { resetSearchState } from '../searchControllerReset'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
@@ -13,7 +14,9 @@ export async function openPendingReservation(
   reservation: PendingNameReservation,
 ) {
   const {
+    chainId,
     hydrateNameFromIndexer,
+    getCurrentBlockHeight,
     indexerClient,
     loadPendingReservations,
     openSearchView,
@@ -26,6 +29,7 @@ export async function openPendingReservation(
     setIndexerConfirmation,
     setIndexerError,
     setPreparedCommit,
+    setRegistrationCompletion,
     setRegistrationStep,
     setResultView,
   } = props
@@ -56,11 +60,28 @@ export async function openPendingReservation(
       indexerClient.getHealth(),
       indexerClient.getCommitment(reservation.commitment),
     ])
-    const nextBlockHeight = currentBlockHeightFromHealth(health)
+    setApiSearchResult(nextResult)
+    await hydrateNameFromIndexer(indexerClient, nextResult)
+
+    if (nextResult.status === 'registered') {
+      clearRegisteredPendingReservations({
+        canonicalName: nextResult.canonical,
+        chainId,
+        loadPendingReservations,
+      })
+      setCommitted(false)
+      setPreparedCommit(null)
+      setRegistrationCompletion(null)
+      setRegistrationStep('duration')
+      setResultView('details')
+      setIndexerConfirmation('Registration is complete.')
+      return
+    }
+
+    const nextBlockHeight = currentBlockHeightFromHealth(health) ?? await getCurrentBlockHeight()
     const committedBlockHeight = indexedCommit?.committedBlockHeight ?? reservation.committedBlockHeight
     const committedTxId = indexedCommit?.committedTxId ?? reservation.committedTxId
 
-    setApiSearchResult(nextResult)
     setCurrentBlockHeight(nextBlockHeight)
     setPreparedCommit({
       commitment: reservation.commitment,
@@ -80,8 +101,6 @@ export async function openPendingReservation(
       })
       loadPendingReservations()
     }
-
-    await hydrateNameFromIndexer(indexerClient, nextResult)
   } catch (error) {
     setIndexerError(userFacingErrorMessage(error))
   } finally {

@@ -92,8 +92,10 @@ export function buildSearchRuntimeArgs({
   const { selectedAuthority } = walletRuntime
 
   return {
+    chainId: appRuntime.runtimeConfig.chainId,
     currentBlockHeight,
     displayName,
+    getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
     indexerClient,
     liveDuskDomainsApp,
     loadPendingReservations,

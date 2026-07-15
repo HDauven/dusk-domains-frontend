@@ -2,7 +2,7 @@
   position: relative;
   z-index: 4;
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) auto minmax(260px, 1fr);
+  grid-template-columns: minmax(365px, 1fr) auto minmax(210px, 1fr);
   justify-content: initial;
   min-height: 104px;
   padding: 0 clamp(32px, 3.4vw, 52px);

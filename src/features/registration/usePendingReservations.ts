@@ -8,6 +8,7 @@ export type { PreparedRegistrationCommit } from './pendingReservationTypes'
 export function usePendingReservations({
   chainId,
   currentCommitment,
+  getCurrentBlockHeight,
   indexerClient,
   refreshListView,
   selectedAuthority,
@@ -27,6 +28,7 @@ export function usePendingReservations({
   } = useCommitmentBlockRefresh({
     chainId,
     currentCommitment,
+    getCurrentBlockHeight,
     indexerClient,
     loadPendingReservations,
     selectedAuthority,
@@ -38,6 +40,7 @@ export function usePendingReservations({
     refreshPendingReservationsFromIndexer,
   } = useSavedPendingReservationRefresh({
     indexerClient,
+    getCurrentBlockHeight,
     loadPendingReservations,
     pendingReservations,
     refreshListView,

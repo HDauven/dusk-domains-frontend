@@ -4,11 +4,13 @@ import type {
   DuskDomainsIndexerClient,
   DuskDomainTxState,
   NameResult,
+  PendingNameReservation,
   ResolverRecord,
   SubnameExpiryPolicy,
   SubnameRevocationPolicy,
   SubnameState,
 } from '../../names/internal'
+import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import type { RegistrationCompletionState } from '../registration/registrationCompletionState'
 import type { RegistrationStepId } from '../registration/registrationSteps'
 import type { PreparedRegistrationCommit } from '../registration/usePendingReservations'
@@ -17,9 +19,11 @@ import type { SearchResultView } from './SearchWorkspace'
 export type ResolverRecordSets = Record<string, ResolverRecord[]>
 
 export type UseSearchControllerProps = {
+  chainId: string
+  getCurrentBlockHeight: CurrentBlockHeightReader
   hydrateNameFromIndexer: (client: DuskDomainsIndexerClient, result: NameResult) => Promise<void>
   indexerClient: DuskDomainsIndexerClient | null
-  loadPendingReservations: () => void
+  loadPendingReservations: () => PendingNameReservation[]
   openSearchView: () => void
   query: string
   recordSourceContractId: string

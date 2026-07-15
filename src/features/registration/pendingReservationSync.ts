@@ -1,16 +1,19 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { currentBlockHeightFromHealth } from '../../app/appHelpers'
+import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import {
   currentUnixSeconds,
   updatePendingNameReservationBlock,
   type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
+import { inferredCommittedBlockHeightFromReservation } from './pendingReservationBlockRecovery'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 
 type RefreshCommitBlockStateArgs = {
   chainId: string
   commitment: string
+  getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient
   loadPendingReservations: () => PendingNameReservation[]
   selectedAuthority: string
@@ -21,6 +24,7 @@ type RefreshCommitBlockStateArgs = {
 export async function refreshCommitBlockStateFromIndexer({
   chainId,
   commitment,
+  getCurrentBlockHeight,
   indexerClient,
   loadPendingReservations,
   selectedAuthority,
@@ -31,10 +35,36 @@ export async function refreshCommitBlockStateFromIndexer({
     indexerClient.getHealth(),
     indexerClient.getCommitment(commitment),
   ])
-  const nextBlockHeight = currentBlockHeightFromHealth(health)
+  const nextBlockHeight = currentBlockHeightFromHealth(health) ?? await getCurrentBlockHeight()
   setCurrentBlockHeight(nextBlockHeight)
 
   if (indexedCommit?.committedBlockHeight === null || indexedCommit?.committedBlockHeight === undefined) {
+    const savedReservation = loadPendingReservations().find((reservation) => reservation.commitment === commitment)
+    const inferredBlockHeight = savedReservation
+      ? inferredCommittedBlockHeightFromReservation(savedReservation, nextBlockHeight)
+      : null
+
+    if (savedReservation && inferredBlockHeight !== null) {
+      setPreparedCommit((current) => {
+        if (!current || current.commitment !== commitment) return current
+        return {
+          ...current,
+          committedBlockHeight: inferredBlockHeight,
+          committedTxId: savedReservation.committedTxId ?? current.committedTxId,
+        }
+      })
+      if (selectedAuthority) {
+        updatePendingNameReservationBlock({
+          chainId,
+          controller: selectedAuthority,
+          commitment,
+        }, {
+          committedBlockHeight: inferredBlockHeight,
+          committedTxId: savedReservation.committedTxId,
+        })
+        loadPendingReservations()
+      }
+    }
     return false
   }
 
@@ -70,6 +100,7 @@ export async function refreshCommitBlockStateFromIndexer({
 }
 
 type RefreshPendingReservationsArgs = {
+  getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient
   loadPendingReservations: () => PendingNameReservation[]
   pendingReservations: PendingNameReservation[]
@@ -78,6 +109,7 @@ type RefreshPendingReservationsArgs = {
 }
 
 export async function refreshPendingReservationsFromIndexer({
+  getCurrentBlockHeight,
   indexerClient,
   loadPendingReservations,
   pendingReservations,
@@ -85,7 +117,8 @@ export async function refreshPendingReservationsFromIndexer({
   setNowSeconds,
 }: RefreshPendingReservationsArgs) {
   const health = await indexerClient.getHealth()
-  setCurrentBlockHeight(currentBlockHeightFromHealth(health))
+  const nextBlockHeight = currentBlockHeightFromHealth(health) ?? await getCurrentBlockHeight()
+  setCurrentBlockHeight(nextBlockHeight)
   setNowSeconds(currentUnixSeconds())
 
   const indexedReservations = await Promise.all(pendingReservations.map(async (reservation) => {
@@ -104,7 +137,8 @@ export async function refreshPendingReservationsFromIndexer({
 
   let changed = false
   for (const { reservation, indexedCommit } of indexedReservations) {
-    const committedBlockHeight = indexedCommit?.committedBlockHeight ?? reservation.committedBlockHeight
+    const committedBlockHeight = indexedCommit?.committedBlockHeight
+      ?? inferredCommittedBlockHeightFromReservation(reservation, nextBlockHeight)
     const committedTxId = indexedCommit?.committedTxId ?? reservation.committedTxId
 
     if (

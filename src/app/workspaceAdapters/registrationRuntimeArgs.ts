@@ -20,6 +20,7 @@ export function buildRegistrationRuntimeArgs({
     canRegister: namePreview.canRegister,
     chainId: appRuntime.runtimeConfig.chainId,
     committed: registrationState.committed,
+    getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
     indexerClient: appRuntime.indexerClient,
     mainView: searchState.mainView,
     preparedCommit: registrationState.preparedCommit,

@@ -42,6 +42,13 @@ export function PrimaryNavigation({
         Treasury
       </button>
       <button
+        className={mainView === 'marketplace' ? 'active' : ''}
+        type="button"
+        onClick={() => onMainViewChange('marketplace')}
+      >
+        Marketplace
+      </button>
+      <button
         className={mainView === 'referrals' ? 'active' : ''}
         type="button"
         onClick={() => onMainViewChange('referrals')}

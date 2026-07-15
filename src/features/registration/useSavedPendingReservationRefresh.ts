@@ -3,10 +3,12 @@ import {
   type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
+import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import { refreshPendingReservationsFromIndexer as refreshSavedPendingReservationsFromIndexer } from './pendingReservationSync'
 
 export function useSavedPendingReservationRefresh({
   indexerClient,
+  getCurrentBlockHeight,
   loadPendingReservations,
   pendingReservations,
   refreshListView,
@@ -14,6 +16,7 @@ export function useSavedPendingReservationRefresh({
   setNowSeconds,
 }: {
   indexerClient: DuskDomainsIndexerClient | null
+  getCurrentBlockHeight: CurrentBlockHeightReader
   loadPendingReservations: () => PendingNameReservation[]
   pendingReservations: PendingNameReservation[]
   refreshListView: boolean
@@ -21,9 +24,14 @@ export function useSavedPendingReservationRefresh({
   setNowSeconds: (seconds: number) => void
 }) {
   const refreshPendingReservationsFromIndexer = useCallback(async () => {
-    if (!indexerClient || pendingReservations.length === 0) return false
+    if (pendingReservations.length === 0) return false
+    if (!indexerClient) {
+      setCurrentBlockHeight(await getCurrentBlockHeight())
+      return false
+    }
 
     return refreshSavedPendingReservationsFromIndexer({
+      getCurrentBlockHeight,
       indexerClient,
       loadPendingReservations,
       pendingReservations,
@@ -31,6 +39,7 @@ export function useSavedPendingReservationRefresh({
       setNowSeconds,
     })
   }, [
+    getCurrentBlockHeight,
     indexerClient,
     loadPendingReservations,
     pendingReservations,
@@ -39,7 +48,7 @@ export function useSavedPendingReservationRefresh({
   ])
 
   useEffect(() => {
-    if (!refreshListView || !indexerClient || pendingReservations.length === 0) return
+    if (!refreshListView || (!indexerClient && !getCurrentBlockHeight) || pendingReservations.length === 0) return
 
     let cancelled = false
     const refresh = async () => {
@@ -62,6 +71,7 @@ export function useSavedPendingReservationRefresh({
     }
   }, [
     indexerClient,
+    getCurrentBlockHeight,
     pendingReservations.length,
     refreshListView,
     refreshPendingReservationsFromIndexer,
