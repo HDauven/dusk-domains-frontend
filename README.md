@@ -9,9 +9,9 @@ The app lets users search, reserve, register and manage `.dusk` domains. It uses
 - Node.js 22+
 - npm
 - Dusk Wallet browser extension for live writes
-- Dusk Domains core and treasury contract IDs
+- Dusk Domains core, treasury and marketplace contract IDs
 - Dusk Domains indexer URL
-- Core and treasury data-driver WASM URLs
+- Core, treasury and marketplace data-driver WASM URLs
 
 ## Setup
 
@@ -34,11 +34,17 @@ VITE_DUSK_DOMAINS_NODE_URL
 VITE_DUSK_DOMAINS_CHAIN_ID
 VITE_DUSK_DOMAINS_CORE_CONTRACT_ID
 VITE_DUSK_DOMAINS_TREASURY_CONTRACT_ID
+VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID
 VITE_DUSK_DOMAINS_CORE_DRIVER_URL
 VITE_DUSK_DOMAINS_TREASURY_DRIVER_URL
+VITE_DUSK_DOMAINS_MARKETPLACE_DRIVER_URL
 VITE_DUSK_DOMAINS_INDEXER_URL
 VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES=true
 ```
+
+The node endpoint must accept browser requests from the frontend origin. A raw
+`rusk-private` endpoint may need a local CORS proxy for browser-based contract
+reads; hosted Dusk node endpoints should expose the required CORS headers.
 
 Optional product links:
 
