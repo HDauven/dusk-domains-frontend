@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@dusk/connect": "npm:@jsr/dusk__connect@^0.2.0",
-    "@duskdomains/sdk": "file:../dusk-domains-sdk",
+    "@duskdomains/sdk": "https://github.com/HDauven/dusk-domains-sdk/archive/2864ee5dc17524a44007eb5055531ba2034cd403.tar.gz",
     "@noble/hashes": "^2.2.0",
     "lucide-react": "^1.20.0",
     "react": "^19.2.6",
