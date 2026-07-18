@@ -44,11 +44,13 @@ export async function canonicalOfferTarget(
   const currentBlockHeight = await required(client.getCurrentBlockHeight())
   const response = await required(client.getName(name))
   const record = response.record
+  if (!record) {
+    throw new Error(`${name} is not registered on this network.`)
+  }
   if (!response.marketplaceTransferable) {
     throw new Error('Offers are only available for second-level domains without subdomains.')
   }
-  if (!record
-    || response.node !== expectedNode
+  if (response.node !== expectedNode
     || response.canonicalName !== name
     || currentBlockHeight >= record.lifecycle.expiresAtBlock
     || normalizedAuthority(record.owner) === normalizedAuthority(buyerAuthority)) {

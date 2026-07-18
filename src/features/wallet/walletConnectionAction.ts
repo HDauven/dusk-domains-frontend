@@ -10,6 +10,7 @@ const networkSwitchRefreshDelayMs = 250
 export type WalletConnectionActionArgs = {
   connectOptions?: DuskConnectOptions
   expectedChainId: string
+  expectedNodeUrl?: string
   refreshWalletConnectionState: RefreshWalletStatus
   refreshWalletSessionState: RefreshWalletStatus
   wallet: DuskWalletLike
@@ -18,14 +19,15 @@ export type WalletConnectionActionArgs = {
 export async function performWalletConnectionAction({
   connectOptions,
   expectedChainId,
+  expectedNodeUrl = '',
   refreshWalletConnectionState,
   refreshWalletSessionState,
   wallet,
 }: WalletConnectionActionArgs) {
   const status = walletStatusFromUnknown(await refreshWalletConnectionState())
 
-  if (status === 'wrong-network' && expectedChainId && wallet.switchChain) {
-    await wallet.switchChain({ chainId: expectedChainId })
+  if (status === 'wrong-network' && (expectedNodeUrl || expectedChainId) && wallet.switchChain) {
+    await wallet.switchChain(expectedNodeUrl ? { nodeUrl: expectedNodeUrl } : { chainId: expectedChainId })
     await waitForExpectedWalletNetwork(refreshWalletSessionState)
     return { openModal: false }
   }

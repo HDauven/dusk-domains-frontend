@@ -12,6 +12,7 @@ import {
 type UseLiveWritePreflightArgs = {
   connectKit: WalletModalControl
   connectOptions?: DuskConnectOptions
+  expectedNodeUrl?: string
   liveWritesEnabled: boolean
   refreshWalletConnectionState: () => Promise<unknown>
   refreshWalletSessionState: () => Promise<unknown>
@@ -23,6 +24,7 @@ type UseLiveWritePreflightArgs = {
 export function useLiveWritePreflight({
   connectKit,
   connectOptions,
+  expectedNodeUrl,
   liveWritesEnabled,
   refreshWalletConnectionState,
   refreshWalletSessionState,
@@ -40,6 +42,7 @@ export function useLiveWritePreflight({
       action,
       connectKit,
       connectOptions,
+      expectedNodeUrl,
       extraRequiredLux,
       liveWritesEnabled,
       refreshWalletConnectionState,
@@ -48,7 +51,7 @@ export function useLiveWritePreflight({
       transactionCount,
       wallet,
     })
-  }, [connectKit, connectOptions, liveWritesEnabled, refreshWalletConnectionState, refreshWalletSessionState, wallet])
+  }, [connectKit, connectOptions, expectedNodeUrl, liveWritesEnabled, refreshWalletConnectionState, refreshWalletSessionState, wallet])
 
   const ensureContractAuthorityForLiveWrite = useCallback((
     action: string,

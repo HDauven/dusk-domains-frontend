@@ -1,6 +1,7 @@
 import {
   checkPublicBalanceForWrite,
   type DuskConnectOptions,
+  type DuskWalletState,
   isWalletLockedMessage,
   userFacingErrorMessage,
 } from '../names/internal'
@@ -8,6 +9,8 @@ import {
 export type BalanceWallet = {
   connect?: (options?: DuskConnectOptions) => Promise<unknown>
   getPublicBalance: () => Promise<{ value: string }>
+  state?: DuskWalletState
+  switchChain?: (params: { nodeUrl: string }) => Promise<unknown>
 }
 
 export type WalletModalControl = {
@@ -18,6 +21,7 @@ type EnsurePublicBalanceForLiveWriteRequestArgs = {
   action: string
   connectKit: WalletModalControl
   connectOptions?: DuskConnectOptions
+  expectedNodeUrl?: string
   extraRequiredLux?: bigint
   liveWritesEnabled: boolean
   refreshWalletConnectionState: () => Promise<unknown>
@@ -31,6 +35,7 @@ export async function ensurePublicBalanceForLiveWriteRequest({
   action,
   connectKit,
   connectOptions,
+  expectedNodeUrl,
   extraRequiredLux = 0n,
   liveWritesEnabled,
   refreshWalletConnectionState,
@@ -42,6 +47,7 @@ export async function ensurePublicBalanceForLiveWriteRequest({
   if (!liveWritesEnabled) return true
 
   try {
+    await ensureExpectedWalletNode({ expectedNodeUrl, refreshWalletSessionState, wallet })
     return await checkWalletPublicBalance({
       action,
       extraRequiredLux,
@@ -68,6 +74,7 @@ export async function ensurePublicBalanceForLiveWriteRequest({
     if (!recovered) return false
 
     try {
+      await ensureExpectedWalletNode({ expectedNodeUrl, refreshWalletSessionState, wallet })
       return await checkWalletPublicBalance({
         action,
         extraRequiredLux,
@@ -79,6 +86,38 @@ export async function ensurePublicBalanceForLiveWriteRequest({
       setError(`Could not check public balance before ${action}: ${userFacingErrorMessage(retryError)}`)
       return false
     }
+  }
+}
+
+async function ensureExpectedWalletNode({
+  expectedNodeUrl,
+  refreshWalletSessionState,
+  wallet,
+}: {
+  expectedNodeUrl?: string
+  refreshWalletSessionState: () => Promise<unknown>
+  wallet: BalanceWallet
+}) {
+  const expected = normalizedUrl(expectedNodeUrl)
+  if (!expected) return
+  const current = normalizedUrl(wallet.state?.node?.nodeUrl)
+  if (current === expected) return
+  if (!wallet.switchChain) throw new Error('Dusk Wallet cannot switch to the configured local node.')
+
+  await wallet.switchChain({ nodeUrl: expectedNodeUrl! })
+  await refreshWalletSessionState()
+  const selected = normalizedUrl(wallet.state?.node?.nodeUrl)
+  if (selected && selected !== expected) {
+    throw new Error('Dusk Wallet did not switch to the configured local node.')
+  }
+}
+
+function normalizedUrl(value: string | null | undefined) {
+  try {
+    const url = new URL(value ?? '')
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/u, '')}`
+  } catch {
+    return ''
   }
 }
 

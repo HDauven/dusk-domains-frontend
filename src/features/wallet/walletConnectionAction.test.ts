@@ -44,6 +44,21 @@ describe('wallet connection action', () => {
     expect(refreshWalletSessionState).toHaveBeenCalledTimes(3)
   })
 
+  it('uses the configured custom node instead of the default localnet preset', async () => {
+    const switchChain = vi.fn().mockResolvedValue(null)
+
+    await performWalletConnectionAction({
+      expectedChainId: 'dusk:0',
+      expectedNodeUrl: 'http://127.0.0.1:18181/',
+      refreshWalletConnectionState: vi.fn().mockResolvedValue('wrong-network'),
+      refreshWalletSessionState: vi.fn().mockResolvedValue('connected'),
+      wallet: walletLike({ switchChain }),
+    })
+
+    expect(switchChain).toHaveBeenCalledWith({ nodeUrl: 'http://127.0.0.1:18181/' })
+    expect(switchChain).not.toHaveBeenCalledWith({ chainId: 'dusk:0' })
+  })
+
   it('falls back to the modal when a wrong-network wallet cannot switch directly', async () => {
     const result = await performWalletConnectionAction({
       expectedChainId: 'dusk:2',

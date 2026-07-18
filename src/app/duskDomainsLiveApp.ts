@@ -60,7 +60,9 @@ export function createDuskDomainsLiveApp(options: DuskDomainsLiveAppOptions): Du
   const dusk = createDuskApp({
     wallet: options.wallet,
     nodeUrl: options.runtimeConfig.nodeUrl,
-    chain: { chainId: options.runtimeConfig.chainId },
+    chain: options.runtimeConfig.chainId === 'dusk:0'
+      ? { nodeUrl: options.runtimeConfig.nodeUrl }
+      : { chainId: options.runtimeConfig.chainId },
     autoConnect: options.autoConnect ?? true,
     contracts: options.runtimeConfig.contracts,
   })

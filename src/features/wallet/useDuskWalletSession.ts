@@ -15,6 +15,7 @@ export function useDuskWalletSession(
   connectKit: DuskConnectKitLike,
   connectOptions?: DuskConnectOptions,
   expectedChainId = '',
+  expectedNodeUrl = '',
 ) {
   const wallet = connectKit.wallet
   const [walletState, setWalletState] = useState<DuskWalletState>(() => wallet.state)
@@ -30,8 +31,8 @@ export function useDuskWalletSession(
       setWalletDiscoveryReady(true)
     }
 
-    return walletConnectionStatus(wallet.state, true, expectedChainId)
-  }, [expectedChainId, wallet])
+    return walletConnectionStatus(wallet.state, true, expectedChainId, expectedNodeUrl)
+  }, [expectedChainId, expectedNodeUrl, wallet])
 
   const refreshWalletConnectionState = useCallback(async (timeoutMs = 400) => {
     try {
@@ -40,8 +41,8 @@ export function useDuskWalletSession(
       await refreshWalletSessionState()
     }
 
-    return walletConnectionStatus(wallet.state, true, expectedChainId)
-  }, [expectedChainId, refreshWalletSessionState, wallet])
+    return walletConnectionStatus(wallet.state, true, expectedChainId, expectedNodeUrl)
+  }, [expectedChainId, expectedNodeUrl, refreshWalletSessionState, wallet])
 
   useWalletBootstrap({
     connectKit,
@@ -61,6 +62,7 @@ export function useDuskWalletSession(
 
   useWalletAutoRefresh({
     expectedChainId,
+    expectedNodeUrl,
     refreshWalletSessionState,
     walletDiscoveryReady,
     walletState,
@@ -73,6 +75,7 @@ export function useDuskWalletSession(
       const result = await performWalletConnectionAction({
         connectOptions,
         expectedChainId,
+        expectedNodeUrl,
         refreshWalletConnectionState,
         refreshWalletSessionState,
         wallet,
@@ -84,7 +87,7 @@ export function useDuskWalletSession(
     } finally {
       if (openModal) connectKit.open()
     }
-  }, [connectKit, connectOptions, expectedChainId, refreshWalletConnectionState, refreshWalletSessionState, wallet])
+  }, [connectKit, connectOptions, expectedChainId, expectedNodeUrl, refreshWalletConnectionState, refreshWalletSessionState, wallet])
 
   const handleRefreshWalletProviders = useCallback(async () => {
     setWalletDiscoveryRefreshing(true)

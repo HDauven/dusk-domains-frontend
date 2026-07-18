@@ -97,6 +97,25 @@ describe('wallet status', () => {
     })
   })
 
+  it('treats the default localnet node as wrong when this app uses its local proxy', () => {
+    const selectedAddress = 'dusk1account'
+    const state = walletState({
+      accounts: [selectedAddress],
+      authorized: true,
+      chainId: 'dusk:0',
+      node: { chainId: 'dusk:0', networkName: 'Localnet', nodeUrl: 'http://127.0.0.1:8080/' },
+      profiles: [{ account: selectedAddress, profileId: 'primary' }],
+      selectedAddress,
+      selectedProfile: { account: selectedAddress, profileId: 'primary' },
+    })
+
+    expect(walletConnectionStatus(state, true, 'dusk:0', 'http://127.0.0.1:18181/')).toBe('wrong-network')
+    expect(walletConnectionStatus({
+      ...state,
+      node: { ...state.node!, nodeUrl: 'http://127.0.0.1:18181/' },
+    }, true, 'dusk:0', 'http://127.0.0.1:18181/')).toBe('connected')
+  })
+
   it('does not expose a stale selected address while detecting or locked', () => {
     const selectedAddress = 'dusk1previous'
     const state = walletState({

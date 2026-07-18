@@ -118,6 +118,20 @@ describe('canonical marketplace signing state', () => {
     await expect(canonicalOfferTarget(expired, 'example.dusk', node, authority)).rejects.toThrow('changed on-chain')
   })
 
+  it('identifies an unregistered offer target before applying transfer restrictions', async () => {
+    const missing = coreClientWith({
+      getName: vi.fn(async () => ({ ok: true, value: {
+        canonicalName: 'testnet.dusk',
+        marketplaceTransferable: false,
+        node,
+        record: null,
+      } })),
+    })
+
+    await expect(canonicalOfferTarget(missing, 'testnet.dusk', node, authority))
+      .rejects.toThrow('testnet.dusk is not registered on this network')
+  })
+
   it('blocks listings and offers for subnames or roots with subdomains', async () => {
     const indexed = { node, canonicalName: 'example.dusk' } as IndexedNameSummary
     const encumbered = coreClientWith({

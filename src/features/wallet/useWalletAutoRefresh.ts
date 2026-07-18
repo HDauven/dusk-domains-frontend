@@ -3,11 +3,13 @@ import type { DuskWalletState } from '../../names/internal'
 
 export function useWalletAutoRefresh({
   expectedChainId,
+  expectedNodeUrl,
   refreshWalletSessionState,
   walletDiscoveryReady,
   walletState,
 }: {
   expectedChainId?: string
+  expectedNodeUrl?: string
   refreshWalletSessionState: () => Promise<unknown>
   walletDiscoveryReady: boolean
   walletState: DuskWalletState
@@ -17,6 +19,7 @@ export function useWalletAutoRefresh({
   const walletChainId = normalizeChainId(walletState.chainId ?? '')
   const targetChainId = normalizeChainId(expectedChainId ?? '')
   const wrongNetwork = Boolean(selectedAccount && walletChainId && targetChainId && walletChainId !== targetChainId)
+    || nodeUrlMismatch(walletState.node?.nodeUrl, expectedNodeUrl)
 
   useEffect(() => {
     if (!walletDiscoveryReady || !providerDetected || !walletState.authorized) return
@@ -53,6 +56,7 @@ export function useWalletAutoRefresh({
     }
   }, [
     expectedChainId,
+    expectedNodeUrl,
     providerDetected,
     refreshWalletSessionState,
     wrongNetwork,
@@ -67,6 +71,21 @@ export function useWalletAutoRefresh({
     walletState.providerInfo?.uuid,
     walletState.selectedAddress,
   ])
+}
+
+function nodeUrlMismatch(walletNodeUrl: string | null | undefined, expectedNodeUrl: string | undefined) {
+  const current = normalizedUrl(walletNodeUrl)
+  const expected = normalizedUrl(expectedNodeUrl)
+  return Boolean(current && expected && current !== expected)
+}
+
+function normalizedUrl(value: string | null | undefined) {
+  try {
+    const url = new URL(value ?? '')
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/u, '')}`
+  } catch {
+    return ''
+  }
 }
 
 function normalizeChainId(chainId: string) {

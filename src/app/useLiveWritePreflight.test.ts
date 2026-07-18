@@ -5,6 +5,34 @@ import {
 } from './liveWritePreflight'
 
 describe('live write preflight locked-wallet recovery', () => {
+  it('switches a local wallet away from its default 8080 node before reading balance', async () => {
+    const calls: string[] = []
+    const state = {
+      node: { chainId: 'dusk:0', networkName: 'Localnet', nodeUrl: 'http://127.0.0.1:8080/' },
+    }
+    const switchChain = vi.fn(async ({ nodeUrl }: { nodeUrl: string }) => {
+      calls.push(`switch:${nodeUrl}`)
+      state.node.nodeUrl = nodeUrl
+    })
+    const getPublicBalance = vi.fn(async () => {
+      calls.push('balance')
+      return { value: '1000000000' }
+    })
+
+    await expect(ensurePublicBalanceForLiveWriteRequest({
+      action: 'reserving this name',
+      connectKit: { open: vi.fn() },
+      expectedNodeUrl: 'http://127.0.0.1:18181/',
+      liveWritesEnabled: true,
+      refreshWalletConnectionState: vi.fn(),
+      refreshWalletSessionState: vi.fn().mockResolvedValue('connected'),
+      setError: vi.fn(),
+      wallet: { getPublicBalance, state: state as never, switchChain },
+    })).resolves.toBe(true)
+
+    expect(calls).toEqual(['switch:http://127.0.0.1:18181/', 'balance'])
+  })
+
   it('requests profiles directly when the authorized wallet is locked', async () => {
     const errors: string[] = []
     const connectOptions = { appName: 'Dusk Domains' }

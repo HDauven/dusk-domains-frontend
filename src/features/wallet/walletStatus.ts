@@ -17,8 +17,9 @@ export function deriveWalletSessionModel(
   state: DuskWalletState,
   discoveryReady: boolean,
   expectedChainId = '',
+  expectedNodeUrl = '',
 ): WalletSessionModel {
-  const status = walletConnectionStatus(state, discoveryReady, expectedChainId)
+  const status = walletConnectionStatus(state, discoveryReady, expectedChainId, expectedNodeUrl)
   const selectedAccount = state.selectedAddress ?? state.accounts[0] ?? ''
   const selectedAddress = status === 'connected' || status === 'wrong-network' ? selectedAccount : ''
 
@@ -38,6 +39,7 @@ export function walletConnectionStatus(
   state: DuskWalletState,
   discoveryReady: boolean,
   expectedChainId = '',
+  expectedNodeUrl = '',
 ): WalletConnectionStatus {
   if (!discoveryReady) return 'detecting'
 
@@ -46,7 +48,7 @@ export function walletConnectionStatus(
   if (state.authorized && state.profiles.length === 0) return 'locked'
   const selectedAccount = state.selectedAddress ?? state.accounts[0] ?? ''
   if (selectedAccount) {
-    return walletChainMatchesExpected(state.chainId, expectedChainId) ? 'connected' : 'wrong-network'
+    return walletNetworkMatchesExpected(state, expectedChainId, expectedNodeUrl) ? 'connected' : 'wrong-network'
   }
   return 'disconnected'
 }
@@ -82,6 +84,22 @@ function walletChainMatchesExpected(walletChainId: string | null | undefined, ex
   const walletChain = normalizeChainId(walletChainId ?? '')
   const expectedChain = normalizeChainId(expectedChainId)
   return !walletChain || !expectedChain || walletChain === expectedChain
+}
+
+function walletNetworkMatchesExpected(state: DuskWalletState, expectedChainId: string, expectedNodeUrl: string) {
+  if (!walletChainMatchesExpected(state.chainId, expectedChainId)) return false
+  const currentNode = normalizedUrl(state.node?.nodeUrl)
+  const expectedNode = normalizedUrl(expectedNodeUrl)
+  return !currentNode || !expectedNode || currentNode === expectedNode
+}
+
+function normalizedUrl(value: string | null | undefined) {
+  try {
+    const url = new URL(value ?? '')
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/u, '')}`
+  } catch {
+    return ''
+  }
 }
 
 function normalizeChainId(chainId: string) {
