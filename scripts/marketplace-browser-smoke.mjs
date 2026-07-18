@@ -37,6 +37,22 @@ try {
       failures.push(`${viewport.name}: marketplace panel is outside the viewport`)
     }
 
+    await page.getByRole('button', { name: 'View auction' }).click()
+    await page.getByRole('heading', { name: marketplaceName }).waitFor()
+    await page.getByRole('heading', { name: 'Auction details' }).waitFor()
+    await page.getByRole('heading', { name: 'Auction activity' }).waitFor()
+    await page.getByText('Domain secured in escrow').waitFor()
+    await page.screenshot({ fullPage: true, path: `${outputDir}/auction-${viewport.name}.png` })
+
+    const detailPanel = page.locator('.marketplace-auction-detail')
+    const detailBox = await detailPanel.boundingBox()
+    if (!detailBox || detailBox.x < 0 || detailBox.x + detailBox.width > viewport.width + 1) {
+      failures.push(`${viewport.name}: auction detail is outside the viewport`)
+    }
+
+    await page.getByRole('button', { name: 'Back to marketplace' }).click()
+    await page.getByText(marketplaceName).waitFor()
+
     await page.getByRole('tab', { name: 'Sell' }).click()
     await page.getByText('Connect your wallet').waitFor()
     await page.getByRole('tab', { name: 'Offers' }).click()

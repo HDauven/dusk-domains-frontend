@@ -290,7 +290,865 @@
   cursor: pointer;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.marketplace-browse,
+.marketplace-my-view,
+.marketplace-auction-detail {
+  display: grid;
+  gap: 24px;
+}
+
+.marketplace-discovery-bar {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: rgba(8, 7, 17, 0.72);
+}
+
+.marketplace-search-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(126, 100, 200, 0.3);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(3, 4, 9, 0.62);
+}
+
+.marketplace-search-control:focus-within {
+  border-color: rgba(197, 181, 255, 0.72);
+  box-shadow: 0 0 0 2px rgba(167, 139, 255, 0.1);
+}
+
+.marketplace-search-control input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+}
+
+.marketplace-filter-control {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.marketplace-filter-control button,
+.marketplace-sort-control select {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.marketplace-filter-control button {
+  padding: 0 11px;
+  cursor: pointer;
+}
+
+.marketplace-filter-control button:hover,
+.marketplace-filter-control button.active {
+  color: var(--text);
+  background: rgba(95, 74, 168, 0.24);
+}
+
+.marketplace-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.marketplace-sort-control select {
+  padding: 0 28px 0 10px;
+  border-color: rgba(126, 100, 200, 0.28);
+  color: var(--text);
+  background: rgba(3, 4, 9, 0.62);
+}
+
+.marketplace-result-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid rgba(167, 139, 255, 0.18);
+  border-radius: 999px;
+  color: var(--accent-soft);
+  background: rgba(95, 74, 168, 0.14);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.marketplace-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.marketplace-card {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(116, 82, 214, 0.12), transparent 42%),
+    var(--panel-row);
+  transition: border-color 150ms ease, transform 150ms ease, background 150ms ease;
+}
+
+.marketplace-card:hover {
+  border-color: rgba(167, 139, 255, 0.28);
+  background:
+    radial-gradient(circle at 100% 0, rgba(116, 82, 214, 0.18), transparent 46%),
+    rgba(13, 12, 24, 0.92);
+  transform: translateY(-1px);
+}
+
+.marketplace-card-topline,
+.marketplace-auction-hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.marketplace-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid rgba(167, 139, 255, 0.2);
+  border-radius: 999px;
+  color: var(--accent-soft);
+  background: rgba(95, 74, 168, 0.16);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.marketplace-status-badge.live,
+.marketplace-status-badge.ending {
+  border-color: rgba(101, 222, 138, 0.24);
+  color: var(--green);
+  background: rgba(101, 222, 138, 0.09);
+}
+
+.marketplace-status-badge.ending {
+  border-color: rgba(255, 189, 106, 0.28);
+  color: var(--amber);
+  background: rgba(255, 189, 106, 0.1);
+}
+
+.marketplace-status-badge.ended,
+.marketplace-status-badge.expired {
+  border-color: rgba(255, 116, 106, 0.24);
+  color: var(--red);
+  background: rgba(255, 116, 106, 0.08);
+}
+
+.marketplace-status-badge.buy-now {
+  color: var(--green);
+}
+
+.marketplace-watch-button,
+.marketplace-review-heading button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(167, 139, 255, 0.16);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(3, 4, 9, 0.44);
+  cursor: pointer;
+}
+
+.marketplace-watch-button:hover,
+.marketplace-watch-button.active {
+  border-color: rgba(167, 139, 255, 0.34);
+  color: var(--accent-soft);
+  background: rgba(95, 74, 168, 0.2);
+}
+
+.marketplace-watch-button.labeled {
+  width: auto;
+  gap: 7px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.marketplace-card-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--accent-soft);
+}
+
+.marketplace-card-name > div {
+  min-width: 0;
+}
+
+.marketplace-card-name h3,
+.marketplace-card-name p,
+.marketplace-card-note,
+.marketplace-personal-status {
+  margin: 0;
+}
+
+.marketplace-card-name h3 {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marketplace-card-name p,
+.marketplace-card-note {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.marketplace-personal-status,
+.marketplace-bidder-banner {
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--accent-soft);
+  background: rgba(95, 74, 168, 0.18);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.marketplace-personal-status.leading,
+.marketplace-bidder-banner.leading {
+  color: var(--green);
+  background: rgba(101, 222, 138, 0.09);
+}
+
+.marketplace-card-metrics {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.marketplace-card-metrics > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.marketplace-card-metrics > div:last-child {
+  border-bottom: 0;
+}
+
+.marketplace-card-metrics dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.marketplace-card-metrics dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.marketplace-card-note {
+  min-height: 33px;
+}
+
+.marketplace-card-action {
+  align-self: end;
+  width: 100%;
+}
+
+.marketplace-card-action.primary-button,
+.marketplace-card-action .primary-button,
+.marketplace-card-action .commit-button {
+  width: 100%;
+  min-height: 42px;
+}
+
+.marketplace-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.marketplace-back-button:hover {
+  color: var(--text);
+}
+
+.marketplace-auction-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 10% 0, rgba(116, 82, 214, 0.18), transparent 42%),
+    rgba(8, 7, 17, 0.78);
+}
+
+.marketplace-auction-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--accent-soft);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.marketplace-auction-hero h2,
+.marketplace-auction-hero p {
+  margin: 0;
+}
+
+.marketplace-auction-hero h2 {
+  color: var(--text);
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: -0.03em;
+}
+
+.marketplace-auction-hero p {
+  max-width: 620px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.marketplace-auction-hero-actions {
+  flex: 0 0 auto;
+}
+
+.marketplace-auction-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
+  gap: 16px;
+  align-items: start;
+}
+
+.marketplace-auction-main {
+  display: grid;
+  gap: 16px;
+}
+
+.marketplace-auction-facts,
+.marketplace-auction-activity,
+.marketplace-bid-panel,
+.marketplace-position-section,
+.marketplace-balance-card {
+  padding: 18px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-row);
+}
+
+.marketplace-auction-facts .marketplace-section-heading h3,
+.marketplace-auction-activity .marketplace-section-heading h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.marketplace-auction-facts dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 15px 0 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.marketplace-auction-facts dl > div {
+  display: grid;
+  gap: 7px;
+  padding: 13px;
+  background: rgba(5, 5, 12, 0.72);
+}
+
+.marketplace-auction-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.marketplace-auction-facts dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.marketplace-auction-facts code {
+  color: var(--text);
+}
+
+.marketplace-auction-activity ol {
+  display: grid;
+  gap: 0;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.marketplace-auction-activity li {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.marketplace-auction-activity li:last-child {
+  border-bottom: 0;
+}
+
+.marketplace-activity-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--accent-soft);
+  background: rgba(95, 74, 168, 0.16);
+}
+
+.marketplace-auction-activity li > div {
+  display: grid;
+  gap: 3px;
+}
+
+.marketplace-auction-activity li strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.marketplace-auction-activity li span,
+.marketplace-activity-empty {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.marketplace-activity-value {
+  justify-items: end;
+}
+
+.marketplace-activity-empty {
+  margin: 16px 0 0;
+}
+
+.marketplace-bid-panel {
+  position: sticky;
+  top: 86px;
+  display: grid;
+  gap: 16px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(116, 82, 214, 0.16), transparent 44%),
+    var(--panel-row);
+}
+
+.marketplace-bidder-banner {
+  margin: 0;
+}
+
+.marketplace-bid-price,
+.marketplace-bid-timer {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.marketplace-bid-price span,
+.marketplace-bid-timer span,
+.marketplace-bid-price small,
+.marketplace-bid-timer small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.marketplace-bid-price strong {
+  color: var(--text);
+  font-size: 26px;
+  letter-spacing: -0.035em;
+}
+
+.marketplace-bid-timer strong {
+  color: var(--text);
+  font-size: 17px;
+}
+
+.marketplace-auction-action-stack {
+  display: grid;
+  gap: 11px;
+}
+
+.marketplace-auction-action-stack > p,
+.marketplace-custody-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.marketplace-auction-action-stack > .primary-button,
+.marketplace-auction-action-stack > .commit-button {
+  width: 100%;
+  min-height: 44px;
+}
+
+.marketplace-bid-field {
+  display: grid;
+  gap: 7px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.marketplace-bid-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 62px 0 12px;
+  border: 1px solid rgba(126, 100, 200, 0.38);
+  border-radius: 8px;
+  outline: 0;
+  color: var(--text);
+  background: rgba(5, 5, 12, 0.78);
+  font: inherit;
+  font-size: 14px;
+}
+
+.marketplace-bid-field input:focus {
+  border-color: rgba(197, 181, 255, 0.72);
+  box-shadow: 0 0 0 2px rgba(167, 139, 255, 0.1);
+}
+
+.marketplace-minimum-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.marketplace-minimum-row button {
+  padding: 0;
+  border: 0;
+  color: var(--accent-soft);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.marketplace-review-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 2, 7, 0.76);
+  backdrop-filter: blur(8px);
+}
+
+.marketplace-bid-review {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 520px);
+  max-height: calc(100vh - 40px);
+  padding: 22px;
+  overflow: auto;
+  border: 1px solid rgba(167, 139, 255, 0.28);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(116, 82, 214, 0.2), transparent 44%),
+    #0a0912;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.marketplace-review-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.marketplace-review-heading span,
+.marketplace-review-amount span {
+  color: var(--accent-soft);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.marketplace-review-heading h2 {
+  margin: 5px 0 0;
+  color: var(--text);
+  font-size: 21px;
+}
+
+.marketplace-review-amount {
+  display: grid;
+  gap: 5px;
+  padding: 15px;
+  border: 1px solid rgba(167, 139, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(95, 74, 168, 0.12);
+}
+
+.marketplace-review-amount strong {
+  color: var(--text);
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+
+.marketplace-review-custody {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid rgba(101, 222, 138, 0.16);
+  border-radius: 9px;
+  color: var(--green);
+  background: rgba(101, 222, 138, 0.06);
+}
+
+.marketplace-review-custody > div {
+  display: grid;
+  gap: 4px;
+}
+
+.marketplace-review-custody strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.marketplace-review-custody p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.marketplace-review-actions {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 9px;
+}
+
+.marketplace-review-actions button {
+  width: 100%;
+  min-height: 44px;
+}
+
+.marketplace-position-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.marketplace-position-summary > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 9px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  color: var(--accent-soft);
+  background: var(--panel-row);
+}
+
+.marketplace-position-summary strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.marketplace-position-summary span {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.marketplace-balance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-color: rgba(101, 222, 138, 0.18);
+  background:
+    radial-gradient(circle at 0 0, rgba(101, 222, 138, 0.09), transparent 40%),
+    var(--panel-row);
+}
+
+.marketplace-balance-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.marketplace-balance-card span,
+.marketplace-balance-card p,
+.marketplace-watch-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.marketplace-balance-card strong {
+  color: var(--text);
+  font-size: 22px;
+}
+
+.marketplace-balance-card .primary-button {
+  width: auto;
+  min-width: 150px;
+}
+
+.marketplace-position-section {
+  display: grid;
+  gap: 14px;
+}
+
+.marketplace-position-section .marketplace-section-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.marketplace-position-list {
+  display: grid;
+  gap: 7px;
+}
+
+.marketplace-position-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(120px, auto);
+  gap: 14px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  background: rgba(5, 5, 12, 0.46);
+}
+
+.marketplace-position-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.marketplace-position-row strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.marketplace-position-row span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.marketplace-position-row .commit-button {
+  width: 100%;
+  min-height: 36px;
+  font-size: 11px;
+}
+
+.marketplace-watch-note {
+  text-align: center;
+}
+
 @media (max-width: 1060px) {
+  .marketplace-discovery-bar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .marketplace-filter-control {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .marketplace-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .marketplace-auction-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 320px);
+  }
+
   .marketplace-order-row {
     grid-template-columns: minmax(160px, 1.1fr) minmax(100px, 0.55fr) minmax(100px, 0.55fr);
   }
@@ -307,7 +1165,7 @@
 @media (max-width: 700px) {
   .marketplace-tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     width: 100%;
   }
 
@@ -323,6 +1181,10 @@
 
   .marketplace-refund-bar .commit-button {
     width: 100%;
+  }
+
+  .marketplace-section-heading .marketplace-result-count {
+    align-self: flex-start;
   }
 
   .marketplace-mode-control {
@@ -353,5 +1215,60 @@
 
   .marketplace-editor {
     padding: 16px;
+  }
+
+  .marketplace-discovery-bar,
+  .marketplace-auction-layout,
+  .marketplace-card-grid,
+  .marketplace-position-summary,
+  .marketplace-review-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-filter-control {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .marketplace-sort-control {
+    justify-content: space-between;
+  }
+
+  .marketplace-sort-control select {
+    flex: 1 1 auto;
+  }
+
+  .marketplace-auction-hero,
+  .marketplace-balance-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .marketplace-auction-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .marketplace-auction-facts dl {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-bid-panel {
+    position: static;
+  }
+
+  .marketplace-position-row {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-position-row > strong {
+    font-size: 16px;
+  }
+
+  .marketplace-balance-card .primary-button {
+    width: 100%;
+  }
+
+  .marketplace-bid-review {
+    padding: 18px;
   }
 }

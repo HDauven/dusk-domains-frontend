@@ -18,6 +18,7 @@ import {
   normalizeNameInput,
   userFacingErrorMessage,
   validateName,
+  type ActivityEntry,
   type DuskDomainCallMetadata,
   type DuskDomainContractMap,
   type DuskDomainsIndexerClient,
@@ -38,6 +39,7 @@ import {
   durationBlocks,
   MIN_MARKETPLACE_AMOUNT_LUX,
   minimumBidDusk,
+  minimumBidLux,
 } from './auctionMath'
 import type { MarketplaceSaleMode, MarketplaceTab, MarketplaceViewProps } from './marketplaceTypes'
 import {
@@ -50,6 +52,8 @@ import {
   canonicalRefund,
   minimumCanonicalBidLux,
 } from './canonicalMarketplaceState'
+
+const MARKETPLACE_WATCHLIST_KEY = 'dusk-domains-marketplace-watchlist-v1'
 
 type SubmitNameWrite = (
   name: string,
@@ -110,6 +114,11 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const [offerAmountDusk, setOfferAmountDusk] = useState('25')
   const [offerDurationDays, setOfferDurationDays] = useState('7')
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
+  const [selectedAuctionNode, setSelectedAuctionNode] = useState('')
+  const [auctionActivity, setAuctionActivity] = useState<ActivityEntry[]>([])
+  const [auctionActivityLoading, setAuctionActivityLoading] = useState(false)
+  const [bidReview, setBidReview] = useState<MarketplaceViewProps['bidReview']>(null)
+  const [watchedNodes, setWatchedNodes] = useState<string[]>(readWatchlist)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -176,7 +185,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       })
       setBidDrafts((current) => Object.fromEntries(nextAuctions.map((auction) => [
         auction.node,
-        current[auction.node] || minimumBidDusk(auction),
+        currentBidDraft(current[auction.node], auction),
       ])))
     } catch (loadError) {
       if (shouldApply()) setError(userFacingErrorMessage(loadError))
@@ -189,6 +198,21 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     if (mainView !== 'marketplace') return
     globalThis.queueMicrotask(() => void loadMarketplace())
   }, [loadMarketplace, mainView])
+
+  const loadAuctionActivity = useCallback(async (node: string) => {
+    if (!indexerClient || !node) {
+      setAuctionActivity([])
+      return
+    }
+    setAuctionActivityLoading(true)
+    try {
+      setAuctionActivity(await indexerClient.getActivity(node))
+    } catch {
+      setAuctionActivity([])
+    } finally {
+      setAuctionActivityLoading(false)
+    }
+  }, [indexerClient])
 
   const submitMarketplaceAction = useCallback(async (
     actionName: string,
@@ -203,14 +227,14 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
 
     if (!actionsAvailable) {
       setError('Marketplace writes are not enabled for this deployment.')
-      return
+      return null
     }
     if (!selectedAddress) {
       onOpenWalletConnection()
       setError('Connect your wallet to continue.')
-      return
+      return null
     }
-    if (!await ensurePublicBalanceForLiveWrite(actionName, setError, 1, depositLux)) return
+    if (!await ensurePublicBalanceForLiveWrite(actionName, setError, 1, depositLux)) return null
 
     try {
       const finalState = await submitNameWrite(name, call, {
@@ -222,8 +246,10 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
         setConfirmation(successMessage)
         await loadMarketplace()
       }
+      return finalState
     } catch (submitError) {
       setError(userFacingErrorMessage(submitError))
+      return null
     }
   }, [
     actionsAvailable,
@@ -378,7 +404,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     )
   }, [marketplaceOnChainClient, selectedAuthority, submitMarketplaceAction])
 
-  const handlePlaceBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
+  const handleReviewBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
     const amountLux = validLuxAmount(bidDrafts[auction.node] ?? '')
     if (amountLux === null) {
       setError('Enter a valid bid.')
@@ -395,9 +421,44 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     }
     if (amountLux < minimumBid) {
       setError(`Bid at least ${formatLuxAsDusk(minimumBid)} DUSK.`)
+      setBidDrafts((current) => ({ ...current, [auction.node]: formatLuxAsDusk(minimumBid) }))
       return
     }
-    await submitMarketplaceAction(
+    setError('')
+    setConfirmation('')
+    setBidReview({
+      amountDusk: formatLuxAsDusk(amountLux),
+      amountLux,
+      auction,
+      minimumBidLux: minimumBid,
+    })
+  }, [bidDrafts, marketplaceOnChainClient])
+
+  const handlePlaceBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
+    const reviewed = bidReview?.auction.node === auction.node ? bidReview : null
+    const amountLux = reviewed?.amountLux ?? validLuxAmount(bidDrafts[auction.node] ?? '')
+    if (amountLux === null) {
+      setError('Enter a valid bid.')
+      return
+    }
+    if (!marketplaceOnChainClient) return
+    let minimumBid: bigint
+    try {
+      const canonical = await canonicalAuction(marketplaceOnChainClient, auction)
+      minimumBid = minimumCanonicalBidLux(canonical)
+    } catch (readError) {
+      setBidReview(null)
+      setError(userFacingErrorMessage(readError))
+      return
+    }
+    if (amountLux < minimumBid) {
+      setBidReview(null)
+      setBidDrafts((current) => ({ ...current, [auction.node]: formatLuxAsDusk(minimumBid) }))
+      setError(`The minimum bid is now ${formatLuxAsDusk(minimumBid)} DUSK.`)
+      await loadMarketplace()
+      return
+    }
+    const result = await submitMarketplaceAction(
       'placing this bid',
       auction.name,
       marketplacePlaceBidRuntimeCall({
@@ -408,7 +469,17 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       amountLux,
       'Bid placed.',
     )
-  }, [bidDrafts, marketplaceOnChainClient, selectedAuthority, submitMarketplaceAction])
+    if (result?.status === 'executed') {
+      setBidReview(null)
+      setWatchedNodes((current) => {
+        if (current.includes(auction.node)) return current
+        const next = [...current, auction.node]
+        writeWatchlist(next)
+        return next
+      })
+      await loadAuctionActivity(auction.node)
+    }
+  }, [bidDrafts, bidReview, loadAuctionActivity, loadMarketplace, marketplaceOnChainClient, selectedAuthority, submitMarketplaceAction])
 
   const handlePlaceOffer = useCallback(async () => {
     const validation = validateName(offerName)
@@ -577,10 +648,35 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     await simpleAction('settling this auction', auction.name, marketplaceSettleAuctionRuntimeCall({ node: auction.node }), 'Auction settled.')
   }, [guardCanonicalRead, simpleAction])
 
+  const handleToggleWatch = useCallback((node: string) => {
+    setWatchedNodes((current) => {
+      const next = current.includes(node)
+        ? current.filter((currentNode) => currentNode !== node)
+        : [...current, node]
+      writeWatchlist(next)
+      return next
+    })
+  }, [])
+
+  const handleOpenAuction = useCallback((node: string) => {
+    setAuctionActivity([])
+    setSelectedAuctionNode(node)
+    void loadAuctionActivity(node)
+  }, [loadAuctionActivity])
+
+  const handleCloseAuction = useCallback(() => {
+    setAuctionActivity([])
+    setBidReview(null)
+    setSelectedAuctionNode('')
+  }, [])
+
   const marketplaceProps: MarketplaceViewProps = {
     actionsAvailable,
     auctions,
+    auctionActivity,
+    auctionActivityLoading,
     bidDrafts,
+    bidReview,
     confirmation,
     currentBlockHeight,
     durationDays,
@@ -598,13 +694,16 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     reserveDusk,
     saleMode,
     selectedAddress,
+    selectedAuctionNode,
     selectedAuthority,
     selectedNode,
     sellableNames,
     tab,
     txState,
+    watchedNodes,
     onAcceptOffer: handleAcceptOffer,
     onBidDraftChange: (node, value) => setBidDrafts((current) => ({ ...current, [node]: value })),
+    onCancelBidReview: () => setBidReview(null),
     onBuyFixedSale: handleBuyFixedSale,
     onCancelAuction: handleCancelAuction,
     onCancelFixedSale: handleCancelFixedSale,
@@ -620,15 +719,22 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     onOfferDurationDaysChange: setOfferDurationDays,
     onOfferNameChange: setOfferName,
     onOpenWalletConnection,
+    onOpenAuction: handleOpenAuction,
     onPlaceBid: handlePlaceBid,
     onPlaceOffer: handlePlaceOffer,
     onPrivateBuyerChange: setPrivateBuyer,
     onRefresh: loadMarketplace,
+    onReviewBid: (auction) => void handleReviewBid(auction),
     onReserveDuskChange: setReserveDusk,
     onSaleModeChange: setSaleMode,
     onSelectedNodeChange: setSelectedNode,
     onSettleAuction: handleSettleAuction,
-    onTabChange: setTab,
+    onTabChange: (nextTab) => {
+      setTab(nextTab)
+      if (nextTab !== 'browse') setSelectedAuctionNode('')
+    },
+    onToggleWatch: handleToggleWatch,
+    onCloseAuction: handleCloseAuction,
   }
 
   return { loadMarketplace, marketplaceProps }
@@ -644,6 +750,31 @@ function formatLuxAsDusk(value: bigint): string {
   const whole = value / 1_000_000_000n
   const fraction = (value % 1_000_000_000n).toString().padStart(9, '0').replace(/0+$/u, '')
   return fraction ? `${whole}.${fraction}` : whole.toString()
+}
+
+function currentBidDraft(value: string | undefined, auction: IndexedMarketplaceAuction) {
+  const current = validLuxAmount(value ?? '')
+  return current !== null && current >= minimumBidLux(auction)
+    ? (value ?? minimumBidDusk(auction))
+    : minimumBidDusk(auction)
+}
+
+function readWatchlist() {
+  try {
+    const value = globalThis.localStorage?.getItem(MARKETPLACE_WATCHLIST_KEY)
+    const parsed: unknown = value ? JSON.parse(value) : []
+    return Array.isArray(parsed) ? parsed.filter((node): node is string => typeof node === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function writeWatchlist(nodes: string[]) {
+  try {
+    globalThis.localStorage?.setItem(MARKETPLACE_WATCHLIST_KEY, JSON.stringify(nodes))
+  } catch {
+    // Watching remains available for this session when browser storage is unavailable.
+  }
 }
 
 export type MarketplaceFeature = ReturnType<typeof useMarketplaceFeature>

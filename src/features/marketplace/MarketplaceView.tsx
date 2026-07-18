@@ -5,7 +5,9 @@ import { PanelFeedbackStack } from '../../components/ui/PanelFeedbackStack'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import { RefreshButton } from '../../components/ui/RefreshButton'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
-import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
+import { MarketplaceActivity } from './MarketplaceActivity'
+import { MarketplaceAuctionDetail } from './MarketplaceAuctionDetail'
+import { MarketplaceBidReview } from './MarketplaceBidReview'
 import { MarketplaceBrowse } from './MarketplaceBrowse'
 import { MarketplaceOffers } from './MarketplaceOffers'
 import { MarketplaceSell } from './MarketplaceSell'
@@ -13,12 +15,14 @@ import type { MarketplaceTab, MarketplaceViewProps } from './marketplaceTypes'
 
 const tabs: Array<{ id: MarketplaceTab; label: string }> = [
   { id: 'browse', label: 'Browse' },
+  { id: 'activity', label: 'My marketplace' },
   { id: 'sell', label: 'Sell' },
   { id: 'offers', label: 'Offers' },
 ]
 
 export function MarketplaceView(props: MarketplaceViewProps) {
-  const { actionsAvailable, confirmation, error, loading, marketplaceEnabled, onClaimRefund, onRefresh, onTabChange, refund, tab, txState } = props
+  const { actionsAvailable, confirmation, error, loading, marketplaceEnabled, onRefresh, onTabChange, refund, tab, txState } = props
+  const selectedAuction = props.auctions.find((auction) => auction.node === props.selectedAuctionNode) ?? null
 
   return (
     <AccountPanel className="marketplace-panel" labelledBy="marketplace-heading" panelId="marketplace">
@@ -56,11 +60,11 @@ export function MarketplaceView(props: MarketplaceViewProps) {
       {refund?.amountLux ? (
         <div className="marketplace-refund-bar">
           <div>
-            <span>Available refund</span>
-            <strong>{formatLuxNumberAsDusk(refund.amountLux)}</strong>
+            <span>Marketplace funds available</span>
+            <strong>Outbid or returned funds are ready to withdraw.</strong>
           </div>
-          <button className="commit-button" disabled={!actionsAvailable} type="button" onClick={onClaimRefund}>
-            Claim
+          <button className="commit-button" disabled={!actionsAvailable} type="button" onClick={() => onTabChange('activity')}>
+            View balance
           </button>
         </div>
       ) : null}
@@ -71,9 +75,12 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <PanelMessage icon={<RefreshCw size={18} />}>Loading marketplace</PanelMessage>
       ) : null}
 
-      {marketplaceEnabled && tab === 'browse' ? <MarketplaceBrowse {...props} /> : null}
+      {marketplaceEnabled && tab === 'browse' && selectedAuction ? <MarketplaceAuctionDetail auction={selectedAuction} props={props} /> : null}
+      {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse {...props} /> : null}
+      {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity props={props} /> : null}
       {marketplaceEnabled && tab === 'sell' ? <MarketplaceSell {...props} /> : null}
       {marketplaceEnabled && tab === 'offers' ? <MarketplaceOffers {...props} /> : null}
+      <MarketplaceBidReview props={props} />
     </AccountPanel>
   )
 }
