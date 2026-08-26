@@ -43,30 +43,8 @@ export function useReferralControls({
     setReferralError('')
 
     try {
-      let copied = false
-      if (globalThis.navigator?.clipboard) {
-        try {
-          await globalThis.navigator.clipboard.writeText(referralLink)
-          copied = true
-        } catch {
-          copied = false
-        }
-      }
-      if (!copied && typeof globalThis.document !== 'undefined') {
-        const copyTarget = globalThis.document.createElement('textarea')
-        copyTarget.value = referralLink
-        copyTarget.setAttribute('readonly', '')
-        copyTarget.style.position = 'fixed'
-        copyTarget.style.left = '-9999px'
-        copyTarget.style.top = '0'
-        globalThis.document.body.append(copyTarget)
-        copyTarget.select()
-        copied = globalThis.document.execCommand('copy')
-        copyTarget.remove()
-      }
-      if (!copied) {
-        throw new Error('Clipboard is unavailable.')
-      }
+      if (!globalThis.navigator?.clipboard) throw new Error('Clipboard is unavailable.')
+      await globalThis.navigator.clipboard.writeText(referralLink)
       setReferralCopied(true)
     } catch {
       setReferralCopied(false)

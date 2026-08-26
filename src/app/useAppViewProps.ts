@@ -1,17 +1,19 @@
 import { useRuntimeNotice } from './useRuntimeNotice'
 import type { AppViewModelInputs } from './appViewTypes'
-import { useAppDomainManagementProps } from './useAppDomainManagementProps'
-import { useAppRegistrationProps } from './useAppRegistrationProps'
+import { buildDomainManagementFeatureProps } from './domainManagementFeatureAdapter'
+import { buildRegistrationFeatureProps } from './registrationFeatureAdapter'
+import { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
+import { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useAppSearchProps } from './useAppSearchProps'
 
 export function useAppViewProps(inputs: AppViewModelInputs) {
-  const { registrationProps } = useAppRegistrationProps(inputs)
+  const { registrationProps } = useRegistrationFeature(buildRegistrationFeatureProps(inputs))
   const {
     primaryProps,
     recordsProps,
     settingsProps,
     subdomainsProps,
-  } = useAppDomainManagementProps(inputs)
+  } = useDomainManagementFeature(buildDomainManagementFeatureProps(inputs))
   const { searchProps } = useAppSearchProps({
     ...inputs,
     primaryProps,

@@ -1,8 +1,14 @@
 import './App.css'
-import { DuskDomainsApp } from './app/DuskDomainsApp'
+import { AppMainContent } from './app/AppMainContent'
+import { AppShell } from './app/AppShell'
+import { useDuskDomainsAppModel } from './app/useDuskDomainsAppModel'
 
-function App() {
-  return <DuskDomainsApp />
+export default function App() {
+  const { mainContentProps, shellProps } = useDuskDomainsAppModel()
+
+  return (
+    <AppShell {...shellProps}>
+      <AppMainContent {...mainContentProps} />
+    </AppShell>
+  )
 }
-
-export default App
