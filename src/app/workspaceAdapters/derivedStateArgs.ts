@@ -1,4 +1,4 @@
-import type { UseAppDerivedStateArgs } from '../appDerivedStateHelpers'
+import type { UseAppDerivedStateArgs } from '../derived/types'
 import type { AppCoreRuntimes } from '../useAppCoreRuntimes'
 import type { DomainRecordState, NamePreview, RegistrationRuntime } from './types'
 

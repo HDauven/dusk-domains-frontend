@@ -1,7 +1,7 @@
 import type { useActivityFeed } from '../features/activity/useActivityFeed'
 import type { useDomainRecordState } from '../features/domains/useDomainRecordState'
 import type { useNamePreview } from '../features/search/useNamePreview'
-import type { useAppDerivedState } from './useAppDerivedState'
+import type { deriveAppDerivedState } from './derived/deriveAppDerivedState'
 import type { useAppRuntime } from './useAppRuntime'
 import type { useDomainManagementAppState } from './useDomainManagementAppState'
 import type { useEconomicsRuntime } from './useEconomicsRuntime'
@@ -15,7 +15,7 @@ import type { useWalletRuntime } from './useWalletRuntime'
 export type AppViewModelInputs = {
   activityFeed: ReturnType<typeof useActivityFeed>
   appRuntime: ReturnType<typeof useAppRuntime>
-  derivedState: ReturnType<typeof useAppDerivedState>
+  derivedState: ReturnType<typeof deriveAppDerivedState>
   domainRecordState: ReturnType<typeof useDomainRecordState>
   domainState: ReturnType<typeof useDomainManagementAppState>
   economicsRuntime: ReturnType<typeof useEconomicsRuntime>

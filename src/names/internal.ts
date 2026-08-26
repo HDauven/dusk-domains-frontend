@@ -18,8 +18,3 @@ export type {
   DuskWalletState,
   SwitchChainParams,
 } from '@dusk/connect'
-
-export function installLocalDevDuskWallet(_options: unknown = {}) {
-  void _options
-  console.warn('The local dev wallet is no longer bundled with @duskdomains/sdk. Use a Dusk wallet provider for frontend testing.')
-}

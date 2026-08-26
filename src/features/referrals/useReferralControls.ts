@@ -64,9 +64,7 @@ export function useReferralControls({
         copied = globalThis.document.execCommand('copy')
         copyTarget.remove()
       }
-      if (!copied) {
-        throw new Error('Clipboard is unavailable.')
-      }
+      if (!copied) throw new Error('Clipboard is unavailable.')
       setReferralCopied(true)
     } catch {
       setReferralCopied(false)

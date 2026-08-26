@@ -1,7 +1,5 @@
-import {
-  buildMainViewRuntimeArgs,
-  buildSearchRuntimeArgs,
-} from './navigationRuntimeAdapters'
+import { buildMainViewRuntimeArgs } from './mainViewRuntimeAdapter'
+import { buildSearchRuntimeArgs } from './searchRuntimeAdapter'
 import type { AppCoreRuntimes } from './useAppCoreRuntimes'
 import type { NameWorkspaceRuntime } from './useNameWorkspaceRuntime'
 import { useMainViewRuntime } from './useMainViewRuntime'

@@ -100,9 +100,6 @@ export function statusCopy(status: NameStatus) {
   return 'Needs review'
 }
 
-export function overviewCopy(status: NameStatus) {
-  return overviewCopyForIssues(status, [])
-}
 
 export function overviewCopyForIssues(status: NameStatus, issues: NameResult['issues']) {
   if (status === 'available') return 'This domain can be registered.'
