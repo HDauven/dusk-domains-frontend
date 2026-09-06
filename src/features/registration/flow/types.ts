@@ -52,7 +52,7 @@ export type RegistrationStepPanelProps = {
   installUrl: string
   maxDurationYears: number
   minDurationYears: number
-  networkFee: number
+  networkFee: number | null
   onAddressInputChange: (value: string) => void
   onDurationChange: (duration: number) => void
   onOpenWalletConnection: () => void

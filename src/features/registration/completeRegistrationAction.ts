@@ -5,6 +5,7 @@ import {
 import {
   userFacingErrorMessage,
 } from '../../names/internal'
+import { formatLifecycleDay } from '../domains/domainFormat'
 import { createCompleteRegistrationRequest } from './completeRegistrationCall'
 import { handleCompleteRegistrationEarlyReveal } from './completeRegistrationEarlyReveal'
 import { completeRegistrationPreflight } from './completeRegistrationPreflight'
@@ -46,7 +47,10 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
     1,
     BigInt(request.feeLux),
   ))) return
-  setRegistrationCompletion(createRegistrationCompletionState())
+  setRegistrationCompletion(createRegistrationCompletionState({
+    registrationFee: request.feeLux / 1e9,
+    expiryDate: formatLifecycleDay(request.lifecycle.expiresAt, props.lifecycleBaseBlockHeight, Math.floor(Date.now() / 1000)),
+  }))
 
   try {
     const finalState = await submitNameWrite(displayName, request.call, {

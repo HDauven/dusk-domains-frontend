@@ -15,7 +15,7 @@ describe('fetchWalletScopedNames', () => {
   })
 
   it('derives the owner key from the selected public wallet when needed', async () => {
-    const names = [{ node: 'node-1', canonicalName: 'mine.dusk' }]
+    const names = [{ node: 'node-1', canonicalName: 'mine.dusk', owner: '0xfa95da9c6c860cc3d5506de45b01ea84b9d2cad24a23be36003e505222d8d644' }]
     const getNames = vi.fn(async () => names)
     const address = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
 
@@ -31,8 +31,8 @@ describe('fetchWalletScopedNames', () => {
   })
 
   it('only calls the owner-filtered name list for My Domains', async () => {
-    const names = [{ node: 'node-1', canonicalName: 'mine.dusk' }]
     const owner = `0x${'22'.repeat(32)}`
+    const names = [{ node: 'node-1', canonicalName: 'mine.dusk', owner }]
     const getNames = vi.fn(async () => names)
 
     await expect(fetchWalletScopedNames({
@@ -43,6 +43,16 @@ describe('fetchWalletScopedNames', () => {
 
     expect(getNames).toHaveBeenCalledTimes(1)
     expect(getNames).toHaveBeenCalledWith({ owner })
+  })
+
+  it('excludes sold names returned because of historical controller activity', async () => {
+    const owner = `0x${'22'.repeat(32)}`
+    const mine = { node: 'mine', owner, records: [] }
+    const sold = { node: 'sold', owner: `0x${'33'.repeat(32)}`, records: [] }
+    const getNames = vi.fn(async () => [mine, sold])
+    await expect(fetchWalletScopedNames({
+      indexerClient: { getNames }, selectedAddress: 'dusk1selected', selectedAuthority: owner,
+    })).resolves.toEqual([mine])
   })
 
   it('falls back to public address records when owner lookup returns nothing', async () => {

@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useScopedState } from '../utils/useScopedState'
 import type { SearchResultView } from '../features/search/SearchWorkspace'
 import { currentUnixSeconds, type NameResult } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 
-export function useSearchAppState() {
+export function useSearchAppState(accountScope: string) {
   const [query, setQuery] = useState('aurora.dusk')
   const [mainView, setMainView] = useState<AppMainView>('search')
   const [nowSeconds, setNowSeconds] = useState(() => currentUnixSeconds())
@@ -11,8 +12,9 @@ export function useSearchAppState() {
   const [checked, setChecked] = useState(false)
   const [resultView, setResultView] = useState<SearchResultView>('overview')
   const [apiSearchResult, setApiSearchResult] = useState<NameResult | null>(null)
-  const [indexerError, setIndexerError] = useState('')
-  const [indexerConfirmation, setIndexerConfirmation] = useState('')
+  const feedbackScope = `${accountScope}:${mainView}:${resultView}:${query}`
+  const [indexerError, setIndexerError] = useScopedState(feedbackScope, '')
+  const [indexerConfirmation, setIndexerConfirmation] = useScopedState(feedbackScope, '')
 
   return {
     apiSearchResult,

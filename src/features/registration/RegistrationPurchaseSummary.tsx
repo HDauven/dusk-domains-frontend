@@ -13,6 +13,7 @@ export function RegistrationPurchaseSummary({
   feeConfigError,
   networkFee,
   registerSetsPrimary,
+  registrationComplete = false,
   registrationFee,
   registrationTargetAddress,
   selectedAddress,
@@ -25,8 +26,9 @@ export function RegistrationPurchaseSummary({
   displayName: string
   expiryDate: string
   feeConfigError: string
-  networkFee: number
+  networkFee: number | null
   registerSetsPrimary: boolean
+  registrationComplete?: boolean
   registrationFee: number
   registrationTargetAddress: string
   selectedAddress: string
@@ -40,11 +42,11 @@ export function RegistrationPurchaseSummary({
       </div>
       <div>
         <span>Reservation</span>
-        <strong>{commitWindow.status === 'ready' ? 'Ready' : pendingReservationStatusCopy(commitWindow.status, commitWindow.waitBlocks)}</strong>
+        <strong>{registrationComplete ? 'Completed' : commitWindow.status === 'ready' ? 'Ready' : pendingReservationStatusCopy(commitWindow.status, commitWindow.waitBlocks)}</strong>
       </div>
       <div>
         <span>Payment</span>
-        <strong>{registrationFee ? `${registrationFee.toFixed(2)} DUSK` : '-'}</strong>
+        <strong>{canRegister ? `${registrationFee.toFixed(2)} DUSK` : '-'}</strong>
       </div>
       {feeConfigError ? (
         <div>
@@ -54,11 +56,11 @@ export function RegistrationPurchaseSummary({
       ) : null}
       <div>
         <span>Network fee</span>
-        <strong>{networkFee ? `~${networkFee.toFixed(2)} DUSK` : '-'}</strong>
+        <strong>{networkFee !== null ? `~${networkFee.toFixed(6)} DUSK` : 'Shown in wallet for each transaction'}</strong>
       </div>
       <div>
-        <span>Total</span>
-        <strong>{total ? `${total.toFixed(2)} DUSK` : '-'}</strong>
+        <span>Subtotal (excludes network fees)</span>
+        <strong>{canRegister ? `${total.toFixed(2)} DUSK` : '-'}</strong>
       </div>
       <div>
         <span>Owner wallet</span>
@@ -73,7 +75,7 @@ export function RegistrationPurchaseSummary({
         <strong>{selectedAddress && registerSetsPrimary ? 'Set' : 'Skip'}</strong>
       </div>
       <div>
-        <span>Expires</span>
+        <span>Estimated expiry</span>
         <strong>{canRegister ? expiryDate : '-'}</strong>
       </div>
       {activeReferral ? (

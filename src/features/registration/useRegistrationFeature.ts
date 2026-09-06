@@ -24,7 +24,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   expiryDate: string
   feeConfigError: string
   feeConfigLoading: boolean
-  networkFee: number
+  networkFee: number | null
   onBackToOverview: () => void
   onOpenWalletConnection: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
@@ -119,7 +119,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     resultIssues: props.resultIssues,
     status: {
       onViewPendingReservation: props.onViewPendingReservation,
-      showReservationRecovery: props.showReservationRecovery,
+      showReservationRecovery: !registrationComplete && props.showReservationRecovery,
       walletError: props.walletError,
     },
     step,
@@ -127,7 +127,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
       displayName: props.displayName,
       registrationComplete,
       registrationStep: props.registrationStep,
-      registrationStepDescription: props.registrationStepDescription,
+      registrationStepDescription: registrationComplete ? 'Your domain is registered.' : props.registrationStepDescription,
     },
   }
 

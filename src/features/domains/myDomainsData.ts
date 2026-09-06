@@ -21,20 +21,22 @@ export async function fetchWalletScopedNames({
 
   if (!walletAddress || authorityCandidates.length === 0) return []
 
-  const ownerResults = await Promise.all(authorityCandidates.map(async (owner) => (
-    indexerClient.getNames({ owner })
-  )))
-  const ownedNames = dedupeNames(ownerResults.flat())
-  if (ownedNames.length > 0) return ownedNames
-
-  const allNames = await indexerClient.getNames()
-  return dedupeNames(allNames.filter((name) => (
+  const matchesWallet = (name: IndexedNameSummary) => Boolean(
     name.owner && authorityCandidates.includes(name.owner)
     || name.manager && authorityCandidates.includes(name.manager)
     || name.records.some((record) => (
       record.key === 'moonlight_address' && record.value === walletAddress
     ))
+  )
+  const ownerResults = await Promise.all(authorityCandidates.map(async (owner) => (
+    indexerClient.getNames({ owner })
   )))
+  // Owner queries may include historical controllers; verify current membership too.
+  const ownedNames = dedupeNames(ownerResults.flat()).filter(matchesWallet)
+  if (ownedNames.length > 0) return ownedNames
+
+  const allNames = await indexerClient.getNames()
+  return dedupeNames(allNames.filter(matchesWallet))
 }
 
 function ownerCandidatesFromWallet({
