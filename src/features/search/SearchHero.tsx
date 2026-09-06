@@ -22,7 +22,10 @@ export function SearchHero({
         </h1>
       </div>
 
-      <div className="search-panel">
+      <form className="search-panel" onSubmit={(event) => {
+        event.preventDefault()
+        if (!loading) onCheckAvailability()
+      }}>
         <label htmlFor="name-search">Search a .dusk domain</label>
         <div className="search-row">
           <div className="name-input">
@@ -39,7 +42,7 @@ export function SearchHero({
               </button>
             ) : null}
           </div>
-          <button className="primary-button" type="button" onClick={onCheckAvailability}>
+          <button className="primary-button" type="submit" disabled={loading}>
             {loading ? 'Checking...' : 'Search'}
             <Search size={24} />
           </button>
@@ -52,7 +55,7 @@ export function SearchHero({
           <i aria-hidden="true" />
           <button type="button" onClick={() => onQueryChange('you.dusk')}>you.dusk</button>
         </div>
-      </div>
+      </form>
       <p className="hero-footnote">
         Dusk Domains is the identity and routing protocol for{' '}
         <a href="https://dusk.network" target="_blank" rel="noreferrer">Dusk</a>.

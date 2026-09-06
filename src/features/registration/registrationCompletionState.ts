@@ -14,6 +14,7 @@ export type RegistrationCompletionStep = {
 }
 
 export type RegistrationCompletionState = {
+  summary?: { registrationFee: number; expiryDate: string }
   status: 'running' | 'executed' | 'failed'
   activeStep: RegistrationCompletionStepId
   steps: RegistrationCompletionStep[]
@@ -28,8 +29,9 @@ const registrationCompletionStepDefinitions: Array<Omit<RegistrationCompletionSt
   },
 ]
 
-export function createRegistrationCompletionState(): RegistrationCompletionState {
+export function createRegistrationCompletionState(summary?: RegistrationCompletionState['summary']): RegistrationCompletionState {
   return {
+    summary,
     status: 'running',
     activeStep: 'complete_registration',
     steps: registrationCompletionStepDefinitions.map((step) => ({
@@ -82,6 +84,7 @@ export function updateRegistrationCompletionState(
   const failed = steps.some((step) => step.status === 'failed')
   const executed = steps.every((step) => step.status === 'executed')
   return {
+    ...base,
     status: failed ? 'failed' : executed ? 'executed' : 'running',
     activeStep: failed || txState.status !== 'executed'
       ? stepId
@@ -94,6 +97,7 @@ export function updateRegistrationCompletionState(
 export function markRegistrationCompletionExecuted(current: RegistrationCompletionState | null): RegistrationCompletionState {
   const base = current ?? createRegistrationCompletionState()
   return {
+    ...base,
     status: 'executed',
     activeStep: 'complete_registration',
     steps: base.steps.map((step) => ({

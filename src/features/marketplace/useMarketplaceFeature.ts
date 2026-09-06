@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useScopedState } from '../../utils/useScopedState'
 import {
   coreAcceptMarketplaceOfferRuntimeCall,
   coreEscrowAuctionRuntimeCall,
@@ -97,14 +98,15 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     selectedAuthority,
     submitNameWrite,
   } = args
+  const accountScope = `${runtimeConfig.chainId}:${runtimeConfig.contracts.marketplace?.contractId}:${selectedAuthority}`
   const [fixedSales, setFixedSales] = useState<IndexedMarketplaceFixedSale[]>([])
   const [auctions, setAuctions] = useState<IndexedMarketplaceAuction[]>([])
   const [offers, setOffers] = useState<IndexedMarketplaceOffer[]>([])
-  const [refund, setRefund] = useState<IndexedMarketplaceRefund | null>(null)
-  const [ownedNames, setOwnedNames] = useState<IndexedNameSummary[]>([])
+  const [refund, setRefund] = useScopedState<IndexedMarketplaceRefund | null>(accountScope, null)
+  const [ownedNames, setOwnedNames] = useScopedState<IndexedNameSummary[]>(accountScope, [])
   const [tab, setTab] = useState<MarketplaceTab>('browse')
   const [saleMode, setSaleMode] = useState<MarketplaceSaleMode>('fixed')
-  const [selectedNode, setSelectedNode] = useState('')
+  const [selectedNode, setSelectedNode] = useScopedState(accountScope, '')
   const [fixedPriceDusk, setFixedPriceDusk] = useState('25')
   const [privateBuyer, setPrivateBuyer] = useState('')
   const [reserveDusk, setReserveDusk] = useState('25')
@@ -114,15 +116,16 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const [offerAmountDusk, setOfferAmountDusk] = useState('25')
   const [offerDurationDays, setOfferDurationDays] = useState('7')
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
-  const [selectedAuctionNode, setSelectedAuctionNode] = useState('')
+  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(accountScope, '')
   const [auctionActivity, setAuctionActivity] = useState<ActivityEntry[]>([])
   const [auctionActivityLoading, setAuctionActivityLoading] = useState(false)
-  const [bidReview, setBidReview] = useState<MarketplaceViewProps['bidReview']>(null)
+  const [bidReview, setBidReview] = useScopedState<MarketplaceViewProps['bidReview']>(accountScope, null)
   const [watchedNodes, setWatchedNodes] = useState<string[]>(readWatchlist)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [confirmation, setConfirmation] = useState('')
-  const [txState, setTxState] = useState<DuskDomainTxState | null>(null)
+  const feedbackScope = `${accountScope}:${mainView}:${tab}`
+  const [error, setError] = useScopedState(feedbackScope, '')
+  const [confirmation, setConfirmation] = useScopedState(feedbackScope, '')
+  const [txState, setTxState] = useScopedState<DuskDomainTxState | null>(feedbackScope, null)
   const requestId = useRef(0)
 
   const marketplaceEnabled = Boolean(runtimeConfig.capabilities.marketplace && runtimeConfig.contracts.marketplace)
@@ -136,8 +139,9 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     ...auctions.map((auction) => auction.node),
   ]), [auctions, fixedSales])
   const sellableNames = useMemo(() => ownedNames.filter((name) => (
-    name.status === 'active' && !activeOrderNodes.has(name.node)
-  )), [activeOrderNodes, ownedNames])
+    name.status === 'active' && name.owner === selectedAuthority
+      && name.subnameCount === 0 && name.canonicalName.split('.').length === 2 && !activeOrderNodes.has(name.node)
+  )), [activeOrderNodes, ownedNames, selectedAuthority])
   const selectedName = useMemo(() => (
     sellableNames.find((name) => name.node === selectedNode) ?? sellableNames[0] ?? null
   ), [sellableNames, selectedNode])
@@ -192,7 +196,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     } finally {
       if (shouldApply()) setLoading(false)
     }
-  }, [indexerClient, selectedAddress, selectedAuthority])
+  }, [indexerClient, selectedAddress, selectedAuthority, setError, setOwnedNames, setRefund, setSelectedNode])
 
   useEffect(() => {
     if (mainView !== 'marketplace') return
@@ -258,6 +262,9 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     onOpenWalletConnection,
     runtimeConfig.contracts,
     selectedAddress,
+    setConfirmation,
+    setError,
+    setTxState,
     submitNameWrite,
   ])
 
@@ -379,6 +386,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     selectedAddress,
     selectedAuthority,
     selectedName,
+    setError,
     submitMarketplaceAction,
   ])
 
@@ -402,7 +410,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       canonical.priceLux,
       `${sale.name} purchased.`,
     )
-  }, [marketplaceOnChainClient, selectedAuthority, submitMarketplaceAction])
+  }, [marketplaceOnChainClient, selectedAuthority, setError, submitMarketplaceAction])
 
   const handleReviewBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
     const amountLux = validLuxAmount(bidDrafts[auction.node] ?? '')
@@ -432,7 +440,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       auction,
       minimumBidLux: minimumBid,
     })
-  }, [bidDrafts, marketplaceOnChainClient])
+  }, [bidDrafts, marketplaceOnChainClient, setBidReview, setConfirmation, setError])
 
   const handlePlaceBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
     const reviewed = bidReview?.auction.node === auction.node ? bidReview : null
@@ -479,7 +487,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       })
       await loadAuctionActivity(auction.node)
     }
-  }, [bidDrafts, bidReview, loadAuctionActivity, loadMarketplace, marketplaceOnChainClient, selectedAuthority, submitMarketplaceAction])
+  }, [bidDrafts, bidReview, loadAuctionActivity, loadMarketplace, marketplaceOnChainClient, selectedAuthority, setBidReview, setError, submitMarketplaceAction])
 
   const handlePlaceOffer = useCallback(async () => {
     const validation = validateName(offerName)
@@ -537,6 +545,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     offerName,
     marketplaceOnChainClient,
     selectedAuthority,
+    setError,
     submitMarketplaceAction,
   ])
 
@@ -561,7 +570,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       setError(userFacingErrorMessage(readError))
       return false
     }
-  }, [marketplaceOnChainClient])
+  }, [marketplaceOnChainClient, setError])
 
   const handleAcceptOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
     if (!marketplaceOnChainClient || !duskDomainsOnChainClient) return
@@ -599,6 +608,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     ownedNames,
     selectedAddress,
     selectedAuthority,
+    setError,
     simpleAction,
   ])
 
@@ -611,7 +621,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       return
     }
     await simpleAction('claiming marketplace funds', 'Marketplace refund', marketplaceClaimRefundRuntimeCall(), 'Refund claimed.')
-  }, [marketplaceOnChainClient, refund, simpleAction])
+  }, [marketplaceOnChainClient, refund, setError, simpleAction])
 
   const handleCancelAuction = useCallback(async (auction: IndexedMarketplaceAuction) => {
     if (!await guardCanonicalRead((client) => canonicalAuction(client, auction))) return
@@ -659,16 +669,17 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   }, [])
 
   const handleOpenAuction = useCallback((node: string) => {
+    setTab('browse')
     setAuctionActivity([])
     setSelectedAuctionNode(node)
     void loadAuctionActivity(node)
-  }, [loadAuctionActivity])
+  }, [loadAuctionActivity, setSelectedAuctionNode])
 
   const handleCloseAuction = useCallback(() => {
     setAuctionActivity([])
     setBidReview(null)
     setSelectedAuctionNode('')
-  }, [])
+  }, [setBidReview, setSelectedAuctionNode])
 
   const marketplaceProps: MarketplaceViewProps = {
     actionsAvailable,

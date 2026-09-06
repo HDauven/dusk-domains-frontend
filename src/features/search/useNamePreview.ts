@@ -40,8 +40,9 @@ export function useNamePreview({
   const nodeHex = useMemo(() => safeNamehashHex(displayName), [displayName])
   const registrationFee = canRegister ? registrationPrice(result.label, duration, feeConfig) : 0
   const renewalFee = nodeHex ? registrationPrice(result.label, renewalYears, feeConfig) : 0
-  const networkFee = canRegister ? 0.2 : 0
-  const total = registrationFee + networkFee
+  // The wallet determines the network fee; do not present a fixed guess as an estimate.
+  const networkFee: number | null = null
+  const total = registrationFee
   const lifecycleBaseBlockHeight = currentBlockHeight ?? 0
   const registrationLifecycle = useMemo(() => createRegistrationLifecycle({
     startsAt: lifecycleBaseBlockHeight,

@@ -40,7 +40,7 @@ export function RegistrationPurchaseStep({
   expiryDate: string
   feeConfigError: string
   installUrl: string
-  networkFee: number
+  networkFee: number | null
   onOpenWalletConnection: () => void
   onRegisterName: () => void
   onSetAddress: () => void
@@ -61,17 +61,18 @@ export function RegistrationPurchaseStep({
       <RegistrationPurchaseSummary
         activeReferral={activeReferral}
         appliedReferral={appliedReferral}
-        canRegister={canRegister}
+        canRegister={canRegister || registrationComplete}
+        registrationComplete={registrationComplete}
         commitWindow={commitWindow}
         displayName={displayName}
-        expiryDate={expiryDate}
+        expiryDate={registrationCompletion?.summary?.expiryDate ?? expiryDate}
         feeConfigError={feeConfigError}
         networkFee={networkFee}
         registerSetsPrimary={registerSetsPrimary}
-        registrationFee={registrationFee}
+        registrationFee={registrationCompletion?.summary?.registrationFee ?? registrationFee}
         registrationTargetAddress={registrationTargetAddress}
         selectedAddress={selectedAddress}
-        total={total}
+        total={registrationCompletion?.summary?.registrationFee ?? total}
       />
 
       <RegistrationPurchaseChecklist

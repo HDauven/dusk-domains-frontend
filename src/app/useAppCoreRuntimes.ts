@@ -18,7 +18,6 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     runtimeConfig,
     wallet,
   } = appRuntime
-  const searchState = useSearchAppState()
   const registrationState = useRegistrationAppState()
   const domainState = useDomainManagementAppState(recordSourceContractId)
   const walletRuntime = useWalletRuntime({
@@ -40,6 +39,7 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     submitNameWrite,
     walletSession,
   } = walletRuntime
+  const searchState = useSearchAppState(`${runtimeConfig.chainId}:${walletRuntime.selectedAddress}`)
   const economicsRuntime = useEconomicsRuntime({
     indexerClient,
     liveDuskDomainsApp,
