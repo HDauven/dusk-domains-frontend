@@ -36,6 +36,8 @@ try {
     }
     window.renderScope = scope => root.render(React.createElement(Probe, { scope }))
     window.renderScope('A')
+    window.root = root
+    window.React = React
     window.renderSearch = () => {
       function Search() {
         const [query, onQueryChange] = React.useState('')
@@ -60,8 +62,47 @@ try {
   await page.locator('#name-search').fill('aurora.dusk')
   await page.locator('#name-search').press('Enter')
   await page.waitForFunction(() => window.searchCount === 1)
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { useRegistrationRuntime } = await import('/src/app/useRegistrationRuntime.ts')
+    const { upsertPendingNameReservation } = await import('/src/names/internal.ts')
+    upsertPendingNameReservation({ name: 'resume.dusk', node: 'node', commitment: 'commit', secret: 'local-test',
+      controller: 'controller', ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1,
+      committedBlockHeight: null, committedTxId: 'tx', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+    const indexerClient = { getHealth: async () => ({ currentBlockHeight: 200 }),
+      getCommitment: async () => ({ committedBlockHeight: 100, committedTxId: 'tx' }) }
+    const getCurrentBlockHeight = async () => 200
+    function SavedReservation() {
+      const [height, setCurrentBlockHeight] = React.useState(null)
+      const [, setNowSeconds] = React.useState(0)
+      const [preparedCommit, setPreparedCommit] = React.useState(null)
+      const { pendingReservations } = useRegistrationRuntime({ mainView: 'search', chainId: 'dusk:0',
+        selectedAuthority: 'controller', selectedAddress: '', registrationAddressInput: '', registrationStep: 'duration',
+        walletSetupState: 'disconnected', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
+        setCurrentBlockHeight, setNowSeconds, canRegister: true, committed: false, registerSetsPrimary: false })
+      return React.createElement('output', { id: 'saved-reservation' }, `${height}:${pendingReservations[0]?.committedBlockHeight}`)
+    }
+    root.render(React.createElement(SavedReservation))
+  })
+  await page.waitForFunction(() => document.querySelector('#saved-reservation')?.textContent === '200:100')
+  await page.evaluate(async () => {
+    await import('/src/index.css')
+    await import('/src/App.css')
+    const { MyDomainRows } = await import('/src/features/domains/my-domains/MyDomainRows.tsx')
+    window.root.render(window.React.createElement('main', { className: 'page' },
+      window.React.createElement('section', { className: 'my-names-panel' },
+        window.React.createElement(MyDomainRows, { myNames: [{ canonicalName: 'a-long-domain-name.dusk', node: 'node', records: [], subnameCount: 0 }],
+          primarySummaries: {}, formatNameLifecycle: () => 'Registered', onOpenIndexedName: () => {} }))))
+  })
+  const open = page.getByRole('button', { name: 'Open', exact: true })
+  await open.waitFor()
+  for (const width of [390, 721, 765, 834, 1060, 1440]) {
+    await page.setViewportSize({ width, height: 1000 })
+    const bounds = await open.boundingBox()
+    assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width, `Open clipped at ${width}px`)
+  }
   assert.deepEqual(errors, [])
-  console.log('PASS: native Enter submission and stale A → B → A feedback isolation')
+  console.log('PASS: Enter, scoped feedback, saved-reservation refresh and responsive Open buttons')
 } finally {
   await browser.close()
 }

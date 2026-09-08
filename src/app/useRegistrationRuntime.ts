@@ -59,7 +59,7 @@ export function useRegistrationRuntime({
     currentCommitment: preparedCommit?.commitment ?? '',
     getCurrentBlockHeight,
     indexerClient,
-    refreshListView: mainView === 'my-names',
+    refreshListView: mainView === 'my-names' || mainView === 'search',
     selectedAuthority,
     setCurrentBlockHeight,
     setNowSeconds,
