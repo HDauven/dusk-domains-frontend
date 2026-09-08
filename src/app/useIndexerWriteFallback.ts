@@ -6,6 +6,8 @@ import {
   type DuskDomainsIndexerClient,
 } from '../names/internal'
 
+export type ConfirmedWriteFallback = ReturnType<typeof useIndexerWriteFallback>
+
 type UseIndexerWriteFallbackArgs = {
   indexerClient: DuskDomainsIndexerClient | null
   liveDuskDomainsApp: DuskConnectAppLike | null

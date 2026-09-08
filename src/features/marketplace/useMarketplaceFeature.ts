@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useScopedState } from '../../utils/useScopedState'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
   coreAcceptMarketplaceOfferRuntimeCall,
   coreEscrowAuctionRuntimeCall,
@@ -21,7 +23,6 @@ import {
   validateName,
   type ActivityEntry,
   type DuskDomainCallMetadata,
-  type DuskDomainContractMap,
   type DuskDomainsIndexerClient,
   type DuskDomainsMarketplaceOnChainClient,
   type DuskDomainsOnChainClient,
@@ -56,22 +57,8 @@ import {
 
 const MARKETPLACE_WATCHLIST_KEY = 'dusk-domains-marketplace-watchlist-v1'
 
-type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: {
-    contracts?: DuskDomainContractMap
-    onUpdate?: (state: DuskDomainTxState) => void
-  },
-) => Promise<DuskDomainTxState>
-
 type UseMarketplaceFeatureArgs = {
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    transactionCount?: number,
-    extraRequiredLux?: bigint,
-  ) => Promise<boolean>
+  ensurePublicBalanceForLiveWrite: LiveWritePreflight['ensurePublicBalanceForLiveWrite']
   indexerClient: DuskDomainsIndexerClient | null
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
   liveWritesAvailable: boolean

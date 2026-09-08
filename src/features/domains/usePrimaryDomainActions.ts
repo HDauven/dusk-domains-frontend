@@ -1,20 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react'
-import {
-  type DuskDomainCallMetadata,
-  type DuskDomainTxState,
-  type DuskDomainsIndexerClient,
-  type DuskDomainsRuntimeConfig,
-  type SubmitDuskDomainWriteOptions,
-} from '../../names/internal'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
+import type { DuskDomainTxState, DuskDomainsRuntimeConfig } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import { clearPrimaryDomainName } from './clearPrimaryDomainName'
 import { setPrimaryDomainName } from './setPrimaryDomainName'
-
-type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
 
 type AppendActivity = (input: {
   eventType: 'primary_name'
@@ -22,11 +13,6 @@ type AppendActivity = (input: {
   target?: string
   txId?: string
 }) => void
-
-type ConfirmedWriteFallback = (
-  description: string,
-  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
-) => Promise<boolean>
 
 export type UsePrimaryDomainActionsProps = {
   appendActivity: AppendActivity
@@ -44,17 +30,7 @@ export type UsePrimaryDomainActionsProps = {
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
   walletSetupState: WalletConnectionStatus
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight
 
 export function usePrimaryDomainActions(props: UsePrimaryDomainActionsProps) {
   return {

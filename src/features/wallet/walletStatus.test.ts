@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { useEffect } from 'react'
+import { useWalletAutoRefresh } from './useWalletAutoRefresh'
 import type { DuskWalletState } from '../../names/internal'
 import {
   deriveWalletSessionModel,
@@ -10,6 +12,12 @@ import {
   walletRequiredHeading,
   walletRequiredIntro,
 } from './walletStatus'
+
+vi.mock('react', () => ({ useEffect: vi.fn() }))
+
+function WalletPolling(props: Parameters<typeof useWalletAutoRefresh>[0]) {
+  useWalletAutoRefresh(props)
+}
 
 function walletState(overrides: Partial<DuskWalletState> = {}): DuskWalletState {
   return {
@@ -134,6 +142,43 @@ describe('wallet status', () => {
       selectedAddress: '',
       status: 'locked',
     })
+  })
+
+  it('preserves polling intervals for missing accounts, providers and normalized networks', () => {
+    const interval = vi.spyOn(globalThis, 'setInterval').mockReturnValue(0 as never)
+    vi.stubGlobal('document', new EventTarget())
+    vi.stubGlobal('addEventListener', vi.fn())
+    vi.stubGlobal('removeEventListener', vi.fn())
+    const node = (nodeUrl: string) => ({ chainId: 'dusk:0', networkName: 'Localnet', nodeUrl })
+    const cases: [Partial<DuskWalletState>, number | null][] = [
+      [{ chainId: ' DUSK:0 ' }, 10_000],
+      [{ chainId: 'dusk:3' }, 1_000],
+      [{ chainId: 'dusk:3', accounts: [] }, 10_000],
+      [{ node: node('HTTP://LOCALHOST:18181///?ignored#fragment') }, 10_000],
+      [{ node: node('http://localhost:8080/'), accounts: [] }, 1_000],
+      [{ node: node('invalid') }, 10_000],
+      [{ authorized: false }, null],
+      [{ installed: false, providerInfo: null }, null],
+    ]
+    try {
+      for (const [overrides, expected] of cases) {
+        interval.mockClear()
+        WalletPolling({
+          walletState: walletState({ authorized: true, accounts: ['account'], ...overrides }),
+          walletDiscoveryReady: true,
+          expectedChainId: 'dusk:0',
+          expectedNodeUrl: 'http://localhost:18181/',
+          refreshWalletSessionState: vi.fn(),
+        })
+        const cleanup = vi.mocked(useEffect).mock.lastCall![0]()
+        try {
+          expect(interval.mock.lastCall?.[1] ?? null).toBe(expected)
+        } finally { cleanup?.() }
+      }
+    } finally {
+      vi.restoreAllMocks()
+      vi.unstubAllGlobals()
+    }
   })
 
   it('uses precise wallet-required copy for setup prompts', () => {

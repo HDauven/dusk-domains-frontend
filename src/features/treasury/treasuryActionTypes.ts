@@ -1,20 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
   CoreFeeConfig,
-  DuskDomainCallMetadata,
   DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
   IndexedTreasuryState,
-  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { FeeConfigFormState } from './feeConfig'
 
-export type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
+export type { SubmitNameWrite }
 
 export type UseTreasuryActionsProps = {
   connectedAsTreasuryOperator: boolean
@@ -40,14 +36,4 @@ export type UseTreasuryActionsProps = {
   treasuryClaimAmountError: string
   treasuryClaimAmountLux: number | null
   treasuryState: IndexedTreasuryState
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight

@@ -1,20 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { ManagedNameState } from '../../app/appHelpers'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
   CoreFeeConfig,
-  DuskDomainCallMetadata,
-  DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
-  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 
-export type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
+export type { SubmitNameWrite, ConfirmedWriteFallback }
 
 export type AppendDomainSettingsActivity = (input: {
   eventType: 'transfer' | 'renewal'
@@ -22,11 +18,6 @@ export type AppendDomainSettingsActivity = (input: {
   target?: string
   txId?: string
 }) => void
-
-export type ConfirmedWriteFallback = (
-  description: string,
-  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
-) => Promise<boolean>
 
 export type UseDomainSettingsActionsProps = {
   appendActivity: AppendDomainSettingsActivity
@@ -55,14 +46,4 @@ export type UseDomainSettingsActionsProps = {
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
   walletSetupState: WalletConnectionStatus
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight

@@ -76,7 +76,7 @@ export function walletCanSign(state: DuskWalletState, selectedAddress: string) {
   return Boolean(state.authorized && selectedAddress && state.profiles.length > 0)
 }
 
-function walletProviderDetected(state: DuskWalletState) {
+export function walletProviderDetected(state: DuskWalletState) {
   return Boolean(state.installed || state.providerInfo || state.availableProviders.length > 0)
 }
 
@@ -86,14 +86,14 @@ function walletChainMatchesExpected(walletChainId: string | null | undefined, ex
   return !walletChain || !expectedChain || walletChain === expectedChain
 }
 
-function walletNetworkMatchesExpected(state: DuskWalletState, expectedChainId: string, expectedNodeUrl: string) {
+export function walletNetworkMatchesExpected(state: DuskWalletState, expectedChainId = '', expectedNodeUrl = '') {
   if (!walletChainMatchesExpected(state.chainId, expectedChainId)) return false
-  const currentNode = normalizedUrl(state.node?.nodeUrl)
-  const expectedNode = normalizedUrl(expectedNodeUrl)
+  const currentNode = normalizeWalletNodeUrl(state.node?.nodeUrl)
+  const expectedNode = normalizeWalletNodeUrl(expectedNodeUrl)
   return !currentNode || !expectedNode || currentNode === expectedNode
 }
 
-function normalizedUrl(value: string | null | undefined) {
+export function normalizeWalletNodeUrl(value: string | null | undefined) {
   try {
     const url = new URL(value ?? '')
     return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/u, '')}`
