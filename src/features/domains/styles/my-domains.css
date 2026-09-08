@@ -102,7 +102,7 @@
 
 .my-name-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.35fr) minmax(140px, 0.9fr) minmax(112px, 0.55fr) minmax(96px, 0.5fr) minmax(120px, 0.55fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr) minmax(0, 0.55fr) minmax(0, 0.5fr) auto;
   align-items: center;
 }
 
