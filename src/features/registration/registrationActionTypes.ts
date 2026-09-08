@@ -1,27 +1,24 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { ManagedNameState } from '../../app/appHelpers'
 import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
   CoreFeeConfig,
-  DuskDomainCallMetadata,
   DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
   NameResult,
   RegistrationCommitWindow,
   ResolverRecord,
-  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 import type { RegistrationStepId } from './registrationSteps'
 import type { PreparedRegistrationCommit } from './usePendingReservations'
 
-export type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
+export type { SubmitNameWrite, ConfirmedWriteFallback }
 
 export type AppendActivity = (input: {
   eventType: 'registration'
@@ -29,11 +26,6 @@ export type AppendActivity = (input: {
   target?: string
   txId?: string
 }) => void
-
-export type ConfirmedWriteFallback = (
-  description: string,
-  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
-) => Promise<boolean>
 
 export type UseRegistrationActionsProps = {
   appliedReferral: ReferralState | null
@@ -82,14 +74,4 @@ export type UseRegistrationActionsProps = {
   setWalletError: Dispatch<SetStateAction<string>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback
   submitNameWrite: SubmitNameWrite
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight

@@ -9,6 +9,8 @@ import {
   type WalletModalControl,
 } from './liveWritePreflight'
 
+export type LiveWritePreflight = ReturnType<typeof useLiveWritePreflight>
+
 type UseLiveWritePreflightArgs = {
   connectKit: WalletModalControl
   connectOptions?: DuskConnectOptions
