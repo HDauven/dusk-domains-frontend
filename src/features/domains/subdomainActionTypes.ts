@@ -1,21 +1,17 @@
 import type { Dispatch, SetStateAction } from 'react'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
-  DuskDomainCallMetadata,
-  DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
-  SubmitDuskDomainWriteOptions,
   SubnameExpiryPolicy,
   SubnameRevocationPolicy,
   SubnameState,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 
-export type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
+export type { SubmitNameWrite, ConfirmedWriteFallback }
 
 export type AppendSubdomainActivity = (input: {
   eventType: 'subname_created'
@@ -25,11 +21,6 @@ export type AppendSubdomainActivity = (input: {
   node?: string
   name?: string
 }) => void
-
-export type ConfirmedWriteFallback = (
-  description: string,
-  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
-) => Promise<boolean>
 
 export type UseSubdomainActionsProps = {
   appendActivity: AppendSubdomainActivity
@@ -64,14 +55,4 @@ export type UseSubdomainActionsProps = {
   subnameManager: string
   subnameResolver: string
   subnameRevocationPolicy: SubnameRevocationPolicy
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight

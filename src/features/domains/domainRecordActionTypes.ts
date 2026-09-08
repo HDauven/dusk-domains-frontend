@@ -1,21 +1,17 @@
 import type { Dispatch, SetStateAction } from 'react'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
   CoreRecordMutationInput,
-  DuskDomainCallMetadata,
-  DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
   ResolverRecord,
-  SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { RecordTargetOption } from './recordTypes'
 
-export type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
+export type { SubmitNameWrite, ConfirmedWriteFallback }
 
 export type AppendDomainRecordActivity = (input: {
   eventType: 'record_update'
@@ -25,11 +21,6 @@ export type AppendDomainRecordActivity = (input: {
   node?: string
   name?: string
 }) => void
-
-export type ConfirmedWriteFallback = (
-  description: string,
-  check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
-) => Promise<boolean>
 
 export type UseDomainRecordActionsProps = {
   activeRecordTarget: RecordTargetOption | undefined
@@ -54,14 +45,4 @@ export type UseDomainRecordActionsProps = {
   submitNameWrite: SubmitNameWrite
   walletAuthorized: boolean
   walletSetupState: WalletConnectionStatus
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight

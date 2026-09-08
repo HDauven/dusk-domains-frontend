@@ -4,20 +4,10 @@ import type {
   DuskDomainsRuntimeConfig,
 } from '../../names/internal'
 import type { WalletSessionModel } from '../wallet/walletStatus'
-import type { SubmitNameWrite } from './treasuryActionTypes'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 
-export type LiveWritePreflight = {
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+export type { LiveWritePreflight }
 
 export type UseTreasuryFeatureArgs = {
   indexerClient: DuskDomainsIndexerClient | null

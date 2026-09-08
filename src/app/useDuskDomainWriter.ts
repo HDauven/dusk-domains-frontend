@@ -12,6 +12,8 @@ import {
   type SubmitDuskDomainWriteOptions,
 } from '../names/internal'
 
+export type SubmitNameWrite = ReturnType<typeof useDuskDomainWriter>
+
 type UseDuskDomainWriterArgs = {
   captureUrl: string | undefined
   chainId: string

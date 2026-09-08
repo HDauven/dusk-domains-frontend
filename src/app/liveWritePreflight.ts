@@ -6,6 +6,8 @@ import {
   userFacingErrorMessage,
 } from '../names/internal'
 
+import { normalizeWalletNodeUrl } from '../features/wallet/walletStatus'
+
 export type BalanceWallet = {
   connect?: (options?: DuskConnectOptions) => Promise<unknown>
   getPublicBalance: () => Promise<{ value: string }>
@@ -98,26 +100,17 @@ async function ensureExpectedWalletNode({
   refreshWalletSessionState: () => Promise<unknown>
   wallet: BalanceWallet
 }) {
-  const expected = normalizedUrl(expectedNodeUrl)
+  const expected = normalizeWalletNodeUrl(expectedNodeUrl)
   if (!expected) return
-  const current = normalizedUrl(wallet.state?.node?.nodeUrl)
+  const current = normalizeWalletNodeUrl(wallet.state?.node?.nodeUrl)
   if (current === expected) return
   if (!wallet.switchChain) throw new Error('Dusk Wallet cannot switch to the configured local node.')
 
   await wallet.switchChain({ nodeUrl: expectedNodeUrl! })
   await refreshWalletSessionState()
-  const selected = normalizedUrl(wallet.state?.node?.nodeUrl)
+  const selected = normalizeWalletNodeUrl(wallet.state?.node?.nodeUrl)
   if (selected && selected !== expected) {
     throw new Error('Dusk Wallet did not switch to the configured local node.')
-  }
-}
-
-function normalizedUrl(value: string | null | undefined) {
-  try {
-    const url = new URL(value ?? '')
-    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/u, '')}`
-  } catch {
-    return ''
   }
 }
 

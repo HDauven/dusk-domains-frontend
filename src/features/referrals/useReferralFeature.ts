@@ -11,20 +11,8 @@ import { useReferralAccount } from './useReferralAccount'
 import { useReferralActions } from './useReferralActions'
 import { useReferralControls } from './useReferralControls'
 import { useReferralViewModel } from './useReferralViewModel'
-import type { SubmitNameWrite } from '../treasury/treasuryActionTypes'
-
-type LiveWritePreflight = {
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 
 export function useReferralFeature({
   indexerClient,

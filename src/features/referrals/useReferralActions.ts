@@ -1,21 +1,15 @@
 import type { Dispatch, SetStateAction } from 'react'
+import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
   treasuryClaimAllReferralRewardsRuntimeCall,
   userFacingMessageFromText,
   waitForConfirmedIndexerRefresh,
-  type DuskDomainCallMetadata,
   type DuskDomainTxState,
   type DuskDomainsIndexerClient,
   type DuskDomainsRuntimeConfig,
   type IndexedReferralState,
-  type SubmitDuskDomainWriteOptions,
 } from '../../names/internal'
-
-type SubmitNameWrite = (
-  name: string,
-  call: DuskDomainCallMetadata,
-  options?: SubmitDuskDomainWriteOptions,
-) => Promise<DuskDomainTxState>
 
 type UseReferralActionsProps = {
   indexerClient: DuskDomainsIndexerClient | null
@@ -32,17 +26,7 @@ type UseReferralActionsProps = {
   setReferralError: (message: string) => void
   setReferralTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   submitNameWrite: SubmitNameWrite
-  ensureContractAuthorityForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-  ) => boolean
-  ensurePublicBalanceForLiveWrite: (
-    action: string,
-    setError: (message: string) => void,
-    minimumLux?: number,
-    depositLux?: bigint,
-  ) => Promise<boolean>
-}
+} & LiveWritePreflight
 
 export function useReferralActions({
   indexerClient,
