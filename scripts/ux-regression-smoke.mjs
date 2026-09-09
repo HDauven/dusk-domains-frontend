@@ -86,6 +86,35 @@ try {
   })
   await page.waitForFunction(() => document.querySelector('#saved-reservation')?.textContent === '200:100')
   await page.evaluate(async () => {
+    const { React, root } = window
+    const { SearchWorkspace } = await import('/src/features/search/SearchWorkspace.tsx')
+    const props = { checked: true, loading: false, query: 'owned.dusk', resultView: 'overview',
+      onQueryChange: () => {}, onCheckAvailability: () => {},
+      availabilityProps: { displayName: 'owned.dusk', reserved: false, status: 'available' },
+      overviewProps: { canRegister: true, displayName: 'owned.dusk', resultStatus: 'available', resultIssues: [],
+        savedReservation: null, savedReservationWindow: null, subnameCount: 0, primaryVerified: false,
+        onContinueRegistration: () => {}, onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, onViewDetails: () => {} } }
+    window.renderReadReady = resultReady => root.render(React.createElement(SearchWorkspace, { ...props, resultReady }))
+    window.renderReadReady(true)
+  })
+  await page.getByRole('button', { name: 'Continue registration' }).waitFor()
+  assert.equal(await page.locator('.availability-pill').textContent(), 'Available')
+  await page.evaluate(() => window.renderReadReady(false))
+  await page.getByRole('status').filter({ hasText: 'Domain data is unavailable' }).waitFor()
+  assert.equal(await page.getByText('Available', { exact: true }).count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Continue registration' }).count(), 0)
+  await page.evaluate(() => window.renderReadReady(true))
+  await page.getByRole('button', { name: 'Continue registration' }).waitFor()
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')
+    root.render(React.createElement(MarketplaceView, { auctions: [], fixedSales: [], offers: [], watchedNodes: [],
+      actionsAvailable: false, marketplaceEnabled: true, tab: 'browse',
+      txState: { status: 'awaiting_approval', context: { title: 'Make offer' } } }))
+  })
+  await page.locator('.tx-status.awaiting_approval').waitFor()
+  assert.equal(await page.getByText('Connect a wallet to transact.', { exact: true }).count(), 0)
+  await page.evaluate(async () => {
     await import('/src/index.css')
     await import('/src/App.css')
     const { MyDomainRows } = await import('/src/features/domains/my-domains/MyDomainRows.tsx')

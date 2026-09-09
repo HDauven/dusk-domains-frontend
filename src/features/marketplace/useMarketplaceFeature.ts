@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useScopedState } from '../../utils/useScopedState'
+import { waitForIndexerBlock } from '../../app/indexerReadHelpers'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
@@ -17,6 +18,7 @@ import {
   marketplacePlaceBidRuntimeCall,
   marketplacePlaceOfferRuntimeCall,
   marketplaceSettleAuctionRuntimeCall,
+  isDuskDomainTxBusy,
   namehashHex,
   normalizeNameInput,
   userFacingErrorMessage,
@@ -117,6 +119,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
 
   const marketplaceEnabled = Boolean(runtimeConfig.capabilities.marketplace && runtimeConfig.contracts.marketplace)
   const actionsAvailable = marketplaceEnabled
+    && !isDuskDomainTxBusy(txState)
     && liveWritesAvailable
     && Boolean(marketplaceOnChainClient)
     && Boolean(duskDomainsOnChainClient)
@@ -234,8 +237,11 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       })
       setTxState(finalState)
       if (finalState.status === 'executed') {
+        setConfirmation(`${successMessage} Syncing marketplace data…`)
+        const height = await duskDomainsOnChainClient?.getCurrentBlockHeight()
+        if (await waitForIndexerBlock(indexerClient, height?.ok ? height.value : null)) await loadMarketplace()
+        else setError('Transaction confirmed, but marketplace data is still syncing. Refresh again shortly.')
         setConfirmation(successMessage)
-        await loadMarketplace()
       }
       return finalState
     } catch (submitError) {
@@ -244,7 +250,9 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     }
   }, [
     actionsAvailable,
+    duskDomainsOnChainClient,
     ensurePublicBalanceForLiveWrite,
+    indexerClient,
     loadMarketplace,
     onOpenWalletConnection,
     runtimeConfig.contracts,
@@ -430,6 +438,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   }, [bidDrafts, marketplaceOnChainClient, setBidReview, setConfirmation, setError])
 
   const handlePlaceBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
+    setBidReview(null)
     const reviewed = bidReview?.auction.node === auction.node ? bidReview : null
     const amountLux = reviewed?.amountLux ?? validLuxAmount(bidDrafts[auction.node] ?? '')
     if (amountLux === null) {
@@ -442,12 +451,10 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       const canonical = await canonicalAuction(marketplaceOnChainClient, auction)
       minimumBid = minimumCanonicalBidLux(canonical)
     } catch (readError) {
-      setBidReview(null)
       setError(userFacingErrorMessage(readError))
       return
     }
     if (amountLux < minimumBid) {
-      setBidReview(null)
       setBidDrafts((current) => ({ ...current, [auction.node]: formatLuxAsDusk(minimumBid) }))
       setError(`The minimum bid is now ${formatLuxAsDusk(minimumBid)} DUSK.`)
       await loadMarketplace()
@@ -465,7 +472,6 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       'Bid placed.',
     )
     if (result?.status === 'executed') {
-      setBidReview(null)
       setWatchedNodes((current) => {
         if (current.includes(auction.node)) return current
         const next = [...current, auction.node]

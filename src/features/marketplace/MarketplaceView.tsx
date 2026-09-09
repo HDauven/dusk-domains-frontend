@@ -1,4 +1,5 @@
 import { RefreshCw, Store } from 'lucide-react'
+import { isDuskDomainTxBusy } from '../../names/internal'
 import { AccountPanel } from '../../components/ui/AccountPanel'
 import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { PanelFeedbackStack } from '../../components/ui/PanelFeedbackStack'
@@ -53,7 +54,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
       {!marketplaceEnabled ? (
         <PanelMessage icon={<Store size={18} />}>Marketplace is not enabled for this deployment.</PanelMessage>
       ) : null}
-      {marketplaceEnabled && !actionsAvailable ? (
+      {marketplaceEnabled && !actionsAvailable && !isDuskDomainTxBusy(txState) ? (
         <PanelMessage icon={<Store size={18} />} tone="subtle">Connect a wallet to transact.</PanelMessage>
       ) : null}
 

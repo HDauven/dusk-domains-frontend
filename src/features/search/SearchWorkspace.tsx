@@ -4,6 +4,7 @@ import { SearchResultPanel, type SearchResultPanelProps, type SearchResultView }
 type SearchWorkspaceProps = SearchResultPanelProps & {
   checked: boolean
   loading: boolean
+  resultReady: boolean
   onCheckAvailability: () => void
   onQueryChange: (value: string) => void
   query: string
@@ -23,6 +24,7 @@ export function SearchWorkspace({
   query,
   recordsProps,
   registrationProps,
+  resultReady,
   resultView,
   settingsProps,
   subdomainsProps,
@@ -37,7 +39,11 @@ export function SearchWorkspace({
         query={query}
       />
 
-      {checked ? (
+      {checked && !resultReady ? (
+        <p role="status">{loading ? 'Checking domain data…' : 'Domain data is unavailable. Search again shortly.'}</p>
+      ) : null}
+
+      {checked && resultReady ? (
         <SearchResultPanel
           activityProps={activityProps}
           availabilityProps={availabilityProps}
