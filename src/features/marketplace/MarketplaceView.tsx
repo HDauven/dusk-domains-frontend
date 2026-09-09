@@ -33,13 +33,24 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         headingId="marketplace-heading"
       />
 
-      <div aria-label="Marketplace views" className="marketplace-tabs" role="tablist">
+      <div aria-label="Marketplace views" className="marketplace-tabs" role="tablist" onKeyDown={(event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+        const buttons = [...event.currentTarget.querySelectorAll('button')]
+        const current = buttons.indexOf(document.activeElement as HTMLButtonElement)
+        if (current < 0) return
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+          : (current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length
+        event.preventDefault()
+        buttons[next].focus()
+        buttons[next].click()
+      }}>
         {tabs.map((item) => (
           <button
             aria-selected={tab === item.id}
             className={tab === item.id ? 'active' : ''}
             key={item.id}
             role="tab"
+            tabIndex={tab === item.id ? 0 : -1}
             type="button"
             onClick={() => onTabChange(item.id)}
           >

@@ -37,7 +37,7 @@ export function ReferralLinkCard({
     >
       {selectedAddress ? (
         <div className="copy-row">
-          <input readOnly value={referralLink} />
+          <input aria-label="Referral link" readOnly value={referralLink} />
           <button className="commit-button save-record" disabled={!referralLink} type="button" onClick={() => void onCopyReferralLink()}>
             {referralCopied ? 'Copied' : 'Copy'}
           </button>

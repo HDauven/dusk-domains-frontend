@@ -1,5 +1,5 @@
 import { ShieldCheck, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { ClaimReview } from '../../components/ui/ClaimReview'
 import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 import { auctionDurationLabel, auctionTimeLabel } from './marketplacePresentation'
@@ -7,24 +7,29 @@ import type { MarketplaceViewProps } from './marketplaceTypes'
 
 export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps }) {
   const review = props.bidReview
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const open = Boolean(review)
 
-  useEffect(() => {
-    if (!review) return
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') props.onCancelBidReview()
+  useLayoutEffect(() => {
+    if (!open) return
+    const dialog = dialogRef.current
+    const previousFocus = document.activeElement
+    dialog?.showModal()
+    return () => {
+      dialog?.close()
+      // React can remove the dialog before the browser restores its opener.
+      if (previousFocus instanceof HTMLElement) previousFocus.focus()
     }
-    globalThis.addEventListener('keydown', closeOnEscape)
-    return () => globalThis.removeEventListener('keydown', closeOnEscape)
-  }, [props, review])
+  }, [open])
 
   if (!review) return null
   const { auction } = review
 
   return (
-    <div className="marketplace-review-backdrop" role="presentation" onMouseDown={(event) => {
+    <dialog ref={dialogRef} aria-labelledby="marketplace-bid-review-heading" className="marketplace-review-backdrop" onCancel={props.onCancelBidReview} onMouseDown={(event) => {
       if (event.currentTarget === event.target) props.onCancelBidReview()
     }}>
-      <section aria-labelledby="marketplace-bid-review-heading" aria-modal="true" className="marketplace-bid-review" role="dialog">
+      <section className="marketplace-bid-review">
         <div className="marketplace-review-heading">
           <div>
             <span>Review transaction</span>
@@ -61,7 +66,7 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps })
           <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onPlaceBid(auction)}>Confirm in wallet</button>
         </div>
       </section>
-    </div>
+    </dialog>
   )
 }
 
