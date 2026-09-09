@@ -25,6 +25,7 @@ export type AppendDomainRecordActivity = (input: {
 export type UseDomainRecordActionsProps = {
   activeRecordTarget: RecordTargetOption | undefined
   appendActivity: AppendDomainRecordActivity
+  canRemoveRecords: boolean
   canSaveRecords: boolean
   criticalRecordChange: boolean
   nodeHex: string

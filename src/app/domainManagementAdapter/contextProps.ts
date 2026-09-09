@@ -26,7 +26,6 @@ export function buildDomainManagementContextProps(inputs: AppViewModelInputs) {
     ...searchRuntime,
     ...searchState,
     ...walletRuntime,
-    canRemoveRecords: walletRuntime.walletSession.canSign,
     clampDurationYears,
     editableRecordKeys,
     fallbackManager,

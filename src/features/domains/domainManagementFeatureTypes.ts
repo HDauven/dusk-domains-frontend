@@ -38,7 +38,6 @@ export type UseDomainManagementFeatureProps =
       name?: string
     }) => void
     canChangeRecordSource: boolean
-    canRemoveRecords: boolean
     clampDurationYears: (years: number) => number
     confirmationInput: string
     criticalRecordConfirmation: string
