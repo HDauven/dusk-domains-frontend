@@ -14,7 +14,7 @@ export function pluralize(count: number, singular: string, plural = `${singular}
 }
 
 export function formatPendingReservationDetail(reservation: PendingNameReservation) {
-  return `Reserved ${formatIsoDay(reservation.createdAt)} · ${reservation.durationYears} ${pluralize(reservation.durationYears, 'year')}`
+  return `Saved ${formatIsoDay(reservation.createdAt)} · ${reservation.durationYears} ${pluralize(reservation.durationYears, 'year')}`
 }
 
 export function formatIsoDay(value: string) {
@@ -47,7 +47,7 @@ export function completeRegistrationButtonCopy(
 }
 
 export function pendingReservationStatusCopy(status: CommitWindowStatus, waitBlocks: number) {
-  if (status === 'missing') return 'Confirming'
+  if (status === 'missing') return 'Unconfirmed'
   if (status === 'waiting') return `Ready in ${waitBlocks} ${pluralize(waitBlocks, 'block')}`
   if (status === 'stale') return 'Expired'
   return 'Ready'
@@ -60,9 +60,9 @@ export function pendingReservationActionCopy(status: CommitWindowStatus) {
 }
 
 export function pendingReservationNextStepCopy(status: CommitWindowStatus, waitBlocks: number) {
-  if (status === 'missing') return 'We will show it here as soon as the reservation confirms.'
+  if (status === 'missing') return 'Check your wallet before retrying. If you canceled approval, forget this saved request to start again.'
   if (status === 'waiting') return `Registration unlocks in ${waitBlocks} ${pluralize(waitBlocks, 'block')}.`
-  if (status === 'stale') return 'This reservation expired. Reserve it again to continue.'
+  if (status === 'stale') return 'This reservation expired. Forget the saved request in My Domains before reserving again.'
   return 'Ready to complete now.'
 }
 

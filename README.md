@@ -57,6 +57,15 @@ VITE_DUSK_DOMAINS_STATUS_URL
 
 Never commit filled env files, mnemonics, wallet backups or operator credentials.
 
+## Registration recovery
+
+The reservation secret is saved in this browser before wallet approval. After an
+interruption, reopen the name in Search or My Domains and check its status before
+retrying. Unconfirmed, rejected and expired requests remain saved until explicitly
+forgotten. Forgetting deletes the local recovery secret; it does not cancel a
+submitted transaction. Keep browser storage enabled and retain it until the
+registration is resolved.
+
 ## Scripts
 
 ```bash
