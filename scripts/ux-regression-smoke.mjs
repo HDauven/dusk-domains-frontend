@@ -115,6 +115,60 @@ try {
   await page.locator('.tx-status.awaiting_approval').waitFor()
   assert.equal(await page.getByText('Connect a wallet to transact.', { exact: true }).count(), 0)
   await page.evaluate(async () => {
+    const { React, root } = window
+    const { useMarketplaceFeature } = await import('/src/features/marketplace/useMarketplaceFeature.ts')
+    const { createDuskNodeBlockHeightReader } = await import('/src/app/duskNodeHeight.ts')
+    const { createDuskDomainsOnChainClient } = await import('/src/names/internal.ts')
+    localStorage.removeItem('dusk-domains-marketplace-watchlist-v1')
+    const auction = { node: `0x${'11'.repeat(32)}`, name: 'heightbound.dusk', sellerAuthority: `0x${'22'.repeat(32)}`,
+      reservePriceLux: 5000000000, startBlockHeight: null, endBlockHeight: null, bidCount: 0, highestBid: null }
+    window.heightBoundAuction = auction
+    const currentBlockHeight = createDuskNodeBlockHeightReader('http://node.test/', async (_input, init) => {
+      window.heightFetchStarted = true
+      return new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => {
+        window.heightFetchAborted = true
+        reject(init.signal.reason)
+      }, { once: true }))
+    })
+    const args = { mainView: 'search', indexerClient: null, liveWritesAvailable: true,
+      selectedAddress: 'buyer', selectedAuthority: `0x${'33'.repeat(32)}`,
+      runtimeConfig: { chainId: 'dusk:0', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: `0x${'55'.repeat(32)}` } } },
+      duskDomainsOnChainClient: createDuskDomainsOnChainClient({ read: { read: async () => null }, currentBlockHeight }),
+      marketplaceOnChainClient: { getAuction: async () => ({ ok: true, value: { ...auction,
+        reservePriceLux: 5000000000n, startBlock: null, endBlock: null } }) },
+      ensurePublicBalanceForLiveWrite: async () => true, onOpenWalletConnection: () => {},
+      submitNameWrite: async (_name, _call, options) => {
+        window.heightBoundWrites = (window.heightBoundWrites || 0) + 1
+        const state = { status: 'executed', txId: 'fixture-bid', context: { title: 'Place bid' } }
+        options.onUpdate(state)
+        return state
+      } }
+    function BidSync() {
+      const { marketplaceProps: props } = useMarketplaceFeature(args)
+      window.heightBoundMarketplace = props
+      return React.createElement('output', { id: 'height-bound-bid', 'data-status': props.txState?.status,
+        'data-watched': props.watchedNodes.includes(auction.node) }, `${props.confirmation} ${props.error}`)
+    }
+    root.render(React.createElement(BidSync))
+  })
+  await page.locator('#height-bound-bid').waitFor({ state: 'attached' })
+  await page.evaluate(() => window.heightBoundMarketplace.onBidDraftChange(window.heightBoundAuction.node, '5'))
+  await page.waitForFunction(() => window.heightBoundMarketplace.bidDrafts[window.heightBoundAuction.node] === '5')
+  await page.evaluate(() => {
+    window.heightBoundBidDone = false
+    void window.heightBoundMarketplace.onPlaceBid(window.heightBoundAuction).then(() => { window.heightBoundBidDone = true })
+  })
+  await page.waitForFunction(() => window.heightFetchStarted)
+  assert.equal(await page.locator('#height-bound-bid').getAttribute('data-status'), 'executed')
+  assert.match(await page.locator('#height-bound-bid').textContent(), /Syncing marketplace data/)
+  await page.waitForFunction(() => window.heightBoundBidDone, null, { timeout: 15_000 })
+  assert.ok(await page.evaluate(() => window.heightFetchAborted))
+  assert.equal(await page.evaluate(() => window.heightBoundWrites), 1)
+  assert.equal(await page.locator('#height-bound-bid').getAttribute('data-status'), 'executed')
+  assert.equal(await page.locator('#height-bound-bid').getAttribute('data-watched'), 'true')
+  assert.match(await page.locator('#height-bound-bid').textContent(), /Transaction confirmed, but marketplace data is still syncing/)
+  assert.doesNotMatch(await page.locator('#height-bound-bid').textContent(), /Syncing marketplace data|Transaction failed/)
+  await page.evaluate(async () => {
     await import('/src/index.css')
     await import('/src/App.css')
     const { MyDomainRows } = await import('/src/features/domains/my-domains/MyDomainRows.tsx')

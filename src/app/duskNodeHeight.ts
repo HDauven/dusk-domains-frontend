@@ -26,6 +26,7 @@ export async function fetchDuskNodeCurrentBlockHeight(
   try {
     const response = await fetchImpl(endpoint, {
       method: 'POST',
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
