@@ -12,7 +12,7 @@ export function RegistrationPurchaseChecklist({
   return (
     <div className="includes review-includes">
       <h3>{registrationComplete ? 'Complete' : 'Purchase'}</h3>
-      <span><CheckCircle2 size={16} /> Reservation signed</span>
+      <span><CheckCircle2 size={16} /> Reservation saved</span>
       <span>
         {registrationComplete ? <CheckCircle2 size={16} /> : <Clock size={16} />}
         {registrationComplete ? 'Domain active' : commitWindow.status === 'ready' ? 'Ready to complete' : pendingReservationNextStepCopy(commitWindow.status, commitWindow.waitBlocks)}

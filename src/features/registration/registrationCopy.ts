@@ -1,6 +1,5 @@
 import { txStatusCopy } from '../../components/status/txStatus'
 import {
-  REGISTRATION_MIN_REVEAL_WAIT_BLOCKS,
   registrationCommitWindow,
   type DuskDomainTxState,
   type PendingNameReservation,
@@ -81,16 +80,10 @@ export function commitWindowCopy(
   waitBlocks: number,
   staleInBlocks: number,
 ) {
-  if (status === 'missing') {
-    return `Start by reserving the name. Registration unlocks ${REGISTRATION_MIN_REVEAL_WAIT_BLOCKS} blocks after the reservation confirms.`
-  }
+  if (status === 'missing' || status === 'stale') return pendingReservationNextStepCopy(status, waitBlocks)
 
   if (status === 'waiting') {
     return `Reservation confirmed. Registration unlocks in ${waitBlocks} ${pluralize(waitBlocks, 'block')} and expires in ${formatBlocks(staleInBlocks)}.`
-  }
-
-  if (status === 'stale') {
-    return 'This reservation expired. Start registration again.'
   }
 
   return `Ready to complete. This reservation expires in ${formatBlocks(staleInBlocks)}.`

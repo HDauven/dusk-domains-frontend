@@ -1,7 +1,14 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
-import { listPendingNameReservations, namehashHex, type DuskDomainTxState } from '../../names/internal'
+import { listPendingNameReservations, namehashHex, registrationCommitWindow, type DuskDomainTxState } from '../../names/internal'
 import { prepareRegistrationCommit } from './prepareRegistrationCommit'
 import { forgetPendingReservation } from '../search/actions/forgetPendingReservation'
+import { openPendingReservation } from '../search/actions/openPendingReservation'
+import { RegistrationPurchaseStep } from './RegistrationPurchaseStep'
+import { RegistrationReviewStep } from './RegistrationReviewStep'
+
+vi.mock('../search/searchControllerReset', () => ({ resetSearchState: vi.fn() }))
 
 const controller = `0x${'11'.repeat(32)}`
 function args() {
@@ -69,4 +76,44 @@ it('fails before broadcast if storage fails or a previous uncertain reservation 
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   expect(broadcast).toHaveBeenCalledOnce()
   expect(props.setWalletError.mock.calls.at(-1)?.[0]).toContain('browser storage')
+})
+
+it('does not call a rejected saved request signed or submitted after reopening Purchase and Review', async () => {
+  const props = args()
+  const submitNameWrite = vi.fn(async (_name, _call, options) => {
+    options.onUpdate({ status: 'awaiting_approval' })
+    return { status: 'rejected' }
+  })
+  await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
+  const saved = listPendingNameReservations()[0]
+  expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: null })
+  const setPreparedCommit = vi.fn(), setRegistrationStep = vi.fn()
+  let committed = false, currentBlockHeight: number | null = null
+  const noop = () => {}
+  const getCommitment = vi.fn(async () => null)
+  await openPendingReservation({ ...props, chainId: 'dusk:0', setPreparedCommit, setRegistrationStep,
+    setCommitted: (value: boolean) => { committed = value },
+    setCurrentBlockHeight: (value: number | null) => { currentBlockHeight = value },
+    openSearchView: noop, setDuration: noop, setChecked: noop, setResultView: noop,
+    setActivityLoading: noop, setApiSearchResult: noop, hydrateNameFromIndexer: noop,
+    indexerClient: { getCommitment, getHealth: async () => ({ ok: true, currentBlockHeight: 500 }),
+      searchName: async () => ({ canonical: saved.name, status: 'available' }) } } as never, saved)
+  expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment)
+  expect(setRegistrationStep).toHaveBeenLastCalledWith('purchase')
+  expect(committed).toBe(true) // This flag resumes the flow; it does not prove a broadcast.
+  const commitWindow = registrationCommitWindow(setPreparedCommit.mock.calls.at(-1)?.[0].committedBlockHeight, currentBlockHeight)
+  expect(commitWindow.status).toBe('missing')
+  const view = { ...props, committed, commitWindow, walletSetupState: 'connected',
+    canRegister: true, canPrepareCommit: false, canRevealRegistration: false, commitBusy: false,
+    commitStale: false, commitTxState: null, txBusy: false, txState: null,
+    activeReferral: null, appliedReferral: null, registrationCompletion: null,
+    registrationFee: 10, total: 10, networkFee: null, expiryDate: '-', registrationTargetAddress: 'owner' }
+  const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, view as never))
+    + renderToStaticMarkup(createElement(RegistrationReviewStep, view as never))
+  expect(html).toContain('Unconfirmed')
+  expect(html.match(/Reservation saved/g)).toHaveLength(2)
+  expect(html).toContain('Check your wallet before retrying')
+  expect(html).not.toMatch(/Reservation signed|Reservation submitted|>Reserved</)
+  expect(html).not.toContain('Start by reserving the name')
+  expect(submitNameWrite).toHaveBeenCalledOnce()
 })
