@@ -25,6 +25,7 @@ type UseSearchWorkspaceFeatureProps = {
   recentWarnings: SearchWorkspaceProps['activityProps']['recentWarnings']
   recordsProps: SearchWorkspaceProps['recordsProps']
   registrationProps: SearchWorkspaceProps['registrationProps']
+  resultReady: boolean
   resultStatus: SearchWorkspaceProps['availabilityProps']['status']
   resultIssues: SearchWorkspaceProps['overviewProps']['resultIssues']
   resultView: SearchWorkspaceProps['resultView']
@@ -55,6 +56,7 @@ export function useSearchWorkspaceFeature({
   recentWarnings,
   recordsProps,
   registrationProps,
+  resultReady,
   resultStatus,
   resultIssues,
   resultView,
@@ -114,6 +116,7 @@ export function useSearchWorkspaceFeature({
     query,
     recordsProps,
     registrationProps,
+    resultReady,
     resultView,
     settingsProps,
     subdomainsProps,

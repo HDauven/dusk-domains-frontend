@@ -3,10 +3,10 @@ import { createDuskConnectKit } from '@dusk/connect/ui'
 import { browserWriteProofUrlFromEnv } from './appEnv'
 import { duskDomainsConnectOptions } from './appConstants'
 import { createDuskNodeBlockHeightReader } from './duskNodeHeight'
+import { createHealthyIndexerClient } from './indexerReadHelpers'
 import {
   createDuskDomainsMarketplaceOnChainClient,
   createDuskDomainsOnChainClient,
-  createDuskDomainsIndexerClient,
   createDuskDomainsOnChainReadTransport,
   createDuskDomainsRuntimeConfig,
   type DuskDomainsRuntimeEnv,
@@ -18,7 +18,7 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
   const browserWriteProofUrl = useMemo(() => browserWriteProofUrlFromEnv(env), [env])
   const recordSourceContractId = runtimeConfig.contracts.core.contractId
   const indexerClient = useMemo(() => (
-    runtimeConfig.indexerUrl ? createDuskDomainsIndexerClient({ baseUrl: runtimeConfig.indexerUrl }) : null
+    runtimeConfig.indexerUrl ? createHealthyIndexerClient(runtimeConfig.indexerUrl) : null
   ), [runtimeConfig.indexerUrl])
   const getCurrentBlockHeight = useMemo(() => (
     createDuskNodeBlockHeightReader(runtimeConfig.nodeUrl)

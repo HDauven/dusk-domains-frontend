@@ -42,6 +42,11 @@ VITE_DUSK_DOMAINS_INDEXER_URL
 VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES=true
 ```
 
+Projection reads require a reachable indexer reporting `health.ok: true`. Indexer
+fetches time out after 10 seconds each; multi-request reads and confirmation retries
+can take longer. A confirmed wallet transaction may precede finalized indexing:
+wait for synchronization or refresh the data rather than resubmitting it.
+
 The node endpoint must accept browser requests from the frontend origin. A raw
 `rusk-private` endpoint may need a local CORS proxy for browser-based contract
 reads; hosted Dusk node endpoints should expose the required CORS headers.
