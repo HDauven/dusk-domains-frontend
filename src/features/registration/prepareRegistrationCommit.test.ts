@@ -7,6 +7,8 @@ import { forgetPendingReservation } from '../search/actions/forgetPendingReserva
 import { openPendingReservation } from '../search/actions/openPendingReservation'
 import { RegistrationPurchaseStep } from './RegistrationPurchaseStep'
 import { RegistrationReviewStep } from './RegistrationReviewStep'
+import { refreshCommitBlockStateFromIndexer } from './pendingReservationSync'
+import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 
 vi.mock('../search/searchControllerReset', () => ({ resetSearchState: vi.fn() }))
 
@@ -27,7 +29,7 @@ function args() {
     setIndexerError: noop, setIndexerConfirmation: noop,
   }
 }
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
 it('saves before wallet approval and preserves the secret while a confirmed height read stalls', async () => {
   const props = args()
@@ -116,4 +118,36 @@ it('does not call a rejected saved request signed or submitted after reopening P
   expect(html).not.toMatch(/Reservation signed|Reservation submitted|>Reserved</)
   expect(html).not.toContain('Start by reserving the name')
   expect(submitNameWrite).toHaveBeenCalledOnce()
+})
+
+it('starts recovery aging after execution, not a long wallet approval', async () => {
+  vi.useFakeTimers()
+  const startedAt = new Date('2030-01-01T00:00:00Z').getTime()
+  vi.setSystemTime(startedAt)
+  const props = args()
+  const state = { prepared: null as PreparedRegistrationCommit | null, height: null as number | null }
+  const setPreparedCommit: Parameters<typeof refreshCommitBlockStateFromIndexer>[0]['setPreparedCommit'] = update => {
+    state.prepared = typeof update === 'function' ? update(state.prepared) : update
+  }
+  const getCurrentBlockHeight = async () => null
+  await prepareRegistrationCommit({ ...props, getCurrentBlockHeight, setPreparedCommit,
+    submitNameWrite: async (_name: unknown, _call: unknown, options: { onUpdate: (state: unknown) => void }) => {
+      options.onUpdate({ status: 'awaiting_approval' })
+      vi.setSystemTime(startedAt + 90_000)
+      return { status: 'executed', txId: 'confirmed-after-long-approval' }
+    } } as never)
+  const saved = listPendingNameReservations()[0]
+  expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: 'confirmed-after-long-approval' })
+  const getCommitment = vi.fn(async () => null)
+  await refreshCommitBlockStateFromIndexer({ chainId: 'dusk:0', commitment: saved.commitment,
+    getCurrentBlockHeight, selectedAuthority: controller, setPreparedCommit,
+    setCurrentBlockHeight: height => { state.height = height }, loadPendingReservations: props.loadPendingReservations,
+    indexerClient: { getHealth: async () => ({ ok: true, currentBlockHeight: 500 }), getCommitment } as never })
+  expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment)
+  expect(state.height).toBe(500)
+  expect(listPendingNameReservations()[0].committedBlockHeight).toBeNull()
+  expect(state.prepared?.committedBlockHeight).toBeNull()
+  expect(registrationCommitWindow(state.prepared?.committedBlockHeight, state.height).status).toBe('missing')
+  expect(saved.createdAt).toBe(new Date(startedAt).toISOString())
+  expect(saved.updatedAt).toBe(new Date(startedAt + 90_000).toISOString())
 })

@@ -99,6 +99,7 @@ export async function prepareRegistrationCommit({
     setTxState(null)
     upsertPendingNameReservation({
       ...reservation,
+      updatedAt: new Date().toISOString(),
       committedBlockHeight: initialBlockHeight,
       committedTxId: finalState.txId ?? null,
     })
