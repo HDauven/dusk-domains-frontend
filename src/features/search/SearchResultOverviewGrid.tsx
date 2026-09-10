@@ -25,7 +25,7 @@ export function SearchResultOverviewGrid({
       </div>
       <div>
         <span>Status</span>
-        <strong>{reservedByUser ? 'Reserved by you' : overviewStatusCopy(resultStatus)}</strong>
+        <strong>{reservedByUser ? 'Registration saved' : overviewStatusCopy(resultStatus)}</strong>
       </div>
       <div>
         <span>Primary</span>

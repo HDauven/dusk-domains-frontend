@@ -28,8 +28,8 @@ export function MyDomainsHeader({
             items={[
               ...(pendingReservationCount > 0
                 ? [{
-                    ariaLabel: `${pendingReservationCount} ${pluralize(pendingReservationCount, 'reserved domain', 'reserved domains')}`,
-                    label: 'reserved',
+                    ariaLabel: `${pendingReservationCount} ${pluralize(pendingReservationCount, 'saved reservation')}`,
+                    label: 'saved',
                     value: pendingReservationCount,
                   }]
                 : []),
