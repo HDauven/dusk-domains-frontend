@@ -61,7 +61,6 @@ export {
   walletRequiredIntro,
   walletSetupActionCopy,
   walletSetupActionTitle,
-  walletSetupValueCopy,
 } from './walletCopy'
 
 export function selectedWalletProviderName(state: DuskWalletState) {

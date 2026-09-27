@@ -6,12 +6,12 @@ export function ReservationRecoveryNotice({
   onView: () => void
 }) {
   return (
-    <div className="reservation-recovery">
-      <Clock size={17} />
-      <span>This reservation is saved in My Domains.</span>
-      <button className="commit-button save-record" type="button" onClick={onView}>
+    <p className="reservation-recovery">
+      <Clock size={15} />
+      <span>If you leave, this reservation waits for you under My names.</span>
+      <button className="text-button" type="button" onClick={onView}>
         View
       </button>
-    </div>
+    </p>
   )
 }

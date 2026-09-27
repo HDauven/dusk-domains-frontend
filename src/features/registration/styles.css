@@ -1,6 +1,481 @@
-@import './styles/registration.css';
-@import './styles/registration-duration.css';
-@import './styles/registration-setup.css';
-@import './styles/registration-review.css';
-@import './styles/registration-navigation.css';
-@import './styles/registration-progress.css';
+/* Registration: the claim card grows a stepper, the current step and the summary stub. */
+
+.register-card {
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+}
+
+.register-main {
+  gap: 22px;
+}
+
+/* Stepper: numbered dots on one line. */
+.register-stepper {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.register-stepper li {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.register-stepper li:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  margin: 0 12px 0 2px;
+  background: var(--line-strong);
+}
+
+.register-stepper li.complete:not(:last-child)::after {
+  background: linear-gradient(90deg, var(--rose), var(--dawn));
+}
+
+.register-stepper li:last-child {
+  flex: 0 0 auto;
+}
+
+.register-stepper-dot {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font: 600 12px var(--font-mono);
+}
+
+.register-stepper li.active {
+  color: var(--ink);
+}
+
+.register-stepper li.active .register-stepper-dot {
+  border-color: transparent;
+  color: var(--night);
+  background: var(--grad-dusk);
+  box-shadow: 0 0 18px rgba(255, 111, 145, 0.45);
+}
+
+.register-stepper li.complete {
+  color: var(--ink-2);
+}
+
+.register-stepper li.complete .register-stepper-dot {
+  border-color: rgba(255, 214, 176, 0.5);
+  color: var(--dawn);
+}
+
+.register-head h2 {
+  margin: 0 0 6px;
+}
+
+/* Steps */
+.register-step {
+  display: grid;
+  gap: 14px;
+}
+
+.register-wallet {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(246, 241, 255, 0.03);
+}
+
+.register-wallet svg {
+  flex: 0 0 auto;
+  color: var(--ok);
+}
+
+.register-wallet div {
+  display: grid;
+  gap: 2px;
+}
+
+.register-wallet strong {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.register-wallet code {
+  color: var(--ink);
+  font: 500 14px var(--font-mono);
+}
+
+.register-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.register-toggle > span {
+  display: grid;
+  gap: 3px;
+}
+
+.register-toggle strong {
+  color: var(--ink);
+  font-size: 14.5px;
+}
+
+.register-toggle em {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: normal;
+}
+
+/* A switch drawn on the checkbox itself. */
+.register-toggle input {
+  position: relative;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(246, 241, 255, 0.08);
+  cursor: pointer;
+  appearance: none;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.register-toggle input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
+}
+
+.register-toggle input:checked {
+  border-color: transparent;
+  background: var(--grad-dusk);
+}
+
+.register-toggle input:checked::after {
+  background: var(--night);
+  transform: translateX(18px);
+}
+
+.register-toggle input:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.register-toggle input:focus-visible {
+  outline: 2px solid var(--dawn);
+  outline-offset: 3px;
+}
+
+.registration-address-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+/* Action: what to do now, and the one button that does it. */
+.register-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px 18px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid rgba(255, 214, 176, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 111, 145, 0.08), rgba(123, 97, 255, 0.06));
+}
+
+.register-action-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.register-action-copy strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.register-action-copy span {
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.register-action > .tx-status {
+  grid-column: 1 / -1;
+}
+
+.register-wallet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 14px;
+}
+
+.register-wallet-help {
+  display: grid;
+  flex-basis: 100%;
+  justify-items: end;
+  gap: 4px;
+  color: var(--ink-2);
+  font-size: 13px;
+  text-align: right;
+}
+
+.register-reservation {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 14px;
+  align-items: baseline;
+}
+
+.register-reservation span {
+  color: var(--muted);
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.register-reservation strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.register-reservation.ready strong,
+.register-reservation.executed strong {
+  color: var(--ok);
+}
+
+.register-reservation.stale strong {
+  color: var(--warn);
+}
+
+.register-settle {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(246, 241, 255, 0.08);
+}
+
+.register-settle span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--violet), var(--rose), var(--dawn));
+  transition: width 600ms var(--ease);
+}
+
+/* Completion progress, after the second signature. */
+.registration-progress {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(246, 241, 255, 0.03);
+}
+
+.registration-progress.executed {
+  border-color: rgba(141, 240, 192, 0.3);
+  background: rgba(141, 240, 192, 0.05);
+}
+
+.registration-progress.failed {
+  border-color: rgba(255, 138, 150, 0.35);
+}
+
+.registration-progress-header {
+  display: grid;
+  gap: 3px;
+}
+
+.registration-progress-header strong {
+  color: var(--ink);
+}
+
+.registration-progress-header span {
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.registration-progress ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.registration-progress li {
+  display: flex;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.registration-progress li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.registration-progress li.executed {
+  color: var(--ink-2);
+}
+
+.registration-progress li.executed svg {
+  color: var(--ok);
+}
+
+.registration-progress li.failed svg {
+  color: var(--danger);
+}
+
+.registration-progress li div {
+  display: grid;
+  gap: 2px;
+}
+
+.registration-progress li strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.registration-progress li code {
+  font: 500 12px var(--font-mono);
+}
+
+.registration-progress > .primary-button {
+  justify-self: start;
+}
+
+.register-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.register-nav .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+/* Summary stub */
+.register-summary {
+  align-content: start;
+  gap: 18px;
+}
+
+.register-facts {
+  display: grid;
+  margin: 0;
+}
+
+.register-facts div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.register-facts dt {
+  color: var(--muted);
+}
+
+.register-facts dd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font-weight: 560;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.register-facts code {
+  font: 500 12.5px var(--font-mono);
+}
+
+.register-facts .text-button {
+  font-size: 12.5px;
+}
+
+.register-summary .claim-price strong {
+  font-size: 44px;
+}
+
+@media (max-width: 860px) {
+  .register-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .register-summary .claim-price strong {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 560px) {
+  .register-stepper-label {
+    display: none;
+  }
+
+  .register-stepper li.active .register-stepper-label {
+    display: inline;
+  }
+
+  .register-action {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .register-action > .primary-button,
+  .register-action > .commit-button,
+  .register-wallet-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .register-wallet-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .register-wallet-help {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .registration-address-input-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

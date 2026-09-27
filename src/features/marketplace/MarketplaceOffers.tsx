@@ -18,7 +18,7 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
         <div className="marketplace-section-heading">
           <div>
             <h2 id="make-offer-heading">Make an offer</h2>
-            <p>Funds stay in escrow until accepted, canceled or expired.</p>
+            <p>Your DUSK waits in escrow until the owner accepts, you cancel, or the offer runs out.</p>
           </div>
         </div>
         {!props.selectedAddress ? (
@@ -27,8 +27,8 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
           <>
             <div className="marketplace-form">
               <label className="marketplace-field-wide">
-                <span>Domain</span>
-                <input placeholder="domain.dusk" type="text" value={props.offerName} onChange={(event) => props.onOfferNameChange(event.target.value)} />
+                <span>Name</span>
+                <input placeholder="name.dusk" type="text" value={props.offerName} onChange={(event) => props.onOfferNameChange(event.target.value)} />
               </label>
               <label>
                 <span>Offer</span>
@@ -41,14 +41,14 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
                 </select>
               </label>
             </div>
-            <button className="commit-button ready" disabled={!props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</button>
+            <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</button>
           </>
         )}
       </section>
 
       <section className="marketplace-section" aria-labelledby="your-offers-heading">
         <div className="marketplace-section-heading">
-          <div><h2 id="your-offers-heading">Your offers</h2><p>{ownOffers.length + incomingOffers.length} active</p></div>
+          <h2 id="your-offers-heading" className="eyebrow">Your offers · {ownOffers.length + incomingOffers.length}</h2>
         </div>
         {!ownOffers.length && !incomingOffers.length ? (
           <PanelMessage icon={<HandCoins size={18} />} tone="subtle">No active offers.</PanelMessage>

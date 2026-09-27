@@ -1,7 +1,5 @@
-import type { IndexedMarketplaceAuction } from '../../names/internal'
-
-const BLOCK_SECONDS = 10
-const BLOCKS_PER_DAY = 8_640
+import { DUSK_APPROX_BLOCK_TIME_SECONDS, type IndexedMarketplaceAuction } from '../../names/internal'
+import { AUCTION_BLOCKS_PER_DAY } from './auctionMath'
 
 export type AuctionStatus = 'waiting' | 'live' | 'ending' | 'ended' | 'expired'
 
@@ -17,8 +15,8 @@ export function auctionTimeLabel(auction: IndexedMarketplaceAuction, currentBloc
 }
 
 export function auctionDurationLabel(durationBlocks: number) {
-  if (durationBlocks % BLOCKS_PER_DAY === 0) {
-    const days = durationBlocks / BLOCKS_PER_DAY
+  if (durationBlocks % AUCTION_BLOCKS_PER_DAY === 0) {
+    const days = durationBlocks / AUCTION_BLOCKS_PER_DAY
     return `${days} ${days === 1 ? 'day' : 'days'}`
   }
   return blocksTimeLabel(durationBlocks, `${durationBlocks.toLocaleString()} blocks`)
@@ -54,6 +52,15 @@ export function auctionStatusLabel(status: AuctionStatus) {
   return 'Live auction'
 }
 
+// Badge tones shared with the rest of the app.
+export function auctionStatusTone(status: AuctionStatus) {
+  if (status === 'live') return 'ok'
+  if (status === 'ending') return 'warn'
+  if (status === 'ended') return 'dusk'
+  if (status === 'expired') return 'danger'
+  return ''
+}
+
 export function marketplaceFeeLabel(feeBps: number) {
   const percent = feeBps / 100
   return `${Number.isInteger(percent) ? percent.toFixed(0) : percent.toFixed(2)}%`
@@ -70,10 +77,11 @@ export function isExpired(expiresAt: number, currentBlockHeight: number | null) 
 
 export function blocksTimeLabel(blocks: number, zeroLabel: string) {
   if (blocks === 0) return zeroLabel
-  const seconds = blocks * BLOCK_SECONDS
-  if (seconds < 3_600) return `${Math.ceil(seconds / 60)}m`
-  if (seconds < 86_400) return `${Math.ceil(seconds / 3_600)}h`
-  return `${Math.ceil(seconds / 86_400)}d`
+  const seconds = blocks * DUSK_APPROX_BLOCK_TIME_SECONDS
+  if (seconds < 3_600) return `${Math.ceil(seconds / 60)} min`
+  if (seconds < 86_400) return `${Math.ceil(seconds / 3_600)} h`
+  const days = Math.ceil(seconds / 86_400)
+  return `${days} ${days === 1 ? 'day' : 'days'}`
 }
 
 function authorityKey(value: string) {

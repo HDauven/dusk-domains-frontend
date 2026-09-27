@@ -22,7 +22,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
     return (
       <div className="marketplace-my-view" role="tabpanel">
         <PanelMessage icon={<WalletCards size={18} />} tone="subtle">
-          <button className="text-action" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</button> to see bids, listings, offers and marketplace funds.
+          <button className="text-button" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</button> to see bids, listings, offers and marketplace funds.
         </PanelMessage>
       </div>
     )
@@ -94,7 +94,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
           ))}
           {sellingFixed.map((sale) => (
             <PositionRow
-              action="Marketplace"
+              action="View listing"
               key={sale.node}
               label={sale.name}
               meta={`Expires ${expiryTimeLabel(sale.expiresAtBlockHeight, props.currentBlockHeight)}`}
@@ -130,8 +130,8 @@ function PositionSection({ children, count, description, heading, icon }: { chil
   return (
     <section className="marketplace-position-section" aria-labelledby={id}>
       <div className="marketplace-section-heading">
-        <div><h2 id={id}>{icon} {heading}</h2><p>{description}</p></div>
-        <span className="marketplace-result-count">{count}</span>
+        <h2 id={id}>{icon} {heading} <span>· {count}</span></h2>
+        <p>{description}</p>
       </div>
       <div className="marketplace-position-list">{children}</div>
     </section>

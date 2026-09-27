@@ -17,7 +17,6 @@ export type SubdomainsViewProps = {
   fallbackManager: string
   managedNameExpiresAt: number
   nowSeconds: number
-  onBack: () => void
   onCreateSubname: () => void
   onDelegateManagerChange: (value: string) => void
   onDelegateSubnameChange: (node: string) => void

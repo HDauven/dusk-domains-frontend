@@ -1,4 +1,4 @@
-import { pluralize } from './registrationCopy'
+import { formatWait } from './registrationCopy'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 
 type CompleteRegistrationPreflightResult =
@@ -30,7 +30,7 @@ export function completeRegistrationPreflight({
     return {
       ok: false,
       message: commitWindow.status === 'waiting'
-        ? `Registration is available in ${commitWindow.waitBlocks} ${pluralize(commitWindow.waitBlocks, 'block')}.`
+        ? `Registration is available in about ${formatWait(commitWindow.waitBlocks)}.`
         : 'The reservation expired. Start registration again.',
     }
   }

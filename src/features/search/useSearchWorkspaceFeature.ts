@@ -8,11 +8,17 @@ type SearchResultView = SearchWorkspaceProps['resultView']
 type UseSearchWorkspaceFeatureProps = {
   activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
   activityLoading: boolean
-  canRegister: SearchWorkspaceProps['overviewProps']['canRegister']
+  canRegister: boolean
   checked: SearchWorkspaceProps['checked']
+  currentBlockHeight: number | null
   displayName: string
+  duration: number
+  expiresLabel: string | null
+  expiryDate: string
+  feeConfigLoading: boolean
   nodeHex: string
   onCheckAvailability: SearchWorkspaceProps['onCheckAvailability']
+  onDurationChange: (duration: number) => void
   onOpenPendingReservation: SearchWorkspaceProps['overviewProps']['onOpenPendingReservation']
   onOpenPendingReservations: SearchWorkspaceProps['overviewProps']['onOpenPendingReservations']
   onQueryChange: SearchWorkspaceProps['onQueryChange']
@@ -24,9 +30,10 @@ type UseSearchWorkspaceFeatureProps = {
   query: string
   recentWarnings: SearchWorkspaceProps['activityProps']['recentWarnings']
   recordsProps: SearchWorkspaceProps['recordsProps']
+  registrationFee: number
   registrationProps: SearchWorkspaceProps['registrationProps']
   resultReady: boolean
-  resultStatus: SearchWorkspaceProps['availabilityProps']['status']
+  resultStatus: SearchWorkspaceProps['headerProps']['status']
   resultIssues: SearchWorkspaceProps['overviewProps']['resultIssues']
   resultView: SearchWorkspaceProps['resultView']
   savedReservation: SearchWorkspaceProps['overviewProps']['savedReservation']
@@ -41,9 +48,15 @@ export function useSearchWorkspaceFeature({
   activityLoading,
   canRegister,
   checked,
+  currentBlockHeight,
   displayName,
+  duration,
+  expiresLabel,
+  expiryDate,
+  feeConfigLoading,
   nodeHex,
   onCheckAvailability,
+  onDurationChange,
   onOpenPendingReservation,
   onOpenPendingReservations,
   onQueryChange,
@@ -55,6 +68,7 @@ export function useSearchWorkspaceFeature({
   query,
   recentWarnings,
   recordsProps,
+  registrationFee,
   registrationProps,
   resultReady,
   resultStatus,
@@ -69,48 +83,54 @@ export function useSearchWorkspaceFeature({
   const searchProps: SearchWorkspaceProps = {
     activityProps: {
       activityEntries,
+      currentBlockHeight,
       displayName,
       formatActivityTime,
       loading: activityLoading,
-      onBack: () => onResultViewChange('details'),
       recentWarnings,
-    },
-    availabilityProps: {
-      displayName,
-      reserved: Boolean(savedReservation),
-      status: resultStatus,
     },
     checked,
     detailsProps: {
+      activityEntries,
+      currentBlockHeight,
       displayName,
+      formatActivityTime,
       onActivity: () => onResultViewChange('activity'),
-      onBack: () => onResultViewChange('overview'),
       onManageRecords: () => onResultViewChange('records'),
-      onPrimary: () => onResultViewChange('primary'),
-      onSettings: () => onResultViewChange('manage'),
       onSubdomains: () => onResultViewChange('subnames'),
       parentResolverRecords,
       primaryVerification,
-      recentWarnings,
       subnames,
+    },
+    headerProps: {
+      displayName,
+      expiresLabel,
+      primaryVerified: primaryProps.primaryVerification.verified,
+      records: resultStatus === 'registered' ? parentResolverRecords : [],
+      reserved: Boolean(savedReservation),
+      status: resultStatus,
     },
     loading: activityLoading,
     nodeHex,
     onCheckAvailability,
     onQueryChange,
+    onResultViewChange,
     overviewProps: {
       canRegister,
       displayName,
+      duration,
+      expiryDate,
+      feeConfigLoading,
       onContinueRegistration: onStartRegistration,
+      onDurationChange,
       onOpenPendingReservation,
       onOpenPendingReservations,
       onViewDetails: () => onResultViewChange('details'),
-      primaryVerified: primaryProps.primaryVerification.verified,
-      resultStatus,
+      registrationFee,
       resultIssues,
+      resultStatus,
       savedReservation,
       savedReservationWindow,
-      subnameCount: subnames.length,
     },
     primaryProps,
     query,

@@ -1,9 +1,7 @@
 @import './styles/app-shell.css';
 @import './components/scene/sky.css';
+@import './styles/horizon.css';
 @import './styles/topbar.css';
-@import './styles/runtime-notice.css';
-@import './styles/notices.css';
-@import './styles/domain-flow.css';
 @import './components/brand/styles.css';
 @import './components/wallet/styles.css';
 @import './components/status/styles.css';
@@ -12,6 +10,3 @@
 @import './features/registration/styles.css';
 @import './features/domains/styles.css';
 @import './features/marketplace/styles.css';
-@import './features/activity/styles.css';
-@import './styles/responsive-tablet.css';
-@import './styles/responsive-mobile.css';

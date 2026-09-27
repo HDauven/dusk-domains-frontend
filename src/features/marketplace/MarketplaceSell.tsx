@@ -12,16 +12,16 @@ export function MarketplaceSell(props: MarketplaceViewProps) {
     <div className="marketplace-form-view" role="tabpanel">
       {!props.selectedAddress ? (
         <PanelMessage icon={<Store size={18} />} tone="subtle">
-          <button className="text-action" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</button> to sell a domain.
+          <button className="text-button" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</button> to sell a name.
         </PanelMessage>
       ) : props.sellableNames.length === 0 ? (
-        <PanelMessage icon={<Store size={18} />} tone="subtle">You have no domains available to sell.</PanelMessage>
+        <PanelMessage icon={<Store size={18} />} tone="subtle">You have no names to sell yet.</PanelMessage>
       ) : (
         <section className="marketplace-editor" aria-labelledby="sell-domain-heading">
           <div className="marketplace-section-heading">
             <div>
-              <h2 id="sell-domain-heading">Sell a domain</h2>
-              <p>The domain moves into marketplace escrow until sold or canceled.</p>
+              <h2 id="sell-domain-heading">Sell a name</h2>
+              <p>It moves into escrow until it sells or you cancel.</p>
             </div>
             <div className="marketplace-mode-control" aria-label="Sale type">
               <button className={props.saleMode === 'fixed' ? 'active' : ''} type="button" onClick={() => props.onSaleModeChange('fixed')}>Fixed price</button>
@@ -31,7 +31,7 @@ export function MarketplaceSell(props: MarketplaceViewProps) {
 
           <div className="marketplace-form">
             <label className="marketplace-field-wide">
-              <span>Domain</span>
+              <span>Name</span>
               <select value={props.selectedNode || selectedName?.node || ''} onChange={(event) => props.onSelectedNodeChange(event.target.value)}>
                 {props.sellableNames.map((name) => <option key={name.node} value={name.node}>{name.canonicalName}</option>)}
               </select>
@@ -68,10 +68,10 @@ export function MarketplaceSell(props: MarketplaceViewProps) {
             <code>{abbreviate(props.selectedAddress)}</code>
           </div>
 
-          <p className="field-note">Only second-level domains without subdomains can be sold.</p>
+          <p className="field-note">Only names with no subnames can be listed. Subnames themselves can’t be sold.</p>
 
-          <button className="commit-button ready" disabled={!props.actionsAvailable} type="button" onClick={props.onCreateListing}>
-            {props.saleMode === 'auction' ? 'Create auction' : 'List domain'}
+          <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={props.onCreateListing}>
+            {props.saleMode === 'auction' ? 'Start auction' : 'List for sale'}
           </button>
         </section>
       )}

@@ -6,16 +6,26 @@ import { PrimaryDomainView } from '../domains/PrimaryDomainView'
 import { RecordsView } from '../domains/RecordsView'
 import { SubdomainsView } from '../domains/SubdomainsView'
 import { RegistrationFlowPanel } from '../registration/RegistrationFlowPanel'
-import { AvailabilityBanner } from './AvailabilityBanner'
+import { NameHeader } from './NameHeader'
 import { SearchResultOverview } from './SearchResultOverview'
 
 export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'primary' | 'subnames' | 'activity'
 
+const nameTabs: Array<{ view: SearchResultView, label: string }> = [
+  { view: 'details', label: 'Profile' },
+  { view: 'records', label: 'Records' },
+  { view: 'subnames', label: 'Subnames' },
+  { view: 'primary', label: 'Primary name' },
+  { view: 'manage', label: 'Settings' },
+  { view: 'activity', label: 'Activity' },
+]
+
 export type SearchResultPanelProps = {
   activityProps: ComponentProps<typeof ActivityHistoryView>
-  availabilityProps: ComponentProps<typeof AvailabilityBanner>
   detailsProps: ComponentProps<typeof DomainDetailsView>
+  headerProps: ComponentProps<typeof NameHeader>
   nodeHex: string
+  onResultViewChange: (view: SearchResultView) => void
   overviewProps: ComponentProps<typeof SearchResultOverview>
   primaryProps: ComponentProps<typeof PrimaryDomainView>
   recordsProps: ComponentProps<typeof RecordsView>
@@ -27,9 +37,10 @@ export type SearchResultPanelProps = {
 
 export function SearchResultPanel({
   activityProps,
-  availabilityProps,
   detailsProps,
+  headerProps,
   nodeHex,
+  onResultViewChange,
   overviewProps,
   primaryProps,
   recordsProps,
@@ -38,41 +49,37 @@ export function SearchResultPanel({
   settingsProps,
   subdomainsProps,
 }: SearchResultPanelProps) {
+  const registered = headerProps.status === 'registered'
+  const tabbed = registered && nodeHex && resultView !== 'overview' && resultView !== 'register'
+
   return (
-    <section className="result-area" aria-label="Domain registration">
-      <AvailabilityBanner {...availabilityProps} />
+    <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
+      <NameHeader {...headerProps} />
 
-      {resultView === 'overview' ? (
-        <SearchResultOverview {...overviewProps} />
+      {tabbed ? (
+        <nav className="tabs" aria-label="Name sections">
+          {nameTabs.map(({ view, label }) => (
+            <button
+              key={view}
+              className={resultView === view ? 'active' : ''}
+              aria-current={resultView === view ? 'page' : undefined}
+              type="button"
+              onClick={() => onResultViewChange(view)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       ) : null}
 
-      {resultView === 'details' ? (
-        <DomainDetailsView {...detailsProps} />
-      ) : null}
-
-      {resultView === 'register' ? (
-        <RegistrationFlowPanel {...registrationProps} />
-      ) : null}
-
-      {nodeHex && resultView === 'manage' ? (
-        <DomainSettingsView {...settingsProps} />
-      ) : null}
-
-      {nodeHex && resultView === 'subnames' ? (
-        <SubdomainsView {...subdomainsProps} />
-      ) : null}
-
-      {nodeHex && resultView === 'records' ? (
-        <RecordsView {...recordsProps} />
-      ) : null}
-
-      {nodeHex && resultView === 'primary' ? (
-        <PrimaryDomainView {...primaryProps} />
-      ) : null}
-
-      {resultView === 'activity' ? (
-        <ActivityHistoryView {...activityProps} />
-      ) : null}
+      {resultView === 'overview' ? <SearchResultOverview {...overviewProps} /> : null}
+      {resultView === 'details' ? <DomainDetailsView {...detailsProps} /> : null}
+      {resultView === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
+      {nodeHex && resultView === 'manage' ? <DomainSettingsView {...settingsProps} /> : null}
+      {nodeHex && resultView === 'subnames' ? <SubdomainsView {...subdomainsProps} /> : null}
+      {nodeHex && resultView === 'records' ? <RecordsView {...recordsProps} /> : null}
+      {nodeHex && resultView === 'primary' ? <PrimaryDomainView {...primaryProps} /> : null}
+      {resultView === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}
     </section>
   )
 }

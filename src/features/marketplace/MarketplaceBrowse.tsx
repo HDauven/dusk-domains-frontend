@@ -1,14 +1,16 @@
-import { Clock3, Gavel, Search, Star, Tag } from 'lucide-react'
+import { Clock3, Gavel, Search, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import type { IndexedMarketplaceAuction, IndexedMarketplaceFixedSale } from '../../names/internal'
 import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 import { minimumBidDusk } from './auctionMath'
+import { ListingName } from './ListingName'
 import {
   auctionDurationLabel,
   auctionStartWindowLabel,
   auctionStatus,
   auctionStatusLabel,
+  auctionStatusTone,
   auctionTimeLabel,
   expiryTimeLabel,
   isExpired,
@@ -38,7 +40,7 @@ export function MarketplaceBrowse(props: MarketplaceViewProps) {
   const hasOrders = props.fixedSales.length > 0 || props.auctions.length > 0
 
   if (!hasOrders) {
-    return <PanelMessage icon={<Gavel size={18} />} tone="subtle">No domains are for sale.</PanelMessage>
+    return <PanelMessage icon={<Gavel size={18} />} tone="subtle">Nothing is for sale right now. List one of yours under Sell.</PanelMessage>
   }
 
   return (
@@ -49,20 +51,20 @@ export function MarketplaceBrowse(props: MarketplaceViewProps) {
           <span className="sr-only">Search marketplace</span>
           <input
             aria-label="Search marketplace"
-            placeholder="Search .dusk domains"
+            placeholder="Search names for sale"
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <div className="marketplace-filter-control" aria-label="Marketplace filters">
+        <div className="tabs marketplace-filter-control" aria-label="Marketplace filters">
           {([
             ['all', 'All'],
             ['auction', 'Auctions'],
             ['buy-now', 'Buy now'],
             ['watching', `Watching ${props.watchedNodes.length || ''}`.trim()],
           ] as Array<[MarketFilter, string]>).map(([id, label]) => (
-            <button className={filter === id ? 'active' : ''} key={id} type="button" onClick={() => setFilter(id)}>{label}</button>
+            <button aria-pressed={filter === id} className={filter === id ? 'active' : ''} key={id} type="button" onClick={() => setFilter(id)}>{label}</button>
           ))}
         </div>
         <label className="marketplace-sort-control">
@@ -82,11 +84,8 @@ export function MarketplaceBrowse(props: MarketplaceViewProps) {
       {auctions.length ? (
         <section className="marketplace-section" aria-labelledby="auctions-heading">
           <div className="marketplace-section-heading">
-            <div>
-              <h2 id="auctions-heading">Auctions</h2>
-              <p>Open bidding with a protected closing window.</p>
-            </div>
-            <span className="marketplace-result-count">{auctions.length}</span>
+            <h2 id="auctions-heading" className="eyebrow">Auctions · {auctions.length}</h2>
+            <p>Open bidding. A late bid pushes the close back, so nobody wins by sniping.</p>
           </div>
           <div className="marketplace-card-grid">
             {auctions.map((auction) => <AuctionCard auction={auction} key={auction.node} props={props} watched={watched.has(auction.node)} />)}
@@ -97,11 +96,8 @@ export function MarketplaceBrowse(props: MarketplaceViewProps) {
       {fixedSales.length ? (
         <section className="marketplace-section" aria-labelledby="fixed-sales-heading">
           <div className="marketplace-section-heading">
-            <div>
-              <h2 id="fixed-sales-heading">Buy now</h2>
-              <p>Purchase immediately at the listed price.</p>
-            </div>
-            <span className="marketplace-result-count">{fixedSales.length}</span>
+            <h2 id="fixed-sales-heading" className="eyebrow">Buy now · {fixedSales.length}</h2>
+            <p>Yours the moment it confirms, at the listed price.</p>
           </div>
           <div className="marketplace-card-grid">
             {fixedSales.map((sale) => <FixedSaleCard key={sale.node} props={props} sale={sale} watched={watched.has(sale.node)} />)}
@@ -121,7 +117,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
   return (
     <article className="marketplace-card marketplace-auction-card">
       <div className="marketplace-card-topline">
-        <span className={`marketplace-status-badge ${status}`}>{auctionStatusLabel(status)}</span>
+        <span className={`status-badge ${auctionStatusTone(status)}`}>{auctionStatusLabel(status)}</span>
         <button
           aria-label={`${watched ? 'Stop watching' : 'Watch'} ${auction.name}`}
           aria-pressed={watched}
@@ -132,10 +128,8 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
           <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={17} />
         </button>
       </div>
-      <div className="marketplace-card-name">
-        <Gavel aria-hidden="true" size={19} />
-        <div><h3>{auction.name}</h3><p>{auction.bidCount} {auction.bidCount === 1 ? 'bid' : 'bids'}</p></div>
-      </div>
+      <ListingName name={auction.name} />
+      <p className="marketplace-card-sub">{auction.bidCount} {auction.bidCount === 1 ? 'bid' : 'bids'}</p>
       {leading ? <p className="marketplace-personal-status leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
       {ownAuction ? <p className="marketplace-personal-status selling">Your auction</p> : null}
       <dl className="marketplace-card-metrics">
@@ -151,7 +145,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
           ? `${auctionDurationLabel(auction.durationBlocks)} once the first bid is confirmed.`
           : 'Late bids can extend the closing time.'}
       </p>
-      <button className="primary-button compact marketplace-card-action" type="button" onClick={() => props.onOpenAuction(auction.node)}>
+      <button className="commit-button marketplace-card-action" type="button" onClick={() => props.onOpenAuction(auction.node)}>
         View auction
       </button>
     </article>
@@ -166,7 +160,7 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceViewProps; 
   return (
     <article className="marketplace-card marketplace-fixed-card">
       <div className="marketplace-card-topline">
-        <span className={`marketplace-status-badge ${expired ? 'expired' : 'buy-now'}`}>{expired ? 'Listing expired' : 'Buy now'}</span>
+        <span className={`status-badge ${expired ? 'danger' : 'dusk'}`}>{expired ? 'Listing expired' : 'Buy now'}</span>
         <button
           aria-label={`${watched ? 'Stop watching' : 'Watch'} ${sale.name}`}
           aria-pressed={watched}
@@ -177,10 +171,8 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceViewProps; 
           <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={17} />
         </button>
       </div>
-      <div className="marketplace-card-name">
-        <Tag aria-hidden="true" size={19} />
-        <div><h3>{sale.name}</h3><p>{sale.privateBuyer ? 'Private sale' : 'Available to anyone'}</p></div>
-      </div>
+      <ListingName name={sale.name} />
+      <p className="marketplace-card-sub">{sale.privateBuyer ? 'Private sale' : 'Available to anyone'}</p>
       {ownSale ? <p className="marketplace-personal-status selling">Your listing</p> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>Price</dt><dd>{formatLuxNumberAsDusk(sale.priceLux)}</dd></div>
@@ -193,9 +185,9 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceViewProps; 
         ) : ownSale ? (
           <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelFixedSale(sale)}>Cancel listing</button>
         ) : !props.selectedAddress ? (
-          <button className="primary-button compact" type="button" onClick={props.onOpenWalletConnection}>Connect to buy</button>
+          <button className="commit-button" type="button" onClick={props.onOpenWalletConnection}>Connect to buy</button>
         ) : (
-          <button className="primary-button compact" disabled={!props.actionsAvailable || !allowedBuyer || !sale.escrowed} type="button" onClick={() => props.onBuyFixedSale(sale)}>
+          <button className="commit-button" disabled={!props.actionsAvailable || !allowedBuyer || !sale.escrowed} type="button" onClick={() => props.onBuyFixedSale(sale)}>
             {allowedBuyer ? `Buy for ${formatLuxNumberAsDusk(sale.priceLux)}` : 'Private sale'}
           </button>
         )}

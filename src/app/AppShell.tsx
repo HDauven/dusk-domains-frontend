@@ -17,7 +17,6 @@ export function AppShell({
   onOpenWallet,
   onSearchHome,
   pendingReservationCount,
-  pendingReservationLabel,
   runtimeNotice,
   searching,
   skyNames,
@@ -33,7 +32,6 @@ export function AppShell({
   onOpenWallet: () => void
   onSearchHome: () => void
   pendingReservationCount: number
-  pendingReservationLabel: string
   runtimeNotice: RuntimeNoticeState | null
   searching: boolean
   skyNames: SkyName[]
@@ -51,7 +49,6 @@ export function AppShell({
         onOpenWallet={onOpenWallet}
         onSearchHome={onSearchHome}
         pendingReservationCount={pendingReservationCount}
-        pendingReservationLabel={pendingReservationLabel}
         walletState={walletState}
         walletStatus={walletStatus}
       />

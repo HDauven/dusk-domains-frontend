@@ -15,15 +15,16 @@ type SearchWorkspaceProps = SearchResultPanelProps & {
 
 export function SearchWorkspace({
   activityProps,
-  availabilityProps,
   checked,
   detailsProps,
   featuredNames,
+  headerProps,
   loading,
   nodeHex,
   onCheckAvailability,
   onOpenName,
   onQueryChange,
+  onResultViewChange,
   overviewProps,
   primaryProps,
   query,
@@ -53,9 +54,10 @@ export function SearchWorkspace({
       {checked && resultReady ? (
         <SearchResultPanel
           activityProps={activityProps}
-          availabilityProps={availabilityProps}
           detailsProps={detailsProps}
+          headerProps={headerProps}
           nodeHex={nodeHex}
+          onResultViewChange={onResultViewChange}
           overviewProps={overviewProps}
           primaryProps={primaryProps}
           recordsProps={recordsProps}

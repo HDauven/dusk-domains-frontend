@@ -19,7 +19,6 @@ export function SubdomainsView({
   fallbackManager,
   managedNameExpiresAt,
   nowSeconds,
-  onBack,
   onCreateSubname,
   onDelegateManagerChange,
   onDelegateSubnameChange,
@@ -50,10 +49,8 @@ export function SubdomainsView({
   return (
     <section className="subnames-panel" aria-labelledby="subnames-heading">
       <PanelHeader
-        backLabel="Back to details"
         badge="Namespace"
         headingId="subnames-heading"
-        onBack={onBack}
         subtitle={displayName}
         title="Subdomains"
       />

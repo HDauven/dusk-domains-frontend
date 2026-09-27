@@ -72,7 +72,7 @@ export async function openPendingReservation(
       setCommitted(false)
       setPreparedCommit(null)
       setRegistrationCompletion(null)
-      setRegistrationStep('duration')
+      setRegistrationStep('setup')
       setResultView('details')
       setIndexerConfirmation('Registration is complete.')
       return

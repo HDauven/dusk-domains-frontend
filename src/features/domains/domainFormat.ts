@@ -8,7 +8,6 @@ import {
   type RecordVisibility,
   type ResolverRecordKey,
 } from '../../names/internal'
-import { formatIsoDay } from '../registration/registrationCopy'
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
 export function unixSecondsFromIso(value: string | null | undefined) {
@@ -64,12 +63,6 @@ export function safeNamehashHex(name: string) {
 
 export function formatActivityTime(timestamp: string) {
   return new Date(timestamp).toISOString().slice(0, 16).replace('T', ' ')
-}
-
-export function formatNameLifecycle(name: IndexedNameSummary) {
-  const status = name.status ? `${name.status.slice(0, 1).toUpperCase()}${name.status.slice(1)}` : 'Unknown'
-  if (!name.expiresAt) return status
-  return `${status} until ${formatIsoDay(name.expiresAt)}`
 }
 
 export function blockHeightFromDateInput(value: string, currentBlockHeight: number | null, nowSeconds: number) {

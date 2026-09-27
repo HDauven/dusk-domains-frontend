@@ -1,11 +1,3 @@
-.records-panel {
-  margin-top: 20px;
-  padding: 24px 26px;
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  background: var(--panel-surface);
-}
-
 .record-target-bar {
   display: grid;
   grid-template-columns: minmax(220px, 0.45fr) minmax(0, 1fr);
@@ -189,10 +181,6 @@
   margin-top: 14px;
 }
 
-.public-warning.record {
-  margin-top: 12px;
-}
-
 .record-list {
   display: grid;
   gap: 10px;
@@ -260,8 +248,8 @@
 
 @media (max-width: 1060px) {
   .record-target-bar,
-  .record-draft-row,
-  .record-row {
+.record-draft-row,
+.record-row {
     grid-template-columns: 1fr;
   }
 

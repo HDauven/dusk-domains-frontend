@@ -1,0 +1,488 @@
+/* A name's page: its header, the claim card, the owner's tabs and the public profile. */
+
+.result-area {
+  display: grid;
+  gap: 18px;
+  padding: 18px 0 40px;
+}
+
+/* Header */
+.name-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 8px 0;
+}
+
+.name-hero-orb {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 108px;
+  height: 108px;
+  padding: 6px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, var(--dawn), var(--rose), var(--violet), var(--dawn));
+  box-shadow: 0 0 60px rgba(255, 111, 145, 0.35), 0 0 140px rgba(255, 179, 107, 0.18);
+}
+
+.name-hero-orb .name-avatar {
+  width: 96px;
+  height: 96px;
+  border: 4px solid var(--night);
+}
+
+.name-hero-orb.unclaimed {
+  padding: 0;
+  background: rgba(12, 10, 32, 0.6);
+  border: 1.5px dashed rgba(255, 214, 176, 0.5);
+  box-shadow: 0 0 50px rgba(255, 111, 145, 0.18);
+  color: var(--dawn);
+}
+
+.name-hero-copy {
+  min-width: 0;
+}
+
+.name-hero-title {
+  margin: 0;
+  color: var(--ink);
+  font: 400 clamp(52px, 7vw, 92px)/0.92 var(--font-display);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.name-hero-title span {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.name-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* Claim card: the term on the left, the price stub on the right. */
+.claim-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  overflow: hidden;
+  border: 1px solid rgba(246, 241, 255, 0.16);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-lg);
+}
+
+.claim-main {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 28px;
+}
+
+.claim-main .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.claim-main h2 {
+  margin: 0;
+  color: var(--ink);
+  font: 400 34px/1 var(--font-display);
+}
+
+.claim-main p {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.claim-stub {
+  display: grid;
+  align-content: center;
+  gap: 16px;
+  padding: 28px;
+  border-left: 1px dashed rgba(246, 241, 255, 0.2);
+  background: rgba(246, 241, 255, 0.025);
+}
+
+.claim-price strong {
+  display: block;
+  color: var(--ink);
+  font: 400 52px/1 var(--font-display);
+}
+
+.claim-price small {
+  color: var(--muted);
+  font: 500 16px var(--font-ui);
+}
+
+.claim-price span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.claim-stub .primary-button {
+  width: 100%;
+  min-width: 0;
+}
+
+.claim-card.blocked,
+.claim-card.resume {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.claim-card.blocked .claim-stub,
+.claim-card.resume .claim-stub {
+  min-width: 240px;
+}
+
+/* Public profile */
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profile-side {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+}
+
+.profile-card h2 {
+  margin: 0;
+  color: var(--muted);
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profile-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.address-list,
+.link-list,
+.recent-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.address-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.address-list span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.address-list code {
+  grid-column: 1;
+  color: var(--ink);
+  font: 500 13.5px/1.5 var(--font-mono);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.address-list .copy-value {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.copy-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--ink-2);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.copy-value:hover {
+  color: var(--ink);
+  border-color: rgba(246, 241, 255, 0.34);
+}
+
+.primary-line {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: var(--ink-2);
+  background: rgba(246, 241, 255, 0.04);
+  font-size: 13.5px;
+}
+
+.primary-line strong {
+  color: var(--ink);
+}
+
+.primary-line.success {
+  background: rgba(141, 240, 192, 0.07);
+}
+
+.primary-line.success strong {
+  color: var(--ok);
+}
+
+.primary-line.danger,
+.primary-line.warning {
+  background: rgba(255, 207, 122, 0.07);
+}
+
+.link-list li,
+.recent-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.link-list span,
+.recent-list time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.link-list a,
+.link-list code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  text-align: right;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-list code {
+  font: 500 13px var(--font-mono);
+}
+
+.link-list a:hover {
+  color: var(--dawn);
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip-list li {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(246, 241, 255, 0.04);
+  font: 500 13px var(--font-mono);
+}
+
+/* Activity */
+.timeline {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0 14px 24px;
+  border-top: 1px solid var(--line);
+}
+
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 21px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--grad-dusk);
+  box-shadow: 0 0 10px rgba(255, 111, 145, 0.5);
+}
+
+.timeline-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.timeline-copy strong {
+  color: var(--ink);
+  font-size: 14.5px;
+}
+
+.timeline-copy span {
+  color: var(--muted);
+  font: 500 12.5px var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.timeline-meta {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.timeline-meta time {
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.timeline-meta code {
+  color: var(--muted);
+  font: 500 12px var(--font-mono);
+}
+
+.recent-warning-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.recent-warning {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 207, 122, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 207, 122, 0.06);
+}
+
+.recent-warning svg {
+  flex: 0 0 auto;
+  color: var(--warn);
+}
+
+.recent-warning div {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.recent-warning strong {
+  color: var(--ink);
+}
+
+.recent-warning span,
+.recent-warning code {
+  color: var(--ink-2);
+}
+
+.recent-warning code {
+  font: 500 12px var(--font-mono);
+}
+
+/* Policy notes under the registration steps */
+.policy-notes {
+  display: grid;
+  gap: 8px;
+}
+
+.policy-notes p {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.policy-notes p.danger {
+  color: #ffc2c8;
+}
+
+.policy-notes p.warning {
+  color: var(--warn);
+}
+
+@media (max-width: 860px) {
+  .name-hero {
+    gap: 16px;
+  }
+
+  .name-hero-orb {
+    width: 76px;
+    height: 76px;
+    padding: 4px;
+  }
+
+  .name-hero-orb .name-avatar {
+    width: 68px !important;
+    height: 68px !important;
+  }
+
+  .claim-card,
+  .claim-card.blocked,
+  .claim-card.resume,
+  .profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .claim-main,
+  .claim-stub {
+    padding: 22px;
+  }
+
+  .claim-stub {
+    border-left: 0;
+    border-top: 1px dashed rgba(246, 241, 255, 0.2);
+  }
+
+  .profile-card {
+    padding: 20px;
+  }
+}

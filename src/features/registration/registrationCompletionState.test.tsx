@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { RegistrationPurchaseStep } from './RegistrationPurchaseStep'
+import { RegistrationSummary } from './RegistrationSummary'
 import { createRegistrationCompletionState, markRegistrationCompletionExecuted, updateRegistrationCompletionState } from './registrationCompletionState'
 
 it('keeps the submitted payment and expiry after hydration changes availability', () => {
@@ -10,18 +11,20 @@ it('keeps the submitted payment and expiry after hydration changes availability'
   const completed = markRegistrationCompletionExecuted(confirmed)
   expect(completed.summary).toEqual(summary)
   const noop = () => {}
+  // The panel reads the fee and expiry from the completion summary, not the live preview.
   const html = renderToStaticMarkup(<RegistrationPurchaseStep
-    activeReferral={null} appliedReferral={null} canRegister={false} canRevealRegistration={false}
-    commitWindow={{ status: 'missing', staleInBlocks: 0, waitBlocks: 0 }}
-    displayName="aurora.dusk" expiryDate="-" feeConfigError="" installUrl="" networkFee={null}
-    onOpenWalletConnection={noop} onRegisterName={noop} onSetAddress={noop}
-    registerSetsPrimary={true} registrationCompletion={completed} registrationFee={0}
-    registrationTargetAddress="account" selectedAddress="account" total={0}
-    txBusy={false} txState={null} walletSetupState="connected"
+    canRevealRegistration={false} commitWindow={{ status: 'missing', staleInBlocks: 0, waitBlocks: 0 }}
+    installUrl="" onOpenWalletConnection={noop} onRegisterName={noop} onSetAddress={noop}
+    registrationCompletion={completed} txBusy={false} txState={null} walletSetupState="connected"
+  />) + renderToStaticMarkup(<RegistrationSummary
+    activeReferral={null} appliedReferral={null} committed={true} displayName="aurora.dusk" duration={1}
+    expiryDate={completed.summary?.expiryDate ?? '-'} feeConfigError="" onChangeTerm={noop}
+    registerSetsPrimary={true} registrationComplete={true} registrationFee={completed.summary?.registrationFee ?? 0}
+    registrationTargetAddress="account" selectedAddress="account"
   />)
-  expect(html).toContain('10.00 DUSK')
+  expect(html).toContain('10 <small>DUSK</small>')
   expect(html).toContain(summary.expiryDate)
-  expect(html).toContain('Completed')
-  expect(html).toContain('Shown in wallet for each transaction')
+  expect(html).toContain('Registration complete')
+  expect(html).toContain('Network fees show in your wallet')
   expect(html).not.toContain('Waiting for reservation confirmation')
 })

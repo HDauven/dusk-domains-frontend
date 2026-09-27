@@ -71,7 +71,7 @@ export function ReferralRewardsCard({
           />
           {referralRewardClaimReady ? (
             <button
-              className="commit-button save-record"
+              className="primary-button compact"
               disabled={!referralClaimable || referralBusy}
               type="button"
               onClick={() => void onClaimReferralRewards()}

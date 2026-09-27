@@ -1,13 +1,12 @@
-import { CheckCircle2 } from 'lucide-react'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
 import { txStatusCopy } from '../../components/status/txStatus'
 import { REGISTRATION_MIN_REVEAL_WAIT_BLOCKS, type DuskDomainTxState } from '../../names/internal'
-import { abbreviate } from '../../utils/format'
 import {
   walletSetupActionCopy,
   walletSetupActionTitle,
   type WalletConnectionStatus,
 } from '../wallet/walletStatus'
+import { formatWait } from './registrationCopy'
 import { RegistrationWalletActionButton } from './RegistrationWalletActionButton'
 
 export function RegistrationReviewStep({
@@ -16,14 +15,9 @@ export function RegistrationReviewStep({
   commitStale,
   commitTxState,
   committed,
-  displayName,
-  duration,
   installUrl,
   onOpenWalletConnection,
   onPrepareCommit,
-  registerSetsPrimary,
-  registrationTargetAddress,
-  selectedAddress,
   txBusy,
   walletSetupState,
 }: {
@@ -32,85 +26,46 @@ export function RegistrationReviewStep({
   commitStale: boolean
   commitTxState: DuskDomainTxState | null
   committed: boolean
-  displayName: string
-  duration: number
   installUrl: string
   onOpenWalletConnection: () => void
   onPrepareCommit: () => void
-  registerSetsPrimary: boolean
-  registrationTargetAddress: string
-  selectedAddress: string
   txBusy: boolean
   walletSetupState: WalletConnectionStatus
 }) {
   const walletReady = walletSetupState === 'connected'
   const actionTitle = walletReady
-    ? committed ? 'Reservation saved' : 'Reserve this domain'
+    ? committed ? 'Reservation saved' : 'Sign the reservation'
     : walletSetupActionTitle(walletSetupState)
   const actionCopy = walletReady
     ? committed
-      ? 'Check the saved request in Purchase before retrying.'
-      : `Purchase unlocks ${REGISTRATION_MIN_REVEAL_WAIT_BLOCKS} blocks after confirmation.`
+      ? 'Check its status under Complete before signing again.'
+      : `You can complete about ${formatWait(REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)} after it confirms.`
     : walletSetupActionCopy(walletSetupState)
 
   return (
-    <div className="registration-review">
-      <div className="review-list">
-        <div>
-          <span>Domain</span>
-          <strong>{displayName}</strong>
-        </div>
-        <div>
-          <span>Duration</span>
-          <strong>{duration} {duration === 1 ? 'year' : 'years'}</strong>
-        </div>
-        <div>
-          <span>Owner wallet</span>
-          <strong>{selectedAddress ? abbreviate(selectedAddress) : '-'}</strong>
-        </div>
-        <div>
-          <span>Address</span>
-          <strong>{registrationTargetAddress ? abbreviate(registrationTargetAddress) : '-'}</strong>
-        </div>
-        <div>
-          <span>Primary</span>
-          <strong>{selectedAddress && registerSetsPrimary ? 'Set' : 'Skip'}</strong>
-        </div>
+    <div className="register-action">
+      <div className="register-action-copy">
+        <strong>{actionTitle}</strong>
+        <span>{actionCopy}</span>
       </div>
-
-      <div className="includes review-includes">
-        <h3>Next</h3>
-        <span><CheckCircle2 size={16} /> Reserve</span>
-        <span><CheckCircle2 size={16} /> Wait 5 blocks</span>
-        <span><CheckCircle2 size={16} /> Complete</span>
-      </div>
-
-      <div className="step-action-card">
-        <div>
-          <strong>{actionTitle}</strong>
-          <span>{actionCopy}</span>
-        </div>
-        {walletReady ? (
-          <button
-            className={committed ? 'commit-button ready' : 'commit-button'}
-            disabled={!canPrepareCommit || txBusy}
-            type="button"
-            onClick={() => void onPrepareCommit()}
-          >
-            {commitBusy ? txStatusCopy(commitTxState?.status, commitTxState?.message) : commitStale ? 'Start again' : committed ? 'Saved' : 'Reserve name'}
-          </button>
-        ) : (
-          <RegistrationWalletActionButton
-            className="commit-button wallet-recovery-button"
-            installUrl={installUrl}
-            onOpenWalletConnection={onOpenWalletConnection}
-            walletSetupState={walletSetupState}
-          />
-        )}
-        {commitTxState ? (
-          <TransactionStatusNotice state={commitTxState} />
-        ) : null}
-      </div>
+      {walletReady ? (
+        <button
+          className={committed ? 'commit-button' : 'primary-button compact'}
+          disabled={!canPrepareCommit || txBusy}
+          type="button"
+          onClick={() => void onPrepareCommit()}
+        >
+          {commitBusy ? txStatusCopy(commitTxState?.status, commitTxState?.message) : commitStale ? 'Start again' : committed ? 'Saved' : 'Reserve'}
+        </button>
+      ) : (
+        <RegistrationWalletActionButton
+          className="primary-button compact"
+          installUrl={installUrl}
+          onOpenWalletConnection={onOpenWalletConnection}
+          walletSetupState={walletSetupState}
+        />
+      )}
+      {commitTxState ? <TransactionStatusNotice state={commitTxState} /> : null}
     </div>
   )
 }

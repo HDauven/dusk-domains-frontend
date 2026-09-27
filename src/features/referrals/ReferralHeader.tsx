@@ -1,7 +1,7 @@
 import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { MetricSummary } from '../../components/ui/MetricSummary'
 import { RefreshButton } from '../../components/ui/RefreshButton'
-import { walletRequiredHeading, walletRequiredIntro } from '../wallet/walletStatus'
+import { walletRequiredHeading } from '../wallet/walletStatus'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
 export function ReferralHeader({
@@ -21,17 +21,13 @@ export function ReferralHeader({
   | 'showReferralSummary'
   | 'walletSetupState'
 >) {
-  const walletPrompt = selectedAddress
-    ? 'Share your link and claim rewards.'
-    : walletRequiredIntro(walletSetupState, 'Create your referral link.')
-
   const linkStatus = selectedAddress
     ? 'Ready'
     : walletRequiredHeading(walletSetupState)
 
   return (
     <AccountViewHeader
-      description={walletPrompt}
+      description="Share your link. When someone registers a name through it, you earn part of the fee, and they pay nothing extra."
       heading="Referrals"
       headingId="referrals-heading"
       actions={showReferralSummary ? (

@@ -18,7 +18,6 @@ export function PrimaryDomainView({
   canSetPrimary,
   displayName,
   error,
-  onBack,
   onClearPrimary,
   onEndpointChange,
   onSetPrimary,
@@ -31,7 +30,6 @@ export function PrimaryDomainView({
   canSetPrimary: boolean
   displayName: string
   error: string
-  onBack: () => void
   onClearPrimary: () => void
   onEndpointChange: (value: string) => void
   onSetPrimary: () => void
@@ -43,11 +41,9 @@ export function PrimaryDomainView({
   return (
     <section className="primary-panel" aria-labelledby="primary-heading">
       <PanelHeader
-        backLabel="Back to details"
         badge={primaryVerification.verified ? 'Verified' : 'Address fallback'}
         badgeClassName={primaryVerification.verified ? 'verified' : 'warning'}
         headingId="primary-heading"
-        onBack={onBack}
         subtitle={displayName}
         title="Primary domain"
       />

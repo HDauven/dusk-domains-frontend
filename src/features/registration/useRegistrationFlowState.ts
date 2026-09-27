@@ -45,13 +45,11 @@ export function useRegistrationFlowState({
     registrationTargetAddress &&
     registrationTargetAddressErrors.length === 0,
   )
-  const canContinueRegistrationStep = registrationStep === 'duration'
-    ? canRegister
-    : registrationStep === 'setup'
-      ? Boolean(canRegister && registrationTargetReady)
-      : registrationStep === 'review'
-        ? Boolean(committed)
-        : false
+  const canContinueRegistrationStep = registrationStep === 'setup'
+    ? Boolean(canRegister && registrationTargetReady)
+    : registrationStep === 'review'
+      ? Boolean(committed)
+      : false
 
   return {
     canContinueRegistrationStep,
@@ -65,8 +63,8 @@ export function useRegistrationFlowState({
 }
 
 function setupStepDescription(walletSetupState: WalletConnectionStatus) {
-  if (walletSetupState === 'connected') return 'This wallet will own the domain.'
-  if (walletSetupState === 'locked') return 'Unlock the wallet that will own this domain.'
+  if (walletSetupState === 'connected') return 'This wallet will own the name. You can point it somewhere else.'
+  if (walletSetupState === 'locked') return 'Unlock the wallet that will own this name.'
   if (walletSetupState === 'missing') return 'Install or enable Dusk Wallet to continue.'
-  return 'Connect the wallet that will own this domain.'
+  return 'Connect the wallet that will own this name.'
 }

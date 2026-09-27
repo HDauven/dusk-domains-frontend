@@ -26,8 +26,8 @@ try {
 
     await page.goto(baseUrl, { waitUntil: 'networkidle' })
     await page.getByRole('button', { name: 'Connect Wallet', exact: true }).waitFor({ timeout: 10_000 })
-    await page.getByRole('button', { name: 'Marketplace' }).click()
-    await page.getByRole('heading', { name: 'Marketplace' }).waitFor()
+    await page.getByRole('button', { name: 'Market', exact: true }).click()
+    await page.getByRole('heading', { name: 'Market', exact: true }).waitFor()
     await page.getByText(marketplaceName).waitFor()
     await page.screenshot({ fullPage: true, path: `${outputDir}/marketplace-${viewport.name}.png` })
 
@@ -39,8 +39,8 @@ try {
 
     await page.getByRole('button', { name: 'View auction' }).click()
     await page.getByRole('heading', { name: marketplaceName }).waitFor()
-    await page.getByRole('heading', { name: 'Auction details' }).waitFor()
-    await page.getByRole('heading', { name: 'Auction activity' }).waitFor()
+    await page.getByRole('heading', { name: 'Details', exact: true }).waitFor()
+    await page.getByRole('heading', { name: /^Bids · \d+$/ }).waitFor()
     await page.getByText('Domain secured in escrow').waitFor()
     await page.screenshot({ fullPage: true, path: `${outputDir}/auction-${viewport.name}.png` })
 
@@ -50,7 +50,7 @@ try {
       failures.push(`${viewport.name}: auction detail is outside the viewport`)
     }
 
-    await page.getByRole('button', { name: 'Back to marketplace' }).click()
+    await page.getByRole('button', { name: 'All listings' }).click()
     await page.getByText(marketplaceName).waitFor()
 
     await page.getByRole('tab', { name: 'Sell' }).click()

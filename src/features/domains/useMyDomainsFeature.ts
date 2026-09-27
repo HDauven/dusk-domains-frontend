@@ -1,24 +1,14 @@
 import type { ComponentProps } from 'react'
-import {
-  type DuskDomainsIndexerClient,
-  type PendingNameReservation,
-} from '../../names/internal'
-import {
-  formatPendingReservationDetail,
-  pendingReservationActionCopy,
-  pendingReservationNextStepCopy,
-  pendingReservationStatusCopy,
-} from '../registration/registrationCopy'
-import { formatNameLifecycle } from './domainFormat'
+import type { DuskDomainsIndexerClient, PendingNameReservation } from '../../names/internal'
 import { MyDomainsView } from './MyDomainsView'
 import { useMyDomains } from './useMyDomains'
-import { useMyDomainsViewModel } from './useMyDomainsViewModel'
 
 export function useMyDomainsFeature({
   currentBlockHeight,
   indexerClient,
   mainView,
   onBlockHeightChange,
+  onConnectWallet,
   onForgetPendingReservation,
   onLoadPendingReservations,
   onOpenIndexedName,
@@ -32,6 +22,7 @@ export function useMyDomainsFeature({
   indexerClient: DuskDomainsIndexerClient | null
   mainView: string
   onBlockHeightChange: (height: number | null) => void
+  onConnectWallet: () => void
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onLoadPendingReservations: () => unknown
   onOpenIndexedName: (name: string) => void
@@ -55,43 +46,21 @@ export function useMyDomainsFeature({
     selectedAuthority,
     shouldLoad: mainView === 'my-names',
   })
-  const pendingReservationCount = pendingReservations.length
-  const {
-    description,
-    emptyCopy,
-    emptyTitle,
-    heading,
-    pendingReservationLabel,
-    verifiedPrimaryCount,
-  } = useMyDomainsViewModel({
-    myNamePrimarySummaries,
-    myNames,
-    pendingReservationCount,
-    selectedAddress,
-  })
 
   const myDomainsProps: ComponentProps<typeof MyDomainsView> = {
     currentBlockHeight,
-    description,
-    emptyCopy,
-    emptyTitle,
-    formatNameLifecycle,
-    formatPendingReservationDetail,
-    heading,
     loading: myNamesLoading,
     myNames,
     myNamesError,
+    onConnectWallet,
     onForgetPendingReservation,
     onOpenIndexedName,
     onOpenPendingReservation,
     onRefresh: () => void loadMyNames(),
     onSearchHome,
-    pendingReservationActionCopy,
-    pendingReservationNextStepCopy,
-    pendingReservationStatusCopy,
     pendingReservations,
     primarySummaries: myNamePrimarySummaries,
-    verifiedPrimaryCount,
+    selectedAddress,
   }
 
   return {
@@ -99,7 +68,5 @@ export function useMyDomainsFeature({
     myDomainsProps,
     myNamePrimarySummaries,
     myNames,
-    pendingReservationCount,
-    pendingReservationLabel,
   }
 }

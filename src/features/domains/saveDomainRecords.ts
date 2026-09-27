@@ -1,4 +1,4 @@
-import { pluralize } from '../registration/registrationCopy'
+import { pluralize } from '../../utils/format'
 import {
   applyRecordMutations,
   coreMutateRecordsSenderRuntimeCall,

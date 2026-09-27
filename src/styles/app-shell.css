@@ -16,8 +16,10 @@
   color: var(--ink);
 }
 
-/* The layout boxes span the whole width, so they let the pointer through to the sky and only
-   their content takes it: the stars beside the content can be hovered, stars under it stay inert. */
+/* The layout boxes span the whole width,
+so they let the pointer through to the sky and only
+   their content takes it: the stars beside the content can be hovered,
+stars under it stay inert. */
 .page,
 .page-main {
   pointer-events: none;
@@ -44,13 +46,7 @@
   flex: 1;
 }
 
-.availability-banner,
-.includes span,
-.setup-row,
-.policy-notes p,
-.my-names-header,
-.my-name-row,
-.pending-reservation-row {
+.policy-notes p {
   display: flex;
   align-items: center;
 }
@@ -60,4 +56,10 @@
   margin: 18px auto 0;
   color: var(--ink-2);
   text-align: center;
+}
+
+@media (max-width: 720px) {
+  .page {
+    --domain-page-gutter: 16px;
+  }
 }

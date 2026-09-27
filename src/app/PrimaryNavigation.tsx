@@ -13,13 +13,11 @@ export function PrimaryNavigation({
   onMainViewChange,
   onSearchHome,
   pendingReservationCount,
-  pendingReservationLabel,
 }: {
   mainView: AppMainView
   onMainViewChange: (view: AppMainView) => void
   onSearchHome: () => void
   pendingReservationCount: number
-  pendingReservationLabel: string
 }) {
   return (
     <nav className="nav-links" aria-label="Primary">
@@ -33,7 +31,7 @@ export function PrimaryNavigation({
         >
           <span>{label}</span>
           {view === 'my-names' && pendingReservationCount > 0 ? (
-            <span className="nav-count-badge" aria-label={pendingReservationLabel}>
+            <span className="nav-count-badge" aria-label={`${pendingReservationCount} unfinished ${pendingReservationCount === 1 ? 'claim' : 'claims'}`}>
               {pendingReservationCount}
             </span>
           ) : null}
