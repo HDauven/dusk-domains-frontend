@@ -102,13 +102,14 @@ export function useSearchWorkspaceFeature({
       primaryVerification,
       subnames,
     },
+    // A registration that just completed is registered even before the indexer says so.
     headerProps: {
       displayName,
       expiresLabel,
       primaryVerified: primaryProps.primaryVerification.verified,
       records: resultStatus === 'registered' ? parentResolverRecords : [],
-      reserved: Boolean(savedReservation),
-      status: resultStatus,
+      reserved: Boolean(savedReservation) && !registrationProps.wizard.registrationComplete,
+      status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
     },
     loading: activityLoading,
     nodeHex,
