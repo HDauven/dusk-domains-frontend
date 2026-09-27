@@ -14,7 +14,6 @@ export function TopBar({
   onOpenWallet,
   onSearchHome,
   pendingReservationCount,
-  pendingReservationLabel,
   walletState,
   walletStatus,
 }: {
@@ -24,7 +23,6 @@ export function TopBar({
   onOpenWallet: () => void
   onSearchHome: () => void
   pendingReservationCount: number
-  pendingReservationLabel: string
   walletState: DuskWalletState
   walletStatus: WalletConnectionStatus
 }) {
@@ -54,7 +52,6 @@ export function TopBar({
         onMainViewChange={onMainViewChange}
         onSearchHome={onSearchHome}
         pendingReservationCount={pendingReservationCount}
-        pendingReservationLabel={pendingReservationLabel}
       />
 
       <DuskConnectControl

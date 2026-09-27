@@ -1,50 +1,61 @@
 import { ArrowRight, X } from 'lucide-react'
-import { registrationCommitWindow } from '../../../names/internal'
-import type { PendingReservationsListProps } from './types'
-
-export function PendingReservationsList({
-  currentBlockHeight,
-  formatPendingReservationDetail,
-  onForgetPendingReservation,
-  onOpenPendingReservation,
+import { registrationCommitWindow, type PendingNameReservation } from '../../../names/internal'
+import { pluralize } from '../../../utils/format'
+import {
   pendingReservationActionCopy,
   pendingReservationNextStepCopy,
   pendingReservationStatusCopy,
+} from '../../registration/registrationCopy'
+
+export function PendingReservationsList({
+  currentBlockHeight,
+  onForgetPendingReservation,
+  onOpenPendingReservation,
   pendingReservations,
-}: PendingReservationsListProps) {
+}: {
+  currentBlockHeight: number | null
+  onForgetPendingReservation: (reservation: PendingNameReservation) => void
+  onOpenPendingReservation: (reservation: PendingNameReservation) => void
+  pendingReservations: PendingNameReservation[]
+}) {
   return (
-    <div className="pending-reservations" aria-label="Pending reservations">
+    <section className="pending-reservations" aria-labelledby="pending-heading">
+      <h2 id="pending-heading" className="eyebrow">
+        Unfinished {pluralize(pendingReservations.length, 'claim')}
+      </h2>
       {pendingReservations.map((reservation) => {
         const reservationWindow = registrationCommitWindow(reservation.committedBlockHeight, currentBlockHeight)
         return (
-          <article className="pending-reservation-row" key={reservation.commitment}>
-            <div className="reservation-main">
+          <article className={`pending-reservation ${reservationWindow.status}`} key={reservation.commitment}>
+            <div className="pending-reservation-main">
               <strong>{reservation.name}</strong>
-              <span>{formatPendingReservationDetail(reservation)}</span>
+              <span>
+                {reservation.durationYears} {pluralize(reservation.durationYears, 'year')} ·{' '}
+                <em>{pendingReservationStatusCopy(reservationWindow.status, reservationWindow.waitBlocks)}</em>
+              </span>
+              <p>{pendingReservationNextStepCopy(reservationWindow.status, reservationWindow.waitBlocks)}</p>
             </div>
-            <div className="reservation-summary">
-              <strong className={`reservation-status ${reservationWindow.status}`}>
-                {pendingReservationStatusCopy(reservationWindow.status, reservationWindow.waitBlocks)}
-              </strong>
-              <span>{pendingReservationNextStepCopy(reservationWindow.status, reservationWindow.waitBlocks)}</span>
-            </div>
-            <div className="reservation-actions">
-              <button className="primary-button compact" type="button" onClick={() => void onOpenPendingReservation(reservation)}>
-                {pendingReservationActionCopy(reservationWindow.status)}
-                <ArrowRight size={18} />
+            <div className="pending-reservation-actions">
+              <button
+                className={reservationWindow.status === 'ready' ? 'primary-button compact' : 'commit-button'}
+                type="button"
+                onClick={() => void onOpenPendingReservation(reservation)}
+              >
+                {pendingReservationActionCopy(reservationWindow.status)} <ArrowRight size={16} />
               </button>
               <button
-                className="icon-button soft"
+                className="icon-button"
                 type="button"
-                aria-label={`Remove saved reservation for ${reservation.name}`}
+                aria-label={`Forget the saved claim for ${reservation.name}`}
+                title="Forget this saved claim"
                 onClick={() => onForgetPendingReservation(reservation)}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
           </article>
         )
       })}
-    </div>
+    </section>
   )
 }

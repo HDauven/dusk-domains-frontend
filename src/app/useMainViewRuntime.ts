@@ -11,6 +11,7 @@ export type UseMainViewRuntimeArgs = {
   loadReferralAccount: () => Promise<unknown>
   loadTreasuryView: () => Promise<boolean>
   mainView: AppMainView
+  onConnectWallet: () => void
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onOpenIndexedName: (name: string) => void
   onOpenPendingReservation: (reservation: PendingNameReservation) => void
@@ -30,6 +31,7 @@ export function useMainViewRuntime({
   loadReferralAccount,
   loadTreasuryView,
   mainView,
+  onConnectWallet,
   onForgetPendingReservation,
   onOpenIndexedName,
   onOpenPendingReservation,
@@ -46,13 +48,12 @@ export function useMainViewRuntime({
     myDomainsProps,
     myNamePrimarySummaries,
     myNames,
-    pendingReservationCount,
-    pendingReservationLabel,
   } = useMyDomainsFeature({
     currentBlockHeight,
     indexerClient,
     mainView,
     onBlockHeightChange: setCurrentBlockHeight,
+    onConnectWallet,
     onForgetPendingReservation,
     onLoadPendingReservations: loadPendingReservations,
     onOpenIndexedName,
@@ -78,7 +79,5 @@ export function useMainViewRuntime({
     myDomainsProps,
     myNamePrimarySummaries,
     myNames,
-    pendingReservationCount,
-    pendingReservationLabel,
   }
 }

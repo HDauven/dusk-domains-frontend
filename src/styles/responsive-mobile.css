@@ -4,19 +4,4 @@
     --domain-page-gutter: 14px;
   }
 
-  .search-row {
-    min-height: auto;
-    overflow: hidden;
-  }
-
-  .my-name-row,
-.pending-reservation-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .my-name-row > div:first-child {
-    min-width: 0;
-  }
 }

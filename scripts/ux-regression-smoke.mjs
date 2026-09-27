@@ -172,16 +172,14 @@ try {
   await page.evaluate(async () => {
     await import('/src/index.css')
     await import('/src/App.css')
-    const { MyDomainRows } = await import('/src/features/domains/my-domains/MyDomainRows.tsx')
-    const { PendingReservationsList } = await import('/src/features/domains/my-domains/PendingReservationsList.tsx')
-    const copy = await import('/src/features/registration/registrationCopy.ts')
+    const { MyDomainsView } = await import('/src/features/domains/MyDomainsView.tsx')
     window.root.render(window.React.createElement('main', { className: 'page' },
-      window.React.createElement('section', { className: 'my-names-panel' },
-        window.React.createElement(PendingReservationsList, { ...copy, currentBlockHeight: 200,
-          pendingReservations: [{ name: 'a-long-domain-name.dusk', commitment: 'commit', committedBlockHeight: null,
-            createdAt: new Date().toISOString(), durationYears: 1 }], onOpenPendingReservation: () => {}, onForgetPendingReservation: () => {} }),
-        window.React.createElement(MyDomainRows, { myNames: [{ canonicalName: 'a-long-domain-name.dusk', node: 'node', records: [], subnameCount: 0 }],
-          primarySummaries: {}, formatNameLifecycle: () => 'Registered', onOpenIndexedName: () => {} }))))
+      window.React.createElement(MyDomainsView, { currentBlockHeight: 200, loading: false, myNamesError: '', selectedAddress: 'owner',
+        pendingReservations: [{ name: 'a-long-domain-name.dusk', commitment: 'commit', committedBlockHeight: null,
+          createdAt: new Date().toISOString(), durationYears: 1 }],
+        myNames: [{ canonicalName: `${'a'.repeat(63)}.dusk`, node: 'node', records: [], subnameCount: 0, expiresAtBlockHeight: 900, graceEndsAtBlockHeight: 1000 }],
+        primarySummaries: {}, onConnectWallet: () => {}, onForgetPendingReservation: () => {}, onOpenIndexedName: () => {},
+        onOpenPendingReservation: () => {}, onRefresh: () => {}, onSearchHome: () => {} })))
   })
   const open = page.getByRole('button', { name: 'Open', exact: true })
   await open.first().waitFor()
@@ -191,7 +189,9 @@ try {
       const bounds = await button.boundingBox()
       assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width, `Open clipped at ${width}px`)
     }
-    assert.ok(await page.locator('.reservation-summary span').evaluate(element => element.scrollWidth <= element.clientWidth), `Recovery instructions clipped at ${width}px`)
+    assert.ok(await page.locator('.pending-reservation-main p').evaluate(element => element.scrollWidth <= element.clientWidth), `Recovery instructions clipped at ${width}px`)
+    const card = await page.locator('.name-card').boundingBox()
+    assert.ok(card.x >= 0 && card.x + card.width <= width, `Name card clipped at ${width}px`)
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `Page overflows at ${width}px`)
   }
   await page.evaluate(async () => {

@@ -47,8 +47,6 @@ export function useDuskDomainsAppModel() {
   } = walletRuntime
   const {
     handleMainViewChange,
-    pendingReservationCount,
-    pendingReservationLabel,
   } = mainViewRuntime
   const {
     handleSearchHome,
@@ -113,8 +111,7 @@ export function useDuskDomainsAppModel() {
       onMainViewChange: (view: AppMainView) => void handleMainViewChange(view),
       onOpenWallet: () => void handleOpenWalletConnection(),
       onSearchHome: handleSearchHome,
-      pendingReservationCount,
-      pendingReservationLabel,
+      pendingReservationCount: workspace.registrationRuntime.pendingReservations.length,
       runtimeNotice,
       walletState,
       walletStatus: walletSetupState,

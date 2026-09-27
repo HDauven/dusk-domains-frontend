@@ -46,9 +46,7 @@ stars under it stay inert. */
   flex: 1;
 }
 
-.policy-notes p,
-.my-name-row,
-.pending-reservation-row {
+.policy-notes p {
   display: flex;
   align-items: center;
 }

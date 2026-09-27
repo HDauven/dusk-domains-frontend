@@ -3,7 +3,6 @@ import {
   DUSK_APPROX_BLOCK_TIME_SECONDS,
   registrationCommitWindow,
   type DuskDomainTxState,
-  type PendingNameReservation,
 } from '../../names/internal'
 import { pluralize } from '../../utils/format'
 import type { RegistrationCompletionState } from './registrationCompletionState'
@@ -20,14 +19,6 @@ export function formatWait(blocks: number) {
   if (hours < 48) return `${hours} ${pluralize(hours, 'hour')}`
   const days = Math.round(hours / 24)
   return `${days} ${pluralize(days, 'day')}`
-}
-
-export function formatPendingReservationDetail(reservation: PendingNameReservation) {
-  return `Saved ${formatIsoDay(reservation.createdAt)} · ${reservation.durationYears} ${pluralize(reservation.durationYears, 'year')}`
-}
-
-export function formatIsoDay(value: string) {
-  return new Date(value).toISOString().slice(0, 10)
 }
 
 // The reservation line above the button already says how long the wait is.

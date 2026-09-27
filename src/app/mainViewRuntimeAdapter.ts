@@ -23,7 +23,7 @@ export function buildMainViewRuntimeArgs({
   const { currentBlockHeight, mainView, setCurrentBlockHeight, setMainView } = searchState
   const { loadPendingReservations, pendingReservations } = registrationRuntime
   const { loadReferralAccount, loadTreasuryView, resetReferralCopied } = economicsRuntime
-  const { selectedAddress, selectedAuthority } = walletRuntime
+  const { handleOpenWalletConnection, selectedAddress, selectedAuthority } = walletRuntime
   const {
     forgetPendingReservation,
     handleSearchHome,
@@ -38,6 +38,7 @@ export function buildMainViewRuntimeArgs({
     loadReferralAccount,
     loadTreasuryView,
     mainView,
+    onConnectWallet: () => void handleOpenWalletConnection(),
     onForgetPendingReservation: (reservation) => void forgetPendingReservation(reservation),
     onOpenIndexedName: (name) => void openIndexedName(name),
     onOpenPendingReservation: (reservation) => void openPendingReservation(reservation),
