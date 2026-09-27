@@ -52,7 +52,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     selectedAddress,
     selectedAuthority,
   } = args
-  const accountScope = `${runtimeConfig.chainId}:${runtimeConfig.contracts.marketplace?.contractId}:${selectedAuthority}`
+  const marketScope = `${runtimeConfig.chainId}:${runtimeConfig.contracts.marketplace?.contractId}`
+  const accountScope = `${marketScope}:${selectedAuthority}`
   const [tab, setTab] = useState<MarketplaceTab>('browse')
   const [selectedNode, setSelectedNode] = useScopedState(accountScope, '')
 
@@ -105,7 +106,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
   })
   const auctionState = useAuctions({
-    accountScope, auctions, indexerClient, loadMarketplace, marketplaceOnChainClient, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
+    accountScope, auctions, indexerClient, loadMarketplace, marketplaceOnChainClient, marketScope, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
   })
   const offerState = useOffers({
     duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,

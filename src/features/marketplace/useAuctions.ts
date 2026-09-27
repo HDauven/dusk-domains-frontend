@@ -25,6 +25,7 @@ export function useAuctions({
   indexerClient,
   loadMarketplace,
   marketplaceOnChainClient,
+  marketScope,
   onBidPlaced,
   selectedAuthority,
   setConfirmation,
@@ -36,6 +37,7 @@ export function useAuctions({
   indexerClient: DuskDomainsIndexerClient | null
   loadMarketplace: () => Promise<void>
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
+  marketScope: string
   onBidPlaced: (node: string) => void
   selectedAuthority: string
   setConfirmation: (message: string) => void
@@ -43,7 +45,9 @@ export function useAuctions({
   writes: MarketplaceWrites
 }) {
   const [bidDrafts, setBidDrafts] = useState<Record<string, string>>({})
-  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(accountScope, '')
+  // The open auction belongs to the market, not the account: a wallet restoring its session after a
+  // reload must not close the auction someone just opened. The bid review is the account's.
+  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, '')
   const [auctionActivity, setAuctionActivity] = useState<ActivityEntry[]>([])
   const [auctionActivityLoading, setAuctionActivityLoading] = useState(false)
   const [bidReview, setBidReview] = useScopedState<MarketplaceViewProps['bidReview']>(accountScope, null)
