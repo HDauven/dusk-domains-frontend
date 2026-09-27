@@ -7,9 +7,8 @@ export function RecordsHeader({
 }) {
   return (
     <PanelHeader
-      badge="Public records"
       headingId="records-heading"
-      subtitle={displayName}
+      subtitle={`Where ${displayName} points: addresses, links and profile. Everything here is public.`}
       title="Records"
     />
   )

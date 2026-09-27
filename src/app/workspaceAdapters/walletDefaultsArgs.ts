@@ -9,7 +9,6 @@ export function buildWalletDefaultsArgs({
   return {
     selectedAddress: walletRuntime.selectedAddress,
     selectedAuthority: walletRuntime.selectedAuthority,
-    setDelegateManager: domainState.setDelegateManager,
     setDraftManager: domainState.setDraftManager,
     setDraftOwner: domainState.setDraftOwner,
     setManagedName: domainState.setManagedName,

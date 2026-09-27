@@ -8,10 +8,7 @@ import type { SubdomainListProps } from './types'
 
 export function SubdomainList({
   currentBlockHeight,
-  delegateSubnameNode,
   nowSeconds,
-  onDelegateManagerChange,
-  onDelegateSubnameChange,
   onRecordTargetSelect,
   subnames,
 }: SubdomainListProps) {
@@ -19,16 +16,12 @@ export function SubdomainList({
     <div className="subname-list">
       {subnames.map((subname) => (
         <button
-          className={delegateSubnameNode === subname.node ? 'subname-row selected' : 'subname-row'}
+          className="subname-row"
+          disabled={subname.status !== 'active'}
           key={subname.node}
+          title={subname.status === 'active' ? `Edit records for ${subname.name}` : undefined}
           type="button"
-          onClick={() => {
-            onDelegateSubnameChange(subname.node)
-            onDelegateManagerChange(subname.manager)
-            if (subname.status === 'active') {
-              onRecordTargetSelect(subname)
-            }
-          }}
+          onClick={() => onRecordTargetSelect(subname)}
         >
           <strong>{subname.name}</strong>
           <span>{subname.status}</span>

@@ -1,6 +1,5 @@
 import type {
   PendingNameReservation,
-  SubnameState,
 } from '../../names/internal'
 
 export function findSavedReservation({
@@ -16,8 +15,4 @@ export function findSavedReservation({
     reservation.name.toLowerCase() === displayName.toLowerCase()
     || (nodeHex && reservation.node === nodeHex)
   )) ?? null
-}
-
-export function selectedDelegatedSubname(subnames: SubnameState[], delegateSubnameNode: string) {
-  return subnames.find((subname) => subname.node === delegateSubnameNode)
 }

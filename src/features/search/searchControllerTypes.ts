@@ -37,8 +37,6 @@ export type UseSearchControllerProps = {
   setConfirmationInput: Dispatch<SetStateAction<string>>
   setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
   setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
-  setDelegateManager: Dispatch<SetStateAction<string>>
-  setDelegateSubnameNode: Dispatch<SetStateAction<string>>
   setDuration: Dispatch<SetStateAction<number>>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>

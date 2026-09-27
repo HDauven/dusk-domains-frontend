@@ -44,8 +44,8 @@ export function PrimaryDomainView({
         badge={primaryVerification.verified ? 'Verified' : 'Address fallback'}
         badgeClassName={primaryVerification.verified ? 'verified' : 'warning'}
         headingId="primary-heading"
-        subtitle={displayName}
-        title="Primary domain"
+        subtitle="The name apps show for a wallet instead of its address."
+        title="Primary name"
       />
 
       <div className="primary-grid">

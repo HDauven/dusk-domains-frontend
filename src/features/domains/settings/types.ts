@@ -9,7 +9,6 @@ export type ManagedNameState = {
 }
 
 export type DomainSettingsViewProps = {
-  canChangeRecordSource: boolean
   canManageName: boolean
   canRenewName: boolean
   confirmationInput: string
@@ -17,7 +16,6 @@ export type DomainSettingsViewProps = {
   displayName: string
   draftManager: string
   draftOwner: string
-  draftResolver: string
   feeConfigError: string
   feeConfigLoading: boolean
   managedName: ManagedNameState
@@ -29,11 +27,9 @@ export type DomainSettingsViewProps = {
   onConfirmationInputChange: (value: string) => void
   onDraftManagerChange: (value: string) => void
   onDraftOwnerChange: (value: string) => void
-  onDraftResolverChange: (value: string) => void
   onOwnershipUpdate: () => void
   onRenewName: () => void
   onRenewalYearsChange: (years: number) => void
-  onResolverUpdate: () => void
   renewalBusy: boolean
   renewalError: string
   renewalFee: number
@@ -44,22 +40,18 @@ export type DomainSettingsViewProps = {
 
 export type AuthoritySettingsPanelProps = Pick<
   DomainSettingsViewProps,
-  | 'canChangeRecordSource'
   | 'canManageName'
   | 'confirmationInput'
   | 'displayName'
   | 'draftManager'
   | 'draftOwner'
-  | 'draftResolver'
   | 'managedName'
   | 'managementError'
   | 'managementTxState'
   | 'onConfirmationInputChange'
   | 'onDraftManagerChange'
   | 'onDraftOwnerChange'
-  | 'onDraftResolverChange'
   | 'onOwnershipUpdate'
-  | 'onResolverUpdate'
 >
 
 export type RenewalPanelProps = Pick<

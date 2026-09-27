@@ -18,7 +18,6 @@ export type UseAppDerivedStateArgs = {
   criticalRecordChange: boolean
   criticalRecordConfirmationMatches: boolean
   currentBlockHeight: number | null
-  delegateSubnameNode: string
   displayName: string
   managedName: ManagedNameState
   managementTxState: DuskDomainTxState | null

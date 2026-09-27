@@ -9,7 +9,6 @@ import { useWalletRuntime } from './useWalletRuntime'
 export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
   const appRuntime = useAppRuntime(env)
   const {
-    browserWriteProofUrl,
     connectKit,
     connectOptions,
     indexerClient,
@@ -21,7 +20,6 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
   const registrationState = useRegistrationAppState()
   const domainState = useDomainManagementAppState(recordSourceContractId)
   const walletRuntime = useWalletRuntime({
-    captureUrl: browserWriteProofUrl,
     connectKit,
     connectOptions,
     liveDuskDomainsApp,

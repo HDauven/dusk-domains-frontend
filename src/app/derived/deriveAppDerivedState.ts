@@ -5,7 +5,6 @@ import { derivePrimaryState } from './primaryState'
 import { deriveRecordCapabilities } from './recordCapabilities'
 import {
   findSavedReservation,
-  selectedDelegatedSubname,
 } from './reservationState'
 import { deriveRegistrationCapabilities } from './registrationCapabilities'
 import type { UseAppDerivedStateArgs } from './types'
@@ -19,7 +18,6 @@ export function deriveAppDerivedState({
   criticalRecordChange,
   criticalRecordConfirmationMatches,
   currentBlockHeight,
-  delegateSubnameNode,
   displayName,
   managedName,
   managementTxState,
@@ -148,15 +146,12 @@ export function deriveAppDerivedState({
   const recordAuthorized = canManageActiveName(recordTarget, selectedAuthority, currentBlockHeight)
 
   return {
-    canChangeRecordSource: false,
     canClearPrimary,
     canCreateSubname: canCreateSubname && parentAuthorized,
-    canDelegateSubname: false,
     canManageName: canManageName && parentAuthorized,
     canPrepareCommit,
     canRenewName: canRenewName && parentAuthorized,
     canRevealRegistration,
-    canRevokeSelectedSubname: false,
     canRemoveRecords: walletSigningReady && recordAuthorized && !recordBusy,
     canSaveRecords: canSaveRecords && recordAuthorized,
     canSetPrimary: canSetPrimary && parentAuthorized,
@@ -174,7 +169,6 @@ export function deriveAppDerivedState({
     renewalBusy,
     savedReservation,
     savedReservationWindow,
-    selectedDelegatedSubname: selectedDelegatedSubname(subnames, delegateSubnameNode),
     subnameBusy,
     txBusy,
   }

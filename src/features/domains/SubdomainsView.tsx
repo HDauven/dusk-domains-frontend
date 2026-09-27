@@ -3,28 +3,19 @@ import { PanelHeader } from '../../components/ui/PanelHeader'
 import { formatLifecycleDay } from './domainFormat'
 import { ManagementFeedback } from './ManagementFeedback'
 import { SubdomainCreatePanel } from './subdomains/SubdomainCreatePanel'
-import { SubdomainDelegationPanel } from './subdomains/SubdomainDelegationPanel'
 import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubdomainsViewProps } from './subdomains/types'
 
 export function SubdomainsView({
   canCreateSubname,
-  canDelegateSubname,
-  canRevokeSelectedSubname,
   currentBlockHeight,
-  delegateManager,
-  delegateSubnameNode,
   displayName,
   error,
   fallbackManager,
   managedNameExpiresAt,
   nowSeconds,
   onCreateSubname,
-  onDelegateManagerChange,
-  onDelegateSubnameChange,
-  onDelegateSubnameSubmit,
   onRecordTargetSelect,
-  onRevokeSubname,
   onSubnameExpiryDateChange,
   onSubnameExpiryPolicyChange,
   onSubnameLabelChange,
@@ -49,10 +40,9 @@ export function SubdomainsView({
   return (
     <section className="subnames-panel" aria-labelledby="subnames-heading">
       <PanelHeader
-        badge="Namespace"
         headingId="subnames-heading"
-        subtitle={displayName}
-        title="Subdomains"
+        subtitle={`Names under ${displayName}, like pay.${displayName}. Each can point somewhere else and have its own manager.`}
+        title="Subnames"
       />
 
       <div className="subname-box" aria-label="Subdomain controls">
@@ -79,35 +69,16 @@ export function SubdomainsView({
         />
 
         {subnames.length ? (
-          <>
-            <SubdomainList
-              currentBlockHeight={currentBlockHeight}
-              delegateSubnameNode={delegateSubnameNode}
-              nowSeconds={nowSeconds}
-              onDelegateManagerChange={onDelegateManagerChange}
-              onDelegateSubnameChange={onDelegateSubnameChange}
-              onRecordTargetSelect={onRecordTargetSelect}
-              subnames={subnames}
-            />
-
-            <SubdomainDelegationPanel
-              canDelegateSubname={canDelegateSubname}
-              canRevokeSelectedSubname={canRevokeSelectedSubname}
-              delegateManager={delegateManager}
-              delegateSubnameNode={delegateSubnameNode}
-              fallbackManager={fallbackManager}
-              onDelegateManagerChange={onDelegateManagerChange}
-              onDelegateSubnameChange={onDelegateSubnameChange}
-              onDelegateSubnameSubmit={onDelegateSubnameSubmit}
-              onRevokeSubname={onRevokeSubname}
-              selectedAuthority={selectedAuthority}
-              subnames={subnames}
-            />
-          </>
+          <SubdomainList
+            currentBlockHeight={currentBlockHeight}
+            nowSeconds={nowSeconds}
+            onRecordTargetSelect={onRecordTargetSelect}
+            subnames={subnames}
+          />
         ) : (
           <div className="activity-empty">
             <Info size={18} />
-            <span>No subdomains found.</span>
+            <span>No subnames yet.</span>
           </div>
         )}
 

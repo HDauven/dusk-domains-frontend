@@ -11,12 +11,9 @@ type AppRuntime = ReturnType<typeof useAppRuntime>
 type UseWalletRuntimeArgs = Pick<
   AppRuntime,
   'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
-> & {
-  captureUrl: string | undefined
-}
+>
 
 export function useWalletRuntime({
-  captureUrl,
   connectKit,
   connectOptions,
   liveDuskDomainsApp,
@@ -54,13 +51,8 @@ export function useWalletRuntime({
   } = selectedAuthorityState
 
   const submitNameWrite = useDuskDomainWriter({
-    captureUrl,
-    chainId: runtimeConfig.chainId,
     contracts: runtimeConfig.contracts,
     liveDuskDomainsApp,
-    liveWritesEnabled: runtimeConfig.liveWritesEnabled,
-    selectedAddress,
-    walletState,
   })
   const requestSelectedShieldedAddress = useCallback(async () => {
     if (!selectedAddress) throw new Error('Connect a wallet first.')

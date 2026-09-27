@@ -1,26 +1,22 @@
-import { ArrowRight, Info } from 'lucide-react'
-import { FieldShell, TextField } from '../../../components/ui/FormControls'
+import { Info } from 'lucide-react'
+import { TextField } from '../../../components/ui/FormControls'
 import { abbreviate } from '../../../utils/format'
 import { ManagementFeedback } from '../ManagementFeedback'
 import type { AuthoritySettingsPanelProps } from './types'
 
 export function AuthoritySettingsPanel({
-  canChangeRecordSource,
   canManageName,
   confirmationInput,
   displayName,
   draftManager,
   draftOwner,
-  draftResolver,
   managedName,
   managementError,
   managementTxState,
   onConfirmationInputChange,
   onDraftManagerChange,
   onDraftOwnerChange,
-  onDraftResolverChange,
   onOwnershipUpdate,
-  onResolverUpdate,
 }: AuthoritySettingsPanelProps) {
   return (
     <>
@@ -41,18 +37,6 @@ export function AuthoritySettingsPanel({
           onChange={(event) => onDraftManagerChange(event.target.value)}
         />
 
-        <FieldShell className="resolver-control" label="Record source" labelFor="resolver-address">
-          <input
-            id="resolver-address"
-            value={draftResolver}
-            onChange={(event) => onDraftResolverChange(event.target.value)}
-          />
-          <div className="resolver-diff">
-            <span>Old <code>{abbreviate(managedName.resolver)}</code></span>
-            <ArrowRight size={15} />
-            <span>New <code>{abbreviate(draftResolver)}</code></span>
-          </div>
-        </FieldShell>
       </div>
 
       <div className="public-warning record">
@@ -75,14 +59,6 @@ export function AuthoritySettingsPanel({
           onClick={() => void onOwnershipUpdate()}
         >
           Update authorities
-        </button>
-        <button
-          className="commit-button danger-action"
-          disabled={!canChangeRecordSource}
-          type="button"
-          onClick={() => void onResolverUpdate()}
-        >
-          Change record source
         </button>
       </div>
 

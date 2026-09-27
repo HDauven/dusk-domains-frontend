@@ -24,7 +24,6 @@ export function buildDerivedStateArgs({
     criticalRecordChange: domainRecordState.criticalRecordChange,
     criticalRecordConfirmationMatches: domainRecordState.criticalRecordConfirmationMatches,
     currentBlockHeight: searchState.currentBlockHeight,
-    delegateSubnameNode: domainState.delegateSubnameNode,
     displayName: namePreview.displayName,
     managedName: domainState.managedName,
     managementTxState: domainState.managementTxState,

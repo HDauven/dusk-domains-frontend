@@ -4,7 +4,6 @@ import { RenewalPanel } from './settings/RenewalPanel'
 import type { DomainSettingsViewProps } from './settings/types'
 
 export function DomainSettingsView({
-  canChangeRecordSource,
   canManageName,
   canRenewName,
   confirmationInput,
@@ -12,7 +11,6 @@ export function DomainSettingsView({
   displayName,
   draftManager,
   draftOwner,
-  draftResolver,
   feeConfigError,
   feeConfigLoading,
   managedName,
@@ -24,11 +22,9 @@ export function DomainSettingsView({
   onConfirmationInputChange,
   onDraftManagerChange,
   onDraftOwnerChange,
-  onDraftResolverChange,
   onOwnershipUpdate,
   onRenewName,
   onRenewalYearsChange,
-  onResolverUpdate,
   renewalBusy,
   renewalError,
   renewalFee,
@@ -39,29 +35,24 @@ export function DomainSettingsView({
   return (
     <section className="management-panel" id="my-names" aria-labelledby="management-heading">
       <PanelHeader
-        badge="Advanced"
         headingId="management-heading"
-        subtitle={displayName}
-        title="Domain settings"
+        subtitle={`Who owns ${displayName}, who manages it, and how long it lasts.`}
+        title="Settings"
       />
 
       <AuthoritySettingsPanel
-        canChangeRecordSource={canChangeRecordSource}
         canManageName={canManageName}
         confirmationInput={confirmationInput}
         displayName={displayName}
         draftManager={draftManager}
         draftOwner={draftOwner}
-        draftResolver={draftResolver}
         managedName={managedName}
         managementError={managementError}
         managementTxState={managementTxState}
         onConfirmationInputChange={onConfirmationInputChange}
         onDraftManagerChange={onDraftManagerChange}
         onDraftOwnerChange={onDraftOwnerChange}
-        onDraftResolverChange={onDraftResolverChange}
         onOwnershipUpdate={onOwnershipUpdate}
-        onResolverUpdate={onResolverUpdate}
       />
 
       <RenewalPanel

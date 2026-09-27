@@ -18,8 +18,7 @@ it('preserves record consent resets, wallet errors, primary fallback and renewal
   const actions = {
     handleClearPrimaryName: vi.fn(), handleSetPrimaryName: vi.fn(), handleRecordClear: vi.fn(),
     handleRecordsSave: vi.fn(), handleOwnershipUpdate: vi.fn(), handleRenewName: vi.fn(),
-    handleResolverUpdate: vi.fn(), handleCreateSubname: vi.fn(), handleDelegateSubname: vi.fn(),
-    handleRevokeSubname: vi.fn(),
+    handleCreateSubname: vi.fn(),
   }
   const views = buildDomainManagementProps(props, actions)
   expect(views.primaryProps.placeholder).toBe('public')
