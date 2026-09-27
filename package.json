@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:testnet": "DUSK_DOMAINS_DEV_PROXY=https://dusk.domains vite --mode production",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",

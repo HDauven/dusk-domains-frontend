@@ -5,8 +5,11 @@ import type { WalletConnectionStatus } from '../features/wallet/walletStatus'
 import type { AppMainView } from './AppTypes'
 import { PrimaryNavigation } from './PrimaryNavigation'
 
+export type NetworkBadge = { label: string, tone: 'mainnet' | 'testnet' | 'local' | 'preview' }
+
 export function TopBar({
   mainView,
+  network,
   onMainViewChange,
   onOpenWallet,
   onSearchHome,
@@ -16,6 +19,7 @@ export function TopBar({
   walletStatus,
 }: {
   mainView: AppMainView
+  network: NetworkBadge
   onMainViewChange: (view: AppMainView) => void
   onOpenWallet: () => void
   onSearchHome: () => void
@@ -26,13 +30,24 @@ export function TopBar({
 }) {
   return (
     <header className="topbar">
-      <button className="brand" type="button" aria-label="Dusk Domains home" onClick={onSearchHome}>
-        <NamesMark />
-        <span className="brand-type">
-          <span className="product-name">Dusk Domains</span>
-          <span className="product-domain">Domain Service</span>
+      <div className="topbar-brand">
+        <a
+          className="brand"
+          href="/"
+          aria-label="Dusk Domains home"
+          onClick={(event) => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey) return
+            event.preventDefault()
+            onSearchHome()
+          }}
+        >
+          <NamesMark />
+          <span className="brand-name">Dusk Domains</span>
+        </a>
+        <span className={`network-badge ${network.tone}`} title={`Connected to Dusk ${network.label.toLowerCase()}`}>
+          {network.label}
         </span>
-      </button>
+      </div>
 
       <PrimaryNavigation
         mainView={mainView}

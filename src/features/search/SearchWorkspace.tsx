@@ -1,11 +1,14 @@
+import type { ShowcaseName } from '../../app/useSkyNames'
 import { SearchHero } from './SearchHero'
 import { SearchResultPanel, type SearchResultPanelProps, type SearchResultView } from './SearchResultPanel'
 
 type SearchWorkspaceProps = SearchResultPanelProps & {
   checked: boolean
+  featuredNames?: ShowcaseName[]
   loading: boolean
   resultReady: boolean
   onCheckAvailability: () => void
+  onOpenName?: (name: string) => void
   onQueryChange: (value: string) => void
   query: string
 }
@@ -15,9 +18,11 @@ export function SearchWorkspace({
   availabilityProps,
   checked,
   detailsProps,
+  featuredNames,
   loading,
   nodeHex,
   onCheckAvailability,
+  onOpenName,
   onQueryChange,
   overviewProps,
   primaryProps,
@@ -33,14 +38,16 @@ export function SearchWorkspace({
     <>
       <SearchHero
         checked={checked}
+        featuredNames={featuredNames}
         loading={loading}
         onCheckAvailability={onCheckAvailability}
+        onOpenName={onOpenName}
         onQueryChange={onQueryChange}
         query={query}
       />
 
       {checked && !resultReady ? (
-        <p role="status">{loading ? 'Checking domain data…' : 'Domain data is unavailable. Search again shortly.'}</p>
+        <p className="search-status" role="status">{loading ? 'Checking the name…' : 'Name data is unavailable right now. Try again in a moment.'}</p>
       ) : null}
 
       {checked && resultReady ? (

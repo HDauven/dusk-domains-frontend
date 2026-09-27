@@ -1,6 +1,6 @@
 @import './styles/app-shell.css';
+@import './components/scene/sky.css';
 @import './styles/topbar.css';
-@import './styles/navigation.css';
 @import './styles/runtime-notice.css';
 @import './styles/notices.css';
 @import './styles/domain-flow.css';

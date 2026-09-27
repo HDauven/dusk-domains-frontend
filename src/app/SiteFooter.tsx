@@ -1,0 +1,30 @@
+import type { DuskDomainsRuntimeConfig } from '../names/internal'
+import type { AppMainView } from './AppTypes'
+import { followLink, routePath } from './routes'
+
+export function SiteFooter({
+  links,
+  onMainViewChange,
+}: {
+  links: DuskDomainsRuntimeConfig['launchLinks']
+  onMainViewChange: (view: AppMainView) => void
+}) {
+  const external = [
+    ['Support', links.support],
+    ['Report abuse', links.abuse],
+    ['Security', links.security],
+    ['Status', links.status],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]))
+
+  return (
+    <footer className="site-footer">
+      <p>Dusk Domains, the name service for <a href="https://dusk.network" target="_blank" rel="noreferrer">Dusk</a>.</p>
+      <nav aria-label="Footer">
+        <a href={routePath({ view: 'treasury' })} onClick={(event) => followLink(event, () => onMainViewChange('treasury'))}>Treasury</a>
+        {external.map(([label, href]) => (
+          <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>
+        ))}
+      </nav>
+    </footer>
+  )
+}

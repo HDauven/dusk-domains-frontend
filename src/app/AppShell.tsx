@@ -1,56 +1,70 @@
 import type { ReactNode } from 'react'
-import type { DuskWalletState } from '../names/internal'
-import { HeroBackground } from '../components/scene/HeroBackground'
+import type { DuskDomainsRuntimeConfig, DuskWalletState } from '../names/internal'
+import { SkyBackground, type SkyName } from '../components/scene/SkyBackground'
 import type { WalletConnectionStatus } from '../features/wallet/walletStatus'
 import type { AppMainView, RuntimeNotice as RuntimeNoticeState } from './AppTypes'
 import { RuntimeNotice } from './RuntimeNotice'
-import { TopBar } from './TopBar'
+import { SiteFooter } from './SiteFooter'
+import { TopBar, type NetworkBadge } from './TopBar'
 
 export function AppShell({
   children,
+  launchLinks,
   mainView,
+  network,
   onMainViewChange,
+  onOpenName,
   onOpenWallet,
   onSearchHome,
   pendingReservationCount,
   pendingReservationLabel,
   runtimeNotice,
+  searching,
+  skyNames,
   walletState,
   walletStatus,
 }: {
   children: ReactNode
+  launchLinks: DuskDomainsRuntimeConfig['launchLinks']
   mainView: AppMainView
+  network: NetworkBadge
   onMainViewChange: (view: AppMainView) => void
+  onOpenName: (name: string) => void
   onOpenWallet: () => void
   onSearchHome: () => void
   pendingReservationCount: number
   pendingReservationLabel: string
   runtimeNotice: RuntimeNoticeState | null
+  searching: boolean
+  skyNames: SkyName[]
   walletState: DuskWalletState
   walletStatus: WalletConnectionStatus
 }) {
   return (
-    <main className="page">
-      <div className="app-frame">
-        <HeroBackground />
+    <div className={mainView === 'search' && !searching ? 'page at-home' : 'page'}>
+      <SkyBackground names={skyNames} onOpenName={onOpenName} />
 
-        <TopBar
-          mainView={mainView}
-          onMainViewChange={onMainViewChange}
-          onOpenWallet={onOpenWallet}
-          onSearchHome={onSearchHome}
-          pendingReservationCount={pendingReservationCount}
-          pendingReservationLabel={pendingReservationLabel}
-          walletState={walletState}
-          walletStatus={walletStatus}
-        />
+      <TopBar
+        mainView={mainView}
+        network={network}
+        onMainViewChange={onMainViewChange}
+        onOpenWallet={onOpenWallet}
+        onSearchHome={onSearchHome}
+        pendingReservationCount={pendingReservationCount}
+        pendingReservationLabel={pendingReservationLabel}
+        walletState={walletState}
+        walletStatus={walletStatus}
+      />
 
-        {runtimeNotice ? (
-          <RuntimeNotice notice={runtimeNotice} />
-        ) : null}
+      {runtimeNotice ? (
+        <RuntimeNotice notice={runtimeNotice} />
+      ) : null}
 
+      <main className="page-main">
         {children}
-      </div>
-    </main>
+      </main>
+
+      <SiteFooter links={launchLinks} onMainViewChange={onMainViewChange} />
+    </div>
   )
 }
