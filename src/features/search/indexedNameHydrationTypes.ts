@@ -20,6 +20,7 @@ export type UseIndexedNameHydrationProps = {
   setActivityEntries: Dispatch<SetStateAction<ActivityEntry[]>>
   setActivityLoading: Dispatch<SetStateAction<boolean>>
   setApiSearchResult: Dispatch<SetStateAction<NameResult | null>>
+  setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
   setDelegateManager: Dispatch<SetStateAction<string>>
   setDraftManager: Dispatch<SetStateAction<string>>
   setDraftOwner: Dispatch<SetStateAction<string>>

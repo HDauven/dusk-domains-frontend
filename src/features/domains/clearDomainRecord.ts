@@ -12,10 +12,9 @@ import type { UseDomainRecordActionsProps } from './domainRecordActionTypes'
 export async function clearDomainRecord({
   activeRecordTarget,
   appendActivity,
+  canRemoveRecords,
   nodeHex,
-  recordBusy,
   runtimeConfig,
-  selectedAddress,
   selectedAuthority,
   setPrimaryEndpointValue,
   setRecordError,
@@ -23,7 +22,6 @@ export async function clearDomainRecord({
   setResolverRecordSets,
   shouldApplyPreviewWriteFallback,
   submitNameWrite,
-  walletAuthorized,
   walletSetupState,
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
@@ -31,7 +29,7 @@ export async function clearDomainRecord({
   setRecordError('')
   const target = activeRecordTarget
   if (!guardDomainActionPrerequisite({
-    canContinue: Boolean(walletAuthorized && selectedAddress && target && !recordBusy),
+    canContinue: Boolean(canRemoveRecords && target),
     setError: setRecordError,
       walletSetupState,
     blockedCopy: 'Connect the manager wallet before removing this record.',

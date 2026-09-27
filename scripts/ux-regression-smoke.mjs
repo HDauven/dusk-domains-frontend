@@ -86,23 +86,200 @@ try {
   })
   await page.waitForFunction(() => document.querySelector('#saved-reservation')?.textContent === '200:100')
   await page.evaluate(async () => {
+    const { React, root } = window
+    const { SearchWorkspace } = await import('/src/features/search/SearchWorkspace.tsx')
+    const props = { checked: true, loading: false, query: 'owned.dusk', resultView: 'overview',
+      onQueryChange: () => {}, onCheckAvailability: () => {},
+      availabilityProps: { displayName: 'owned.dusk', reserved: false, status: 'available' },
+      overviewProps: { canRegister: true, displayName: 'owned.dusk', resultStatus: 'available', resultIssues: [],
+        savedReservation: null, savedReservationWindow: null, subnameCount: 0, primaryVerified: false,
+        onContinueRegistration: () => {}, onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, onViewDetails: () => {} } }
+    window.renderReadReady = resultReady => root.render(React.createElement(SearchWorkspace, { ...props, resultReady }))
+    window.renderReadReady(true)
+  })
+  await page.getByRole('button', { name: 'Continue registration' }).waitFor()
+  assert.equal(await page.locator('.availability-pill').textContent(), 'Available')
+  await page.evaluate(() => window.renderReadReady(false))
+  await page.getByRole('status').filter({ hasText: 'Domain data is unavailable' }).waitFor()
+  assert.equal(await page.getByText('Available', { exact: true }).count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Continue registration' }).count(), 0)
+  await page.evaluate(() => window.renderReadReady(true))
+  await page.getByRole('button', { name: 'Continue registration' }).waitFor()
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')
+    root.render(React.createElement(MarketplaceView, { auctions: [], fixedSales: [], offers: [], watchedNodes: [],
+      actionsAvailable: false, marketplaceEnabled: true, tab: 'browse',
+      txState: { status: 'awaiting_approval', context: { title: 'Make offer' } } }))
+  })
+  await page.locator('.tx-status.awaiting_approval').waitFor()
+  assert.equal(await page.getByText('Connect a wallet to transact.', { exact: true }).count(), 0)
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { useMarketplaceFeature } = await import('/src/features/marketplace/useMarketplaceFeature.ts')
+    const { createDuskNodeBlockHeightReader } = await import('/src/app/duskNodeHeight.ts')
+    const { createDuskDomainsOnChainClient } = await import('/src/names/internal.ts')
+    localStorage.removeItem('dusk-domains-marketplace-watchlist-v1')
+    const auction = { node: `0x${'11'.repeat(32)}`, name: 'heightbound.dusk', sellerAuthority: `0x${'22'.repeat(32)}`,
+      reservePriceLux: 5000000000, startBlockHeight: null, endBlockHeight: null, bidCount: 0, highestBid: null }
+    window.heightBoundAuction = auction
+    const currentBlockHeight = createDuskNodeBlockHeightReader('http://node.test/', async (_input, init) => {
+      window.heightFetchStarted = true
+      return new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => {
+        window.heightFetchAborted = true
+        reject(init.signal.reason)
+      }, { once: true }))
+    })
+    const args = { mainView: 'search', indexerClient: null, liveWritesAvailable: true,
+      selectedAddress: 'buyer', selectedAuthority: `0x${'33'.repeat(32)}`,
+      runtimeConfig: { chainId: 'dusk:0', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: `0x${'55'.repeat(32)}` } } },
+      duskDomainsOnChainClient: createDuskDomainsOnChainClient({ read: { read: async () => null }, currentBlockHeight }),
+      marketplaceOnChainClient: { getAuction: async () => ({ ok: true, value: { ...auction,
+        reservePriceLux: 5000000000n, startBlock: null, endBlock: null } }) },
+      ensurePublicBalanceForLiveWrite: async () => true, onOpenWalletConnection: () => {},
+      submitNameWrite: async (_name, _call, options) => {
+        window.heightBoundWrites = (window.heightBoundWrites || 0) + 1
+        const state = { status: 'executed', txId: 'fixture-bid', context: { title: 'Place bid' } }
+        options.onUpdate(state)
+        return state
+      } }
+    function BidSync() {
+      const { marketplaceProps: props } = useMarketplaceFeature(args)
+      window.heightBoundMarketplace = props
+      return React.createElement('output', { id: 'height-bound-bid', 'data-status': props.txState?.status,
+        'data-watched': props.watchedNodes.includes(auction.node) }, `${props.confirmation} ${props.error}`)
+    }
+    root.render(React.createElement(BidSync))
+  })
+  await page.locator('#height-bound-bid').waitFor({ state: 'attached' })
+  await page.evaluate(() => window.heightBoundMarketplace.onBidDraftChange(window.heightBoundAuction.node, '5'))
+  await page.waitForFunction(() => window.heightBoundMarketplace.bidDrafts[window.heightBoundAuction.node] === '5')
+  await page.evaluate(() => {
+    window.heightBoundBidDone = false
+    void window.heightBoundMarketplace.onPlaceBid(window.heightBoundAuction).then(() => { window.heightBoundBidDone = true })
+  })
+  await page.waitForFunction(() => window.heightFetchStarted)
+  assert.equal(await page.locator('#height-bound-bid').getAttribute('data-status'), 'executed')
+  assert.match(await page.locator('#height-bound-bid').textContent(), /Syncing marketplace data/)
+  await page.waitForFunction(() => window.heightBoundBidDone, null, { timeout: 15_000 })
+  assert.ok(await page.evaluate(() => window.heightFetchAborted))
+  assert.equal(await page.evaluate(() => window.heightBoundWrites), 1)
+  assert.equal(await page.locator('#height-bound-bid').getAttribute('data-status'), 'executed')
+  assert.equal(await page.locator('#height-bound-bid').getAttribute('data-watched'), 'true')
+  assert.match(await page.locator('#height-bound-bid').textContent(), /Transaction confirmed, but marketplace data is still syncing/)
+  assert.doesNotMatch(await page.locator('#height-bound-bid').textContent(), /Syncing marketplace data|Transaction failed/)
+  await page.evaluate(async () => {
     await import('/src/index.css')
     await import('/src/App.css')
     const { MyDomainRows } = await import('/src/features/domains/my-domains/MyDomainRows.tsx')
+    const { PendingReservationsList } = await import('/src/features/domains/my-domains/PendingReservationsList.tsx')
+    const copy = await import('/src/features/registration/registrationCopy.ts')
     window.root.render(window.React.createElement('main', { className: 'page' },
       window.React.createElement('section', { className: 'my-names-panel' },
+        window.React.createElement(PendingReservationsList, { ...copy, currentBlockHeight: 200,
+          pendingReservations: [{ name: 'a-long-domain-name.dusk', commitment: 'commit', committedBlockHeight: null,
+            createdAt: new Date().toISOString(), durationYears: 1 }], onOpenPendingReservation: () => {}, onForgetPendingReservation: () => {} }),
         window.React.createElement(MyDomainRows, { myNames: [{ canonicalName: 'a-long-domain-name.dusk', node: 'node', records: [], subnameCount: 0 }],
           primarySummaries: {}, formatNameLifecycle: () => 'Registered', onOpenIndexedName: () => {} }))))
   })
   const open = page.getByRole('button', { name: 'Open', exact: true })
-  await open.waitFor()
-  for (const width of [390, 721, 765, 834, 1060, 1440]) {
+  await open.first().waitFor()
+  for (const width of [320, 390, 721, 765, 834, 1060, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
-    const bounds = await open.boundingBox()
-    assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width, `Open clipped at ${width}px`)
+    for (const button of await open.all()) {
+      const bounds = await button.boundingBox()
+      assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width, `Open clipped at ${width}px`)
+    }
+    assert.ok(await page.locator('.reservation-summary span').evaluate(element => element.scrollWidth <= element.clientWidth), `Recovery instructions clipped at ${width}px`)
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `Page overflows at ${width}px`)
+  }
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { MarketplaceBidReview } = await import('/src/features/marketplace/MarketplaceBidReview.tsx')
+    const auction = { name: `${'a'.repeat(63)}.dusk`, highestBid: null, reservePriceLux: 5e9,
+      startBlockHeight: null, durationBlocks: 8640 }
+    function Review() {
+      const [bidReview, setReview] = React.useState(null)
+      const [height, setHeight] = React.useState(100)
+      window.redrawReview = () => setHeight(value => value + 1)
+      return React.createElement(React.Fragment, null,
+        React.createElement('button', { id: 'review-trigger', onClick: () => setReview({ auction,
+          amountDusk: '5', minimumBidLux: 5000000000n }) }, 'Review bid'),
+        React.createElement(MarketplaceBidReview, { props: { bidReview, currentBlockHeight: height,
+          actionsAvailable: true, onCancelBidReview: () => setReview(null), onPlaceBid: () => {} } }))
+    }
+    root.render(React.createElement(Review))
+  })
+  const trigger = page.getByRole('button', { name: 'Review bid', exact: true })
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: /^Bid on/ })
+  await dialog.waitFor()
+  assert.ok(await dialog.evaluate(element => element.matches(':modal')))
+  for (const key of ['Tab', 'Tab', 'Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab']) {
+    await page.keyboard.press(key)
+    // Native dialogs can yield to browser chrome, but never to background controls.
+    assert.ok(await dialog.evaluate(element => element.contains(document.activeElement) || document.activeElement === document.body), 'Focus escaped bid review')
+  }
+  await trigger.evaluate(element => element.focus())
+  assert.equal(await trigger.evaluate(element => element === document.activeElement), false, 'Background is not inert')
+  const focused = await page.evaluate(() => document.activeElement.textContent)
+  await page.evaluate(() => window.redrawReview())
+  await page.waitForTimeout(50)
+  assert.equal(await page.evaluate(() => document.activeElement.textContent), focused)
+  for (const width of [320, 390, 834, 1440]) {
+    await page.setViewportSize({ width, height: 640 })
+    assert.ok(await page.locator('.marketplace-bid-review').evaluate(element => element.scrollWidth <= element.clientWidth), `Bid review overflows at ${width}px`)
+    const close = page.getByRole('button', { name: 'Close bid review' })
+    await close.scrollIntoViewIfNeeded()
+    assert.ok(await close.evaluate(element => { const r = element.getBoundingClientRect(); return element.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)) }), 'Review is obscured')
+  }
+  await page.keyboard.press('Escape')
+  await dialog.waitFor({ state: 'detached' })
+  assert.ok(await trigger.evaluate(element => element === document.activeElement), 'Focus not restored')
+  await trigger.click()
+  await page.getByRole('button', { name: 'Go back', exact: true }).click()
+  await dialog.waitFor({ state: 'detached' })
+  assert.ok(await trigger.evaluate(element => element === document.activeElement), 'Button dismissal lost focus')
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { TreasuryClaimCard } = await import('/src/features/treasury/cards/TreasuryClaimCard.tsx')
+    const { ReferralLinkCard } = await import('/src/features/referrals/ReferralLinkCard.tsx')
+    const address = 'owner-wallet-address'.repeat(8)
+    root.render(React.createElement('main', { className: 'page' }, React.createElement('div', { className: 'account-grid' },
+      React.createElement(TreasuryClaimCard, { treasuryState: { availableLux: 50075000000, operatorRecipient: address },
+        treasuryRecipientMatchesOperator: true, selectedAddress: address, showTreasuryClaimControls: true,
+        showTreasuryClaimReview: true, treasuryReviewAmountLux: 1000000000, treasuryReviewLabel: 'Claim amount',
+        treasuryConnectedWalletLabel: 'Signing wallet', treasuryClaimAmount: '1', onTreasuryClaimAmountChange: () => {} }),
+      React.createElement(ReferralLinkCard, { selectedAddress: address, referralLink: 'https://example.test/?ref=wallet' }))))
+  })
+  await page.getByRole('textbox', { name: 'Referral link', exact: true }).waitFor()
+  for (const width of [320, 390, 834, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    assert.ok(await page.locator('.treasury-claim-control').evaluate(element => {
+      const width = document.documentElement.clientWidth
+      return [...element.querySelectorAll('input,button')].every(control => { const rect = control.getBoundingClientRect(); return rect.left >= 0 && rect.right <= width })
+    }), `Treasury controls clipped at ${width}px`)
+  }
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')
+    const props = { auctions: [], fixedSales: [], offers: [], watchedNodes: [], marketplaceEnabled: false, actionsAvailable: false }
+    function Tabs() {
+      const [tab, onTabChange] = React.useState('browse')
+      return React.createElement(MarketplaceView, { ...props, tab, onTabChange })
+    }
+    root.render(React.createElement(Tabs))
+  })
+  await page.getByRole('tab', { name: 'Browse', exact: true }).focus()
+  for (const [key, label] of [['ArrowRight', 'My marketplace'], ['End', 'Offers'], ['Home', 'Browse'], ['ArrowLeft', 'Offers']]) {
+    await page.keyboard.press(key)
+    const selected = page.getByRole('tab', { name: label, exact: true })
+    assert.equal(await selected.getAttribute('aria-selected'), 'true')
+    assert.ok(await selected.evaluate(element => element === document.activeElement))
+    assert.equal(await page.locator('[role="tab"][tabindex="0"]').count(), 1)
   }
   assert.deepEqual(errors, [])
-  console.log('PASS: Enter, scoped feedback, saved-reservation refresh and responsive Open buttons')
+  console.log('PASS: UX regression checks')
 } finally {
   await browser.close()
 }

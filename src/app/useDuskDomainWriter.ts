@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { createPreviewRegistrationApp } from './appHelpers'
 import { selectedWalletProviderName } from '../features/wallet/walletStatus'
 import {
@@ -33,12 +33,15 @@ export function useDuskDomainWriter({
   selectedAddress,
   walletState,
 }: UseDuskDomainWriterArgs) {
+  const pendingWrite = useRef(false)
   return useCallback(async (
     name: string,
     call: DuskDomainCallMetadata,
     options: SubmitDuskDomainWriteOptions = {},
   ): Promise<DuskDomainTxState> => {
+    if (pendingWrite.current) throw new Error('Finish the pending wallet transaction before starting another.')
     const app = liveDuskDomainsApp ?? createPreviewRegistrationApp(name)
+    pendingWrite.current = true
 
     return await submitDuskDomainWriteCall(app, call, {
       contracts,
@@ -60,6 +63,6 @@ export function useDuskDomainWriter({
         }
       },
       allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
-    })
+    }).finally(() => { pendingWrite.current = false })
   }, [captureUrl, chainId, contracts, liveDuskDomainsApp, liveWritesEnabled, selectedAddress, walletState])
 }

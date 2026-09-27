@@ -45,11 +45,11 @@ export function RegistrationReviewStep({
 }) {
   const walletReady = walletSetupState === 'connected'
   const actionTitle = walletReady
-    ? committed ? 'Reservation submitted' : 'Reserve this domain'
+    ? committed ? 'Reservation saved' : 'Reserve this domain'
     : walletSetupActionTitle(walletSetupState)
   const actionCopy = walletReady
     ? committed
-      ? 'Continue to purchase once the reservation is ready.'
+      ? 'Check the saved request in Purchase before retrying.'
       : `Purchase unlocks ${REGISTRATION_MIN_REVEAL_WAIT_BLOCKS} blocks after confirmation.`
     : walletSetupActionCopy(walletSetupState)
 
@@ -97,7 +97,7 @@ export function RegistrationReviewStep({
             type="button"
             onClick={() => void onPrepareCommit()}
           >
-            {commitBusy ? txStatusCopy(commitTxState?.status, commitTxState?.message) : commitStale ? 'Start again' : committed ? 'Reserved' : 'Reserve name'}
+            {commitBusy ? txStatusCopy(commitTxState?.status, commitTxState?.message) : commitStale ? 'Start again' : committed ? 'Saved' : 'Reserve name'}
           </button>
         ) : (
           <RegistrationWalletActionButton

@@ -10,6 +10,7 @@ export function forgetPendingReservation(
   }: UseSearchControllerProps,
   reservation: PendingNameReservation,
 ) {
+  if (!globalThis.confirm(`Forget the saved reservation for ${reservation.name}? This deletes its recovery secret from this browser, but does not cancel a submitted transaction. Check your wallet first.`)) return
   removePendingNameReservation({
     chainId: reservation.chainId,
     controller: reservation.controller,

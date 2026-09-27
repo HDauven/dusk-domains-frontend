@@ -83,6 +83,10 @@ export function RecordsView({
         recordTargetOptions={recordTargetOptions}
       />
 
+      {!canRemoveRecords && !recordBusy ? (
+        <p className="secure-note" role="status">Connect the owner or manager wallet of an active domain to save or remove records.</p>
+      ) : null}
+
       <RecordDraftEditor
         editableRecordKeys={editableRecordKeys}
         onDraftValueChange={onDraftValueChange}

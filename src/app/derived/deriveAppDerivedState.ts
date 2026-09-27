@@ -1,6 +1,6 @@
 import { registrationCommitWindow } from '../../names/internal'
 import { deriveBusyState } from './busyState'
-import { deriveManagementCapabilities } from './managementCapabilities'
+import { canManageActiveName, deriveManagementCapabilities } from './managementCapabilities'
 import { derivePrimaryState } from './primaryState'
 import { deriveRecordCapabilities } from './recordCapabilities'
 import {
@@ -142,18 +142,24 @@ export function deriveAppDerivedState({
     walletAuthorized: walletSigningReady,
   })
 
+  const parentAuthorized = canManageActiveName(managedName, selectedAuthority, currentBlockHeight)
+  const recordTarget = activeRecordTarget?.node === nodeHex ? managedName
+    : subnames.find(name => name.node === activeRecordTarget?.node && name.status === 'active')
+  const recordAuthorized = canManageActiveName(recordTarget, selectedAuthority, currentBlockHeight)
+
   return {
     canChangeRecordSource: false,
     canClearPrimary,
-    canCreateSubname,
+    canCreateSubname: canCreateSubname && parentAuthorized,
     canDelegateSubname: false,
-    canManageName,
+    canManageName: canManageName && parentAuthorized,
     canPrepareCommit,
-    canRenewName,
+    canRenewName: canRenewName && parentAuthorized,
     canRevealRegistration,
     canRevokeSelectedSubname: false,
-    canSaveRecords,
-    canSetPrimary,
+    canRemoveRecords: walletSigningReady && recordAuthorized && !recordBusy,
+    canSaveRecords: canSaveRecords && recordAuthorized,
+    canSetPrimary: canSetPrimary && parentAuthorized,
     commitBusy,
     commitStale,
     commitWindow,

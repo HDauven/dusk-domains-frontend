@@ -1,10 +1,38 @@
 import { unixSecondsFromIso } from '../features/domains/domainFormat'
 import {
+  createDuskDomainsIndexerClient,
   type DuskDomainsIndexerClient,
   type IndexedSubname,
   type SubnameState,
   userFacingErrorMessage,
+  waitForIndexerConfirmation,
 } from '../names/internal'
+
+export function createHealthyIndexerClient(baseUrl: string) {
+  const healthUrl = `${baseUrl.trim().replace(/\/+$/u, '')}/health`
+  const client = createDuskDomainsIndexerClient({
+    baseUrl,
+    fetch: async (input, init) => {
+      // A reachable API can still be serving an incomplete or stale projection.
+      if (input !== healthUrl && !(await client.getHealth()).ok) {
+        throw new Error('Domain data is still syncing. Refresh and try again shortly.')
+      }
+      return fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10_000) })
+    },
+  })
+  return client
+}
+
+export async function waitForIndexerBlock(client: DuskDomainsIndexerClient | null, height: number | null) {
+  if (!client || height === null) return false
+  return (await waitForIndexerConfirmation({
+    description: 'marketplace update', attempts: 15, delayMs: 1_000,
+    check: async () => {
+      const health = await client.getHealth()
+      return health.ok && (health.finalizedBlockHeight ?? -1) >= height
+    },
+  })).confirmed
+}
 
 export type IndexerReadResult<T> =
   | {
