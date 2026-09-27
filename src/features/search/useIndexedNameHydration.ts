@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { currentBlockHeightFromHealth } from '../../app/appHelpers'
 import type {
   DuskDomainsIndexerClient,
   NameResult,
@@ -22,8 +23,12 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     client: DuskDomainsIndexerClient,
     searchResult: NameResult,
   ) => {
+    const health = await client.getHealth()
+    if (!health.ok) throw new Error('Domain data is still syncing. Refresh and try again shortly.')
+    const currentBlockHeight = currentBlockHeightFromHealth(health)
+    props.setCurrentBlockHeight(currentBlockHeight)
     const reads = await readIndexedName(client, searchResult)
-    if (reads) applyIndexedNameHydration(props, reads)
+    if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight }, reads)
   }, [props])
 
   const refreshCurrentNameFromIndexer = useCallback(async () => {

@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --text: #f5f3ff;
   --ink: #f5f3ff;
   --muted: #b8b2c8;
@@ -33,8 +34,11 @@ html {
   scroll-behavior: smooth;
 }
 
+html:has(dialog:modal) {
+  overflow: hidden;
+}
+
 body {
-  min-width: 320px;
   margin: 0;
   background: #030407;
 }

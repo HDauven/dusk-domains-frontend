@@ -10,6 +10,7 @@ type UseAppSearchPropsArgs =
 
 export function useAppSearchProps({
   activityFeed,
+  appRuntime,
   derivedState,
   domainRecordState,
   domainState,
@@ -85,6 +86,7 @@ export function useAppSearchProps({
     recentWarnings,
     recordsProps,
     registrationProps,
+    resultReady: !appRuntime.indexerClient || searchState.apiSearchResult !== null,
     resultIssues: result.issues,
     resultStatus: result.status,
     resultView,

@@ -24,6 +24,7 @@ export async function checkAvailability(props: UseSearchControllerProps) {
   } = props
 
   setChecked(true)
+  setApiSearchResult(null)
   setResultView('overview')
   setRegistrationStep('duration')
   if (!indexerClient) return

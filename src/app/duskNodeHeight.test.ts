@@ -5,6 +5,24 @@ import {
 } from './duskNodeHeight'
 
 describe('dusk node block height', () => {
+  it('bounds a stalled height fetch and returns unavailable height after abort', async () => {
+    const controller = new AbortController()
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(controller.signal)
+    const fetchImpl: typeof fetch = async (_input, init) => new Promise((_resolve, reject) => {
+      if (!init?.signal) return reject(new Error('Missing abort signal'))
+      init.signal.addEventListener('abort', () => reject(init.signal?.reason), { once: true })
+    })
+    const pending = fetchDuskNodeCurrentBlockHeight('http://node.test/', fetchImpl)
+    try {
+      expect(timeout).toHaveBeenCalledExactlyOnceWith(10_000)
+      controller.abort()
+      await expect(pending).resolves.toBeNull()
+    } finally {
+      controller.abort()
+      timeout.mockRestore()
+    }
+  })
+
   it('reads numeric and string block heights from GraphQL responses', () => {
     expect(blockHeightFromGraphqlResponse({
       data: { block: { header: { height: 3718426 } } },

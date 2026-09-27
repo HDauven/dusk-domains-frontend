@@ -16,7 +16,7 @@ export function AvailabilityBanner({
         <span>Search result</span>
         <h2>{displayName}</h2>
       </div>
-      <span className="availability-pill">{reserved ? 'Reserved by you' : statusCopy(status)}</span>
+      <span className="availability-pill">{reserved ? 'Registration saved' : statusCopy(status)}</span>
     </div>
   )
 }
