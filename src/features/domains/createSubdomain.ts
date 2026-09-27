@@ -20,8 +20,6 @@ export async function createSubdomain({
   selectedAddress,
   selectedAuthority,
   setCriticalRecordConfirmation,
-  setDelegateManager,
-  setDelegateSubnameNode,
   setPublicRecordAcknowledged,
   setRecordDrafts,
   setRecordError,
@@ -99,8 +97,6 @@ export async function createSubdomain({
     setRecordError('')
     setPublicRecordAcknowledged(false)
     setCriticalRecordConfirmation('')
-    setDelegateSubnameNode(subname.node)
-    setDelegateManager(subname.manager)
     appendActivity({
       eventType: 'subname_created',
       actor: selectedAuthority,

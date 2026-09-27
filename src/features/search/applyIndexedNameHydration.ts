@@ -15,10 +15,8 @@ export function applyIndexedNameHydration(
     recordSourceContractId,
     selectedAuthority,
     setActivityEntries,
-    setDelegateManager,
     setDraftManager,
     setDraftOwner,
-    setDraftResolver,
     setIndexerError,
     setManagedName,
     setPrimaryEndpointValue,
@@ -79,19 +77,15 @@ export function applyIndexedNameHydration(
     }))
     if (stateRead.value.owner) setDraftOwner(stateRead.value.owner)
     if (stateRead.value.manager) setDraftManager(stateRead.value.manager)
-    if (stateRead.value.resolverId) setDraftResolver(stateRead.value.resolverId)
     const defaultSubnameManager = stateRead.value.manager || selectedAuthority || fallbackManager
     setSubnameManager((current) => (
       !current || current === fallbackManager || current === selectedAuthority ? defaultSubnameManager : current
     ))
-    setDelegateManager((current) => current || defaultSubnameManager)
   } else {
     setManagedName(createManagedNameState(recordSourceContractId))
     setDraftOwner(fallbackOwner)
     setDraftManager(fallbackManager)
-    setDraftResolver(recordSourceContractId)
     setSubnameManager(selectedAuthority || fallbackManager)
-    setDelegateManager(selectedAuthority || '')
   }
 
   setActivityEntries(activityRead.value ?? [])

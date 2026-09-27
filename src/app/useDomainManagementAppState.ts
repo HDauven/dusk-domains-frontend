@@ -33,12 +33,9 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
   const [subnameExpiryDate, setSubnameExpiryDate] = useState('')
   const [subnameRevocationPolicy, setSubnameRevocationPolicy] = useState<SubnameRevocationPolicy>('parent_revocable')
   const [subnames, setSubnames] = useState<SubnameState[]>([])
-  const [delegateSubnameNode, setDelegateSubnameNode] = useState('')
-  const [delegateManager, setDelegateManager] = useState('')
   const [managedName, setManagedName] = useState(() => createManagedNameState(recordSourceContractId))
   const [draftOwner, setDraftOwner] = useState(fallbackOwner)
   const [draftManager, setDraftManager] = useState(fallbackManager)
-  const [draftResolver, setDraftResolver] = useState(recordSourceContractId)
   const activeSubnames = useMemo(() => (
     subnames.filter((subname) => subname.status === 'active')
   ), [subnames])
@@ -46,11 +43,8 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
   return {
     activeSubnames,
     confirmationInput,
-    delegateManager,
-    delegateSubnameNode,
     draftManager,
     draftOwner,
-    draftResolver,
     managedName,
     managementError,
     managementTxState,
@@ -64,11 +58,8 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
     renewalTxState,
     renewalYears,
     setConfirmationInput,
-    setDelegateManager,
-    setDelegateSubnameNode,
     setDraftManager,
     setDraftOwner,
-    setDraftResolver,
     setManagedName,
     setManagementError,
     setManagementTxState,

@@ -1,14 +1,6 @@
 .page {
   --domain-flow-width: 1060px;
   --domain-page-gutter: clamp(20px, 6vw, 120px);
-  --panel-surface: var(--surface);
-  --panel-surface-soft: var(--surface-soft);
-  --panel-surface-strong: rgba(12, 10, 32, 0.8);
-  --panel-surface-solid: var(--surface-strong);
-  --panel-row: rgba(12, 10, 32, 0.55);
-  --panel-row-hover: rgba(24, 19, 56, 0.72);
-  --panel-border: var(--line);
-  --panel-border-strong: var(--line-strong);
   position: relative;
   display: flex;
   flex-direction: column;

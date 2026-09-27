@@ -25,20 +25,14 @@ export type AppendSubdomainActivity = (input: {
 export type UseSubdomainActionsProps = {
   appendActivity: AppendSubdomainActivity
   canCreateSubname: boolean
-  canDelegateSubname: boolean
-  canRevokeSelectedSubname: boolean
   currentBlockHeight: number | null
-  delegateManager: string
   displayName: string
   managedNameExpiresAt: number
   nowSeconds: number
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
-  selectedDelegatedSubname: SubnameState | undefined
   setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
-  setDelegateManager: Dispatch<SetStateAction<string>>
-  setDelegateSubnameNode: Dispatch<SetStateAction<string>>
   setPublicRecordAcknowledged: Dispatch<SetStateAction<boolean>>
   setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>

@@ -10,23 +10,23 @@
   gap: 9px;
   min-height: 94px;
   padding: 14px 16px;
-  border: 1px solid var(--panel-border-strong);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--panel-row);
+  background: var(--surface-soft);
 }
 
 .primary-status.success {
   border-color: rgba(93, 219, 128, 0.22);
-  background: var(--panel-row);
+  background: var(--surface-soft);
 }
 
 .primary-status.danger {
   border-color: rgba(255, 110, 110, 0.22);
-  background: var(--panel-row);
+  background: var(--surface-soft);
 }
 
 .primary-status strong {
-  color: var(--text);
+  color: var(--ink);
   font-size: 14px;
 }
 

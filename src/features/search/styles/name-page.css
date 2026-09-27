@@ -6,6 +6,12 @@
   padding: 18px 0 40px;
 }
 
+/* Views inside a name's page take the page's width, not a second frame. */
+.result-area > * {
+  width: auto;
+  margin: 0;
+}
+
 /* Header */
 .name-hero {
   display: flex;

@@ -12,8 +12,6 @@ export function resetSearchState({
   setCommitted,
   setConfirmationInput,
   setCriticalRecordConfirmation,
-  setDelegateManager,
-  setDelegateSubnameNode,
   setIndexerConfirmation,
   setIndexerError,
   setManagementError,
@@ -90,7 +88,5 @@ export function resetSearchState({
   setSubnameExpiryPolicy('inherits_parent')
   setSubnameExpiryDate('')
   setSubnameRevocationPolicy('parent_revocable')
-  setDelegateSubnameNode('')
-  setDelegateManager(selectedAuthority || '')
   setRenewalYears(1)
 }

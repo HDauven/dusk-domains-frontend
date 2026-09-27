@@ -1,6 +1,5 @@
 export * from '@duskdomains/sdk/internal'
 export * from '@duskdomains/sdk/writes'
-export * from '@duskdomains/sdk/write-proof'
 
 export {
   createDuskWallet,

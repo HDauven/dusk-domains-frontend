@@ -22,7 +22,6 @@ export async function applyCompleteRegistrationSuccess(
     selectedAuthority,
     setDraftManager,
     setDraftOwner,
-    setDraftResolver,
     setManagedName,
     setPrimaryEndpointValue,
     setPrimaryName,
@@ -75,7 +74,6 @@ export async function applyCompleteRegistrationSuccess(
   setPrimaryEndpointValue(registrationTargetAddress)
   setDraftOwner(selectedAuthority)
   setDraftManager(selectedAuthority)
-  setDraftResolver(recordSourceContractId)
   appendActivity({
     eventType: 'registration',
     actor: selectedAuthority,

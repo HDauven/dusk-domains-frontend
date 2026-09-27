@@ -70,7 +70,6 @@ export function buildDomainManagementProps(
       walletAddressAvailable: Boolean(props.selectedAddress),
     },
     settingsProps: {
-      canChangeRecordSource: props.canChangeRecordSource,
       canManageName: props.canManageName,
       canRenewName: props.canRenewName,
       confirmationInput: props.confirmationInput,
@@ -78,7 +77,6 @@ export function buildDomainManagementProps(
       displayName: props.displayName,
       draftManager: props.draftManager,
       draftOwner: props.draftOwner,
-      draftResolver: props.draftResolver,
       feeConfigError: props.feeConfigError,
       feeConfigLoading: props.feeConfigLoading,
       managedName: props.managedName,
@@ -90,11 +88,9 @@ export function buildDomainManagementProps(
       onConfirmationInputChange: props.setConfirmationInput,
       onDraftManagerChange: props.setDraftManager,
       onDraftOwnerChange: props.setDraftOwner,
-      onDraftResolverChange: props.setDraftResolver,
       onOwnershipUpdate: () => void actions.handleOwnershipUpdate(),
       onRenewName: () => void actions.handleRenewName(),
       onRenewalYearsChange: (years) => props.setRenewalYears(props.clampDurationYears(years)),
-      onResolverUpdate: () => void actions.handleResolverUpdate(),
       renewalBusy: props.renewalBusy,
       renewalError: props.renewalError,
       renewalFee: props.renewalFee,
@@ -104,20 +100,13 @@ export function buildDomainManagementProps(
     },
     subdomainsProps: {
       canCreateSubname: props.canCreateSubname,
-      canDelegateSubname: props.canDelegateSubname,
-      canRevokeSelectedSubname: props.canRevokeSelectedSubname,
       currentBlockHeight: props.currentBlockHeight,
-      delegateManager: props.delegateManager,
-      delegateSubnameNode: props.delegateSubnameNode,
       displayName: props.displayName,
       error: props.subnameError,
       fallbackManager: props.fallbackManager,
       managedNameExpiresAt: props.managedName.expiresAt,
       nowSeconds: props.nowSeconds,
       onCreateSubname: () => void actions.handleCreateSubname(),
-      onDelegateManagerChange: props.setDelegateManager,
-      onDelegateSubnameChange: props.setDelegateSubnameNode,
-      onDelegateSubnameSubmit: () => void actions.handleDelegateSubname(),
       onRecordTargetSelect: (subname) => {
         props.setRecordTargetNode(subname.node)
         props.setRecordDrafts({})
@@ -125,7 +114,6 @@ export function buildDomainManagementProps(
         props.setPublicRecordAcknowledged(false)
         props.setCriticalRecordConfirmation('')
       },
-      onRevokeSubname: () => void actions.handleRevokeSubname(),
       onSubnameExpiryDateChange: props.setSubnameExpiryDate,
       onSubnameExpiryPolicyChange: props.setSubnameExpiryPolicy,
       onSubnameLabelChange: props.setSubnameLabel,

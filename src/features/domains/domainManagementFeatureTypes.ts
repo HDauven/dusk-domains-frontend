@@ -37,12 +37,9 @@ export type UseDomainManagementFeatureProps =
       node?: string
       name?: string
     }) => void
-    canChangeRecordSource: boolean
     clampDurationYears: (years: number) => number
     confirmationInput: string
     criticalRecordConfirmation: string
-    delegateSubnameNode: string
-    draftResolver: string
     editableRecordKeys: readonly ResolverRecordKey[]
     fallbackManager: string
     feeConfigError: string
@@ -69,7 +66,6 @@ export type UseDomainManagementFeatureProps =
     resolverRecords: ResolverRecord[]
     requestSelectedShieldedAddress: () => Promise<string>
     setConfirmationInput: SetState<string>
-    setDraftResolver: SetState<string>
     setRenewalYears: SetState<number>
     setSubnameExpiryDate: SetState<string>
     setSubnameExpiryPolicy: SetState<SubnameExpiryPolicy>

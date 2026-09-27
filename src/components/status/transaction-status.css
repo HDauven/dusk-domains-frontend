@@ -15,7 +15,7 @@
 }
 
 .tx-status strong {
-  color: var(--text);
+  color: var(--ink);
   font-size: 14px;
 }
 
@@ -30,7 +30,7 @@
   max-width: 100%;
   padding: 5px 8px;
   overflow: hidden;
-  color: var(--accent);
+  color: var(--violet);
   border: 1px solid rgba(167, 139, 255, 0.22);
   border-radius: 6px;
   background: rgba(5, 5, 12, 0.74);

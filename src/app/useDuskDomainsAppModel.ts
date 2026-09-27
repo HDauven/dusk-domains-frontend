@@ -3,7 +3,6 @@ import type { AppMainView } from './AppTypes'
 import type { NetworkBadge } from './TopBar'
 import { useSkyNames, showcase } from './useSkyNames'
 import { useUrlRoute } from './useUrlRoute'
-import { useAppBrowserProofCapture } from './useAppBrowserProofCapture'
 import { useAppCoreRuntimes } from './useAppCoreRuntimes'
 import { useAppNavigationRuntimes } from './useAppNavigationRuntimes'
 import { useAppViewProps } from './useAppViewProps'
@@ -21,8 +20,6 @@ export function useDuskDomainsAppModel() {
   const core = useAppCoreRuntimes(import.meta.env)
   const workspace = useNameWorkspaceRuntime(core)
   const navigation = useAppNavigationRuntimes({ core, workspace })
-
-  useAppBrowserProofCapture({ core, navigation, workspace })
 
   const {
     appRuntime,

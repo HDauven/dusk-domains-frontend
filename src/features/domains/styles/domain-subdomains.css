@@ -3,12 +3,12 @@
   gap: 14px;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
 }
 
 .subname-box h3 {
   margin: 0;
-  color: var(--text);
+  color: var(--ink);
   font-size: 17px;
   font-weight: 700;
 }
@@ -21,8 +21,7 @@
 
 .subname-editor,
 .subname-quick-create,
-.subname-policy-grid,
-.delegate-row {
+.subname-policy-grid {
   display: grid;
   gap: 14px;
   align-items: end;
@@ -45,49 +44,12 @@
   align-self: flex-start;
 }
 
-.subname-advanced {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: rgba(5, 5, 12, 0.4);
-}
-
-.subname-advanced summary {
-  min-height: 42px;
-  padding: 12px 14px;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  list-style-position: inside;
-}
-
-.subname-advanced summary:hover {
-  color: var(--accent);
-}
-
-.subname-advanced[open] {
-  background: rgba(8, 7, 17, 0.62);
-}
-
-.subname-advanced[open] summary {
-  border-bottom: 1px solid var(--border);
-}
-
-.subname-advanced .subname-editor,
-.subname-advanced .delegate-row {
-  padding: 14px;
-}
-
 .subname-editor {
   grid-template-columns: repeat(3, minmax(160px, 1fr));
 }
 
 .subname-policy-grid {
   grid-template-columns: minmax(170px, 0.8fr) minmax(170px, 0.8fr) minmax(170px, 0.8fr) auto;
-}
-
-.delegate-row {
-  grid-template-columns: minmax(190px, 0.85fr) minmax(0, 1fr) auto auto;
 }
 
 .subname-list {
@@ -103,7 +65,7 @@
   min-height: 54px;
   padding: 10px 12px;
   color: var(--muted);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(5, 5, 12, 0.48);
   cursor: pointer;
@@ -111,8 +73,7 @@
   text-align: left;
 }
 
-.subname-row:hover,
-.subname-row.selected {
+.subname-row:not(:disabled):hover {
   border-color: rgba(167, 139, 255, 0.58);
   background: rgba(12, 10, 24, 0.72);
 }
@@ -120,7 +81,7 @@
 .subname-row strong {
   min-width: 0;
   overflow: hidden;
-  color: var(--text);
+  color: var(--ink);
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,7 +99,7 @@
 .subname-row span:nth-child(2) {
   width: fit-content;
   padding: 4px 7px;
-  color: var(--accent);
+  color: var(--violet);
   border: 1px solid rgba(167, 139, 255, 0.22);
   border-radius: 5px;
   background: rgba(95, 74, 168, 0.16);
