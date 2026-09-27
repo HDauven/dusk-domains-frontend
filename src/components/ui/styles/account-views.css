@@ -21,11 +21,6 @@
   align-self: start;
 }
 
-.primary-account-card {
-  border-color: rgba(167, 139, 255, 0.16);
-  background: var(--panel-row);
-}
-
 .treasury-claim-control {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -57,4 +52,20 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+}
+
+@media (max-width: 860px) {
+  .rewards-account-card.claimable {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rewards-account-card.claimable > * {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .fee-config-actions > button {
+    flex: 1 1 auto;
+  }
 }

@@ -57,3 +57,9 @@ stars under it stay inert. */
   color: var(--ink-2);
   text-align: center;
 }
+
+@media (max-width: 720px) {
+  .page {
+    --domain-page-gutter: 16px;
+  }
+}

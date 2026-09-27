@@ -1,4 +1,5 @@
 import { AccountCard } from '../../components/ui/AccountCard'
+import { abbreviate } from '../../utils/format'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
 export function ActiveReferralCard({
@@ -6,29 +7,27 @@ export function ActiveReferralCard({
   appliedReferral,
   onClearReferral,
   onReferralInputChange,
-  referralAttributionLabel,
   referralState,
 }: Pick<ReferralsViewProps,
   | 'activeReferral'
   | 'appliedReferral'
   | 'onClearReferral'
   | 'onReferralInputChange'
-  | 'referralAttributionLabel'
   | 'referralState'
 >) {
   return (
     <AccountCard
-      heading={referralAttributionLabel}
-      intro={appliedReferral ? 'Applies to your next registration.' : activeReferral ? 'Saved for later.' : 'Paste a referral before registering.'}
-      title="Active referral"
+      heading={appliedReferral || activeReferral ? abbreviate(referralState.input) : 'Nobody yet'}
+      intro={appliedReferral ? 'Applies to your next registration.' : activeReferral ? 'Saved. It applies once referrals are switched on.' : 'If someone sent you here, paste their address. It costs you nothing.'}
+      title="Referred by"
     >
       <div className="copy-row">
         <input
           value={referralState.input}
-          placeholder="Referral address"
+          placeholder="Their wallet address"
           onChange={(event) => onReferralInputChange(event.target.value)}
         />
-        <button className="commit-button save-record" disabled={!referralState.input} type="button" onClick={onClearReferral}>
+        <button className="commit-button" disabled={!referralState.input} type="button" onClick={onClearReferral}>
           Clear
         </button>
       </div>

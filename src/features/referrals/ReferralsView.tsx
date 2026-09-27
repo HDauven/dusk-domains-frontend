@@ -67,22 +67,23 @@ export function ReferralsView({
         appliedReferral={appliedReferral}
         onClearReferral={onClearReferral}
         onReferralInputChange={onReferralInputChange}
-        referralAttributionLabel={referralAttributionLabel}
         referralState={referralState}
       />
 
-      <ReferralRewardsCard
-        onClaimReferralRewards={onClaimReferralRewards}
-        referralAccountState={referralAccountState}
-        referralBusy={referralBusy}
-        referralClaimRecipient={referralClaimRecipient}
-        referralClaimable={referralClaimable}
-        referralRewardClaimReady={referralRewardClaimReady}
-        referralRewardGuidance={referralRewardGuidance}
-        referralRewardSummaryValue={referralRewardSummaryValue}
-        referralRewardsSupported={referralRewardsSupported}
-        referralTxState={referralTxState}
-      />
+      {selectedAddress ? (
+        <ReferralRewardsCard
+          onClaimReferralRewards={onClaimReferralRewards}
+          referralAccountState={referralAccountState}
+          referralBusy={referralBusy}
+          referralClaimRecipient={referralClaimRecipient}
+          referralClaimable={referralClaimable}
+          referralRewardClaimReady={referralRewardClaimReady}
+          referralRewardGuidance={referralRewardGuidance}
+          referralRewardSummaryValue={referralRewardSummaryValue}
+          referralRewardsSupported={referralRewardsSupported}
+          referralTxState={referralTxState}
+        />
+      ) : null}
     </AccountViewLayout>
   )
 }

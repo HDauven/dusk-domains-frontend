@@ -28,8 +28,8 @@ export function TreasuryPricingCard({
   return (
     <AccountCard
       className="fee-config-card"
-      heading={feeConfigLoading ? 'Loading' : `v${feeConfig.version}`}
-      intro="Operator-controlled annual prices and referral rewards."
+      heading="Yearly prices"
+      intro={feeConfigLoading ? 'Loading the live price list.' : `Version ${feeConfig.version}. The operator sets the price per year by name length, and the share that goes to referrers.`}
       title="Pricing"
     >
       <div className="fee-config-grid">

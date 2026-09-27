@@ -72,7 +72,7 @@ describe('App user-facing copy', () => {
 
     expect(source).toContain('no extra cost')
     expect(source).toContain('No extra fee for the buyer.')
-    expect(source).toContain('Active referral')
+    expect(source).toContain('Referred by')
     expect(source).toContain('Applies to your next registration.')
     expect(source).not.toContain('Included when you register.')
   })
