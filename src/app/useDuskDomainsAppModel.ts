@@ -1,10 +1,21 @@
+import type { DuskDomainsRuntimeConfig } from '../names/internal'
 import type { AppMainView } from './AppTypes'
+import type { NetworkBadge } from './TopBar'
+import { useSkyNames, showcase } from './useSkyNames'
+import { useUrlRoute } from './useUrlRoute'
 import { useAppBrowserProofCapture } from './useAppBrowserProofCapture'
 import { useAppCoreRuntimes } from './useAppCoreRuntimes'
 import { useAppNavigationRuntimes } from './useAppNavigationRuntimes'
 import { useAppViewProps } from './useAppViewProps'
 import { useNameWorkspaceRuntime } from './useNameWorkspaceRuntime'
 import { useMarketplaceFeature } from '../features/marketplace/useMarketplaceFeature'
+
+function networkBadge(config: DuskDomainsRuntimeConfig): NetworkBadge {
+  if (config.mode !== 'live_ready') return { label: 'Preview', tone: 'preview' }
+  if (config.chainId === 'dusk:1') return { label: 'Mainnet', tone: 'mainnet' }
+  if (config.chainId === 'dusk:0') return { label: 'Local', tone: 'local' }
+  return { label: config.chainId === 'dusk:3' ? 'Devnet' : 'Testnet', tone: 'testnet' }
+}
 
 export function useDuskDomainsAppModel() {
   const core = useAppCoreRuntimes(import.meta.env)
@@ -41,7 +52,22 @@ export function useDuskDomainsAppModel() {
   } = mainViewRuntime
   const {
     handleSearchHome,
+    searchName,
   } = searchRuntime
+  const skyNames = useSkyNames(appRuntime.indexerClient)
+  const openName = (name: string) => void searchName(name)
+  const openView = (view: AppMainView) => {
+    if (view === 'search') handleSearchHome()
+    else void handleMainViewChange(view)
+  }
+
+  useUrlRoute({
+    checked: searchState.checked,
+    mainView,
+    onOpenName: openName,
+    onOpenView: openView,
+    searchedName: searchState.apiSearchResult?.canonical ?? null,
+  })
 
   const {
     mainContentProps,
@@ -71,9 +97,19 @@ export function useDuskDomainsAppModel() {
     mainContentProps: {
       ...mainContentProps,
       marketplaceProps,
+      searchProps: {
+        ...mainContentProps.searchProps,
+        featuredNames: showcase(skyNames),
+        onOpenName: openName,
+      },
     },
     shellProps: {
+      launchLinks: appRuntime.runtimeConfig.launchLinks,
       mainView,
+      network: networkBadge(appRuntime.runtimeConfig),
+      onOpenName: openName,
+      searching: searchState.checked,
+      skyNames: skyNames.map(({ name, node }) => ({ label: name, node })),
       onMainViewChange: (view: AppMainView) => void handleMainViewChange(view),
       onOpenWallet: () => void handleOpenWalletConnection(),
       onSearchHome: handleSearchHome,

@@ -1,0 +1,108 @@
+/* The sky: night overhead, the sunset on the planet's rim, and a star for every registered name. */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 104%, rgba(255, 179, 107, 0.5) 0%, rgba(255, 111, 145, 0.32) 28%, rgba(143, 107, 255, 0.2) 52%, transparent 75%),
+    linear-gradient(180deg, #04040f 0%, #0b0a26 38%, #1b1349 66%, #33205e 84%, #4e2766 100%);
+}
+
+.sky-dust {
+  position: absolute;
+  inset: 0 0 38% 0;
+  width: 100%;
+  height: 62%;
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+}
+
+.sky-names {
+  position: absolute;
+  inset: 0;
+}
+
+.sky-name {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sky-name::before {
+  content: '';
+  position: absolute;
+  inset: 5.5px;
+  border-radius: 50%;
+  background: #f4efff;
+  opacity: 0.75;
+  box-shadow: 0 0 5px 1px rgba(201, 188, 255, 0.6), 0 0 14px 2px rgba(143, 107, 255, 0.25);
+}
+
+.sky-name span {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface-strong);
+  border: 1px solid var(--line-strong);
+  font: 500 12px var(--font-mono);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sky-name {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .sky-name:hover::before {
+    inset: 3px;
+    opacity: 1;
+    box-shadow: 0 0 10px 2px rgba(255, 214, 176, 0.9), 0 0 26px 6px rgba(255, 111, 145, 0.45);
+  }
+
+  .sky-name:hover span {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.sky-planet {
+  position: absolute;
+  transition: transform 600ms var(--ease), opacity 600ms var(--ease);
+  left: 50%;
+  bottom: -2180px;
+  width: 3600px;
+  height: 2400px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 50% 48% at 50% 50%, #0a0818 96%, #140f2e 99%);
+  box-shadow:
+    0 -2px 0 rgba(255, 214, 176, 0.9),
+    0 -10px 40px rgba(255, 179, 107, 0.5),
+    0 -60px 160px rgba(255, 111, 145, 0.32);
+}
+
+@media (max-width: 760px) {
+  .sky-planet {
+    bottom: -2240px;
+  }
+}
+
+/* Off the home page the sun has set further: the rim sinks and dims so panels read cleanly. */
+.page:not(.at-home) .sky-planet {
+  transform: translateX(-50%) translateY(220px);
+  opacity: 0.55;
+}

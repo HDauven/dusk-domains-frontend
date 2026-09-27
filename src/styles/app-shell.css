@@ -1,49 +1,49 @@
 .page {
   --domain-flow-width: 1060px;
-  --domain-page-gutter: clamp(28px, 8vw, 150px);
-  --panel-surface: rgba(5, 5, 12, 0.5);
-  --panel-surface-soft: rgba(5, 5, 12, 0.46);
-  --panel-surface-strong: rgba(5, 5, 12, 0.58);
-  --panel-surface-solid: rgba(5, 5, 12, 0.88);
-  --panel-row: rgba(5, 5, 12, 0.5);
-  --panel-row-hover: rgba(12, 10, 24, 0.72);
-  --panel-border: rgba(167, 139, 255, 0.085);
-  --panel-border-strong: rgba(167, 139, 255, 0.16);
-  min-height: 100vh;
-  padding: 0;
-  background:
-    radial-gradient(circle at 50% 32%, rgba(115, 83, 255, 0.055), transparent 33%),
-    radial-gradient(circle at 14% 24%, rgba(122, 100, 255, 0.035), transparent 24%),
-    #010207;
-  color: var(--text);
-}
-
-.app-frame {
+  --domain-page-gutter: clamp(20px, 6vw, 120px);
+  --panel-surface: var(--surface);
+  --panel-surface-soft: var(--surface-soft);
+  --panel-surface-strong: rgba(12, 10, 32, 0.8);
+  --panel-surface-solid: var(--surface-strong);
+  --panel-row: rgba(12, 10, 32, 0.55);
+  --panel-row-hover: rgba(24, 19, 56, 0.72);
+  --panel-border: var(--line);
+  --panel-border-strong: var(--line-strong);
   position: relative;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  margin: 0 auto;
-  overflow: hidden;
-  background: #010207;
+  color: var(--ink);
 }
 
-.scene-background {
-  position: fixed;
-  top: 104px;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 0;
-  overflow: hidden;
+/* The layout boxes span the whole width, so they let the pointer through to the sky and only
+   their content takes it: the stars beside the content can be hovered, stars under it stay inert. */
+.page,
+.page-main {
   pointer-events: none;
 }
 
-.topbar,
-.brand,
-.brand-type,
-.nav-links,
-.wallet-connect,
-.search-row,
+.page > .topbar,
+.page > .runtime-notice,
+.page > .site-footer,
+.page-main > * {
+  pointer-events: auto;
+}
+
+.page-main > .hero {
+  pointer-events: none;
+}
+
+.page-main > .hero > * {
+  pointer-events: auto;
+}
+
+.page-main {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
+
 .availability-banner,
 .includes span,
 .setup-row,
@@ -53,4 +53,11 @@
 .pending-reservation-row {
   display: flex;
   align-items: center;
+}
+
+.search-status {
+  width: min(var(--domain-flow-width), calc(100% - 2 * var(--domain-page-gutter)));
+  margin: 18px auto 0;
+  color: var(--ink-2);
+  text-align: center;
 }

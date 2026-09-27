@@ -22,5 +22,11 @@ export function useSearchController(props: UseSearchControllerProps) {
       openPendingReservation(props, reservation)
     ),
     resetSearch: (nextValue: string) => resetSearchState(props, nextValue),
+    // Opens a name the way a typed search would, for example from a /name/ URL.
+    searchName: (name: string) => {
+      props.openSearchView()
+      resetSearchState(props, name)
+      return checkAvailability({ ...props, query: name })
+    },
   }
 }

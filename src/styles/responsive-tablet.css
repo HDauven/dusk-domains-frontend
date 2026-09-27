@@ -1,30 +1,4 @@
 @media (max-width: 1060px) {
-  .topbar {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: stretch;
-    gap: 16px;
-    min-height: auto;
-    height: auto;
-    padding: 24px;
-  }
-
-  .brand {
-    justify-content: center;
-    min-width: 0;
-  }
-
-  .nav-links {
-    justify-content: center;
-    height: auto;
-    gap: 22px;
-  }
-
-  .nav-links button {
-    height: 38px;
-    font-size: 20px;
-  }
-
   .runtime-notice {
     align-items: flex-start;
     padding: 12px 22px;
@@ -34,15 +8,6 @@
   .registration-layout {
     display: grid;
     grid-template-columns: 1fr;
-  }
-
-  .search-panel .primary-button {
-    min-height: 58px;
-    font-size: 18px;
-  }
-
-  .name-input {
-    min-height: 64px;
   }
 
   .primary-button {

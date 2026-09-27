@@ -100,7 +100,7 @@ try {
   await page.getByRole('button', { name: 'Continue registration' }).waitFor()
   assert.equal(await page.locator('.availability-pill').textContent(), 'Available')
   await page.evaluate(() => window.renderReadReady(false))
-  await page.getByRole('status').filter({ hasText: 'Domain data is unavailable' }).waitFor()
+  await page.getByRole('status').filter({ hasText: 'Name data is unavailable' }).waitFor()
   assert.equal(await page.getByText('Available', { exact: true }).count(), 0)
   assert.equal(await page.getByRole('button', { name: 'Continue registration' }).count(), 0)
   await page.evaluate(() => window.renderReadReady(true))
