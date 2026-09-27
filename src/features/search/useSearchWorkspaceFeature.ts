@@ -25,6 +25,7 @@ type UseSearchWorkspaceFeatureProps = {
   onResultViewChange: (view: SearchResultView) => void
   onStartRegistration: () => void
   parentResolverRecords: SearchWorkspaceProps['detailsProps']['parentResolverRecords']
+  paysPreviousOwner: string | null
   primaryProps: SearchWorkspaceProps['primaryProps']
   primaryVerification: SearchWorkspaceProps['detailsProps']['primaryVerification']
   query: string
@@ -64,6 +65,7 @@ export function useSearchWorkspaceFeature({
   onResultViewChange,
   onStartRegistration,
   parentResolverRecords,
+  paysPreviousOwner,
   primaryProps,
   primaryVerification,
   query,
@@ -102,6 +104,7 @@ export function useSearchWorkspaceFeature({
       onManageRecords: () => onResultViewChange('records'),
       onSubdomains: () => onResultViewChange('subnames'),
       parentResolverRecords,
+      paysPreviousOwner,
       primaryVerification,
       subnames,
       viewerAuthority,

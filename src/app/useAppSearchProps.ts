@@ -10,6 +10,17 @@ type UseAppSearchPropsArgs =
   & ReturnType<typeof useDomainManagementFeature>
   & ReturnType<typeof useRegistrationFeature>
 
+function paysPreviousOwner({ owner, records, selectedAddress, selectedAuthority }: {
+  owner: string
+  records: { key: string, value: string }[]
+  selectedAddress: string
+  selectedAuthority: string
+}) {
+  const address = records.find((record) => record.key === 'moonlight_address')?.value ?? ''
+  const owns = Boolean(selectedAuthority) && owner.toLowerCase() === selectedAuthority.toLowerCase()
+  return owns && address && selectedAddress && address !== selectedAddress ? address : null
+}
+
 export function useAppSearchProps({
   activityFeed,
   appRuntime,
@@ -97,6 +108,12 @@ export function useAppSearchProps({
       setResultView('register')
     },
     parentResolverRecords,
+    paysPreviousOwner: paysPreviousOwner({
+      owner: managedName.owner,
+      records: parentResolverRecords,
+      selectedAddress: walletRuntime.selectedAddress,
+      selectedAuthority: walletRuntime.selectedAuthority,
+    }),
     primaryProps,
     primaryVerification,
     query,

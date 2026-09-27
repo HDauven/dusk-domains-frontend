@@ -1,5 +1,6 @@
 import { ArrowUpRight } from 'lucide-react'
 import { CopyValue } from '../../components/ui/CopyValue'
+import { abbreviate } from '../../utils/format'
 import {
   getRecordDefinition,
   type ActivityEntry,
@@ -28,6 +29,7 @@ export function DomainDetailsView({
   onManageRecords,
   onSubdomains,
   parentResolverRecords,
+  paysPreviousOwner,
   primaryVerification,
   subnames,
   viewerAuthority,
@@ -40,6 +42,8 @@ export function DomainDetailsView({
   onManageRecords: () => void
   onSubdomains: () => void
   parentResolverRecords: ResolverRecord[]
+  // Set when the viewer owns the name but it still pays another address, e.g. after a transfer.
+  paysPreviousOwner: string | null
   primaryVerification: PrimaryVerificationSummary
   subnames: SubnameState[]
   viewerAuthority: string
@@ -71,6 +75,12 @@ export function DomainDetailsView({
             No addresses yet. Its owner can add them under <button type="button" onClick={onManageRecords}>Records</button>.
           </p>
         )}
+        {paysPreviousOwner ? (
+          <p className="primary-line warning">
+            <strong>This name pays another wallet.</strong> Payments go to {abbreviate(paysPreviousOwner)}, not the wallet you're using.{' '}
+            <button className="text-button" type="button" onClick={onManageRecords}>Update it under Records</button>
+          </p>
+        ) : null}
         <p className={`primary-line ${primaryVerification.tone}`}>
           <strong>{primaryVerification.title}.</strong> {primaryVerification.description}
         </p>
