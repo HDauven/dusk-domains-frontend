@@ -1,6 +1,7 @@
 import { ArrowLeft, Clock3, Gavel, ShieldCheck, Star, UserRound } from 'lucide-react'
 import { activityLabel, type ActivityEntry, type IndexedMarketplaceAuction } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
+import { activityActor } from '../activity/activityCopy'
 import { activityWhen } from '../activity/activityTime'
 import { formatActivityTime } from '../domains/domainFormat'
 import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
@@ -77,7 +78,9 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
               <p className="marketplace-activity-empty">Loading auction activity…</p>
             ) : marketplaceActivity.length ? (
               <ol>
-                {marketplaceActivity.map((entry) => <AuctionActivityRow currentBlockHeight={props.currentBlockHeight} entry={entry} key={entry.id} />)}
+                {marketplaceActivity.map((entry) => (
+                  <AuctionActivityRow currentBlockHeight={props.currentBlockHeight} entry={entry} key={entry.id} viewerAuthority={props.selectedAuthority} />
+                ))}
               </ol>
             ) : (
               <p className="marketplace-activity-empty">No bids yet. The first bid starts the auction.</p>
@@ -175,14 +178,14 @@ function AuctionAction({
   )
 }
 
-function AuctionActivityRow({ currentBlockHeight, entry }: { currentBlockHeight: number | null; entry: ActivityEntry }) {
+function AuctionActivityRow({ currentBlockHeight, entry, viewerAuthority }: { currentBlockHeight: number | null; entry: ActivityEntry; viewerAuthority: string }) {
   const amount = marketplaceActivityAmount(entry)
   return (
     <li>
       <span className="marketplace-activity-icon"><Gavel aria-hidden="true" size={14} /></span>
       <div>
         <strong>{activityLabel(entry.eventType)}</strong>
-        <span>{entry.actor && entry.actor !== 'marketplace' ? abbreviate(entry.actor) : 'Marketplace'}</span>
+        <span>{activityActor(entry.actor, viewerAuthority) || 'Marketplace'}</span>
       </div>
       <div className="marketplace-activity-value">
         {amount ? <strong>{amount}</strong> : null}

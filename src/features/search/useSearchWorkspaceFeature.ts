@@ -25,6 +25,7 @@ type UseSearchWorkspaceFeatureProps = {
   onResultViewChange: (view: SearchResultView) => void
   onStartRegistration: () => void
   parentResolverRecords: SearchWorkspaceProps['detailsProps']['parentResolverRecords']
+  paysPreviousOwner: string | null
   primaryProps: SearchWorkspaceProps['primaryProps']
   primaryVerification: SearchWorkspaceProps['detailsProps']['primaryVerification']
   query: string
@@ -41,6 +42,7 @@ type UseSearchWorkspaceFeatureProps = {
   settingsProps: SearchWorkspaceProps['settingsProps']
   subdomainsProps: SearchWorkspaceProps['subdomainsProps']
   subnames: SearchWorkspaceProps['detailsProps']['subnames']
+  viewerAuthority: string
 }
 
 export function useSearchWorkspaceFeature({
@@ -63,6 +65,7 @@ export function useSearchWorkspaceFeature({
   onResultViewChange,
   onStartRegistration,
   parentResolverRecords,
+  paysPreviousOwner,
   primaryProps,
   primaryVerification,
   query,
@@ -79,6 +82,7 @@ export function useSearchWorkspaceFeature({
   settingsProps,
   subdomainsProps,
   subnames,
+  viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
   const searchProps: SearchWorkspaceProps = {
     activityProps: {
@@ -88,6 +92,7 @@ export function useSearchWorkspaceFeature({
       formatActivityTime,
       loading: activityLoading,
       recentWarnings,
+      viewerAuthority,
     },
     checked,
     detailsProps: {
@@ -99,16 +104,19 @@ export function useSearchWorkspaceFeature({
       onManageRecords: () => onResultViewChange('records'),
       onSubdomains: () => onResultViewChange('subnames'),
       parentResolverRecords,
+      paysPreviousOwner,
       primaryVerification,
       subnames,
+      viewerAuthority,
     },
+    // A registration that just completed is registered even before the indexer says so.
     headerProps: {
       displayName,
       expiresLabel,
       primaryVerified: primaryProps.primaryVerification.verified,
       records: resultStatus === 'registered' ? parentResolverRecords : [],
-      reserved: Boolean(savedReservation),
-      status: resultStatus,
+      reserved: Boolean(savedReservation) && !registrationProps.wizard.registrationComplete,
+      status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
     },
     loading: activityLoading,
     nodeHex,

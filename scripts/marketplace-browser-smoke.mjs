@@ -26,9 +26,9 @@ try {
 
     await page.goto(baseUrl, { waitUntil: 'networkidle' })
     await page.getByRole('button', { name: 'Connect Wallet', exact: true }).waitFor({ timeout: 10_000 })
-    await page.getByRole('button', { name: 'Market', exact: true }).click()
+    await page.getByRole('link', { name: 'Market', exact: true }).click()
     await page.getByRole('heading', { name: 'Market', exact: true }).waitFor()
-    await page.getByText(marketplaceName).waitFor()
+    await page.getByRole('heading', { name: marketplaceName }).waitFor()
     await page.screenshot({ fullPage: true, path: `${outputDir}/marketplace-${viewport.name}.png` })
 
     const marketplacePanel = page.locator('#marketplace')
@@ -37,7 +37,7 @@ try {
       failures.push(`${viewport.name}: marketplace panel is outside the viewport`)
     }
 
-    await page.getByRole('button', { name: 'View auction' }).click()
+    await page.locator('.marketplace-card', { has: page.getByRole('heading', { name: marketplaceName }) }).getByRole('button', { name: 'View auction' }).click()
     await page.getByRole('heading', { name: marketplaceName }).waitFor()
     await page.getByRole('heading', { name: 'Details', exact: true }).waitFor()
     await page.getByRole('heading', { name: /^Bids · \d+$/ }).waitFor()
@@ -51,7 +51,7 @@ try {
     }
 
     await page.getByRole('button', { name: 'All listings' }).click()
-    await page.getByText(marketplaceName).waitFor()
+    await page.getByRole('heading', { name: marketplaceName }).waitFor()
 
     await page.getByRole('tab', { name: 'Sell' }).click()
     await page.getByText('Connect your wallet').waitFor()

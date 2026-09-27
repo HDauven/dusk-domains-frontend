@@ -1,20 +1,23 @@
 import { Clock3 } from 'lucide-react'
 import type { RecentChangeWarning } from '../../names/internal'
+import { recentTargetLabel, recordLabel } from './activityCopy'
+import { relativeAge } from './activityTime'
 
-function formatDuration(seconds: number) {
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  const remainder = seconds % 60
-  if (minutes < 60) return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  const minuteRemainder = minutes % 60
-  return minuteRemainder ? `${hours}h ${minuteRemainder}m` : `${hours}h`
+function warningRecord(warning: RecentChangeWarning) {
+  return warning.target ? recordLabel(warning.target) : null
+}
+
+// The SDK's messages name raw record keys; say the same thing with the record's label.
+function recentWarningMessage(warning: RecentChangeWarning) {
+  if (warning.code === 'recent_primary_name_change') return 'Apps check that it matches the address before showing it.'
+  if (warning.code === 'recent_resolver_change') return 'Records now come from a different source. Check them before sending funds.'
+  return `If you didn't change ${warningRecord(warning) ?? 'this record'}, check it before sending funds.`
 }
 
 function recentWarningTitle(warning: RecentChangeWarning) {
-  if (warning.code === 'recent_resolver_change') return 'Record source updated'
-  if (warning.code === 'recent_primary_name_change') return 'Primary domain updated'
-  return 'Record updated'
+  if (warning.code === 'recent_resolver_change') return 'Record source changed'
+  if (warning.code === 'recent_primary_name_change') return 'Primary name changed'
+  return `${warningRecord(warning) ?? 'A record'} changed`
 }
 
 export function RecentWarningStack({ warnings }: { warnings: RecentChangeWarning[] }) {
@@ -27,8 +30,8 @@ export function RecentWarningStack({ warnings }: { warnings: RecentChangeWarning
           <Clock3 size={17} />
           <div>
             <strong>{recentWarningTitle(warning)}</strong>
-            <span>{warning.message}</span>
-            <code>{formatDuration(warning.ageSeconds)} ago · {warning.target ?? warning.eventType}</code>
+            <span>{recentWarningMessage(warning)}</span>
+            <code>{relativeAge(warning.ageSeconds)} · {recentTargetLabel(warning.target, warning.eventType)}</code>
           </div>
         </div>
       ))}

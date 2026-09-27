@@ -1,12 +1,13 @@
 import { ArrowUpRight } from 'lucide-react'
 import { CopyValue } from '../../components/ui/CopyValue'
+import { abbreviate } from '../../utils/format'
 import {
-  activityLabel,
   getRecordDefinition,
   type ActivityEntry,
   type ResolverRecord,
   type SubnameState,
 } from '../../names/internal'
+import { activityDetail, activityTitle } from '../activity/activityCopy'
 import { activityWhen } from '../activity/activityTime'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
 
@@ -28,8 +29,10 @@ export function DomainDetailsView({
   onManageRecords,
   onSubdomains,
   parentResolverRecords,
+  paysPreviousOwner,
   primaryVerification,
   subnames,
+  viewerAuthority,
 }: {
   activityEntries: ActivityEntry[]
   currentBlockHeight: number | null
@@ -39,8 +42,11 @@ export function DomainDetailsView({
   onManageRecords: () => void
   onSubdomains: () => void
   parentResolverRecords: ResolverRecord[]
+  // Set when the viewer owns the name but it still pays another address, e.g. after a transfer.
+  paysPreviousOwner: string | null
   primaryVerification: PrimaryVerificationSummary
   subnames: SubnameState[]
+  viewerAuthority: string
 }) {
   const payable = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))
@@ -69,6 +75,12 @@ export function DomainDetailsView({
             No addresses yet. Its owner can add them under <button type="button" onClick={onManageRecords}>Records</button>.
           </p>
         )}
+        {paysPreviousOwner ? (
+          <p className="primary-line warning">
+            <strong>This name pays another wallet.</strong> Payments go to {abbreviate(paysPreviousOwner)}, not the wallet you're using.{' '}
+            <button className="text-button" type="button" onClick={onManageRecords}>Update it under Records</button>
+          </p>
+        ) : null}
         <p className={`primary-line ${primaryVerification.tone}`}>
           <strong>{primaryVerification.title}.</strong> {primaryVerification.description}
         </p>
@@ -121,7 +133,7 @@ export function DomainDetailsView({
             <ul className="recent-list">
               {activityEntries.slice(0, 4).map((entry) => (
                 <li key={entry.id}>
-                  <span>{activityLabel(entry.eventType)}</span>
+                  <span>{activityTitle(entry)} <em>{activityDetail(entry, viewerAuthority)}</em></span>
                   <time>{activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}</time>
                 </li>
               ))}

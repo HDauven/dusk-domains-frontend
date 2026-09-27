@@ -22,20 +22,29 @@ function lifecycle(name: IndexedNameSummary, currentBlockHeight: number | null) 
   return left < SOON_SECONDS ? { tone: 'warn', copy: `Renew soon: ends ${expires}` } : { tone: '', copy: `Renews by ${expires}` }
 }
 
+// Verified primary for the address the name points to; it is only yours when that address is.
+function isOwnPrimary(primary: MyNamePrimarySummary | undefined, paysElsewhere: boolean) {
+  return primary?.tone === 'success' && !paysElsewhere
+}
+
 export function NameCard({
   currentBlockHeight,
   name,
   onOpen,
   primary,
+  selectedAddress,
 }: {
   currentBlockHeight: number | null
   name: IndexedNameSummary
   onOpen: (name: string) => void
   primary: MyNamePrimarySummary | undefined
+  selectedAddress: string
 }) {
   const label = name.canonicalName.replace(/\.dusk$/, '')
   const avatar = name.records.find((record) => record.key === 'avatar')?.value ?? null
-  const hasAddress = name.records.some((record) => record.key === 'moonlight_address')
+  const address = name.records.find((record) => record.key === 'moonlight_address')?.value ?? ''
+  // A name keeps its records through a sale or transfer, so it can still pay the previous owner.
+  const paysElsewhere = Boolean(address && selectedAddress && address !== selectedAddress)
   const life = lifecycle(name, currentBlockHeight)
 
   return (
@@ -48,8 +57,9 @@ export function NameCard({
       </span>
       <span className={`name-card-life ${life.tone}`}>{life.copy}</span>
       <span className="name-card-tags">
-        {primary?.tone === 'success' ? <span className="status-badge ok">Primary name</span> : null}
-        {hasAddress ? null : <span className="status-badge warn">No address</span>}
+        {isOwnPrimary(primary, paysElsewhere) ? <span className="status-badge ok">Primary name</span> : null}
+        {address ? null : <span className="status-badge warn">No address</span>}
+        {paysElsewhere ? <span className="status-badge warn">Pays another wallet</span> : null}
         {name.subnameCount ? <span className="status-badge">{name.subnameCount} {pluralize(name.subnameCount, 'subname')}</span> : null}
       </span>
     </button>

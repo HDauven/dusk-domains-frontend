@@ -10,7 +10,10 @@ export function activityWhen(
 ) {
   if (blockHeight == null) return 'Pending'
   if (currentBlockHeight == null || currentBlockHeight < blockHeight) return formatTimestamp(timestamp)
-  const seconds = (currentBlockHeight - blockHeight) * DUSK_APPROX_BLOCK_TIME_SECONDS
+  return relativeAge((currentBlockHeight - blockHeight) * DUSK_APPROX_BLOCK_TIME_SECONDS)
+}
+
+export function relativeAge(seconds: number) {
   if (seconds < 90) return 'just now'
   const minutes = Math.round(seconds / 60)
   if (minutes < 60) return `${minutes} min ago`

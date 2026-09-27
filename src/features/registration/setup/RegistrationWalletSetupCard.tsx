@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, ExternalLink } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react'
 import { abbreviate } from '../../../utils/format'
 import {
   walletActionLabel,
@@ -42,15 +42,16 @@ export function RegistrationWalletSetupCard({
   return (
     <>
       {selectedAddress ? (
-        <div className="register-wallet">
-          <CheckCircle2 size={18} />
+        <div className={walletSetupState === 'connected' ? 'register-wallet' : 'register-wallet blocked'}>
+          {walletSetupState === 'connected' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
           <div>
             <strong>Owner wallet</strong>
             <code>{abbreviate(selectedAddress)}</code>
           </div>
         </div>
       ) : null}
-      {!selectedAddress ? (
+      {/* A wallet on another network or locked still has an address; it cannot sign here yet. */}
+      {walletSetupState !== 'connected' ? (
         <div className={`register-action ${walletSetupState}`}>
           <div className="register-action-copy">
             <strong>{walletSetupActionTitle(walletSetupState)}</strong>

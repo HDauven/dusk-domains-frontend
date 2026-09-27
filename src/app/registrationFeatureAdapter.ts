@@ -1,4 +1,5 @@
 import type { AppViewModelInputs } from './appViewTypes'
+import { openRegisteredName } from '../features/registration/openRegisteredName'
 import type { UseRegistrationFeatureProps } from '../features/registration/useRegistrationFeature'
 
 // Registration reads from nearly every runtime; spreading them keeps the list in one place.
@@ -24,7 +25,7 @@ export function buildRegistrationFeatureProps(inputs: AppViewModelInputs): UseRe
     ...registrationState,
     ...searchState,
     onBackToOverview: () => searchState.setResultView('overview'),
-    onSetAddress: () => searchState.setResultView('details'),
+    onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),
     showReservationRecovery: Boolean(registrationState.committed && registrationState.preparedCommit),
     ...mainViewRuntime,
     ...walletRuntime,

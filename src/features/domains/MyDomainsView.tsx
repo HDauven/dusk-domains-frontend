@@ -45,7 +45,8 @@ export function MyDomainsView({
   selectedAddress,
 }: MyDomainsViewProps) {
   const empty = myNames.length === 0 && pendingReservations.length === 0
-  const primaryCount = myNames.filter((name) => primarySummaries[name.node]?.tone === 'success').length
+  const pointsHere = (name: IndexedNameSummary) => name.records.find((record) => record.key === 'moonlight_address')?.value === selectedAddress
+  const primaryCount = myNames.filter((name) => primarySummaries[name.node]?.tone === 'success' && pointsHere(name)).length
 
   return (
     <section className="my-names-panel" id="my-names" aria-labelledby="my-names-heading">
@@ -83,6 +84,7 @@ export function MyDomainsView({
               name={name}
               onOpen={onOpenIndexedName}
               primary={primarySummaries[name.node]}
+              selectedAddress={selectedAddress}
             />
           ))}
         </div>

@@ -1,11 +1,6 @@
 import { Clock } from 'lucide-react'
-import {
-  activityDescription,
-  activityLabel,
-  type ActivityEntry,
-  type RecentChangeWarning,
-} from '../../names/internal'
-import { abbreviate } from '../../utils/format'
+import type { ActivityEntry, RecentChangeWarning } from '../../names/internal'
+import { activityActor, activityDetail, activityTitle } from './activityCopy'
 import { activityWhen } from './activityTime'
 import { RecentWarningStack } from './RecentWarnings'
 
@@ -16,6 +11,7 @@ export function ActivityHistoryView({
   formatActivityTime,
   loading,
   recentWarnings,
+  viewerAuthority,
 }: {
   activityEntries: ActivityEntry[]
   currentBlockHeight: number | null
@@ -23,6 +19,7 @@ export function ActivityHistoryView({
   formatActivityTime: (timestamp: string) => string
   loading: boolean
   recentWarnings: RecentChangeWarning[]
+  viewerAuthority: string
 }) {
   return (
     <section className="activity-panel" aria-labelledby="activity-heading">
@@ -50,14 +47,14 @@ export function ActivityHistoryView({
           {activityEntries.map((entry) => (
             <li key={entry.id}>
               <div className="timeline-copy">
-                <strong>{activityLabel(entry.eventType)}</strong>
-                <span>{activityDescription(entry)}</span>
+                <strong>{activityTitle(entry)}</strong>
+                <span>{activityDetail(entry, viewerAuthority)}</span>
               </div>
               <div className="timeline-meta">
                 <time title={entry.blockHeight ? `Block ${entry.blockHeight}` : undefined}>
                   {activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}
                 </time>
-                <code>{abbreviate(entry.actor)}</code>
+                <code>{activityActor(entry.actor, viewerAuthority)}</code>
               </div>
             </li>
           ))}

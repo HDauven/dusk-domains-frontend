@@ -46,7 +46,7 @@ export function useRegistrationFlowState({
     registrationTargetAddressErrors.length === 0,
   )
   const canContinueRegistrationStep = registrationStep === 'setup'
-    ? Boolean(canRegister && registrationTargetReady)
+    ? Boolean(canRegister && registrationTargetReady && walletSetupState === 'connected')
     : registrationStep === 'review'
       ? Boolean(committed)
       : false
@@ -66,5 +66,6 @@ function setupStepDescription(walletSetupState: WalletConnectionStatus) {
   if (walletSetupState === 'connected') return 'This wallet will own the name. You can point it somewhere else.'
   if (walletSetupState === 'locked') return 'Unlock the wallet that will own this name.'
   if (walletSetupState === 'missing') return 'Install or enable Dusk Wallet to continue.'
+  if (walletSetupState === 'wrong-network') return 'Switch Dusk Wallet to this app\'s network to continue.'
   return 'Connect the wallet that will own this name.'
 }
