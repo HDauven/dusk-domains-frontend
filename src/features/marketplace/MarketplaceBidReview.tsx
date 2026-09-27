@@ -2,6 +2,7 @@ import { ShieldCheck, X } from 'lucide-react'
 import { useLayoutEffect, useRef } from 'react'
 import { ClaimReview } from '../../components/ui/ClaimReview'
 import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
+import { formatLuxAsDusk } from './auctionMath'
 import { auctionDurationLabel, auctionTimeLabel } from './marketplacePresentation'
 import type { MarketplaceViewProps } from './marketplaceTypes'
 
@@ -47,7 +48,7 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps })
           ariaLabel="Bid summary"
           rows={[
             { label: auction.highestBid ? 'Current highest bid' : 'Reserve price', value: formatLuxNumberAsDusk(auction.highestBid?.amountLux ?? auction.reservePriceLux) },
-            { label: 'Minimum allowed', value: `${formatLux(review.minimumBidLux)} DUSK` },
+            { label: 'Minimum allowed', value: `${formatLuxAsDusk(review.minimumBidLux)} DUSK` },
             { label: auction.startBlockHeight === null ? 'Auction starts' : 'Time remaining', value: auction.startBlockHeight === null ? `After confirmation · ${auctionDurationLabel(auction.durationBlocks)}` : auctionTimeLabel(auction, props.currentBlockHeight) },
             { label: 'Network fee', value: 'Shown by your wallet before approval' },
           ]}
@@ -68,10 +69,4 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps })
       </section>
     </dialog>
   )
-}
-
-function formatLux(value: bigint) {
-  const whole = value / 1_000_000_000n
-  const fraction = (value % 1_000_000_000n).toString().padStart(9, '0').replace(/0+$/u, '')
-  return fraction ? `${whole}.${fraction}` : `${whole}`
 }

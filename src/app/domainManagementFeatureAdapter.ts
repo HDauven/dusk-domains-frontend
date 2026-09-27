@@ -1,13 +1,29 @@
 import type { AppViewModelInputs } from './appViewTypes'
 import type { UseDomainManagementFeatureProps } from '../features/domains/domainManagementFeatureTypes'
-import { buildDomainManagementContextProps } from './domainManagementAdapter/contextProps'
+import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from './appConstants'
+import { fallbackManager } from './appHelpers'
 
-export function buildDomainManagementFeatureProps(
-  inputs: AppViewModelInputs,
-): UseDomainManagementFeatureProps {
+export function buildDomainManagementFeatureProps(inputs: AppViewModelInputs): UseDomainManagementFeatureProps {
+  const { activityFeed, appRuntime, economicsRuntime, namePreview, searchRuntime, searchState, walletRuntime } = inputs
+
   return {
     ...inputs.derivedState,
-    ...buildDomainManagementContextProps(inputs),
+    ...activityFeed,
+    ...appRuntime,
+    ...economicsRuntime,
+    ...namePreview,
+    ...searchRuntime,
+    ...searchState,
+    ...walletRuntime,
+    clampDurationYears,
+    editableRecordKeys,
+    fallbackManager,
+    maxDurationYears,
+    minDurationYears,
+    renewalPreviewExpiresAt: namePreview.renewalPreviewLifecycle.expiresAt,
+    resultLabel: namePreview.result.label,
+    walletAuthorized: walletRuntime.walletSession.canSign,
+    walletSetupState: walletRuntime.walletSession.status,
     ...inputs.domainState,
     ...inputs.domainRecordState,
   }

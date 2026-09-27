@@ -1,17 +1,35 @@
 import type { AppViewModelInputs } from './appViewTypes'
 import type { UseRegistrationFeatureProps } from '../features/registration/useRegistrationFeature'
-import { buildRegistrationPreviewProps } from './registrationAdapter/previewProps'
-import { buildRegistrationRuntimeProps } from './registrationAdapter/runtimeProps'
-import { buildRegistrationStateProps } from './registrationAdapter/stateProps'
-import { buildRegistrationWalletProps } from './registrationAdapter/walletProps'
 
-export function buildRegistrationFeatureProps(
-  inputs: AppViewModelInputs,
-): UseRegistrationFeatureProps {
+// Registration reads from nearly every runtime; spreading them keeps the list in one place.
+export function buildRegistrationFeatureProps(inputs: AppViewModelInputs): UseRegistrationFeatureProps {
+  const {
+    activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, mainViewRuntime,
+    namePreview, registrationRuntime, registrationState, searchRuntime, searchState, walletRuntime,
+  } = inputs
+
+  // Later spreads win, so the order matters: it matches the adapters this replaced.
   return {
-    ...buildRegistrationPreviewProps(inputs),
-    ...buildRegistrationRuntimeProps(inputs),
-    ...buildRegistrationStateProps(inputs),
-    ...buildRegistrationWalletProps(inputs),
+    ...activityFeed,
+    ...appRuntime,
+    ...economicsRuntime,
+    ...namePreview,
+    ...searchRuntime,
+    resultIssues: namePreview.result.issues,
+    ...appRuntime,
+    ...derivedState,
+    ...registrationRuntime,
+    ...domainRecordState,
+    ...domainState,
+    ...registrationState,
+    ...searchState,
+    onBackToOverview: () => searchState.setResultView('overview'),
+    onSetAddress: () => searchState.setResultView('details'),
+    showReservationRecovery: Boolean(registrationState.committed && registrationState.preparedCommit),
+    ...mainViewRuntime,
+    ...walletRuntime,
+    onOpenWalletConnection: () => void walletRuntime.handleOpenWalletConnection(),
+    onRefreshWalletProviders: () => walletRuntime.handleRefreshWalletProviders(),
+    onViewPendingReservation: () => void mainViewRuntime.handleMainViewChange('my-names'),
   }
 }
