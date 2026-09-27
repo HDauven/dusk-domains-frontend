@@ -11,10 +11,13 @@ node_modules
 dist
 dist-ssr
 
-# Local environment and generated proof output
+# Local environment and generated proof output. Real env files never belong in git;
+# only the documented examples do.
 *.local
-.env.local
-.env.*.local
+.env
+.env.*
+!.env.example
+!.env.public-beta.example
 target
 brag-output
 
