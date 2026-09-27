@@ -1,5 +1,7 @@
-import { AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react'
+import { AlertTriangle, ArrowRight } from 'lucide-react'
+import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { PanelMessage } from '../../components/ui/PanelMessage'
+import { RefreshButton } from '../../components/ui/RefreshButton'
 import type { IndexedNameSummary, PendingNameReservation } from '../../names/internal'
 import { abbreviate, pluralize } from '../../utils/format'
 import { NameCard } from './my-domains/NameCard'
@@ -47,20 +49,17 @@ export function MyDomainsView({
 
   return (
     <section className="my-names-panel" id="my-names" aria-labelledby="my-names-heading">
-      <header className="my-names-header">
-        <div>
-          <h1 id="my-names-heading">My names</h1>
-          <p>
+      <AccountViewHeader
+        actions={selectedAddress ? <RefreshButton loading={loading} onRefresh={onRefresh} /> : null}
+        description={(
+          <>
             {selectedAddress ? <>Held by <code>{abbreviate(selectedAddress)}</code></> : 'Connect a wallet to see the names it holds.'}
             {myNames.length ? <> · {myNames.length} {pluralize(myNames.length, 'name')}{primaryCount ? ` · ${primaryCount} primary` : ''}</> : null}
-          </p>
-        </div>
-        {selectedAddress ? (
-          <button className="commit-button" disabled={loading} type="button" onClick={onRefresh}>
-            <RefreshCw size={15} className={loading ? 'spin' : undefined} /> {loading ? 'Refreshing' : 'Refresh'}
-          </button>
-        ) : null}
-      </header>
+          </>
+        )}
+        heading="My names"
+        headingId="my-names-heading"
+      />
 
       {myNamesError ? <PanelMessage icon={<AlertTriangle size={18} />}>{myNamesError}</PanelMessage> : null}
 

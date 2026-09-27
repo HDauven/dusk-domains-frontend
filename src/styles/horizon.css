@@ -502,6 +502,98 @@
 
 
 
+/* Inline actions that read as links */
+.text-button,
+.profile-empty button {
+  padding: 0;
+  border: 0;
+  color: var(--dawn);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.text-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.text-button:hover,
+.profile-empty button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Tabs: a segmented row of views; scrolls sideways when it runs out of room. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  backdrop-filter: blur(12px);
+  scrollbar-width: none;
+}
+
+.tabs button {
+  flex: 1 0 auto;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 11px;
+  color: var(--ink-2);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 560;
+  white-space: nowrap;
+  transition: color 160ms var(--ease), background 160ms var(--ease);
+}
+
+.tabs button:hover {
+  color: var(--ink);
+}
+
+.tabs button.active {
+  color: var(--ink);
+  background: rgba(246, 241, 255, 0.1);
+}
+
+.tabs button:focus-visible {
+  outline: 2px solid var(--dawn);
+  outline-offset: -2px;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
 /* Term choices: registration, the claim card and renewal */
 .term-picker {
   display: flex;

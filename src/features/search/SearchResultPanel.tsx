@@ -57,7 +57,7 @@ export function SearchResultPanel({
       <NameHeader {...headerProps} />
 
       {tabbed ? (
-        <nav className="name-tabs" aria-label="Name sections">
+        <nav className="tabs" aria-label="Name sections">
           {nameTabs.map(({ view, label }) => (
             <button
               key={view}

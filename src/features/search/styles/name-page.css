@@ -64,43 +64,6 @@
   margin-top: 14px;
 }
 
-/* Owner's sections */
-.name-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 5px;
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface-soft);
-  backdrop-filter: blur(12px);
-  scrollbar-width: none;
-}
-
-.name-tabs button {
-  flex: 1 0 auto;
-  padding: 9px 16px;
-  border: 0;
-  border-radius: 11px;
-  color: var(--ink-2);
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 560;
-  white-space: nowrap;
-  transition: color 160ms var(--ease), background 160ms var(--ease);
-}
-
-.name-tabs button:hover {
-  color: var(--ink);
-}
-
-.name-tabs button.active {
-  color: var(--ink);
-  background: rgba(246, 241, 255, 0.1);
-}
-
 /* Claim card: the term on the left, the price stub on the right. */
 .claim-card {
   display: grid;
@@ -218,24 +181,6 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-}
-
-.text-button,
-.profile-empty button {
-  padding: 0;
-  border: 0;
-  color: var(--dawn);
-  background: none;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.text-button:hover,
-.profile-empty button:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .profile-empty {

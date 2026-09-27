@@ -16,7 +16,7 @@ import type { MarketplaceTab, MarketplaceViewProps } from './marketplaceTypes'
 
 const tabs: Array<{ id: MarketplaceTab; label: string }> = [
   { id: 'browse', label: 'Browse' },
-  { id: 'activity', label: 'My marketplace' },
+  { id: 'activity', label: 'Yours' },
   { id: 'sell', label: 'Sell' },
   { id: 'offers', label: 'Offers' },
 ]
@@ -29,12 +29,12 @@ export function MarketplaceView(props: MarketplaceViewProps) {
     <AccountPanel className="marketplace-panel" labelledBy="marketplace-heading" panelId="marketplace">
       <AccountViewHeader
         actions={<RefreshButton disabled={loading} loading={loading} onRefresh={onRefresh} />}
-        description="Buy, sell or bid on .dusk domains."
-        heading="Marketplace"
+        description="Buy, sell and bid on .dusk names. Every sale settles through escrow."
+        heading="Market"
         headingId="marketplace-heading"
       />
 
-      <div aria-label="Marketplace views" className="marketplace-tabs" role="tablist" onKeyDown={(event) => {
+      <div aria-label="Marketplace views" className="tabs marketplace-tabs" role="tablist" onKeyDown={(event) => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
         const buttons = [...event.currentTarget.querySelectorAll('button')]
         const current = buttons.indexOf(document.activeElement as HTMLButtonElement)
@@ -69,14 +69,14 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <PanelMessage icon={<Store size={18} />} tone="subtle">Connect a wallet to transact.</PanelMessage>
       ) : null}
 
-      {refund?.amountLux ? (
+      {refund?.amountLux && tab !== 'activity' ? (
         <div className="marketplace-refund-bar">
           <div>
-            <span>Marketplace funds available</span>
-            <strong>Outbid or returned funds are ready to withdraw.</strong>
+            <strong>You have funds to withdraw</strong>
+            <span>From an outbid or a closed order. They wait in the market contract until you take them.</span>
           </div>
           <button className="commit-button" disabled={!actionsAvailable} type="button" onClick={() => onTabChange('activity')}>
-            View balance
+            Withdraw
           </button>
         </div>
       ) : null}

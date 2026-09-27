@@ -15,7 +15,7 @@ describe('marketplace auction presentation', () => {
     expect(auctionStatus(auction, 100_000)).toBe('waiting')
     expect(auctionStatusLabel('waiting')).toBe('Waiting for first bid')
     expect(auctionDurationLabel(auction.durationBlocks)).toBe('7 days')
-    expect(auctionStartWindowLabel(auction, 100_000)).toBe('12d')
+    expect(auctionStartWindowLabel(auction, 100_000)).toBe('12 days')
   })
 
   it('distinguishes ending, ended and expired states', () => {

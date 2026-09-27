@@ -5,14 +5,6 @@
   font: 500 14px var(--font-mono);
 }
 
-.my-names-header .commit-button svg.spin {
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* Unfinished claims */
 .pending-reservations {
   display: grid;
@@ -271,8 +263,7 @@
     transition: none;
   }
 
-  .name-card.skeleton,
-  .my-names-header .commit-button svg.spin {
+  .name-card.skeleton {
     animation: none;
   }
 }

@@ -1,13 +1,17 @@
 import { ArrowLeft, Clock3, Gavel, ShieldCheck, Star, UserRound } from 'lucide-react'
 import { activityLabel, type ActivityEntry, type IndexedMarketplaceAuction } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
+import { activityWhen } from '../activity/activityTime'
+import { formatActivityTime } from '../domains/domainFormat'
 import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 import { minimumBidDusk } from './auctionMath'
+import { ListingName } from './ListingName'
 import {
   auctionDurationLabel,
   auctionStartWindowLabel,
   auctionStatus,
   auctionStatusLabel,
+  auctionStatusTone,
   auctionTimeLabel,
   marketplaceFeeLabel,
   sameAuthority,
@@ -25,19 +29,18 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
   return (
     <div className="marketplace-auction-detail" role="tabpanel">
       <button className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
-        <ArrowLeft aria-hidden="true" size={16} /> Back to marketplace
+        <ArrowLeft aria-hidden="true" size={15} /> All listings
       </button>
 
       <div className="marketplace-auction-hero">
         <div>
-          <div className="marketplace-auction-kicker"><Gavel aria-hidden="true" size={15} /> .dusk auction</div>
-          <h2>{auction.name}</h2>
+          <ListingName heading="h2" name={auction.name} size={64} />
           <p>{auction.startBlockHeight === null
             ? `The first confirmed bid starts a ${auctionDurationLabel(auction.durationBlocks)} countdown.`
             : 'The highest confirmed bid wins when the protected countdown ends.'}</p>
         </div>
         <div className="marketplace-auction-hero-actions">
-          <span className={`marketplace-status-badge ${status}`}>{auctionStatusLabel(status)}</span>
+          <span className={`status-badge ${auctionStatusTone(status)}`}>{auctionStatusLabel(status)}</span>
           <button
             aria-label={`${watched ? 'Stop watching' : 'Watch'} ${auction.name}`}
             aria-pressed={watched}
@@ -54,7 +57,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
         <div className="marketplace-auction-main">
           <section className="marketplace-auction-facts" aria-labelledby="auction-details-heading">
             <div className="marketplace-section-heading">
-              <div><h3 id="auction-details-heading">Auction details</h3><p>Verified from the marketplace read model.</p></div>
+              <h3 id="auction-details-heading" className="eyebrow">Details</h3>
             </div>
             <dl>
               <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><code>{abbreviate(auction.sellerAuthority)}</code></dd></div>
@@ -68,14 +71,13 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
 
           <section className="marketplace-auction-activity" aria-labelledby="auction-activity-heading">
             <div className="marketplace-section-heading">
-              <div><h3 id="auction-activity-heading">Auction activity</h3><p>Confirmed bids and lifecycle events.</p></div>
-              <span className="marketplace-result-count">{marketplaceActivity.length}</span>
+              <h3 id="auction-activity-heading" className="eyebrow">Bids · {marketplaceActivity.length}</h3>
             </div>
             {props.auctionActivityLoading ? (
               <p className="marketplace-activity-empty">Loading auction activity…</p>
             ) : marketplaceActivity.length ? (
               <ol>
-                {marketplaceActivity.map((entry) => <AuctionActivityRow entry={entry} key={entry.id} />)}
+                {marketplaceActivity.map((entry) => <AuctionActivityRow currentBlockHeight={props.currentBlockHeight} entry={entry} key={entry.id} />)}
               </ol>
             ) : (
               <p className="marketplace-activity-empty">No bids yet. The first bid starts the auction.</p>
@@ -173,7 +175,7 @@ function AuctionAction({
   )
 }
 
-function AuctionActivityRow({ entry }: { entry: ActivityEntry }) {
+function AuctionActivityRow({ currentBlockHeight, entry }: { currentBlockHeight: number | null; entry: ActivityEntry }) {
   const amount = marketplaceActivityAmount(entry)
   return (
     <li>
@@ -184,7 +186,9 @@ function AuctionActivityRow({ entry }: { entry: ActivityEntry }) {
       </div>
       <div className="marketplace-activity-value">
         {amount ? <strong>{amount}</strong> : null}
-        <span>{entry.blockHeight === null ? 'Confirmed' : `Block ${entry.blockHeight.toLocaleString()}`}</span>
+        <time title={entry.blockHeight === null ? undefined : `Block ${entry.blockHeight.toLocaleString()}`}>
+          {activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}
+        </time>
       </div>
     </li>
   )

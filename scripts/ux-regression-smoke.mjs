@@ -272,7 +272,7 @@ try {
     root.render(React.createElement(Tabs))
   })
   await page.getByRole('tab', { name: 'Browse', exact: true }).focus()
-  for (const [key, label] of [['ArrowRight', 'My marketplace'], ['End', 'Offers'], ['Home', 'Browse'], ['ArrowLeft', 'Offers']]) {
+  for (const [key, label] of [['ArrowRight', 'Yours'], ['End', 'Offers'], ['Home', 'Browse'], ['ArrowLeft', 'Offers']]) {
     await page.keyboard.press(key)
     const selected = page.getByRole('tab', { name: label, exact: true })
     assert.equal(await selected.getAttribute('aria-selected'), 'true')
