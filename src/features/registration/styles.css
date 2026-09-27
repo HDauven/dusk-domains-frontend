@@ -99,6 +99,14 @@
   color: var(--ok);
 }
 
+.register-wallet.blocked {
+  border-color: rgba(255, 207, 122, 0.3);
+}
+
+.register-wallet.blocked svg {
+  color: var(--warn);
+}
+
 .register-wallet div {
   display: grid;
   gap: 2px;
