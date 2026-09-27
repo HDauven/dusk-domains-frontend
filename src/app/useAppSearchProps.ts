@@ -23,6 +23,7 @@ export function useAppSearchProps({
   registrationState,
   searchRuntime,
   searchState,
+  walletRuntime,
   primaryProps,
   recordsProps,
   settingsProps,
@@ -112,5 +113,6 @@ export function useAppSearchProps({
     settingsProps,
     subdomainsProps,
     subnames,
+    viewerAuthority: walletRuntime.selectedAuthority,
   })
 }

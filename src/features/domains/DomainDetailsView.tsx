@@ -1,12 +1,12 @@
 import { ArrowUpRight } from 'lucide-react'
 import { CopyValue } from '../../components/ui/CopyValue'
 import {
-  activityLabel,
   getRecordDefinition,
   type ActivityEntry,
   type ResolverRecord,
   type SubnameState,
 } from '../../names/internal'
+import { activityDetail, activityTitle } from '../activity/activityCopy'
 import { activityWhen } from '../activity/activityTime'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
 
@@ -30,6 +30,7 @@ export function DomainDetailsView({
   parentResolverRecords,
   primaryVerification,
   subnames,
+  viewerAuthority,
 }: {
   activityEntries: ActivityEntry[]
   currentBlockHeight: number | null
@@ -41,6 +42,7 @@ export function DomainDetailsView({
   parentResolverRecords: ResolverRecord[]
   primaryVerification: PrimaryVerificationSummary
   subnames: SubnameState[]
+  viewerAuthority: string
 }) {
   const payable = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))
@@ -121,7 +123,7 @@ export function DomainDetailsView({
             <ul className="recent-list">
               {activityEntries.slice(0, 4).map((entry) => (
                 <li key={entry.id}>
-                  <span>{activityLabel(entry.eventType)}</span>
+                  <span>{activityTitle(entry)} <em>{activityDetail(entry, viewerAuthority)}</em></span>
                   <time>{activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}</time>
                 </li>
               ))}

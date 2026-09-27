@@ -41,6 +41,7 @@ type UseSearchWorkspaceFeatureProps = {
   settingsProps: SearchWorkspaceProps['settingsProps']
   subdomainsProps: SearchWorkspaceProps['subdomainsProps']
   subnames: SearchWorkspaceProps['detailsProps']['subnames']
+  viewerAuthority: string
 }
 
 export function useSearchWorkspaceFeature({
@@ -79,6 +80,7 @@ export function useSearchWorkspaceFeature({
   settingsProps,
   subdomainsProps,
   subnames,
+  viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
   const searchProps: SearchWorkspaceProps = {
     activityProps: {
@@ -88,6 +90,7 @@ export function useSearchWorkspaceFeature({
       formatActivityTime,
       loading: activityLoading,
       recentWarnings,
+      viewerAuthority,
     },
     checked,
     detailsProps: {
@@ -101,6 +104,7 @@ export function useSearchWorkspaceFeature({
       parentResolverRecords,
       primaryVerification,
       subnames,
+      viewerAuthority,
     },
     // A registration that just completed is registered even before the indexer says so.
     headerProps: {

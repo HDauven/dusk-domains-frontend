@@ -288,6 +288,12 @@
   font-size: 14px;
 }
 
+.recent-list em {
+  margin-left: 6px;
+  color: var(--muted);
+  font-style: normal;
+}
+
 .link-list span,
 .recent-list time {
   flex: 0 0 auto;

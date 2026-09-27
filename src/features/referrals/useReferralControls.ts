@@ -13,7 +13,8 @@ type UseReferralControlsArgs = {
 
 function referralLinkForAddress(selectedAddress: string) {
   if (!selectedAddress || typeof globalThis.location === 'undefined') return ''
-  return `${globalThis.location.origin}${globalThis.location.pathname}?ref=${encodeURIComponent(selectedAddress)}`
+  // Links land on the home page, whichever page the link was copied from.
+  return `${globalThis.location.origin}/?ref=${encodeURIComponent(selectedAddress)}`
 }
 
 export function useReferralControls({
