@@ -48,13 +48,8 @@ export type RegistrationStepPanelProps = {
   duration: number
   expiryDate: string
   feeConfigError: string
-  feeConfigLoading: boolean
   installUrl: string
-  maxDurationYears: number
-  minDurationYears: number
-  networkFee: number | null
   onAddressInputChange: (value: string) => void
-  onDurationChange: (duration: number) => void
   onOpenWalletConnection: () => void
   onPrepareCommit: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
@@ -70,7 +65,6 @@ export type RegistrationStepPanelProps = {
   registrationTargetAddress: string
   registrationTargetAddressErrors: string[]
   selectedAddress: string
-  total: number
   txBusy: boolean
   txState: DuskDomainTxState | null
   walletDiscoveryRefreshing: boolean

@@ -25,7 +25,6 @@ export function RecordsView({
   displayName,
   editableRecordKeys,
   error,
-  onBack,
   onClearRecord,
   onCriticalRecordConfirmationChange,
   onDraftValueChange,
@@ -52,7 +51,6 @@ export function RecordsView({
   displayName: string
   editableRecordKeys: readonly ResolverRecordKey[]
   error: string
-  onBack: () => void
   onClearRecord: (record: ResolverRecord) => void
   onCriticalRecordConfirmationChange: (value: string) => void
   onDraftValueChange: (key: ResolverRecordKey, value: string) => void
@@ -75,7 +73,7 @@ export function RecordsView({
 
   return (
     <section className="records-panel" aria-labelledby="records-heading">
-      <RecordsHeader displayName={displayName} onBack={onBack} />
+      <RecordsHeader displayName={displayName} />
 
       <RecordTargetSelect
         activeRecordTarget={activeRecordTarget}

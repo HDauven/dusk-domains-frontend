@@ -31,7 +31,6 @@ export function buildDomainManagementContextProps(inputs: AppViewModelInputs) {
     fallbackManager,
     maxDurationYears,
     minDurationYears,
-    onBackToDetails: () => searchState.setResultView('details'),
     renewalPreviewExpiresAt: namePreview.renewalPreviewLifecycle.expiresAt,
     resultLabel: namePreview.result.label,
     walletAuthorized: walletRuntime.walletSession.canSign,

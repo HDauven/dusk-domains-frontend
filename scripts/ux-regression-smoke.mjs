@@ -77,7 +77,7 @@ try {
       const [, setNowSeconds] = React.useState(0)
       const [preparedCommit, setPreparedCommit] = React.useState(null)
       const { pendingReservations } = useRegistrationRuntime({ mainView: 'search', chainId: 'dusk:0',
-        selectedAuthority: 'controller', selectedAddress: '', registrationAddressInput: '', registrationStep: 'duration',
+        selectedAuthority: 'controller', selectedAddress: '', registrationAddressInput: '', registrationStep: 'setup',
         walletSetupState: 'disconnected', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
         setCurrentBlockHeight, setNowSeconds, canRegister: true, committed: false, registerSetsPrimary: false })
       return React.createElement('output', { id: 'saved-reservation' }, `${height}:${pendingReservations[0]?.committedBlockHeight}`)
@@ -89,22 +89,23 @@ try {
     const { React, root } = window
     const { SearchWorkspace } = await import('/src/features/search/SearchWorkspace.tsx')
     const props = { checked: true, loading: false, query: 'owned.dusk', resultView: 'overview',
-      onQueryChange: () => {}, onCheckAvailability: () => {},
-      availabilityProps: { displayName: 'owned.dusk', reserved: false, status: 'available' },
-      overviewProps: { canRegister: true, displayName: 'owned.dusk', resultStatus: 'available', resultIssues: [],
-        savedReservation: null, savedReservationWindow: null, subnameCount: 0, primaryVerified: false,
-        onContinueRegistration: () => {}, onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, onViewDetails: () => {} } }
+      onQueryChange: () => {}, onCheckAvailability: () => {}, onResultViewChange: () => {},
+      headerProps: { displayName: 'owned.dusk', expiresLabel: null, primaryVerified: false, records: [], reserved: false, status: 'available' },
+      overviewProps: { canRegister: true, displayName: 'owned.dusk', duration: 1, expiryDate: '2027-09-27', feeConfigLoading: false,
+        registrationFee: 10, resultStatus: 'available', resultIssues: [],
+        savedReservation: null, savedReservationWindow: null,
+        onContinueRegistration: () => {}, onDurationChange: () => {}, onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, onViewDetails: () => {} } }
     window.renderReadReady = resultReady => root.render(React.createElement(SearchWorkspace, { ...props, resultReady }))
     window.renderReadReady(true)
   })
-  await page.getByRole('button', { name: 'Continue registration' }).waitFor()
-  assert.equal(await page.locator('.availability-pill').textContent(), 'Available')
+  await page.getByRole('button', { name: 'Claim owned.dusk' }).waitFor()
+  assert.equal(await page.locator('.name-hero-badges .status-badge').textContent(), 'Available')
   await page.evaluate(() => window.renderReadReady(false))
   await page.getByRole('status').filter({ hasText: 'Name data is unavailable' }).waitFor()
   assert.equal(await page.getByText('Available', { exact: true }).count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Continue registration' }).count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Claim owned.dusk' }).count(), 0)
   await page.evaluate(() => window.renderReadReady(true))
-  await page.getByRole('button', { name: 'Continue registration' }).waitFor()
+  await page.getByRole('button', { name: 'Claim owned.dusk' }).waitFor()
   await page.evaluate(async () => {
     const { React, root } = window
     const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')

@@ -1,6 +1,8 @@
 import type { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import type { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspaceFeature'
+import { formatLifecycleDay } from '../features/domains/domainFormat'
+import { clampDurationYears } from './appConstants'
 import type { AppViewModelInputs } from './appViewTypes'
 
 type UseAppSearchPropsArgs =
@@ -14,6 +16,7 @@ export function useAppSearchProps({
   derivedState,
   domainRecordState,
   domainState,
+  economicsRuntime,
   mainViewRuntime,
   namePreview,
   registrationProps,
@@ -32,13 +35,17 @@ export function useAppSearchProps({
     setResultView,
   } = searchState
   const {
+    duration,
+    setDuration,
     setRegistrationStep,
   } = registrationState
-  const { subnames } = domainState
+  const { managedName, subnames } = domainState
   const {
     canRegister,
     displayName,
+    expiryDate,
     nodeHex,
+    registrationFee,
     result,
   } = namePreview
   const {
@@ -68,15 +75,24 @@ export function useAppSearchProps({
     activityLoading,
     canRegister,
     checked,
+    currentBlockHeight: searchState.currentBlockHeight,
     displayName,
+    duration,
+    expiresLabel: result.status === 'registered'
+      ? formatLifecycleDay(managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds)
+      : null,
+    expiryDate,
+    feeConfigLoading: economicsRuntime.feeConfigLoading,
     nodeHex,
     onCheckAvailability: () => void handleCheckAvailability(),
+    onDurationChange: (years) => setDuration(clampDurationYears(years)),
     onOpenPendingReservation: (reservation) => void openPendingReservation(reservation),
     onOpenPendingReservations: () => void handleMainViewChange('my-names'),
     onQueryChange: resetSearch,
     onResultViewChange: setResultView,
+    // The claim card already chose the term, so registration opens at the wallet step.
     onStartRegistration: () => {
-      setRegistrationStep('duration')
+      setRegistrationStep('setup')
       setResultView('register')
     },
     parentResolverRecords,
@@ -85,6 +101,7 @@ export function useAppSearchProps({
     query,
     recentWarnings,
     recordsProps,
+    registrationFee,
     registrationProps,
     resultReady: !appRuntime.indexerClient || searchState.apiSearchResult !== null,
     resultIssues: result.issues,

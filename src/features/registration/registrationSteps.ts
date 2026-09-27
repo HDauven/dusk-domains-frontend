@@ -1,4 +1,5 @@
-export type RegistrationStepId = 'duration' | 'setup' | 'review' | 'purchase'
+// The term is chosen on the claim card, so the wizard starts at the owner.
+export type RegistrationStepId = 'setup' | 'review' | 'purchase'
 
 export type RegistrationStepDefinition = {
   id: RegistrationStepId
@@ -9,27 +10,21 @@ export type RegistrationStepDefinition = {
 
 export const registrationStepDefinitions: RegistrationStepDefinition[] = [
   {
-    id: 'duration',
-    label: 'Duration',
-    title: 'Duration',
-    description: 'Choose a duration.',
-  },
-  {
     id: 'setup',
     label: 'Wallet',
-    title: 'Wallet',
-    description: 'Connect the wallet that will own this domain.',
+    title: 'Choose the owner',
+    description: 'Connect the wallet that will own this name.',
   },
   {
     id: 'review',
-    label: 'Sign',
-    title: 'Sign',
-    description: 'Reserve this domain.',
+    label: 'Reserve',
+    title: 'Reserve it',
+    description: 'Sign a sealed reservation. It keeps your pick private until you complete.',
   },
   {
     id: 'purchase',
-    label: 'Purchase',
-    title: 'Purchase',
-    description: 'Complete the registration once the reservation is ready.',
+    label: 'Complete',
+    title: 'Make it yours',
+    description: 'Once the reservation settles, sign again to register the name and pay.',
   },
 ]

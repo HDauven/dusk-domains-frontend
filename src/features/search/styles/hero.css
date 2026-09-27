@@ -14,7 +14,7 @@
 .hero-copy h1 {
   margin: 0;
   color: var(--ink);
-  font: 400 clamp(64px, 8.4vw, 118px)/0.92 var(--font-serif);
+  font: 400 clamp(64px, 8.4vw, 118px)/0.92 var(--font-display);
   letter-spacing: -0.02em;
 }
 
@@ -96,7 +96,7 @@
   outline: 0;
   background: transparent;
   color: var(--ink);
-  font: 400 34px/1.1 var(--font-serif);
+  font: 400 34px/1.1 var(--font-display);
   letter-spacing: -0.01em;
 }
 

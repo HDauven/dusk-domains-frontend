@@ -1,4 +1,3 @@
-import { abbreviate } from '../../utils/format'
 import type { WalletConnectionStatus } from './walletStatus'
 
 export function walletActionLabel(status: WalletConnectionStatus) {
@@ -16,15 +15,6 @@ export function walletActionTitle(status: WalletConnectionStatus) {
   if (status === 'locked') return 'Open Dusk Wallet to unlock'
   if (status === 'wrong-network') return 'Switch Dusk Wallet to this app network'
   return 'Open Dusk Wallet to connect'
-}
-
-export function walletSetupValueCopy(status: WalletConnectionStatus, selectedAddress: string) {
-  if (status === 'connected') return abbreviate(selectedAddress)
-  if (status === 'wrong-network') return 'Wrong network'
-  if (status === 'detecting') return 'Checking wallet...'
-  if (status === 'missing') return 'Dusk Wallet not found'
-  if (status === 'locked') return 'Wallet locked'
-  return 'Not connected'
 }
 
 export function walletSetupActionTitle(status: WalletConnectionStatus) {

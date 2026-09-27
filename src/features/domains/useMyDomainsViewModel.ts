@@ -1,6 +1,6 @@
 import type { IndexedNameSummary } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
-import { pluralize } from '../registration/registrationCopy'
+import { pluralize } from '../../utils/format'
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
 type UseMyDomainsViewModelArgs = {

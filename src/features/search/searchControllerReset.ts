@@ -55,7 +55,7 @@ export function resetSearchState({
   setChecked(false)
   setRegisterSetsPrimary(true)
   setRegistrationAddressInput('')
-  setRegistrationStep('duration')
+  setRegistrationStep('setup')
   setResultView('overview')
   setTxState(null)
   setCommitTxState(null)

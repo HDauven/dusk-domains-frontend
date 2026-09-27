@@ -1,10 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import {
-  clampDurationYears,
-  duskWalletInstallUrl,
-  maxDurationYears,
-  minDurationYears,
-} from '../../app/appConstants'
+import { duskWalletInstallUrl } from '../../app/appConstants'
 import type { DuskDomainTxState, NameResult } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
@@ -23,8 +18,6 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   commitTxState: DuskDomainTxState | null
   expiryDate: string
   feeConfigError: string
-  feeConfigLoading: boolean
-  networkFee: number | null
   onBackToOverview: () => void
   onOpenWalletConnection: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
@@ -38,11 +31,9 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   registrationStep: RegistrationStepId
   registrationStepDescription: string
   resultIssues: NameResult['issues']
-  setDuration: Dispatch<SetStateAction<number>>
   setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
   setRegistrationAddressInput: Dispatch<SetStateAction<string>>
   showReservationRecovery: boolean
-  total: number
   txBusy: boolean
   txState: DuskDomainTxState | null
   walletDiscoveryRefreshing: boolean
@@ -69,16 +60,11 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     duration: props.duration,
     expiryDate: props.expiryDate,
     feeConfigError: props.feeConfigError,
-    feeConfigLoading: props.feeConfigLoading,
     installUrl: duskWalletInstallUrl,
-    maxDurationYears,
-    minDurationYears,
-    networkFee: props.networkFee,
     onAddressInputChange: (value) => {
       props.setRegistrationAddressInput(value)
       props.setWalletError('')
     },
-    onDurationChange: (nextDuration) => props.setDuration(clampDurationYears(nextDuration)),
     onOpenWalletConnection: props.onOpenWalletConnection,
     onPrepareCommit: () => void handlePrepareCommit(),
     onRefreshWalletProviders: props.onRefreshWalletProviders,
@@ -99,7 +85,6 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     registrationTargetAddress: props.registrationTargetAddress,
     registrationTargetAddressErrors: props.registrationTargetAddressErrors,
     selectedAddress: props.selectedAddress,
-    total: props.total,
     txBusy: props.txBusy,
     txState: props.txState,
     walletDiscoveryRefreshing: props.walletDiscoveryRefreshing,
@@ -127,7 +112,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
       displayName: props.displayName,
       registrationComplete,
       registrationStep: props.registrationStep,
-      registrationStepDescription: registrationComplete ? 'Your domain is registered.' : props.registrationStepDescription,
+      registrationStepDescription: registrationComplete ? 'It points to your wallet now. Add records or subnames whenever you like.' : props.registrationStepDescription,
     },
   }
 

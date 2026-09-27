@@ -25,6 +25,6 @@
 
 .name-avatar.monogram {
   color: #1a0b1f;
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   line-height: 1;
 }

@@ -26,7 +26,6 @@ export type DomainSettingsViewProps = {
   maxDurationYears: number
   minDurationYears: number
   nowSeconds: number
-  onBack: () => void
   onConfirmationInputChange: (value: string) => void
   onDraftManagerChange: (value: string) => void
   onDraftOwnerChange: (value: string) => void

@@ -34,7 +34,7 @@ export function RegistrationSetupStep({
   walletSetupState: WalletConnectionStatus
 }) {
   return (
-    <div className="registration-setup" aria-label="Registration setup">
+    <div className="register-step" aria-label="Owner">
       <RegistrationWalletSetupCard
         installUrl={installUrl}
         onOpenWalletConnection={onOpenWalletConnection}
@@ -43,17 +43,18 @@ export function RegistrationSetupStep({
         walletDiscoveryRefreshing={walletDiscoveryRefreshing}
         walletSetupState={walletSetupState}
       />
-      <label className="setup-toggle">
+      <label className="register-toggle">
+        <span>
+          <strong>Make it my primary name</strong>
+          <em>{selectedAddress ? registerSetsPrimary ? `Apps show ${displayName} instead of this wallet's address.` : 'Not now. You can set it any time.' : 'Available once a wallet is connected.'}</em>
+        </span>
         <input
           checked={Boolean(selectedAddress && registerSetsPrimary)}
           disabled={!canRegister || !selectedAddress}
+          role="switch"
           type="checkbox"
           onChange={(event) => onRegisterSetsPrimaryChange(event.target.checked)}
         />
-        <span>
-          <strong>Set as primary domain</strong>
-          <em>{selectedAddress ? registerSetsPrimary ? `Show ${displayName} for this wallet.` : 'Skip for now. You can set it later.' : 'Available after wallet connection.'}</em>
-        </span>
       </label>
       {selectedAddress && !registerSetsPrimary ? (
         <RegistrationAddressField

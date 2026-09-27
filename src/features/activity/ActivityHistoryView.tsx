@@ -6,35 +6,30 @@ import {
   type RecentChangeWarning,
 } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
+import { activityWhen } from './activityTime'
 import { RecentWarningStack } from './RecentWarnings'
 
 export function ActivityHistoryView({
   activityEntries,
+  currentBlockHeight,
   displayName,
   formatActivityTime,
   loading,
-  onBack,
   recentWarnings,
 }: {
   activityEntries: ActivityEntry[]
+  currentBlockHeight: number | null
   displayName: string
   formatActivityTime: (timestamp: string) => string
   loading: boolean
-  onBack: () => void
   recentWarnings: RecentChangeWarning[]
 }) {
   return (
     <section className="activity-panel" aria-labelledby="activity-heading">
       <div className="management-header">
         <div>
-          <h2 id="activity-heading">Activity history</h2>
-          <p>{displayName}</p>
-        </div>
-        <div className="management-header-actions">
-          <span className="management-badge">Activity</span>
-          <button className="commit-button" type="button" onClick={onBack}>
-            Back to details
-          </button>
+          <h2 id="activity-heading">Activity</h2>
+          <p>Every change to {displayName}, newest first.</p>
         </div>
       </div>
 
@@ -51,27 +46,19 @@ export function ActivityHistoryView({
           <span>No activity for this name yet.</span>
         </div>
       ) : (
-        <ol className="activity-list">
+        <ol className="timeline">
           {activityEntries.map((entry) => (
             <li key={entry.id}>
-              <div>
+              <div className="timeline-copy">
                 <strong>{activityLabel(entry.eventType)}</strong>
                 <span>{activityDescription(entry)}</span>
               </div>
-              <dl>
-                <div>
-                  <dt>Wallet</dt>
-                  <dd>{abbreviate(entry.actor)}</dd>
-                </div>
-                <div>
-                  <dt>Time</dt>
-                  <dd>{formatActivityTime(entry.timestamp)}</dd>
-                </div>
-                <div>
-                  <dt>Confirmation</dt>
-                  <dd>{entry.blockHeight ?? 'Pending'}</dd>
-                </div>
-              </dl>
+              <div className="timeline-meta">
+                <time title={entry.blockHeight ? `Block ${entry.blockHeight}` : undefined}>
+                  {activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}
+                </time>
+                <code>{abbreviate(entry.actor)}</code>
+              </div>
             </li>
           ))}
         </ol>

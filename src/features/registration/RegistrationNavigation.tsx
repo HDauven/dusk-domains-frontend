@@ -1,45 +1,31 @@
-import { ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { RegistrationStepId } from './registrationSteps'
 
 export function RegistrationNavigation({
   canContinue,
-  currentStep,
   nextStep,
   onBack,
   onNext,
-  previousStep,
   registrationComplete,
 }: {
   canContinue: boolean
-  currentStep: RegistrationStepId
   nextStep: RegistrationStepId | null
   onBack: () => void
   onNext: (step: RegistrationStepId) => void
-  previousStep: RegistrationStepId | null
   registrationComplete: boolean
 }) {
+  if (registrationComplete) return null
+
   return (
-    <div className="registration-nav">
-      <button
-        className="commit-button"
-        type="button"
-        onClick={onBack}
-      >
-        {previousStep ? 'Back' : 'Back to result'}
+    <div className="register-nav">
+      <button className="text-button" type="button" onClick={onBack}>
+        <ArrowLeft size={15} /> Back
       </button>
       {nextStep ? (
-        <button
-          className="primary-button compact"
-          disabled={!canContinue}
-          type="button"
-          onClick={() => onNext(nextStep)}
-        >
-          Continue
-          <ArrowRight size={18} />
+        <button className="primary-button compact" disabled={!canContinue} type="button" onClick={() => onNext(nextStep)}>
+          Continue <ArrowRight size={17} />
         </button>
-      ) : (
-        <span>{registrationComplete ? 'Registration complete.' : currentStep === 'purchase' ? 'Ready to purchase.' : 'Ready to reserve.'}</span>
-      )}
+      ) : null}
     </div>
   )
 }

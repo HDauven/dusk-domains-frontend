@@ -52,7 +52,6 @@ export type UseDomainManagementFeatureProps =
     maxDurationYears: number
     minDurationYears: number
     moonlightRecord: ResolverRecord | undefined
-    onBackToDetails: () => void
     primaryEndpointValue: string
     primaryError: string
     primaryTxState: DuskDomainTxState | null

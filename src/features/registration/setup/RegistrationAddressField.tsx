@@ -16,7 +16,7 @@ export function RegistrationAddressField({
   return (
     <FieldShell
       className="registration-address-field"
-      label="Address"
+      label="Points to"
       labelFor="registration-address"
     >
       <div className="registration-address-input-row">
@@ -26,15 +26,11 @@ export function RegistrationAddressField({
           onChange={(event) => onAddressInputChange(event.target.value)}
           placeholder={selectedAddress}
         />
-        <button
-          className="commit-button"
-          type="button"
-          onClick={onUseWalletAddress}
-        >
-          Use wallet
+        <button className="commit-button" type="button" onClick={onUseWalletAddress}>
+          Use my wallet
         </button>
       </div>
-      <FieldHelp>This domain will resolve to this address. You can change the address or set a primary domain later.</FieldHelp>
+      <FieldHelp>Payments to this name go to this address. You can change it later.</FieldHelp>
       {registrationTargetAddressErrors.length ? (
         <p className="field-note danger">{registrationTargetAddressErrors[0]}</p>
       ) : null}

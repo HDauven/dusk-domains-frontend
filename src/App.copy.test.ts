@@ -17,20 +17,18 @@ function readUiSource() {
     'src/features/referrals/ReferralRewardsCard.tsx',
     'src/features/referrals/ReferralsView.tsx',
     'src/features/registration/registrationCopy.ts',
-    'src/features/registration/RegistrationDurationStep.tsx',
     'src/features/registration/RegistrationCompletionProgress.tsx',
+    'src/features/registration/RegistrationFlowPanel.tsx',
     'src/features/registration/RegistrationNavigation.tsx',
     'src/features/registration/RegistrationPolicyNotes.tsx',
-    'src/features/registration/RegistrationPurchaseAction.tsx',
-    'src/features/registration/RegistrationPurchaseChecklist.tsx',
     'src/features/registration/RegistrationPurchaseStep.tsx',
-    'src/features/registration/RegistrationPurchaseSummary.tsx',
     'src/features/registration/RegistrationReviewStep.tsx',
     'src/features/registration/RegistrationSetupStep.tsx',
     'src/features/registration/RegistrationStepper.tsx',
+    'src/features/registration/RegistrationSummary.tsx',
     'src/features/registration/ReservationRecoveryNotice.tsx',
     'src/features/registration/setup/RegistrationWalletSetupCard.tsx',
-    'src/features/search/AvailabilityBanner.tsx',
+    'src/features/search/NameHeader.tsx',
     'src/features/search/SearchResultOverview.tsx',
     'src/features/treasury/TreasuryView.tsx',
   ]
@@ -72,8 +70,7 @@ describe('App user-facing copy', () => {
   it('states that referral attribution does not add buyer cost', () => {
     const source = readUiSource()
 
-    expect(source).toContain('Buyer fee')
-    expect(source).toContain('No extra fee')
+    expect(source).toContain('no extra cost')
     expect(source).toContain('No extra fee for the buyer.')
     expect(source).toContain('Active referral')
     expect(source).toContain('Applies to your next registration.')
@@ -93,8 +90,8 @@ describe('App user-facing copy', () => {
   it('uses clear completed-registration copy', () => {
     const source = readUiSource()
 
-    expect(source).toContain('Registration complete.')
-    expect(source).toContain('Domain active')
+    expect(source).toContain('Registration complete')
+    expect(source).toContain('is yours')
     expect(source).toContain('Open domain')
     expect(source).not.toContain('Review setup')
   })

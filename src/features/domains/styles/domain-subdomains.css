@@ -1,23 +1,9 @@
-.subnames-panel {
-  margin-top: 20px;
-  padding: 24px 26px;
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  background: var(--panel-surface);
-}
-
 .subname-box {
   display: grid;
   gap: 14px;
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid var(--border);
-}
-
-.subnames-panel .subname-box {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 .subname-box h3 {
@@ -166,10 +152,10 @@
 
 @media (max-width: 1060px) {
   .subname-quick-create,
-  .subname-editor,
-  .subname-policy-grid,
-  .delegate-row,
-  .subname-row {
+.subname-editor,
+.subname-policy-grid,
+.delegate-row,
+.subname-row {
     grid-template-columns: 1fr;
   }
 

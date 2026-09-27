@@ -21,7 +21,6 @@ export function DomainSettingsView({
   maxDurationYears,
   minDurationYears,
   nowSeconds,
-  onBack,
   onConfirmationInputChange,
   onDraftManagerChange,
   onDraftOwnerChange,
@@ -40,10 +39,8 @@ export function DomainSettingsView({
   return (
     <section className="management-panel" id="my-names" aria-labelledby="management-heading">
       <PanelHeader
-        backLabel="Back to details"
         badge="Advanced"
         headingId="management-heading"
-        onBack={onBack}
         subtitle={displayName}
         title="Domain settings"
       />

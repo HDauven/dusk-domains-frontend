@@ -1,40 +1,11 @@
 @media (max-width: 1060px) {
-  .runtime-notice {
-    align-items: flex-start;
-    padding: 12px 22px;
-  }
 
-  .search-row,
-  .registration-layout {
+  .search-row {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .primary-button {
-    width: 100%;
-  }
-
-  .account-card > .primary-button,
-  .account-card > .commit-button {
-    justify-self: stretch;
-  }
-
-  .duration-control-header,
-  .duration-calendar {
-    display: grid;
-  }
-
-  .duration-control-header output {
-    text-align: left;
-  }
-
-  .account-grid,
-  .review-list,
   .fee-config-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .copy-row {
     grid-template-columns: 1fr;
   }
 
@@ -44,11 +15,11 @@
   }
 
   .rewards-account-card.claimable .account-card-heading,
-  .rewards-account-card.claimable .account-card-intro,
-  .rewards-account-card.claimable .account-detail-list,
-  .rewards-account-card.claimable .referral-activity-list,
-  .rewards-account-card.claimable .claim-review,
-  .rewards-account-card.claimable > .commit-button {
+.rewards-account-card.claimable .account-card-intro,
+.rewards-account-card.claimable .account-detail-list,
+.rewards-account-card.claimable .referral-activity-list,
+.rewards-account-card.claimable .claim-review,
+.rewards-account-card.claimable > .commit-button {
     grid-column: auto;
     grid-row: auto;
   }
@@ -75,27 +46,4 @@
     flex: 0 0 38px;
   }
 
-  .wallet-setup-action {
-    display: grid;
-  }
-
-  .wallet-setup-actions {
-    width: 100%;
-  }
-
-  .registration-address-input-row {
-    grid-template-columns: 1fr;
-  }
-
-  .registration-address-input-row .commit-button {
-    width: 100%;
-  }
-
-  .wallet-install-button {
-    flex: 1 1 auto;
-  }
-
-  .registration-step-panel {
-    min-height: auto;
-  }
 }

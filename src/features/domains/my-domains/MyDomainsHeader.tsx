@@ -1,6 +1,7 @@
 import { AccountViewHeader } from '../../../components/ui/AccountViewHeader'
 import { MetricSummary } from '../../../components/ui/MetricSummary'
 import { RefreshButton } from '../../../components/ui/RefreshButton'
+import { pluralize } from '../../../utils/format'
 import type { MyDomainsHeaderProps } from './types'
 
 export function MyDomainsHeader({
@@ -51,8 +52,4 @@ export function MyDomainsHeader({
       )}
     />
   )
-}
-
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return count === 1 ? singular : plural
 }

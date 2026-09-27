@@ -11,7 +11,6 @@ export function buildDomainManagementProps(
       canSetPrimary: props.canSetPrimary,
       displayName: props.displayName,
       error: props.primaryError,
-      onBack: props.onBackToDetails,
       onClearPrimary: () => void actions.handleClearPrimaryName(),
       onEndpointChange: (value) => {
         props.setPrimaryEndpointValue(value)
@@ -32,7 +31,6 @@ export function buildDomainManagementProps(
       displayName: props.displayName,
       editableRecordKeys: props.editableRecordKeys,
       error: props.recordError,
-      onBack: props.onBackToDetails,
       onClearRecord: (record) => void actions.handleRecordClear(record),
       onCriticalRecordConfirmationChange: props.setCriticalRecordConfirmation,
       onDraftValueChange: (key, value) => {
@@ -89,7 +87,6 @@ export function buildDomainManagementProps(
       maxDurationYears: props.maxDurationYears,
       minDurationYears: props.minDurationYears,
       nowSeconds: props.nowSeconds,
-      onBack: props.onBackToDetails,
       onConfirmationInputChange: props.setConfirmationInput,
       onDraftManagerChange: props.setDraftManager,
       onDraftOwnerChange: props.setDraftOwner,
@@ -117,7 +114,6 @@ export function buildDomainManagementProps(
       fallbackManager: props.fallbackManager,
       managedNameExpiresAt: props.managedName.expiresAt,
       nowSeconds: props.nowSeconds,
-      onBack: props.onBackToDetails,
       onCreateSubname: () => void actions.handleCreateSubname(),
       onDelegateManagerChange: props.setDelegateManager,
       onDelegateSubnameChange: props.setDelegateSubnameNode,

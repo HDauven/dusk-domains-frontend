@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { CheckCircle2, ExternalLink, Info } from 'lucide-react'
+import { CheckCircle2, ExternalLink } from 'lucide-react'
+import { abbreviate } from '../../../utils/format'
 import {
   walletActionLabel,
   walletSetupActionCopy,
   walletSetupActionTitle,
-  walletSetupValueCopy,
   type WalletConnectionStatus,
 } from '../../wallet/walletStatus'
 
@@ -41,27 +41,29 @@ export function RegistrationWalletSetupCard({
 
   return (
     <>
-      <div className={walletSetupState === 'connected' ? 'setup-row ready wallet-setup-card' : `setup-row wallet-setup-card ${walletSetupState}`}>
-        <div>
-          <strong>Wallet</strong>
-          <span>{walletSetupValueCopy(walletSetupState, selectedAddress)}</span>
-        </div>
-        {selectedAddress ? <CheckCircle2 size={17} /> : <Info size={17} />}
-      </div>
-      {!selectedAddress ? (
-        <div className={`wallet-setup-action ${walletSetupState}`}>
+      {selectedAddress ? (
+        <div className="register-wallet">
+          <CheckCircle2 size={18} />
           <div>
+            <strong>Owner wallet</strong>
+            <code>{abbreviate(selectedAddress)}</code>
+          </div>
+        </div>
+      ) : null}
+      {!selectedAddress ? (
+        <div className={`register-action ${walletSetupState}`}>
+          <div className="register-action-copy">
             <strong>{walletSetupActionTitle(walletSetupState)}</strong>
             <span>{walletSetupActionCopy(walletSetupState)}</span>
           </div>
           {walletSetupState === 'missing' ? (
-            <div className="wallet-setup-actions wallet-setup-actions-stacked">
-              <a className="commit-button wallet-install-button" href={installUrl} target="_blank" rel="noreferrer">
+            <div className="register-wallet-actions">
+              <a className="primary-button compact" href={installUrl} target="_blank" rel="noreferrer">
                 Install Dusk Wallet
                 <ExternalLink size={16} />
               </a>
               <button
-                className="wallet-retry-button"
+                className="text-button"
                 disabled={walletDiscoveryRefreshing}
                 type="button"
                 onClick={() => void handleMissingWalletRetry()}
@@ -69,18 +71,18 @@ export function RegistrationWalletSetupCard({
                 {walletDiscoveryRefreshing ? 'Checking...' : 'I installed it'}
               </button>
               {showMissingWalletRetryFailure ? (
-                <div className="wallet-install-help" role="status">
+                <div className="register-wallet-help" role="status">
                   <span>Wallet still not detected. Reload this page after installing Dusk Wallet.</span>
-                  <button type="button" onClick={handlePageReload}>
+                  <button className="text-button" type="button" onClick={handlePageReload}>
                     Reload page
                   </button>
                 </div>
               ) : null}
             </div>
           ) : (
-            <div className="wallet-setup-actions">
+            <div className="register-wallet-actions">
               <button
-                className="commit-button wallet-install-button"
+                className="primary-button compact"
                 disabled={walletSetupState === 'detecting'}
                 type="button"
                 onClick={() => void onOpenWalletConnection()}

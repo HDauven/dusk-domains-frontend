@@ -15,7 +15,7 @@ function registrationProgressTitle(status: RegistrationCompletionState['status']
 }
 
 function registrationProgressCopy(status: RegistrationCompletionState['status']) {
-  if (status === 'executed') return 'Your domain is active.'
+  if (status === 'executed') return 'Your name is active.'
   if (status === 'failed') return 'The name is still reserved. Retry when the issue is fixed.'
   return 'Keep the wallet open while this finishes.'
 }
