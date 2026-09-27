@@ -1,57 +1,53 @@
 .wallet-connect {
   justify-self: end;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  min-width: 192px;
-  min-height: 52px;
-  padding: 0 26px;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 220px;
+  padding: 0 18px;
   overflow: hidden;
-  border: 1px solid rgba(167, 139, 255, 0.34);
-  border-radius: 10px;
-  background: rgba(8, 7, 17, 0.72);
-  color: #f5f3ff;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: rgba(246, 241, 255, 0.06);
+  color: var(--ink);
   cursor: pointer;
   font: inherit;
-  font-size: 17px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+  backdrop-filter: blur(8px);
   transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    background 160ms var(--ease),
+    border-color 160ms var(--ease),
+    transform 160ms var(--ease);
 }
 
 .wallet-connect.connected {
-  min-width: 172px;
-  max-width: 240px;
-  border-color: rgba(167, 139, 255, 0.42);
-  background: rgba(95, 74, 168, 0.12);
-  color: #efe9ff;
+  font-family: var(--font-mono);
+  font-weight: 500;
 }
 
-.wallet-connect.needs-unlock {
-  border-color: rgba(167, 139, 255, 0.34);
-  background: rgba(95, 74, 168, 0.1);
-  color: #efe9ff;
+.wallet-connect.connected::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
 }
 
 .wallet-connect.wrong-network {
-  border-color: rgba(197, 181, 255, 0.34);
-  background: rgba(42, 32, 78, 0.68);
-  color: #f5f3ff;
+  border-color: rgba(255, 207, 122, 0.45);
+  color: var(--warn);
 }
 
 .wallet-connect:not(:disabled):hover {
-  border-color: rgba(167, 139, 255, 0.58);
-  background: rgba(15, 12, 30, 0.82);
-  box-shadow: none;
+  border-color: rgba(246, 241, 255, 0.32);
+  background: rgba(246, 241, 255, 0.1);
   transform: translateY(-1px);
-}
-
-.wallet-connect.connected:not(:disabled):hover {
-  border-color: rgba(167, 139, 255, 0.52);
-  background: rgba(95, 74, 168, 0.16);
 }
 
 .wallet-connect:not(:disabled):active {
