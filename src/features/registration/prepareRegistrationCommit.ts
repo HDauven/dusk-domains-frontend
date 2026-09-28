@@ -6,6 +6,7 @@ import {
   listPendingNameReservations,
   REGISTRATION_MIN_REVEAL_WAIT_BLOCKS,
   registrationCommitmentHex,
+  registrationRegistry,
   upsertPendingNameReservation,
   userFacingErrorMessage,
 } from '../../names/internal'
@@ -62,7 +63,11 @@ export async function prepareRegistrationCommit({
       committedBlockHeight: null, committedTxId: null,
       createdAt: reservationTimestamp, updatedAt: reservationTimestamp,
     }
-    const call = coreCommitRuntimeCall({ commitment })
+    // A released name comes back in the registry that holds it; the reveal finds it there too.
+    const registry = liveDuskDomainsApp
+      ? await registrationRegistry(liveDuskDomainsApp, runtimeConfig.contracts, nodeHex)
+      : null
+    const call = { ...coreCommitRuntimeCall({ commitment }), ...(registry ? { contractId: registry } : {}) }
     const finalState = await submitNameWrite(displayName, call, {
       contracts: runtimeConfig.contracts,
       onUpdate: (state) => {
