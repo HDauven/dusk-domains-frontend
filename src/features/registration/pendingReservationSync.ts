@@ -10,6 +10,27 @@ import {
 import { inferredCommittedBlockHeightFromReservation } from './pendingReservationBlockRecovery'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 
+// Commitments are kept per controller, so ask the indexer for this controller's commit. An
+// indexer that predates the controller parameter returns the latest commit for the hash, so a
+// commit from another controller is still ignored.
+export async function indexedOwnCommitment(
+  indexerClient: DuskDomainsIndexerClient,
+  commitment: string,
+  controller: string,
+) {
+  const indexed = await indexerClient.getCommitment(commitment, isBytes32Hex(controller) ? controller : undefined)
+  if (!indexed || !controller) return indexed
+  return authorityKey(indexed.controller) === authorityKey(controller) ? indexed : null
+}
+
+function authorityKey(value: string) {
+  return value.toLowerCase().replace(/^0x/u, '')
+}
+
+function isBytes32Hex(value: string) {
+  return /^(0x)?[0-9a-f]{64}$/iu.test(value)
+}
+
 type RefreshCommitBlockStateArgs = {
   chainId: string
   commitment: string
@@ -33,7 +54,7 @@ export async function refreshCommitBlockStateFromIndexer({
 }: RefreshCommitBlockStateArgs) {
   const [health, indexedCommit] = await Promise.all([
     indexerClient.getHealth(),
-    indexerClient.getCommitment(commitment),
+    indexedOwnCommitment(indexerClient, commitment, selectedAuthority),
   ])
   const nextBlockHeight = currentBlockHeightFromHealth(health) ?? await getCurrentBlockHeight()
   setCurrentBlockHeight(nextBlockHeight)
@@ -125,7 +146,7 @@ export async function refreshPendingReservationsFromIndexer({
     try {
       return {
         reservation,
-        indexedCommit: await indexerClient.getCommitment(reservation.commitment),
+        indexedCommit: await indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
       }
     } catch {
       return {

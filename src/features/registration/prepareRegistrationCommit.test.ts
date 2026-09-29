@@ -100,7 +100,7 @@ it('does not call a rejected saved request signed or submitted after reopening P
     setActivityLoading: noop, setApiSearchResult: noop, hydrateNameFromIndexer: noop,
     indexerClient: { getCommitment, getHealth: async () => ({ ok: true, currentBlockHeight: 500 }),
       searchName: async () => ({ canonical: saved.name, status: 'available' }) } } as never, saved)
-  expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment)
+  expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment, controller)
   expect(setRegistrationStep).toHaveBeenLastCalledWith('purchase')
   expect(committed).toBe(true) // This flag resumes the flow; it does not prove a broadcast.
   const commitWindow = registrationCommitWindow(setPreparedCommit.mock.calls.at(-1)?.[0].committedBlockHeight, currentBlockHeight)
@@ -143,7 +143,7 @@ it('starts recovery aging after execution, not a long wallet approval', async ()
     getCurrentBlockHeight, selectedAuthority: controller, setPreparedCommit,
     setCurrentBlockHeight: height => { state.height = height }, loadPendingReservations: props.loadPendingReservations,
     indexerClient: { getHealth: async () => ({ ok: true, currentBlockHeight: 500 }), getCommitment } as never })
-  expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment)
+  expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment, controller)
   expect(state.height).toBe(500)
   expect(listPendingNameReservations()[0].committedBlockHeight).toBeNull()
   expect(state.prepared?.committedBlockHeight).toBeNull()
