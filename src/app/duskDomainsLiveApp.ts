@@ -21,6 +21,7 @@ type DuskDomainsLiveApp = {
 export function canUseLiveDuskDomainsWrites(config: DuskDomainsRuntimeConfig): boolean {
   return (
     config.liveWritesEnabled
+    && !isPlaceholderContractId(config.contracts.router.contractId)
     && !isPlaceholderContractId(config.contracts.core.contractId)
     && !isPlaceholderContractId(config.contracts.treasury.contractId)
   )

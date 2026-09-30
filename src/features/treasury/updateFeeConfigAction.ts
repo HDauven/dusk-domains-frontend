@@ -1,5 +1,5 @@
 import {
-  coreSetFeeConfigRuntimeCall,
+  routerSetFeeConfigRuntimeCall,
   userFacingMessageFromText,
   waitForConfirmedIndexerRefresh,
 } from '../../names/internal'
@@ -57,7 +57,7 @@ export async function updateFeeConfig({
   if (!ensureContractAuthorityForLiveWrite('update pricing', setFeeConfigUpdateError)) return
   if (!(await ensurePublicBalanceForLiveWrite('updating pricing', setFeeConfigUpdateError))) return
 
-  const finalState = await submitNameWrite('pricing.dusk', coreSetFeeConfigRuntimeCall(parsed.config), {
+  const finalState = await submitNameWrite('pricing.dusk', routerSetFeeConfigRuntimeCall(parsed.config), {
     contracts: runtimeConfig.contracts,
     onUpdate: setFeeConfigTxState,
   })

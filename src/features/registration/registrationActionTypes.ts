@@ -6,6 +6,7 @@ import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
   CoreFeeConfig,
+  DuskConnectAppLike,
   DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
@@ -40,7 +41,7 @@ export type UseRegistrationActionsProps = {
   getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   lifecycleBaseBlockHeight: number
-  liveDuskDomainsApp: unknown
+  liveDuskDomainsApp: DuskConnectAppLike | null
   loadPendingReservations: () => void
   nodeHex: string
   preparedCommit: PreparedRegistrationCommit | null

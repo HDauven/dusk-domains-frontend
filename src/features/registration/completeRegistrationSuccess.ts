@@ -47,19 +47,21 @@ export async function applyCompleteRegistrationSuccess(
   loadPendingReservations()
   setRegistrationCompletion((current) => markRegistrationCompletionExecuted(current))
 
+  // The router picks the resolver that stores a new name's records, so take it from the index.
+  let indexedResolver: string | null = null
   if (!(await shouldApplyPreviewWriteFallback('registration', async (client) => {
     const indexed = await client.searchName(displayName)
     const state = await client.getNameState(nodeHex)
+    indexedResolver = state?.resolverId ?? null
     return indexed.status === 'registered'
       && state?.owner === selectedAuthority
       && state.manager === selectedAuthority
-      && state.resolverId === recordSourceContractId
   }))) return
 
   setManagedName({
     owner: selectedAuthority,
     manager: selectedAuthority,
-    resolver: recordSourceContractId,
+    resolver: indexedResolver ?? recordSourceContractId,
     expiresAt: request.lifecycle.expiresAt,
     graceEndsAt: request.lifecycle.graceEndsAt,
   })
