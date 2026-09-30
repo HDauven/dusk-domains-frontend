@@ -245,3 +245,35 @@ it('reveals as before when the commitment is where the reveal goes, or cannot be
     expect(listPendingNameReservations()).toEqual([saved])
   }
 })
+
+it('keeps the saved reservation after an executed reveal until the name shows as registered', async () => {
+  const pending = async () => ({ ok: true, value: { commitment: `0x${'22'.repeat(32)}`, pending: { controller, createdAtBlock: 100 } } })
+  const noop = () => {}
+  const reveal = (shouldApplyPreviewWriteFallback: unknown) => {
+    const { props } = readyReservation(pending)
+    return { ...props, shouldApplyPreviewWriteFallback, submitNameWrite: vi.fn(async () => ({ status: 'executed', txId: 'reveal' })),
+      setManagedName: noop, setResolverRecordSets: noop, setPrimaryName: noop, setPrimaryEndpointValue: noop,
+      setDraftOwner: noop, setDraftManager: noop, appendActivity: noop }
+  }
+  // Live writes wait for the index; a wallet can call a reverted reveal executed.
+  const indexed = (owner: string | null) => vi.fn(async (_description: string, check: (client: unknown) => Promise<boolean>) => {
+    await check({ searchName: async () => ({ status: owner ? 'registered' : 'available' }),
+      getNameState: async () => owner && { owner, manager: owner, resolverId: 'resolver' } })
+    return false
+  })
+
+  const reverted = reveal(indexed(null))
+  await completeRegistration(reverted as never)
+  expect(reverted.submitNameWrite).toHaveBeenCalledOnce()
+  expect(reverted.shouldApplyPreviewWriteFallback).toHaveBeenCalledOnce()
+  expect(listPendingNameReservations()).toHaveLength(1)
+  const otherOwner = reveal(indexed(`0x${'44'.repeat(32)}`))
+  await completeRegistration(otherOwner as never)
+  expect(listPendingNameReservations()).toHaveLength(1)
+
+  await completeRegistration(reveal(indexed(controller)) as never)
+  expect(listPendingNameReservations()).toEqual([])
+  // Without live writes nothing is waited for, as before.
+  await completeRegistration(reveal(async () => true) as never)
+  expect(listPendingNameReservations()).toEqual([])
+})
