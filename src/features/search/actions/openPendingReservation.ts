@@ -6,6 +6,7 @@ import {
   type PendingNameReservation,
 } from '../../../names/internal'
 import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
+import { indexedOwnCommitment } from '../../registration/pendingReservationSync'
 import { resetSearchState } from '../searchControllerReset'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
@@ -58,7 +59,7 @@ export async function openPendingReservation(
     const [nextResult, health, indexedCommit] = await Promise.all([
       indexerClient.searchName(reservation.name),
       indexerClient.getHealth(),
-      indexerClient.getCommitment(reservation.commitment),
+      indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
     ])
     setApiSearchResult(nextResult)
     await hydrateNameFromIndexer(indexerClient, nextResult)

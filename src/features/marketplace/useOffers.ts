@@ -113,6 +113,8 @@ export function useOffers({
         node: offer.node,
         marketplaceContract: marketplaceContractId,
         buyerAuthority: offer.buyerAuthority,
+        // The amount shown on the offer card: a different offer under this buyer fails.
+        expectedAmountLux: offer.amountLux,
         sellerRecipient: selectedAddress,
       }),
       0n,

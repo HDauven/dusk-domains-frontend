@@ -70,7 +70,7 @@ try {
       controller: 'controller', ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1,
       committedBlockHeight: null, committedTxId: 'tx', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
     const indexerClient = { getHealth: async () => ({ currentBlockHeight: 200 }),
-      getCommitment: async () => ({ committedBlockHeight: 100, committedTxId: 'tx' }) }
+      getCommitment: async () => ({ controller: 'controller', committedBlockHeight: 100, committedTxId: 'tx' }) }
     const getCurrentBlockHeight = async () => 200
     function SavedReservation() {
       const [height, setCurrentBlockHeight] = React.useState(null)
