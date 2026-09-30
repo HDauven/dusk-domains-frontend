@@ -18,14 +18,14 @@ const statusTone: Record<NameStatus, string> = {
 
 export function NameHeader({
   displayName,
-  expiresLabel,
+  lifecycleLabel,
   primaryVerified,
   records,
   reserved,
   status,
 }: {
   displayName: string
-  expiresLabel: string | null
+  lifecycleLabel: string | null
   primaryVerified: boolean
   records: ResolverRecord[]
   reserved: boolean
@@ -55,7 +55,7 @@ export function NameHeader({
             <span className={`status-badge ${statusTone[status]}`}>{statusCopy(status)}</span>
           )}
           {registered && primaryVerified ? <span className="status-badge ok">Primary name</span> : null}
-          {registered && expiresLabel ? <span className="status-badge">Renews by {expiresLabel}</span> : null}
+          {registered && lifecycleLabel ? <span className="status-badge">{lifecycleLabel}</span> : null}
         </div>
       </div>
     </header>

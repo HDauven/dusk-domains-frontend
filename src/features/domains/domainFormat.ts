@@ -85,6 +85,14 @@ export function renewalWindowCopy(
     : `Expired on ${expiry}, so it can't be renewed.`
 }
 
+// The name header's badge. Renewal closes at expiry, and a subname is never renewed on its own.
+export function lifecycleBadgeCopy(name: string, expiresAt: number, currentBlockHeight: number | null, nowSeconds: number) {
+  if (!Number.isFinite(expiresAt) || expiresAt <= 0) return null
+  const expiry = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
+  if (lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)) return `Expired ${expiry}`
+  return isSubname(name) ? `Expires ${expiry}` : `Renews by ${expiry}`
+}
+
 // Subnames are never renewed on their own. Renewing a root name renews its inheriting subnames,
 // down each chain of them; a fixed expiry stays as it was set, and so does everything below it.
 // So only a subname directly under the root is promised renewal through its parent.
@@ -96,9 +104,11 @@ export function subnameExpiryCopy(
   nowSeconds: number,
 ) {
   const expiry = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
-  const lead = lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds) ? `Expired on ${expiry}.` : `Runs until ${expiry}.`
+  const expired = lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)
+  const lead = expired ? `Expired on ${expiry}.` : `Runs until ${expiry}.`
   const parent = name.slice(name.indexOf('.') + 1)
   if (expiryPolicy === 'inherits_parent') {
+    if (expired) return `${lead} It expired with ${parent}.`
     return isSubname(parent)
       ? `${lead} It expires with ${parent}.`
       : `${lead} It expires with ${parent}, and renewing ${parent} renews it too.`
