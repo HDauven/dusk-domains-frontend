@@ -38,6 +38,7 @@ export type RegistrationStepPanelProps = {
   appliedReferral: ReferralState | null
   canPrepareCommit: boolean
   canRegister: boolean
+  canRestartReservation: boolean
   canRevealRegistration: boolean
   commitBusy: boolean
   commitStale: boolean
@@ -55,6 +56,7 @@ export type RegistrationStepPanelProps = {
   onRefreshWalletProviders: () => Promise<unknown> | void
   onRegisterName: () => void
   onRegisterSetsPrimaryChange: (checked: boolean) => void
+  onRestartReservation: () => void
   onSetAddress: () => void
   onUseWalletAddress: () => void
   registerSetsPrimary: boolean
@@ -64,6 +66,7 @@ export type RegistrationStepPanelProps = {
   registrationStep: RegistrationStepId
   registrationTargetAddress: string
   registrationTargetAddressErrors: string[]
+  reservationStranded: boolean
   selectedAddress: string
   txBusy: boolean
   txState: DuskDomainTxState | null

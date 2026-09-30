@@ -44,13 +44,16 @@ export function RegistrationStepPanel(props: RegistrationStepPanelProps) {
 
   return (
     <RegistrationPurchaseStep
+      canRestartReservation={props.canRestartReservation}
       canRevealRegistration={props.canRevealRegistration}
       commitWindow={props.commitWindow}
       installUrl={props.installUrl}
       onOpenWalletConnection={props.onOpenWalletConnection}
       onRegisterName={props.onRegisterName}
+      onRestartReservation={props.onRestartReservation}
       onSetAddress={props.onSetAddress}
       registrationCompletion={props.registrationCompletion}
+      reservationStranded={props.reservationStranded}
       txBusy={props.txBusy}
       txState={props.txState}
       walletSetupState={props.walletSetupState}

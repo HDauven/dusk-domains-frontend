@@ -38,6 +38,7 @@ export function deriveAppDerivedState({
   renewalTxState,
   selectedAddress,
   selectedAuthority,
+  strandedCommitment,
   subnameLabel,
   subnameManager,
   subnames,
@@ -84,8 +85,10 @@ export function deriveAppDerivedState({
     : null
   const {
     canPrepareCommit,
+    canRestartReservation,
     canRevealRegistration,
     commitStale,
+    reservationStranded,
   } = deriveRegistrationCapabilities({
     canRegister,
     commitBusy,
@@ -96,6 +99,8 @@ export function deriveAppDerivedState({
     registrationCompletion,
     registrationTargetReady,
     selectedAddress,
+    selectedAuthority,
+    strandedCommitment,
     txBusy,
     walletAuthorized: walletSigningReady,
   })
@@ -156,6 +161,7 @@ export function deriveAppDerivedState({
     canManageName: canManageName && parentAuthorized,
     canPrepareCommit,
     canRenewName: canRenewName && parentAuthorized,
+    canRestartReservation,
     canRevealRegistration,
     canRemoveRecords: walletSigningReady && recordAuthorized && !recordBusy,
     canSaveRecords: canSaveRecords && recordAuthorized,
@@ -172,6 +178,7 @@ export function deriveAppDerivedState({
     primaryVerification,
     recordBusy,
     renewalBusy,
+    reservationStranded,
     savedReservation,
     savedReservationWindow,
     subnameBusy,

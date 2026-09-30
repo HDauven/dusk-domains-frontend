@@ -79,6 +79,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     renewalTxState: domainState.renewalTxState,
     selectedAddress: walletRuntime.selectedAddress,
     selectedAuthority: walletRuntime.selectedAuthority,
+    strandedCommitment: registrationState.strandedCommitment,
     subnameLabel: domainState.subnameLabel,
     subnameManager: domainState.subnameManager,
     subnames: domainState.subnames,
