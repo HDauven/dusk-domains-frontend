@@ -13,9 +13,9 @@ it('keeps the submitted payment and expiry after hydration changes availability'
   const noop = () => {}
   // The panel reads the fee and expiry from the completion summary, not the live preview.
   const html = renderToStaticMarkup(<RegistrationPurchaseStep
-    canRevealRegistration={false} commitWindow={{ status: 'missing', staleInBlocks: 0, waitBlocks: 0 }}
-    installUrl="" onOpenWalletConnection={noop} onRegisterName={noop} onSetAddress={noop}
-    registrationCompletion={completed} txBusy={false} txState={null} walletSetupState="connected"
+    canRestartReservation={false} canRevealRegistration={false} commitWindow={{ status: 'missing', staleInBlocks: 0, waitBlocks: 0 }}
+    installUrl="" onOpenWalletConnection={noop} onRegisterName={noop} onRestartReservation={noop} onSetAddress={noop}
+    registrationCompletion={completed} reservationStranded={false} txBusy={false} txState={null} walletSetupState="connected"
   />) + renderToStaticMarkup(<RegistrationSummary
     activeReferral={null} appliedReferral={null} committed={true} displayName="aurora.dusk" duration={1}
     expiryDate={completed.summary?.expiryDate ?? '-'} feeConfigError="" onChangeTerm={noop}

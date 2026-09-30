@@ -30,6 +30,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   registrationPreviousStep: RegistrationStepId | null
   registrationStep: RegistrationStepId
   registrationStepDescription: string
+  reservationStranded: boolean
   resultIssues: NameResult['issues']
   setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
   setRegistrationAddressInput: Dispatch<SetStateAction<string>>
@@ -42,7 +43,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
 }
 
 export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
-  const { handlePrepareCommit, handleRegisterName } = useRegistrationActions(props)
+  const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions(props)
   const registrationComplete = props.registrationCompletion?.status === 'executed'
 
   const step: RegistrationFlowPanelProps['step'] = {
@@ -50,6 +51,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     appliedReferral: props.appliedReferral,
     canPrepareCommit: props.canPrepareCommit,
     canRegister: props.canRegister,
+    canRestartReservation: props.canRestartReservation,
     canRevealRegistration: props.canRevealRegistration,
     commitBusy: props.commitBusy,
     commitStale: props.commitStale,
@@ -69,6 +71,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     onPrepareCommit: () => void handlePrepareCommit(),
     onRefreshWalletProviders: props.onRefreshWalletProviders,
     onRegisterName: () => void handleRegisterName(),
+    onRestartReservation: () => void handleRestartReservation(),
     onRegisterSetsPrimaryChange: (nextChecked) => {
       props.setRegisterSetsPrimary(nextChecked)
       if (!nextChecked && !props.registrationAddressInput.trim() && props.selectedAddress) {
@@ -84,6 +87,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     registrationStep: props.registrationStep,
     registrationTargetAddress: props.registrationTargetAddress,
     registrationTargetAddressErrors: props.registrationTargetAddressErrors,
+    reservationStranded: props.reservationStranded,
     selectedAddress: props.selectedAddress,
     txBusy: props.txBusy,
     txState: props.txState,

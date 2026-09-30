@@ -32,6 +32,7 @@ export function applyIndexedNameHydration(
     forwardRead,
     hydratedSubnames,
     node,
+    ownSubnameRead,
     primaryName,
     readErrors,
     stateRead,
@@ -58,6 +59,7 @@ export function applyIndexedNameHydration(
   }
 
   if (stateRead.value) {
+    // Dates the index does not report stay unknown (0): the current ones may be placeholders.
     setManagedName((current) => ({
       owner: stateRead.value?.owner ?? current.owner,
       manager: stateRead.value?.manager ?? current.manager,
@@ -67,13 +69,14 @@ export function applyIndexedNameHydration(
         stateRead.value?.expiresAtBlockHeight,
         currentBlockHeight,
         nowSeconds,
-      ) ?? current.expiresAt,
+      ) ?? 0,
       graceEndsAt: lifecycleHeightFromIndexed(
         stateRead.value?.graceEndsAt,
         stateRead.value?.graceEndsAtBlockHeight,
         currentBlockHeight,
         nowSeconds,
-      ) ?? current.graceEndsAt,
+      ) ?? 0,
+      expiryPolicy: ownSubnameRead.value?.expiryPolicy ?? null,
     }))
     if (stateRead.value.owner) setDraftOwner(stateRead.value.owner)
     if (stateRead.value.manager) setDraftManager(stateRead.value.manager)

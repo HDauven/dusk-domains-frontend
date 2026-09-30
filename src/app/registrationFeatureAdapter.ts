@@ -26,7 +26,7 @@ export function buildRegistrationFeatureProps(inputs: AppViewModelInputs): UseRe
     ...searchState,
     onBackToOverview: () => searchState.setResultView('overview'),
     onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),
-    showReservationRecovery: Boolean(registrationState.committed && registrationState.preparedCommit),
+    showReservationRecovery: Boolean(registrationState.committed && registrationState.preparedCommit && !derivedState.reservationStranded),
     ...mainViewRuntime,
     ...walletRuntime,
     onOpenWalletConnection: () => void walletRuntime.handleOpenWalletConnection(),

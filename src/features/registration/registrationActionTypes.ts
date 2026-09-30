@@ -8,6 +8,7 @@ import type {
   CoreFeeConfig,
   DuskConnectAppLike,
   DuskDomainsIndexerClient,
+  DuskDomainsOnChainClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
   NameResult,
@@ -15,6 +16,7 @@ import type {
   ResolverRecord,
 } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
+import type { StrandedCommitment } from './pendingReservationTypes'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 import type { RegistrationStepId } from './registrationSteps'
 import type { PreparedRegistrationCommit } from './usePendingReservations'
@@ -33,10 +35,12 @@ export type UseRegistrationActionsProps = {
   appendActivity: AppendActivity
   canPrepareCommit: boolean
   canRegister: boolean
+  canRestartReservation: boolean
   committed: boolean
   commitWindow: RegistrationCommitWindow
   displayName: string
   duration: number
+  duskDomainsOnChainClient: DuskDomainsOnChainClient | null
   feeConfig: CoreFeeConfig
   getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
@@ -70,6 +74,7 @@ export type UseRegistrationActionsProps = {
   setRegistrationCompletion: Dispatch<SetStateAction<RegistrationCompletionState | null>>
   setRegistrationStep: Dispatch<SetStateAction<RegistrationStepId>>
   setResolverRecordSets: Dispatch<SetStateAction<Record<string, ResolverRecord[]>>>
+  setStrandedCommitment: Dispatch<SetStateAction<StrandedCommitment | null>>
   setTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setWalletError: Dispatch<SetStateAction<string>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback

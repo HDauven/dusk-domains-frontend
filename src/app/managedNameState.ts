@@ -1,5 +1,6 @@
 import {
   createRegistrationLifecycle,
+  type SubnameExpiryPolicy,
 } from '../names/internal'
 
 export const fallbackOwner = 'dusk1owner-preview'
@@ -11,6 +12,8 @@ export type ManagedNameState = {
   resolver: string
   expiresAt: number
   graceEndsAt: number
+  // A subname's expiry policy; null for a root name, or when the indexer has not reported it.
+  expiryPolicy: SubnameExpiryPolicy | null
 }
 
 export function createManagedNameState(resolver: string): ManagedNameState {
@@ -24,5 +27,6 @@ export function createManagedNameState(resolver: string): ManagedNameState {
     resolver,
     expiresAt: lifecycle.expiresAt,
     graceEndsAt: lifecycle.graceEndsAt,
+    expiryPolicy: null,
   }
 }

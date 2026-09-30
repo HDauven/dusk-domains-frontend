@@ -7,8 +7,12 @@ import {
   type NameStatus,
   type RecordVisibility,
   type ResolverRecordKey,
+  type SubnameExpiryPolicy,
 } from '../../names/internal'
 import type { MyNamePrimarySummary } from './MyDomainsView'
+
+// Lifecycle values are block heights, or unix seconds when no block height was known.
+const unixSecondsLifecycleFloor = 100_000_000
 
 export function unixSecondsFromIso(value: string | null | undefined) {
   if (!value) return null
@@ -36,11 +40,71 @@ export function lifecycleHeightToUnixSeconds(
   nowSeconds: number,
 ) {
   if (!Number.isFinite(lifecycleHeight) || lifecycleHeight <= 0) return null
-  if (lifecycleHeight > 100_000_000) return lifecycleHeight
+  if (lifecycleHeight > unixSecondsLifecycleFloor) return lifecycleHeight
   if (currentBlockHeight !== null) {
     return nowSeconds + (lifecycleHeight - currentBlockHeight) * DUSK_APPROX_BLOCK_TIME_SECONDS
   }
   return nowSeconds + lifecycleHeight * DUSK_APPROX_BLOCK_TIME_SECONDS
+}
+
+// An unknown lifecycle value (0) is never reached.
+export function lifecycleHeightReached(
+  lifecycleHeight: number,
+  currentBlockHeight: number | null,
+  nowSeconds: number,
+) {
+  if (!Number.isFinite(lifecycleHeight) || lifecycleHeight <= 0) return false
+  if (lifecycleHeight > unixSecondsLifecycleFloor) return nowSeconds >= lifecycleHeight
+  return currentBlockHeight !== null && currentBlockHeight >= lifecycleHeight
+}
+
+// Only label.dusk is registered; every deeper name is a subname.
+export function isSubname(name: string) {
+  return name.replace(/\.dusk$/u, '').includes('.')
+}
+
+// The contract takes renewals only before expiry. After it the name is held until grace ends,
+// when anyone can register it. The indexer may not report a grace end; then none is shown.
+export function renewalWindowCopy(
+  { expiresAt, graceEndsAt }: { expiresAt: number, graceEndsAt: number },
+  currentBlockHeight: number | null,
+  nowSeconds: number,
+) {
+  const expiry = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
+  const grace = graceEndsAt > 0 ? formatLifecycleDay(graceEndsAt, currentBlockHeight, nowSeconds) : null
+  if (!lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)) {
+    return grace
+      ? `Runs until ${expiry}. Renew it before then. After that it can't be renewed; it is held until ${grace}, then anyone can register it.`
+      : `Runs until ${expiry}. Renew it before then. After that it can't be renewed.`
+  }
+  if (lifecycleHeightReached(graceEndsAt, currentBlockHeight, nowSeconds)) {
+    return `Expired on ${expiry}, so it can't be renewed. Anyone can register it now.`
+  }
+  return grace
+    ? `Expired on ${expiry}, so it can't be renewed. It is held until ${grace}, then anyone can register it.`
+    : `Expired on ${expiry}, so it can't be renewed.`
+}
+
+// Subnames are never renewed on their own. Renewing a root name renews its inheriting subnames,
+// down each chain of them; a fixed expiry stays as it was set, and so does everything below it.
+// So only a subname directly under the root is promised renewal through its parent.
+export function subnameExpiryCopy(
+  name: string,
+  expiresAt: number,
+  expiryPolicy: SubnameExpiryPolicy | null,
+  currentBlockHeight: number | null,
+  nowSeconds: number,
+) {
+  const expiry = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
+  const lead = lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds) ? `Expired on ${expiry}.` : `Runs until ${expiry}.`
+  const parent = name.slice(name.indexOf('.') + 1)
+  if (expiryPolicy === 'inherits_parent') {
+    return isSubname(parent)
+      ? `${lead} It expires with ${parent}.`
+      : `${lead} It expires with ${parent}, and renewing ${parent} renews it too.`
+  }
+  if (expiryPolicy === 'fixed_before_parent') return `${lead} This date was fixed when it was created and can't be extended.`
+  return `${lead} Subnames can't be renewed on their own.`
 }
 
 export function formatLifecycleDay(

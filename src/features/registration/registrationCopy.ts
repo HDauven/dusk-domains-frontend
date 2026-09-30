@@ -1,6 +1,7 @@
 import { txStatusCopy } from '../../components/status/txStatus'
 import {
   DUSK_APPROX_BLOCK_TIME_SECONDS,
+  REGISTRATION_MIN_REVEAL_WAIT_BLOCKS,
   registrationCommitWindow,
   type DuskDomainTxState,
 } from '../../names/internal'
@@ -86,3 +87,7 @@ export function commitWindowCopy(
   return `Sign to register the name and pay. This reservation stays valid for about ${formatWait(staleInBlocks)}.`
 }
 
+// The reveal would go to a registry added after the commit, which never saw it.
+export function strandedReservationCopy() {
+  return `Dusk Domains added capacity since you reserved, so this reservation can't be completed. Reserve again; you can complete about ${formatWait(REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)} after it confirms.`
+}

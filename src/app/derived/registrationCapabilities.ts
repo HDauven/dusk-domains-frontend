@@ -1,3 +1,4 @@
+import type { StrandedCommitment } from '../../features/registration/pendingReservationTypes'
 import type { RegistrationCompletionState } from '../../features/registration/registrationCompletionState'
 import type { PreparedRegistrationCommit } from '../../features/registration/usePendingReservations'
 import { registrationCommitWindow } from '../../names/internal'
@@ -12,6 +13,8 @@ export function deriveRegistrationCapabilities({
   registrationCompletion,
   registrationTargetReady,
   selectedAddress,
+  selectedAuthority,
+  strandedCommitment,
   txBusy,
   walletAuthorized,
 }: {
@@ -24,10 +27,19 @@ export function deriveRegistrationCapabilities({
   registrationCompletion: RegistrationCompletionState | null
   registrationTargetReady: boolean
   selectedAddress: string
+  selectedAuthority: string
+  strandedCommitment: StrandedCommitment | null
   txBusy: boolean
   walletAuthorized: boolean
 }) {
   const commitStale = commitWindow.status === 'stale'
+  // Only for the account that found it stranded: a reservation from another account is not its to replace.
+  const reservationStranded = Boolean(
+    preparedCommit
+    && preparedCommit.commitment === strandedCommitment?.commitment
+    && selectedAuthority
+    && selectedAuthority.toLowerCase() === strandedCommitment.controller.toLowerCase(),
+  )
 
   return {
     canPrepareCommit: Boolean(walletAuthorized && selectedAddress && nodeHex && canRegister && (!committed || commitStale) && !commitBusy),
@@ -39,8 +51,14 @@ export function deriveRegistrationCapabilities({
       && registrationTargetReady
       && commitWindow.status === 'ready'
       && registrationCompletion?.status !== 'executed'
+      && !reservationStranded
       && !txBusy,
     ),
+    // As canPrepareCommit, but to replace a stranded commitment rather than make a first one.
+    canRestartReservation: Boolean(
+      walletAuthorized && selectedAddress && nodeHex && canRegister && reservationStranded && !commitBusy && !txBusy,
+    ),
     commitStale,
+    reservationStranded,
   }
 }

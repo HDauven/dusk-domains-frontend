@@ -1,7 +1,10 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
-import { listPendingNameReservations, namehashHex, registrationCommitWindow, type DuskDomainTxState } from '../../names/internal'
+import { deriveRegistrationCapabilities } from '../../app/derived/registrationCapabilities'
+import { DEFAULT_FEE_CONFIG, listPendingNameReservations, namehashHex, registrationCommitWindow, upsertPendingNameReservation,
+  type DuskDomainTxState } from '../../names/internal'
+import { completeRegistration } from './completeRegistrationAction'
 import { prepareRegistrationCommit } from './prepareRegistrationCommit'
 import { forgetPendingReservation } from '../search/actions/forgetPendingReservation'
 import { openPendingReservation } from '../search/actions/openPendingReservation'
@@ -9,6 +12,7 @@ import { RegistrationPurchaseStep } from './RegistrationPurchaseStep'
 import { RegistrationReviewStep } from './RegistrationReviewStep'
 import { refreshCommitBlockStateFromIndexer } from './pendingReservationSync'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
+import { restartStrandedReservation } from './strandedReservation'
 
 vi.mock('../search/searchControllerReset', () => ({ resetSearchState: vi.fn() }))
 
@@ -150,4 +154,126 @@ it('starts recovery aging after execution, not a long wallet approval', async ()
   expect(registrationCommitWindow(state.prepared?.committedBlockHeight, state.height).status).toBe('missing')
   expect(saved.createdAt).toBe(new Date(startedAt).toISOString())
   expect(saved.updatedAt).toBe(new Date(startedAt + 90_000).toISOString())
+})
+
+// A reservation whose commit is confirmed and old enough to reveal.
+function readyReservation(getPendingCommitment: () => Promise<unknown>) {
+  const props = args()
+  const saved = { name: 'resume.dusk', node: props.nodeHex, commitment: `0x${'22'.repeat(32)}`, secret: `0x${'33'.repeat(32)}`,
+    controller, ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1, committedBlockHeight: 100,
+    committedTxId: 'old-commit', createdAt: '2030-01-01T00:00:00.000Z', updatedAt: '2030-01-01T00:00:00.000Z' }
+  upsertPendingNameReservation(saved)
+  return { saved, props: { ...props, canRegister: true, committed: true, registrationTargetReady: true,
+    registrationTargetAddressErrors: [], commitWindow: { status: 'ready', waitBlocks: 0, staleInBlocks: 100 },
+    preparedCommit: { commitment: saved.commitment, secret: saved.secret, committedBlockHeight: 100, committedTxId: 'old-commit' },
+    duskDomainsOnChainClient: { getPendingCommitment: vi.fn(getPendingCommitment) }, setStrandedCommitment: vi.fn(),
+    submitNameWrite: vi.fn(async () => ({ status: 'rejected' })), result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
+    lifecycleBaseBlockHeight: 500, registerSetsPrimary: false, appliedReferral: null,
+    registrationTargetAddress: '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r' } }
+}
+
+it('reserves again instead of revealing where a registry added since the commit never saw it', async () => {
+  const { props, saved } = readyReservation(async () => ({ ok: true, value: { commitment: `0x${'22'.repeat(32)}`, pending: null } }))
+  await completeRegistration(props as never)
+  expect(props.duskDomainsOnChainClient.getPendingCommitment).toHaveBeenCalledExactlyOnceWith(controller, saved.commitment, 'resume.dusk')
+  expect(props.submitNameWrite).not.toHaveBeenCalled()
+  const stranded = { controller, commitment: saved.commitment }
+  expect(props.setStrandedCommitment).toHaveBeenCalledExactlyOnceWith(stranded)
+  expect(listPendingNameReservations()).toEqual([saved]) // Kept until the user reserves again.
+
+  const capabilities = deriveRegistrationCapabilities({ ...props, commitBusy: false, txBusy: false, walletAuthorized: true,
+    nodeHex: props.nodeHex, registrationCompletion: null, strandedCommitment: stranded } as never)
+  expect(capabilities).toMatchObject({ canRevealRegistration: false, canRestartReservation: true, reservationStranded: true })
+  const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, { ...props, ...capabilities,
+    walletSetupState: 'connected', registrationCompletion: null, txBusy: false, txState: null } as never)).replaceAll('&#x27;', '\'')
+  expect(html).toContain('Dusk Domains added capacity since you reserved, so this reservation can\'t be completed.')
+  expect(html).toContain('Reserve again')
+  expect(html).not.toContain('Register name')
+
+  const submitNameWrite = vi.fn(async (_name, _call, options) => {
+    options.onUpdate({ status: 'awaiting_approval' })
+    return { status: 'executed', txId: 'new-commit' } as DuskDomainTxState
+  })
+  await restartStrandedReservation({ ...props, ...capabilities, submitNameWrite } as never)
+  expect(submitNameWrite).toHaveBeenCalledOnce()
+  expect(submitNameWrite.mock.calls[0][1]).toMatchObject({ functionName: 'commit_runtime' })
+  const reservations = listPendingNameReservations()
+  expect(reservations).toHaveLength(1)
+  expect(reservations[0].commitment).not.toBe(saved.commitment)
+  expect(reservations[0]).toMatchObject({ name: 'resume.dusk', committedBlockHeight: 500, committedTxId: 'new-commit' })
+  expect(props.setStrandedCommitment).toHaveBeenLastCalledWith(null)
+})
+
+it('never judges or replaces another account’s reservation, from A to B and back to A', async () => {
+  const { props, saved } = readyReservation(async () => ({ ok: true, value: { commitment: `0x${'22'.repeat(32)}`, pending: null } }))
+  // Reserved by A (controller); B has no such commitment on chain.
+  const accountB = `0x${'55'.repeat(32)}`
+  let stranded: unknown = null
+  const asB = { ...props, selectedAuthority: accountB, setStrandedCommitment: vi.fn((value) => { stranded = value }) }
+  await completeRegistration(asB as never)
+  expect(props.duskDomainsOnChainClient.getPendingCommitment).not.toHaveBeenCalled()
+  expect(asB.setStrandedCommitment).not.toHaveBeenCalled()
+  expect(props.submitNameWrite).toHaveBeenCalledOnce() // As before: the contract judges B's reveal.
+
+  const capabilities = (selectedAuthority: string, strandedCommitment: unknown) => deriveRegistrationCapabilities({
+    ...props, commitBusy: false, txBusy: false, walletAuthorized: true, registrationCompletion: null,
+    selectedAuthority, strandedCommitment } as never)
+  expect(capabilities(controller, stranded)).toMatchObject({ canRevealRegistration: true, reservationStranded: false })
+  // A stranded commitment found by one account never carries over to another.
+  const strandedForB = { controller: accountB, commitment: saved.commitment }
+  expect(capabilities(accountB, strandedForB)).toMatchObject({ canRevealRegistration: false, reservationStranded: true })
+  expect(capabilities(controller, strandedForB))
+    .toMatchObject({ canRevealRegistration: true, canRestartReservation: false, reservationStranded: false })
+
+  // Reserve again removes only the connected account's own reservation.
+  const commit = vi.fn()
+  await restartStrandedReservation({ ...asB, canRestartReservation: true, submitNameWrite: commit } as never)
+  expect(commit).not.toHaveBeenCalled()
+  expect(listPendingNameReservations()).toEqual([saved])
+})
+
+it('reveals as before when the commitment is where the reveal goes, or cannot be read', async () => {
+  for (const read of [
+    { ok: true, value: { commitment: `0x${'22'.repeat(32)}`, pending: { controller, createdAtBlock: 100 } } },
+    { ok: false, error: { code: 'contract_read_failed', message: 'offline' } },
+  ]) {
+    const { props, saved } = readyReservation(async () => read)
+    await completeRegistration(props as never)
+    expect(props.submitNameWrite).toHaveBeenCalledExactlyOnceWith('resume.dusk',
+      expect.objectContaining({ functionName: 'complete_registration_runtime' }), expect.anything())
+    expect(props.setStrandedCommitment).not.toHaveBeenCalled()
+    expect(listPendingNameReservations()).toEqual([saved])
+  }
+})
+
+it('keeps the saved reservation after an executed reveal until the name shows as registered', async () => {
+  const pending = async () => ({ ok: true, value: { commitment: `0x${'22'.repeat(32)}`, pending: { controller, createdAtBlock: 100 } } })
+  const noop = () => {}
+  const reveal = (shouldApplyPreviewWriteFallback: unknown) => {
+    const { props } = readyReservation(pending)
+    return { ...props, shouldApplyPreviewWriteFallback, submitNameWrite: vi.fn(async () => ({ status: 'executed', txId: 'reveal' })),
+      setManagedName: noop, setResolverRecordSets: noop, setPrimaryName: noop, setPrimaryEndpointValue: noop,
+      setDraftOwner: noop, setDraftManager: noop, appendActivity: noop }
+  }
+  // Live writes wait for the index; a wallet can call a reverted reveal executed.
+  const indexed = (owner: string | null) => vi.fn(async (_description: string, check: (client: unknown) => Promise<boolean>) => {
+    await check({ searchName: async () => ({ status: owner ? 'registered' : 'available' }),
+      getNameState: async () => owner && { owner, manager: owner, resolverId: 'resolver' } })
+    return false
+  })
+
+  const reverted = reveal(indexed(null))
+  await completeRegistration(reverted as never)
+  expect(reverted.submitNameWrite).toHaveBeenCalledOnce()
+  expect(reverted.shouldApplyPreviewWriteFallback).toHaveBeenCalledOnce()
+  expect(listPendingNameReservations()).toHaveLength(1)
+  const otherOwner = reveal(indexed(`0x${'44'.repeat(32)}`))
+  await completeRegistration(otherOwner as never)
+  expect(listPendingNameReservations()).toHaveLength(1)
+
+  await completeRegistration(reveal(indexed(controller)) as never)
+  expect(listPendingNameReservations()).toEqual([])
+  // Without live writes nothing is waited for, as before.
+  await completeRegistration(reveal(async () => true) as never)
+  expect(listPendingNameReservations()).toEqual([])
 })

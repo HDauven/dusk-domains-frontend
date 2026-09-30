@@ -1,4 +1,5 @@
 import type { RecordTargetOption } from '../../features/domains/recordTypes'
+import type { StrandedCommitment } from '../../features/registration/pendingReservationTypes'
 import type { RegistrationCompletionState } from '../../features/registration/registrationCompletionState'
 import type { PreparedRegistrationCommit } from '../../features/registration/usePendingReservations'
 import type {
@@ -23,6 +24,7 @@ export type UseAppDerivedStateArgs = {
   managementTxState: DuskDomainTxState | null
   moonlightRecord: ResolverRecord | undefined
   nodeHex: string
+  nowSeconds: number
   pendingReservations: PendingNameReservation[]
   preparedCommit: PreparedRegistrationCommit | null
   primaryEndpointValue: string
@@ -37,6 +39,7 @@ export type UseAppDerivedStateArgs = {
   renewalTxState: DuskDomainTxState | null
   selectedAddress: string
   selectedAuthority: string
+  strandedCommitment: StrandedCommitment | null
   subnameLabel: string
   subnameManager: string
   subnames: SubnameState[]

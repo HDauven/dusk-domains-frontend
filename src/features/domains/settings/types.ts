@@ -1,4 +1,4 @@
-import type { DuskDomainTxState } from '../../../names/internal'
+import type { DuskDomainTxState, SubnameExpiryPolicy } from '../../../names/internal'
 
 export type ManagedNameState = {
   owner: string
@@ -6,6 +6,7 @@ export type ManagedNameState = {
   resolver: string
   expiresAt: number
   graceEndsAt: number
+  expiryPolicy: SubnameExpiryPolicy | null
 }
 
 export type DomainSettingsViewProps = {
@@ -72,4 +73,12 @@ export type RenewalPanelProps = Pick<
   | 'renewalPreviewExpiresAt'
   | 'renewalTxState'
   | 'renewalYears'
+>
+
+export type SubnameExpiryPanelProps = Pick<
+  DomainSettingsViewProps,
+  | 'currentBlockHeight'
+  | 'displayName'
+  | 'managedName'
+  | 'nowSeconds'
 >

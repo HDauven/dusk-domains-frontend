@@ -12,14 +12,17 @@ import { completeRegistrationPreflight } from './completeRegistrationPreflight'
 import { applyCompleteRegistrationSuccess } from './completeRegistrationSuccess'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import { updateRegistrationCompletion } from './registrationTxProgress'
+import { revealCommitmentMissing } from './strandedReservation'
 
 export async function completeRegistration(props: UseRegistrationActionsProps) {
   const {
     displayName,
     preparedCommit,
     runtimeConfig,
+    selectedAuthority,
     setRegistrationCompletion,
     setRegistrationStep,
+    setStrandedCommitment,
     setWalletError,
     submitNameWrite,
     ensureContractAuthorityForLiveWrite,
@@ -37,6 +40,11 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
   setWalletError('')
   setRegistrationCompletion(null)
   if (!ensureContractAuthorityForLiveWrite('register this name', setWalletError)) return
+  // The purchase step then offers to reserve again instead of a reveal that would fail.
+  if (await revealCommitmentMissing(props)) {
+    setStrandedCommitment({ controller: selectedAuthority, commitment: preparedCommit.commitment })
+    return
+  }
   const request = createCompleteRegistrationRequest({
     ...props,
     preparedCommit,

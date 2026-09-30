@@ -9,6 +9,12 @@ export type PreparedRegistrationCommit = {
   committedTxId: string | null
 }
 
+// On chain a commitment is kept per controller, so a stranded one names both.
+export type StrandedCommitment = {
+  controller: string
+  commitment: string
+}
+
 export type UsePendingReservationsArgs = {
   chainId: string
   currentCommitment: string
