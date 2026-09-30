@@ -64,6 +64,7 @@ export async function applyCompleteRegistrationSuccess(
     resolver: indexedResolver ?? recordSourceContractId,
     expiresAt: request.lifecycle.expiresAt,
     graceEndsAt: request.lifecycle.graceEndsAt,
+    expiryPolicy: null,
   })
   setResolverRecordSets((current) => ({
     ...current,

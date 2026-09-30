@@ -23,6 +23,7 @@ export type UseAppDerivedStateArgs = {
   managementTxState: DuskDomainTxState | null
   moonlightRecord: ResolverRecord | undefined
   nodeHex: string
+  nowSeconds: number
   pendingReservations: PendingNameReservation[]
   preparedCommit: PreparedRegistrationCommit | null
   primaryEndpointValue: string

@@ -13,13 +13,15 @@ import type {
   ResolverRecord,
   SubnameState,
 } from '../../names/internal'
-import { safeNamehashHex } from '../domains/domainFormat'
+import { isSubname, safeNamehashHex } from '../domains/domainFormat'
 
 export type IndexedNameReadBundle = {
   activityRead: IndexerReadResult<ActivityEntry[]>
   forwardRead: IndexerReadResult<ForwardResolutionResponse>
   hydratedSubnames: SubnameState[] | null
   node: string
+  // This name's own subname entry, which holds its expiry policy; null for a root name.
+  ownSubnameRead: IndexerReadResult<IndexedSubname | null>
   primaryName: string | null
   readErrors: string[]
   stateRead: IndexerReadResult<IndexedLifecycleName | null>
@@ -35,11 +37,13 @@ export async function readIndexedName(
   const node = safeNamehashHex(canonicalName)
   if (!node) return null
 
-  const [forwardRead, stateRead, activityRead, subnameRead] = await Promise.all([
+  const rootName: IndexerReadResult<IndexedSubname | null> = { value: null, error: null }
+  const [forwardRead, stateRead, activityRead, subnameRead, ownSubnameRead] = await Promise.all([
     indexerRead(client.resolveForward(canonicalName)),
     indexerRead(client.getNameState(node)),
     indexerRead(client.getActivity(node)),
     indexerRead(client.getSubnames(node)),
+    isSubname(canonicalName) ? indexerRead(client.getSubname(node)) : rootName,
   ])
   const primaryName = await readPrimaryNameForForwardRecord(client, forwardRead.value?.records)
   const hydratedSubnames = subnameRead.value?.map(indexedSubnameToState) ?? null
@@ -51,6 +55,7 @@ export async function readIndexedName(
     stateRead.error,
     activityRead.error,
     subnameRead.error,
+    ownSubnameRead.error,
   ].filter((message): message is string => Boolean(message))
 
   return {
@@ -58,6 +63,7 @@ export async function readIndexedName(
     forwardRead,
     hydratedSubnames,
     node,
+    ownSubnameRead,
     primaryName,
     readErrors,
     stateRead,

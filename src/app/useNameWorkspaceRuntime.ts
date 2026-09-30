@@ -64,6 +64,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     managementTxState: domainState.managementTxState,
     moonlightRecord: domainRecordState.moonlightRecord,
     nodeHex: namePreview.nodeHex,
+    nowSeconds: searchState.nowSeconds,
     pendingReservations: registrationRuntime.pendingReservations,
     preparedCommit: registrationState.preparedCommit,
     primaryEndpointValue: domainState.primaryEndpointValue,

@@ -1,10 +1,15 @@
+import { isSubname, lifecycleHeightReached } from '../../features/domains/domainFormat'
 import type { RecordTargetOption } from '../../features/domains/recordTypes'
 
 export function deriveRecordCapabilities({
   activeRecordTarget,
   criticalRecordChange,
   criticalRecordConfirmationMatches,
+  currentBlockHeight,
+  displayName,
+  managedNameExpiresAt,
   nodeHex,
+  nowSeconds,
   primaryBusy,
   primaryEndpoint,
   primaryEndpointErrors,
@@ -24,7 +29,11 @@ export function deriveRecordCapabilities({
   activeRecordTarget: RecordTargetOption | undefined
   criticalRecordChange: boolean
   criticalRecordConfirmationMatches: boolean
+  currentBlockHeight: number | null
+  displayName: string
+  managedNameExpiresAt: number
   nodeHex: string
+  nowSeconds: number
   primaryBusy: boolean
   primaryEndpoint: string
   primaryEndpointErrors: readonly string[]
@@ -44,7 +53,15 @@ export function deriveRecordCapabilities({
   return {
     canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryName && primaryVerified && !primaryBusy),
     canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && subnameManager.trim() && !subnameBusy),
-    canRenewName: Boolean(walletAuthorized && selectedAddress && nodeHex && !renewalBusy),
+    // The contract refuses to renew a subname, or any name at or after its expiry.
+    canRenewName: Boolean(
+      walletAuthorized
+      && selectedAddress
+      && nodeHex
+      && !isSubname(displayName)
+      && !lifecycleHeightReached(managedNameExpiresAt, currentBlockHeight, nowSeconds)
+      && !renewalBusy,
+    ),
     canSaveRecords: Boolean(
       walletAuthorized
       && selectedAddress

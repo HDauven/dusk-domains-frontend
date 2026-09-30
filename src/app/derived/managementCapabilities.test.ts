@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
 import { canManageActiveName } from './managementCapabilities'
+import { deriveRecordCapabilities } from './recordCapabilities'
 import { clearDomainRecord } from '../../features/domains/clearDomainRecord'
 import { useIndexedNameHydration } from '../../features/search/useIndexedNameHydration'
 import { readIndexedName } from '../../features/search/indexedNameReads'
@@ -51,4 +52,21 @@ it('refreshes unknown height before applying lifecycle state and refuses unhealt
   await expect(hydrate({ getHealth } as never, {} as never)).rejects.toThrow('still syncing')
   expect(readIndexedName).toHaveBeenCalledOnce()
   expect(applyIndexedNameHydration).toHaveBeenCalledOnce()
+})
+
+it('refuses renewal for a subname and for a name at or past its expiry', () => {
+  const ready = { walletAuthorized: true, selectedAddress: 'owner', nodeHex: 'node', renewalBusy: false,
+    displayName: 'alphavnuc.dusk', managedNameExpiresAt: 200, currentBlockHeight: 100 as number | null, nowSeconds: 0,
+    subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [] }
+  const canRenew = (overrides: Partial<typeof ready> = {}) => (
+    deriveRecordCapabilities({ ...ready, ...overrides } as never).canRenewName
+  )
+  expect(canRenew()).toBe(true)
+  expect(canRenew({ displayName: 'pay.alphavnuc.dusk' })).toBe(false)
+  expect(canRenew({ currentBlockHeight: 199 })).toBe(true)
+  expect(canRenew({ currentBlockHeight: 200 })).toBe(false)
+  // An expiry read without a block height is a time, compared with the clock.
+  const unixExpiry = { managedNameExpiresAt: 1_800_000_000, currentBlockHeight: null }
+  expect(canRenew({ ...unixExpiry, nowSeconds: 1_799_999_999 })).toBe(true)
+  expect(canRenew({ ...unixExpiry, nowSeconds: 1_800_000_000 })).toBe(false)
 })
