@@ -1,26 +1,8 @@
 import { NameAvatar } from '../../../components/brand/NameAvatar'
-import { DUSK_APPROX_BLOCK_TIME_SECONDS, type IndexedNameSummary } from '../../../names/internal'
+import type { IndexedNameSummary } from '../../../names/internal'
 import { pluralize } from '../../../utils/format'
-import { formatLifecycleDay } from '../domainFormat'
 import type { MyNamePrimarySummary } from '../MyDomainsView'
-
-const SOON_SECONDS = 30 * 24 * 60 * 60
-
-// Lifecycle from block heights; the indexer's dates are estimates and have been wrong before.
-function lifecycle(name: IndexedNameSummary, currentBlockHeight: number | null) {
-  const expiresAt = name.expiresAtBlockHeight
-  const graceEndsAt = name.graceEndsAtBlockHeight ?? expiresAt
-  if (expiresAt == null || graceEndsAt == null) return { tone: '', copy: name.expiresAt ? `Renews by ${name.expiresAt.slice(0, 10)}` : '' }
-  const nowSeconds = Math.floor(Date.now() / 1000)
-  const expires = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
-  if (currentBlockHeight === null) return { tone: '', copy: `Renews by ${expires}` }
-  if (currentBlockHeight >= graceEndsAt) return { tone: 'danger', copy: `Expired ${expires}` }
-  if (currentBlockHeight >= expiresAt) {
-    return { tone: 'danger', copy: `Expired. Renew by ${formatLifecycleDay(graceEndsAt, currentBlockHeight, nowSeconds)} to keep it` }
-  }
-  const left = (expiresAt - currentBlockHeight) * DUSK_APPROX_BLOCK_TIME_SECONDS
-  return left < SOON_SECONDS ? { tone: 'warn', copy: `Renew soon: ends ${expires}` } : { tone: '', copy: `Renews by ${expires}` }
-}
+import { nameCardLifecycle } from './nameCardLifecycle'
 
 // Verified primary for the address the name points to; it is only yours when that address is.
 function isOwnPrimary(primary: MyNamePrimarySummary | undefined, paysElsewhere: boolean) {
@@ -45,7 +27,7 @@ export function NameCard({
   const address = name.records.find((record) => record.key === 'moonlight_address')?.value ?? ''
   // A name keeps its records through a sale or transfer, so it can still pay the previous owner.
   const paysElsewhere = Boolean(address && selectedAddress && address !== selectedAddress)
-  const life = lifecycle(name, currentBlockHeight)
+  const life = nameCardLifecycle(name, currentBlockHeight)
 
   return (
     <button className="name-card" type="button" onClick={() => onOpen(name.canonicalName)}>

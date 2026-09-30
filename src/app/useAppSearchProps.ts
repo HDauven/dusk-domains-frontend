@@ -1,7 +1,7 @@
 import type { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import type { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspaceFeature'
-import { formatLifecycleDay } from '../features/domains/domainFormat'
+import { lifecycleBadgeCopy } from '../features/domains/domainFormat'
 import { clampDurationYears } from './appConstants'
 import type { AppViewModelInputs } from './appViewTypes'
 
@@ -90,8 +90,8 @@ export function useAppSearchProps({
     currentBlockHeight: searchState.currentBlockHeight,
     displayName,
     duration,
-    expiresLabel: result.status === 'registered'
-      ? formatLifecycleDay(managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds)
+    lifecycleLabel: result.status === 'registered'
+      ? lifecycleBadgeCopy(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds)
       : null,
     expiryDate,
     feeConfigLoading: economicsRuntime.feeConfigLoading,

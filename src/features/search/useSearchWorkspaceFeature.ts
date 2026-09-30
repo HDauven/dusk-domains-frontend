@@ -13,7 +13,7 @@ type UseSearchWorkspaceFeatureProps = {
   currentBlockHeight: number | null
   displayName: string
   duration: number
-  expiresLabel: string | null
+  lifecycleLabel: string | null
   expiryDate: string
   feeConfigLoading: boolean
   nodeHex: string
@@ -53,7 +53,7 @@ export function useSearchWorkspaceFeature({
   currentBlockHeight,
   displayName,
   duration,
-  expiresLabel,
+  lifecycleLabel,
   expiryDate,
   feeConfigLoading,
   nodeHex,
@@ -112,7 +112,7 @@ export function useSearchWorkspaceFeature({
     // A registration that just completed is registered even before the indexer says so.
     headerProps: {
       displayName,
-      expiresLabel,
+      lifecycleLabel,
       primaryVerified: primaryProps.primaryVerification.verified,
       records: resultStatus === 'registered' ? parentResolverRecords : [],
       reserved: Boolean(savedReservation) && !registrationProps.wizard.registrationComplete,
