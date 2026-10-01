@@ -21,14 +21,12 @@ export function SubdomainsView({
   onSubnameLabelChange,
   onSubnameManagerChange,
   onSubnameResolverChange,
-  onSubnameRevocationPolicyChange,
   selectedAuthority,
   subnameExpiryDate,
   subnameExpiryPolicy,
   subnameLabel,
   subnameManager,
   subnameResolver,
-  subnameRevocationPolicy,
   subnames,
   txState,
 }: SubdomainsViewProps) {
@@ -56,7 +54,6 @@ export function SubdomainsView({
           onSubnameLabelChange={onSubnameLabelChange}
           onSubnameManagerChange={onSubnameManagerChange}
           onSubnameResolverChange={onSubnameResolverChange}
-          onSubnameRevocationPolicyChange={onSubnameRevocationPolicyChange}
           parentExpiryDay={parentExpiryDay}
           selectedAuthority={selectedAuthority}
           subdomainPreview={subdomainPreview}
@@ -65,7 +62,6 @@ export function SubdomainsView({
           subnameLabel={subnameLabel}
           subnameManager={subnameManager}
           subnameResolver={subnameResolver}
-          subnameRevocationPolicy={subnameRevocationPolicy}
         />
 
         {subnames.length ? (

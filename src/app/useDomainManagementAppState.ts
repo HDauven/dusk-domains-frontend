@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import type {
   DuskDomainTxState,
   SubnameExpiryPolicy,
-  SubnameRevocationPolicy,
   SubnameState,
 } from '../names/internal'
 import {
@@ -31,7 +30,6 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
   const [subnameResolver, setSubnameResolver] = useState(recordSourceContractId)
   const [subnameExpiryPolicy, setSubnameExpiryPolicy] = useState<SubnameExpiryPolicy>('inherits_parent')
   const [subnameExpiryDate, setSubnameExpiryDate] = useState('')
-  const [subnameRevocationPolicy, setSubnameRevocationPolicy] = useState<SubnameRevocationPolicy>('parent_revocable')
   const [subnames, setSubnames] = useState<SubnameState[]>([])
   const [managedName, setManagedName] = useState(() => createManagedNameState(recordSourceContractId))
   const [draftOwner, setDraftOwner] = useState(fallbackOwner)
@@ -78,7 +76,6 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
     setSubnameLabel,
     setSubnameManager,
     setSubnameResolver,
-    setSubnameRevocationPolicy,
     setSubnames,
     setSubnameTxState,
     subnameError,
@@ -87,7 +84,6 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
     subnameLabel,
     subnameManager,
     subnameResolver,
-    subnameRevocationPolicy,
     subnames,
     subnameTxState,
   }

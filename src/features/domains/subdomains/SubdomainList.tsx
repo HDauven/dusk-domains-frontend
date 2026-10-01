@@ -1,6 +1,5 @@
 import {
   subnameExpiryDescription,
-  subnameRevocationDescription,
 } from '../../../names/internal'
 import { abbreviate } from '../../../utils/format'
 import { formatLifecycleDay } from '../domainFormat'
@@ -26,7 +25,6 @@ export function SubdomainList({
           <strong>{subname.name}</strong>
           <span>{subname.status}</span>
           <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
-          <span>{subnameRevocationDescription(subname.revocationPolicy)}</span>
           <code>{abbreviate(subname.manager)}</code>
         </button>
       ))}

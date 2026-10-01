@@ -71,10 +71,8 @@ export function indexedSubnameToState(subname: IndexedSubname): SubnameState {
     expiresAt: subname.expiresAtBlockHeight ?? unixSecondsFromIso(subname.expiresAt) ?? 0,
     parentExpiresAt: subname.parentExpiresAtBlockHeight ?? unixSecondsFromIso(subname.parentExpiresAt) ?? 0,
     expiryPolicy: subname.expiryPolicy,
-    revocationPolicy: subname.revocationPolicy,
     createdAt: unixSecondsFromIso(subname.createdAt) ?? 0,
     status: subname.status,
-    revokedAt: unixSecondsFromIso(subname.revokedAt),
   }
 }
 

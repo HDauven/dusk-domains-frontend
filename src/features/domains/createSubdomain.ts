@@ -35,7 +35,6 @@ export async function createSubdomain({
   subnameLabel,
   subnameManager,
   subnameResolver,
-  subnameRevocationPolicy,
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseSubdomainActionsProps) {
@@ -64,7 +63,6 @@ export async function createSubdomain({
       resolver: subnameResolver.trim(),
       parentExpiresAt: managedNameExpiresAt,
       requestedExpiresAt,
-      revocationPolicy: subnameRevocationPolicy,
       createdAt: currentUnixSeconds(),
     })
     const call = coreCreateSubnameRuntimeCall({
@@ -77,7 +75,6 @@ export async function createSubdomain({
       manager: subname.manager,
       expiresAt: subname.expiresAt,
       expiryPolicy: subname.expiryPolicy,
-      revocationPolicy: subname.revocationPolicy,
     })
     const finalState = await submitNameWrite(displayName, call, {
       contracts: runtimeConfig.contracts,
