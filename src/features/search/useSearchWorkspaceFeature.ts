@@ -118,6 +118,7 @@ export function useSearchWorkspaceFeature({
     },
     // A registration that just completed is registered even before the indexer says so.
     headerProps: {
+      viewerAuthority,
       displayName,
       lifecycleLabel,
       primaryVerified: primaryProps.primaryVerification.verified,

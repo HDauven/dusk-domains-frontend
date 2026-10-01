@@ -1,5 +1,5 @@
 import { Sparkles } from 'lucide-react'
-import { AddressChip } from '../../components/ui/AddressChip'
+import { OwnerLabel } from '../identity/OwnerLabel'
 import { Badge } from '../../components/ui/Badge'
 import { NameAvatar } from '../../components/brand/NameAvatar'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
@@ -17,6 +17,7 @@ export function NameHeader({
   primaryVerified,
   owner,
   records,
+  viewerAuthority,
   reserved,
   status,
 }: {
@@ -24,6 +25,7 @@ export function NameHeader({
   lifecycleLabel: string | null
   primaryVerified: boolean
   owner?: string | null
+  viewerAuthority?: string
   records: ResolverRecord[]
   reserved: boolean
   status: NameStatus
@@ -47,7 +49,7 @@ export function NameHeader({
           {label}<span>{tld}</span>
         </h1>
         {registered && description ? <p className="name-hero-description">{description}</p> : null}
-        {registered && owner ? <div className="name-hero-owner">Owner <AddressChip value={owner} label="owner address" /></div> : null}
+        {registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={records.filter(record => record.key === 'moonlight_address').map(record => record.value)} /></div> : null}
         <div className="name-hero-badges">
           {reserved ? (
             <Badge status="reserved">Registration saved</Badge>
