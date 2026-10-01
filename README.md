@@ -1,191 +1,60 @@
 # Dusk Domains Frontend
 
-React/Vite frontend for [dusk.domains](https://dusk.domains/).
+React/Vite app for searching, registering, renewing and managing `.dusk` names,
+with marketplace sales, auctions, offers and claims. Dusk Connect supplies wallet
+access; the SDK handles contract calls and the indexer supplies discovery/history.
 
-The app lets users search, reserve, register and manage `.dusk` domains. It uses Dusk Connect for wallet access, the Dusk Domains SDK for contract reads/writes and the Dusk Domains indexer for search, history and dashboard views.
+## Run and test
 
-## Requirements
+Use Node 24 and npm. From this repository's root:
 
-- Node.js 22+
-- npm
-- Dusk Wallet browser extension for live writes
-- Dusk Domains core, treasury and marketplace contract IDs
-- Dusk Domains indexer URL
-- Core, treasury and marketplace data-driver WASM URLs
-
-## Setup
-
-```bash
-npm install
+```sh
+npm ci
 cp .env.example .env.local
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5217 --strictPort
 ```
 
-Fill `.env.local` with the deployed contracts, node URL, indexer URL and data-driver URLs.
+Fill [.env.local using the template](.env.example) with the deployed router, core,
+treasury and marketplace IDs, matching drivers, node/chain and indexer URL.
+`VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES` enables wallet transactions when the runtime
+is configured. Live writes require Dusk Wallet and browser-accessible node endpoints.
+Support/abuse/security/status URLs are optional; unset links are hidden.
 
-## Environment
-
-The app reads `VITE_DUSK_DOMAINS_*` variables.
-
-Required for live mode:
-
-```text
-VITE_DUSK_DOMAINS_NODE_URL
-VITE_DUSK_DOMAINS_CHAIN_ID
-VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID
-VITE_DUSK_DOMAINS_CORE_CONTRACT_ID
-VITE_DUSK_DOMAINS_TREASURY_CONTRACT_ID
-VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID
-VITE_DUSK_DOMAINS_ROUTER_DRIVER_URL
-VITE_DUSK_DOMAINS_CORE_DRIVER_URL
-VITE_DUSK_DOMAINS_TREASURY_DRIVER_URL
-VITE_DUSK_DOMAINS_MARKETPLACE_DRIVER_URL
-VITE_DUSK_DOMAINS_INDEXER_URL
-VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES=true
-```
-
-Projection reads require a reachable indexer reporting `health.ok: true`. Indexer
-fetches time out after 10 seconds each; multi-request reads and confirmation retries
-can take longer. A confirmed wallet transaction may precede finalized indexing:
-wait for synchronization or refresh the data rather than resubmitting it.
-
-The node endpoint must accept browser requests from the frontend origin. A raw
-`rusk-private` endpoint may need a local CORS proxy for browser-based contract
-reads; hosted Dusk node endpoints should expose the required CORS headers.
-
-Optional product links:
-
-```text
-VITE_DUSK_DOMAINS_SUPPORT_URL
-VITE_DUSK_DOMAINS_ABUSE_URL
-VITE_DUSK_DOMAINS_SECURITY_URL
-VITE_DUSK_DOMAINS_STATUS_URL
-```
-
-Never commit filled env files, mnemonics, wallet backups or operator credentials.
-
-## Registration recovery
-
-The reservation secret is saved in this browser before wallet approval. After an
-interruption, reopen the name in Search or My Domains and check its status before
-retrying. Unconfirmed, rejected and expired requests remain saved until explicitly
-forgotten. Forgetting deletes the local recovery secret; it does not cancel a
-submitted transaction. Keep browser storage enabled and retain it until the
-registration is resolved.
-
-## Scripts
-
-```bash
-npm run dev       # start Vite
-npm run build     # typecheck and build
-npm run preview   # serve the production build locally
-npm run test      # run Vitest
-npm run lint      # run ESLint
-npm run check     # test and build
-```
-
-## Source Layout
-
-```text
-src/
-  app/          app composition, runtime state and adapters
-  components/   reusable UI, wallet, brand and status components
-  features/     search, registration, domains, treasury, referrals and activity views
-  names/        thin re-export boundary to @duskdomains/sdk and first-party SDK helpers
-  styles/       global shell, navigation, layout, notice and responsive styles
-  utils/        small formatting helpers
-```
-
-Feature CSS lives next to the feature it styles. `src/App.css` only composes global styles, shared component styles and feature style bundles.
-
-## Deployment
-
-Build output is static:
-
-```bash
+```sh
+npm test
 npm run build
+npm run lint
 ```
 
-Deploy `dist/` to Cloudflare Pages or another static host. Serve data-driver WASM files with `application/wasm` when possible.
+Tests include checking npm commands in tracked Markdown. With Vite running and
+Playwright Chromium installed, run the browser regressions:
 
-## Referral validation bundle cost
+```sh
+DUSK_DOMAINS_E2E_BASE_URL=http://127.0.0.1:5217/ node scripts/ux-regression-smoke.mjs
+```
 
-Measured with `npm run build` on 2026-10-01 (Node 24.13.0, Vite 8.1.3), using
-the SDK worktree copied into `node_modules/@duskdomains/sdk`. The SDK archive pin
-in `package.json` and `package-lock.json` is unchanged. Noble curves and hashes
-2.4.0 were copied from the SDK's installed dependencies for all three builds.
-The baseline restores frontend `91d4f29` and SDK `2a71a06` sources; the eager
-comparison uses the reviewed `fa2d4e9` / `bb6adea` sources.
+`npm run build` produces static files in `dist/`. Serve driver files as Wasm and
+configure the indexer's allowed browser origin to match the app.
 
-| Build | Main JS | Main gzip | Deferred BLS gzip |
-| --- | ---: | ---: | ---: |
-| Before referral validation | 626.18 KB | 170.76 KB | — |
-| Eager full validation | 697.40 KB | 197.47 KB | — |
-| Lazy full input validation, synchronous encoding | 631.56 KB | 172.85 KB | 24.28 KB |
+## Product behavior
 
-The eager change adds 26.71 KB gzip, above the 15 KB threshold. Full BLS validation
-now loads on the Moonlight referral path. Empty attribution, contracts and Phoenix
-skip the import. The remaining main-chunk increase is 2.09 KB gzip, including
-structural checks, loading and async input state handling; BLS lives in its own chunk.
-CSS stays at 11.98 KB gzip. There is no other BLS implementation in the frontend's
-production dependencies to reuse (`@dusk/connect` has no dependencies;
-`@noble/hashes` only supplies hashing).
+Reservation secrets are saved in this browser before wallet approval. Reopen the
+name in Search or My Domains to recover an interrupted registration. Forgetting
+removes its local secret; it does not cancel a submitted transaction.
 
-Referrals remain inactive while validation is pending. Clearing or changing input
-cancels the old result, including its storage write. A failed module load leaves
-attribution inactive. The browser smoke covers lazy loading, pending and cleared
-input, and rejection of off-curve and out-of-subgroup keys.
+Projection reads require healthy indexer status. A wallet-confirmed transaction
+can precede finalized indexing; synchronization status distinguishes the two.
+Owner/subname lists use bounded complete-set reads. Marketplace and activity lists
+provide Load more. Issued reserved names have normal owner controls; the SDK's
+`saleLocked` profile metadata is not enforced as a sale lock by this app.
 
-`referralStateFromInput` awaits the SDK's full `isClaimableReferrer` validation at
-the referral input. Registration builders and encoding stay synchronous and use
-`hasClaimableReferrerShape`, the cheap contract-equivalent structural check.
+Healthy pause status is polled every ten seconds. The app disables affected
+registration/trading actions and keeps claims, refunds, settlement and ordinary
+name management available. Contracts enforce pause permissions independently.
 
-For worktree development after `npm ci`, copy the SDK's `src/` and `package.json`
-into `node_modules/@duskdomains/sdk/`, and its `node_modules/@noble/` packages into
-the frontend's `node_modules/@noble/`. Restart Vite with a cleared local dependency
-cache after replacing SDK sources. Do not change the archive pin for this workflow.
+## Documentation
 
-## License
-
-MIT
-
-## Issued reserved names
-
-Search trusts the indexer's registered status for issued reserved names and shows the owner and normal profile. Unissued and released protected labels remain reserved. There is no operator issuance UI.
-
-The SDK's official profiles carry `saleLocked: true` policy metadata. This frontend does not enforce that flag; issued names use the ordinary owner and marketplace controls. The contracts do not lock sales.
-
-## Paginated indexer reads
-
-My Domains and marketplace name selection use `getAllNames({ owner })`, with the
-SDK's 10,000-item ceiling and an explicit error on overflow. Empty owner results
-no longer trigger a global namespace scan. Subname management uses the same
-capped traversal through `getAllSubnames`; record hydration uses four concurrent
-workers and reports child read failures. A healthy indexer check is reused for
-five seconds, with concurrent checks sharing one request. Explicit health reads
-remain fresh for confirmation polling.
-
-Marketplace Browse, Yours, and Offers load one page per collection and share a
-Load more control. Name activity and auction activity have their own Load more
-controls. Refresh starts from the first page; pending continuations are ignored
-after a refresh or name switch, as are stale initial hydration results. Tab
-switches preserve loaded marketplace pages. A real reload re-fetches an open
-auction separately when it falls outside page one. The decorative name sky
-intentionally samples only the first name page; search remains a single availability lookup. Treasury
-and referral views keep their existing bounded histories.
-
-The browser smoke counts 49 indexer requests for home (3), search (6), opening a
-name with 20 subnames (27), opening the marketplace with two wallet owner keys
-(7), and paging all three collections twice (6). This fixture session runs within
-one health-cache interval; slower sessions may need additional health checks.
-The production default is 200 requests per client budget per 60 seconds. Searching
-and hydrating a name with 60 children takes 67 requests, with all children read.
-
-## Operator pauses
-
-Operator pause status is read from healthy indexer `/health` responses every ten
-seconds. A banner explains registrations or marketplace trading paused by the
-operator. Only registration commitments/completions and new trading actions are
-disabled; claims, refunds, order cleanup, ended-auction settlement and normal name
-management remain available. Contracts enforce the pause while indexed status
-catches up.
+- [Feature organization](src/features/README.md) and [SDK boundary](src/names/README.md)
+- [SDK APIs and integration examples](https://github.com/HDauven/dusk-domains-sdk/blob/main/README.md)
+- [Contract semantics and permissions](https://github.com/HDauven/dusk-domains-protocol/blob/main/README.md)
+- [Indexer HTTP contract and configuration](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md)

@@ -11,6 +11,7 @@ Each folder owns a workflow or screen-level area:
 - `referrals`: referral status and claim actions.
 - `wallet`: wallet connection and locked/unlocked state UI.
 - `activity`: recent event display.
+- `marketplace`: fixed sales, auctions, offers and refunds.
 
 Keep protocol details out of feature components. Use `src/names` for call builders, record shapes, name policy, SDK reads, indexer access, and Dusk Connect integration.
 
