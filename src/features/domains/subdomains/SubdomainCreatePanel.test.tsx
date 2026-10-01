@@ -13,6 +13,7 @@ it('offers manager assignment and both expiry policies without revocation or del
     parentExpiryDay="2040-06-17" subdomainPreview="pay.acme.dusk" subnameExpiryDate=""
     subnameExpiryPolicy="inherits_parent" subnameLabel="pay" subnameManager="owner"
   />)
+  expect(markup).toContain('Reserved words are allowed in subnames.')
   expect(markup).toContain('Manager')
   expect(markup).toContain('Inherit parent expiry')
   expect(markup).toContain('Fixed before parent expiry')

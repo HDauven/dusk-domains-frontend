@@ -1,4 +1,5 @@
 import { Panel } from '../../components/ui/Panel'
+import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import { PanelHeader } from '../../components/ui/PanelHeader'
 import { isSubname } from './domainFormat'
 import { RecipientSettingsPanel } from './settings/RecipientSettingsPanel'
@@ -64,6 +65,10 @@ export function DomainSettingsView({
           managedName={managedName}
           nowSeconds={nowSeconds}
         />
+      ) : managedName.inMarketplaceEscrow ? (
+        <p>Renewal is available after the listing closes.</p>
+      ) : !canRenewOutsideEscrow(managedName) ? (
+        <p>Renewal is unavailable until marketplace custody can be checked.</p>
       ) : (
         <RenewalPanel
           canRenewName={canRenewName}

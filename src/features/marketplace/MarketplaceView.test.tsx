@@ -18,6 +18,14 @@ const buyer = `0x${'33'.repeat(32)}`
 const outsider = `0x${'44'.repeat(32)}`
 
 describe('MarketplaceView actions', () => {
+  it.each(['fixed sale', 'auction listing', 'auction detail'])('explains renewal to the seller of a %s', kind => {
+    const selected = auction()
+    const listing = kind === 'fixed sale' ? { fixedSales: [fixedSale()] }
+      : { auctions: [selected], selectedAuctionNode: kind === 'auction detail' ? selected.node : '' }
+    expect(render({ ...listing, selectedAuthority: seller })).toContain('Renewal is available after the listing closes.')
+    expect(render({ ...listing, selectedAuthority: buyer })).not.toContain('Renewal is available after the listing closes.')
+  })
+
   it('offers more marketplace results and auction activity only when cursors remain', () => {
     expect(render({ hasMore: true })).toContain('Load more marketplace results')
     expect(render({ hasMore: false })).not.toContain('Load more marketplace results')

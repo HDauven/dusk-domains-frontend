@@ -1,6 +1,7 @@
 import { createWriteAccess } from './writeAccess'
 import { useMemo, useState } from 'react'
 import { useOperatorPause } from './useOperatorPause'
+import { usePoolMarketplace } from './usePoolMarketplace'
 import { DuskWallet } from '@dusk/connect'
 import { createWalletSession } from '../features/wallet/walletSession'
 import { duskDomainsConnectOptions } from './appConstants'
@@ -46,6 +47,7 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
       ? createDuskDomainsOnChainReadTransport(liveDuskDomainsApp, runtimeConfig.contracts)
       : null
   ), [liveDuskDomainsApp, runtimeConfig.contracts])
+  const marketplaceContractId = usePoolMarketplace(onChainReadTransport)
   const marketplaceOnChainClient = useMemo(() => {
     if (!onChainReadTransport || !runtimeConfig.contracts.marketplace) return null
     return createDuskDomainsMarketplaceOnChainClient(onChainReadTransport)
@@ -67,6 +69,7 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
     getCurrentBlockHeight,
     indexerClient,
     liveDuskDomainsApp,
+    marketplaceContractId,
     marketplaceOnChainClient,
     recordSourceContractId,
     runtimeConfig,

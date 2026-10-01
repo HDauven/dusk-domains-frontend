@@ -29,6 +29,7 @@ export function RenewalPanel({
     <div className="renewal-box" aria-label="Renewal controls">
       <div>
         <h3>Renew</h3>
+        {managedName.ownerIsContract ? <p>Renewal adds time and does not change the owner.</p> : null}
         <p>{renewalWindowCopy(managedName, currentBlockHeight, nowSeconds)}</p>
       </div>
 

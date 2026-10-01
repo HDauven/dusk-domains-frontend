@@ -1,3 +1,4 @@
+import { sameAuthority } from '../features/identity/ownerLabel'
 import {
   createRegistrationLifecycle,
   type SubnameExpiryPolicy,
@@ -10,6 +11,8 @@ export type ManagedNameState = {
   node: string
   owner: string
   manager: string
+  ownerIsContract?: boolean
+  inMarketplaceEscrow?: boolean | null
   resolver: string
   expiresAt: number
   graceEndsAt: number
@@ -31,4 +34,14 @@ export function createManagedNameState(resolver: string): ManagedNameState {
     graceEndsAt: lifecycle.graceEndsAt,
     expiryPolicy: null,
   }
+}
+
+export function isMarketplaceEscrow(name: Pick<ManagedNameState, 'owner' | 'manager'>, marketplaceContractId: string | null) {
+  if (!marketplaceContractId?.trim()) return null
+  return !/^(?:0x)?0{64}$/i.test(marketplaceContractId.trim())
+    && [name.owner, name.manager].some(authority => sameAuthority(authority, marketplaceContractId))
+}
+
+export function canRenewOutsideEscrow(name: Pick<ManagedNameState, 'ownerIsContract' | 'inMarketplaceEscrow'>) {
+  return !name.inMarketplaceEscrow && (!name.ownerIsContract || name.inMarketplaceEscrow === false)
 }

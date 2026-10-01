@@ -9,6 +9,7 @@ import {
   userFacingErrorMessage,
 } from '../../names/internal'
 import { guardDomainActionPrerequisite } from './domainActionGuards'
+import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { UseDomainSettingsActionsProps } from './domainSettingsActionTypes'
 
 export async function renewDomainName({
@@ -36,11 +37,21 @@ export async function renewDomainName({
 }: UseDomainSettingsActionsProps) {
   const workspace = submitNameWrite.captureWorkspace(displayName)
   setRenewalError('')
+  if (managedName?.inMarketplaceEscrow) {
+    setRenewalError('Close the marketplace listing before renewing this name.')
+    return
+  }
+  if (managedName && !canRenewOutsideEscrow(managedName)) {
+    setRenewalError('Renewal is unavailable until marketplace custody can be checked.')
+    return
+  }
   if (!guardDomainActionPrerequisite({
     canContinue: canRenewName,
     setError: setRenewalError,
       walletSetupState,
-    blockedCopy: 'Connect the owner or manager wallet before renewing this name.',
+    blockedCopy: managedName?.ownerIsContract
+      ? 'Connect a wallet to renew this name before its grace period ends.'
+      : 'Connect the owner or manager wallet before renewing this name.',
   })) {
     return
   }

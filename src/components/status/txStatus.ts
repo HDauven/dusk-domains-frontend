@@ -1,6 +1,7 @@
 import type { DuskDomainTxState } from '../../names/internal'
 import {
   isReadOnlyWalletMessage,
+  isPendingCommitmentLimitMessage,
   isRevealTooEarlyMessage,
   userFacingMessageFromText,
 } from '../../names/internal'
@@ -14,6 +15,7 @@ export function txStatusCopy(status: DuskDomainTxState['status'] | undefined, me
   if (status === 'executed') return 'Transaction confirmed'
   if (status === 'failed' && isReadOnlyWalletMessage(message)) return 'Wallet is read-only'
   if (status === 'failed' && isRevealTooEarlyMessage(message)) return 'Still waiting'
+  if (isPendingCommitmentLimitMessage(message)) return 'Reservation limit reached'
   if (status === 'failed') return 'Transaction failed'
   if (status === 'rejected') return 'Approval rejected'
   if (status === 'timeout') return 'Transaction timed out'
@@ -23,6 +25,7 @@ export function txStatusCopy(status: DuskDomainTxState['status'] | undefined, me
 export function userFacingTxMessage(state: DuskDomainTxState) {
   const message = state.message?.trim() ?? ''
   if (!message) return ''
+  if (isPendingCommitmentLimitMessage(message)) return userFacingMessageFromText(message)
   if (isReadOnlyWalletMessage(message)) {
     return 'This wallet can preview domains but cannot submit transactions.'
   }

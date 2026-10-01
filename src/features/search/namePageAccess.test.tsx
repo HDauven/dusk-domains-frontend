@@ -27,3 +27,35 @@ it('falls back to the public profile when disconnecting on an owner tab', () => 
   expect(html).not.toContain('>Settings</')
   expect(html).toContain('<select')
 })
+
+it('shows visiting payers only renewal controls for confirmed contract-owned roots', () => {
+  const contractProps = {
+    ...props, resultView: 'manage',
+    headerProps: { ...props.headerProps, viewerAuthority: 'payer' },
+    settingsProps: { ...props.settingsProps, displayName: 'alpha.dusk', canRenewName: true, currentBlockHeight: 250, nowSeconds: 1_790_000_000,
+      managedName: { ...props.settingsProps.managedName, ownerIsContract: true, inMarketplaceEscrow: false, expiresAt: 200, graceEndsAt: 300 },
+      renewalYears: 1, minDurationYears: 1, maxDurationYears: 10, renewalFee: 10, renewalPreviewExpiresAt: 3_153_800 },
+  } as SearchResultPanelProps
+  const html = renderToStaticMarkup(<SearchResultPanel {...contractProps} />)
+  expect(html).toContain('Renewal adds time and does not change the owner.')
+  expect(html).toContain('aria-label="Renewal controls"')
+  expect(html).not.toContain('Transfer name')
+  expect(html).not.toContain('>Records</')
+  for (const headerProps of [
+    { ...contractProps.headerProps, viewerAuthority: '' },
+    { ...contractProps.headerProps, displayName: 'docs.alpha.dusk' },
+  ]) expect(renderToStaticMarkup(<SearchResultPanel {...contractProps} headerProps={headerProps} />)).not.toContain('aria-label="Renewal controls"')
+  expect(renderToStaticMarkup(<SearchResultPanel {...contractProps} settingsProps={{ ...contractProps.settingsProps,
+    managedName: { ...contractProps.settingsProps.managedName, ownerIsContract: false } }} />)).not.toContain('aria-label="Renewal controls"')
+})
+
+it('offers no Renew tab or controls for marketplace escrow even when the owner is a deployed contract', () => {
+  const html = renderToStaticMarkup(<SearchResultPanel {...props} resultView="manage"
+    headerProps={{ ...props.headerProps, viewerAuthority: 'seller' }}
+    settingsProps={{ ...props.settingsProps, displayName: 'alpha.dusk', currentBlockHeight: 100, nowSeconds: 1_790_000_000,
+      renewalYears: 1, minDurationYears: 1, maxDurationYears: 10, renewalFee: 10, renewalPreviewExpiresAt: 3_153_800,
+      managedName: { ...props.settingsProps.managedName, ownerIsContract: true, inMarketplaceEscrow: true, expiresAt: 200, graceEndsAt: 300 } }} />)
+  expect(html).not.toContain('>Renew</')
+  expect(html).not.toContain('aria-label="Renewal controls"')
+  expect(html).toContain('Send to alpha.dusk')
+})

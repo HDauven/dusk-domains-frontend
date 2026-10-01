@@ -19,7 +19,7 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     wallet,
   } = appRuntime
   const registrationState = useRegistrationAppState()
-  const domainState = useDomainManagementAppState(recordSourceContractId, indexerClient, appRuntime.duskDomainsOnChainClient)
+  const domainState = useDomainManagementAppState(recordSourceContractId, indexerClient, appRuntime.duskDomainsOnChainClient, runtimeConfig.nodeUrl, appRuntime.marketplaceContractId)
   const openWorkspace = useRef<{ name: string } | null>(null)
   const getWorkspaceToken = useCallback((name: string) => openWorkspace.current?.name === name ? openWorkspace.current : null, [])
   const walletRuntime = useWalletRuntime({

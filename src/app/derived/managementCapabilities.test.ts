@@ -129,3 +129,39 @@ it('keeps grace renewal available through the app while other management stays c
   expect(deriveAppDerivedState({ ...ready, currentBlockHeight: 300 } as never).canRenewName).toBe(false)
   expect(deriveAppDerivedState({ ...ready, currentBlockHeight: null } as never).canRenewName).toBe(false)
 })
+
+it('allows a connected wallet to renew a contract-owned root during grace without granting management rights', () => {
+  const ready = {
+    walletSigningReady: true, selectedAddress: 'payer', selectedAuthority: 'payer',
+    nodeHex: 'node', displayName: 'alice.dusk',
+    managedName: { node: 'node', owner: 'contract', manager: 'contract', ownerIsContract: true, inMarketplaceEscrow: false, expiresAt: 200, graceEndsAt: 300 },
+    currentBlockHeight: 250, nowSeconds: 1_790_000_000, subnameLabel: 'docs', subnameManager: '',
+    subnames: [], recordDraftMutations: [], recordDraftErrors: [], pendingReservations: [],
+    primaryEndpointValue: '', confirmationInput: 'alice.dusk',
+  }
+  const capabilities = deriveAppDerivedState(ready as never)
+  expect(capabilities.canRenewName).toBe(true)
+  expect(capabilities.canManageName).toBe(false)
+  expect(capabilities.canCreateSubname).toBe(false)
+  expect(capabilities.canSaveRecords).toBe(false)
+  for (const overrides of [
+    { walletSigningReady: false }, { selectedAddress: '' }, { selectedAuthority: '' },
+    { currentBlockHeight: 300 }, { currentBlockHeight: null }, { displayName: 'docs.alice.dusk' },
+    { managedName: { ...ready.managedName, ownerIsContract: false } },
+    { managedName: { ...ready.managedName, node: 'other' } },
+  ]) expect(deriveAppDerivedState({ ...ready, ...overrides } as never).canRenewName).toBe(false)
+})
+
+it('blocks escrow renewal for owners, managers and visiting contract payers', () => {
+  for (const selectedAuthority of ['owner', 'manager', 'payer']) {
+    const ready = {
+      walletSigningReady: true, selectedAddress: 'wallet', selectedAuthority,
+      nodeHex: 'node', displayName: 'alice.dusk',
+      managedName: { node: 'node', owner: 'owner', manager: 'manager', ownerIsContract: true, inMarketplaceEscrow: true, expiresAt: 200, graceEndsAt: 300 },
+      currentBlockHeight: 100, nowSeconds: 0, subnameLabel: '', subnameManager: '', subnames: [],
+      recordDraftMutations: [], recordDraftErrors: [], pendingReservations: [], primaryEndpointValue: '', confirmationInput: '',
+    }
+    expect(deriveAppDerivedState(ready as never).canRenewName).toBe(false)
+    expect(deriveAppDerivedState({ ...ready, managedName: { ...ready.managedName, inMarketplaceEscrow: false } } as never).canRenewName).toBe(true)
+  }
+})
