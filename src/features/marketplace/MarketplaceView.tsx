@@ -9,10 +9,11 @@ import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { PanelFeedbackStack } from '../../components/ui/PanelFeedbackStack'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
+import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
 import { MarketplaceActivity } from './MarketplaceActivity'
 import { MarketplaceAuctionDetail } from './MarketplaceAuctionDetail'
-import { MarketplaceAmount } from './MarketplaceAmount'
 import { MarketplaceReview } from './MarketplaceReview'
+import { MarketplaceAmount } from './MarketplaceAmount'
 import { MarketplaceBidReview } from './MarketplaceBidReview'
 import { MarketplaceBrowse } from './MarketplaceBrowse'
 import { MarketplaceOffers } from './MarketplaceOffers'
@@ -40,7 +41,8 @@ export function MarketplaceView(props: MarketplaceViewProps) {
 
       {!props.selectedAuctionNode ? <div className="marketplace-navigation"><Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" /><MarketplaceFreshness updatedAt={props.updatedAt} /></div> : null}
 
-      <PanelFeedbackStack confirmation={confirmation} error={error} />
+      <PanelFeedbackStack confirmation={confirmation} error={error === MARKETPLACE_SYNC_MESSAGE ? undefined : error} />
+      {error === MARKETPLACE_SYNC_MESSAGE ? <p className="marketplace-freshness" role="status">{error}</p> : null}
 
       {!marketplaceEnabled ? (
         <PanelMessage icon={<Store size={18} />}>Marketplace is not enabled for this deployment.</PanelMessage>

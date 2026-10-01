@@ -22,9 +22,9 @@ import {
   marketplaceFeeLabel,
   sameAuthority,
 } from './marketplacePresentation'
-import type { MarketplaceViewProps } from './marketplaceTypes'
+import type { MarketplaceAuctionDetailProps } from './marketplaceTypes'
 
-export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedMarketplaceAuction; props: MarketplaceViewProps }) {
+export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedMarketplaceAuction; props: MarketplaceAuctionDetailProps }) {
   const status = auctionStatus(auction, props.currentBlockHeight)
   const ownAuction = sameAuthority(auction.sellerAuthority, props.selectedAuthority)
   const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
@@ -125,7 +125,7 @@ function AuctionAction({
   auction: IndexedMarketplaceAuction
   minimum: string
   ownAuction: boolean
-  props: MarketplaceViewProps
+  props: MarketplaceAuctionDetailProps
   status: ReturnType<typeof auctionStatus>
 }) {
   if (status === 'ended') {

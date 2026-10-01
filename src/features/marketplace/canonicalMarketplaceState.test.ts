@@ -149,9 +149,9 @@ describe('canonical marketplace signing state', () => {
       } })),
     })
 
-    await expect(canonicalOwnedName(encumbered, indexed, authority)).rejects.toThrow('without subdomains')
+    await expect(canonicalOwnedName(encumbered, indexed, authority)).rejects.toThrow('without subnames')
     await expect(canonicalOfferTarget(encumbered, 'example.dusk', node, `0x${'33'.repeat(32)}`))
-      .rejects.toThrow('without subdomains')
+      .rejects.toThrow('without subnames')
   })
 
   it('blocks stale or absent offers before cancellation or expiry', async () => {

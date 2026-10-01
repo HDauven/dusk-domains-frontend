@@ -391,14 +391,6 @@ it('lets visitors browse offers without giving them buyer or seller actions', ()
   expect(html).not.toContain('>Accept</button>')
 })
 
-it('keeps browse cards to status, name, amount, time and action', () => {
-  const live = auction({ startBlockHeight: 900, endBlockHeight: 2000, highestBid: { amountLux: 36_465_187_500, bidderAuthority: buyer, placedAtBlockHeight: 900 } })
-  const html = render({ auctions: [live], fixedSales: [fixedSale()] })
-  expect(html).toContain('36.47 DUSK')
-  expect(html).toContain('title="36.4651875 DUSK"')
-  for (const detail of ['Minimum next bid', '>Seller</dt>', 'last 10 minutes', 'Secured in escrow', 'Available to anyone']) expect(html).not.toContain(detail)
-})
-
 it('shows only bids from the current auction and one authoritative count', () => {
   const current = auction({ createdAtBlockHeight: 1000, bidCount: 1 })
   const entry = { id: 'bid', eventType: 'domain_bid_placed' as const, actor: buyer, target: '25000000000', blockHeight: 1100, timestamp: '2026-10-01T00:00:00Z', name: current.name, node: current.node, txId: 'bid' }
@@ -422,25 +414,6 @@ it('shows a successful transaction once with its reference behind Details', () =
   expect(html).not.toContain('Refresh</button>')
 })
 
-it('states the closing rule once beside the timer and keeps freshness in navigation', () => {
-  const live = auction({ startBlockHeight: 900, endBlockHeight: 2000 })
-  const html = render({ auctions: [live], selectedAuctionNode: live.node, updatedAt: 1000 })
-  expect(html.match(/Bids in the last 10 minutes/g)).toHaveLength(1)
-  expect(html).not.toContain('Closing rule')
-  expect(html).toMatch(/marketplace-bid-timer[\s\S]*?Bids in the last 10 minutes extend it to 10 minutes remaining/)
-  for (const view of [html, render({ updatedAt: 1000 })]) {
-    expect(view).toMatch(/class="marketplace-navigation">[\s\S]*?<p class="marketplace-freshness">Updated <time[^>]*>[^<]*<\/time><\/p><\/div>/)
-    expect(view.match(/>Updated /g)).toHaveLength(1)
-  }
-})
-
-it('rounds a first-bid minimum up in both the headline and the draft', () => {
-  const current = auction({ reservePriceLux: 1_000_000_001 })
-  const html = render({ auctions: [current], selectedAuctionNode: current.node })
-  expect(html).toContain('title="1.000000001 DUSK">1.01 DUSK')
-  expect(html).toContain('value="1.01"')
-})
-
 it('renders the transaction review with custody and payout terms before wallet approval', () => {
   const html = render({ review: { title: 'Buy aurora.dusk', rows: [{ label: 'Your wallet → seller', value: '24.375 DUSK' }, { label: 'Treasury', value: '0.625 DUSK' }], note: 'The name moves to your wallet.' } })
   expect(html).toContain('Buy aurora.dusk')
@@ -448,16 +421,6 @@ it('renders the transaction review with custody and payout terms before wallet a
   expect(html).toContain('0.625 DUSK')
   expect(html).toContain('The name moves to your wallet.')
   expect(html).toContain('Confirm in wallet')
-})
-
-
-it('shows the exact bid visibly and abbreviates the receiving wallet with copy', () => {
-  const address = 'a'.repeat(100)
-  const html = render({ selectedAddress: address, bidReview: { amountDusk: '38.288446875', amountLux: 38_288_446_875n, minimumBidLux: 38_288_446_875n, auction: auction() } })
-  expect(html.replace(/<[^>]*>/g, '')).toContain('You are bidding38.288446875 DUSK')
-  expect(html).toContain('>aaaaaaaaaa...aaaaaa</code>')
-  expect(html).not.toContain(`>${address}<`)
-  expect(html).toContain('aria-label="Copy If you win, name moves to"')
 })
 
 it('shows the seller fee and net proceeds for fixed prices and auction minimums', () => {
@@ -470,6 +433,43 @@ it('shows the seller fee and net proceeds for fixed prices and auction minimums'
   expect(render({ tab: 'sell', sellableNames: [ownedName()] })).toContain('Private buyer (optional)')
 })
 
+it('does not repeat the first-bid minimum in the detail form', () => {
+  const current = auction()
+  const html = render({ auctions: [current], selectedAuctionNode: current.node })
+  expect(html).toContain('>Minimum bid</span>')
+  expect(html).not.toContain('>Minimum 40 DUSK</span>')
+})
+
+
+it('keeps browse cards to status, name, amount, time and action', () => {
+  const live = auction({ startBlockHeight: 900, endBlockHeight: 2000, highestBid: { amountLux: 36_465_187_500, bidderAuthority: buyer, placedAtBlockHeight: 900 } })
+  const html = render({ auctions: [live], fixedSales: [fixedSale()] })
+  expect(html).toContain('36.47 DUSK')
+  expect(html).toContain('title="36.4651875 DUSK"')
+  for (const detail of ['Minimum next bid', '>Seller</dt>', 'last 10 minutes', 'Secured in escrow', 'Available to anyone']) expect(html).not.toContain(detail)
+})
+
+it('states the closing rule once beside the timer and keeps freshness in navigation', () => {
+  const live = auction({ startBlockHeight: 900, endBlockHeight: 2000 })
+  const html = render({ auctions: [live], selectedAuctionNode: live.node, updatedAt: 1000 })
+  expect(html.match(/Bids in the last 10 minutes/g)).toHaveLength(1)
+  expect(html).not.toContain('Closing rule')
+  expect(html).toMatch(/marketplace-bid-timer[\s\S]*?Bids in the last 10 minutes extend it to 10 minutes remaining/)
+  for (const view of [html, render({ updatedAt: 1000 })]) {
+    expect(view).toMatch(/class="marketplace-navigation">[\s\S]*?<p class="marketplace-freshness">Updated <time[^>]*>[^<]*<\/time><\/p><\/div>/)
+    expect(view.match(/>Updated /g)).toHaveLength(1)
+  }
+})
+
+it('shows the exact bid visibly and abbreviates the receiving wallet with copy', () => {
+  const address = 'a'.repeat(100)
+  const html = render({ selectedAddress: address, bidReview: { amountDusk: '38.288446875', amountLux: 38_288_446_875n, minimumBidLux: 38_288_446_875n, auction: auction() } })
+  expect(html.replace(/<[^>]*>/g, '')).toContain('You are bidding38.288446875 DUSK')
+  expect(html).toContain('>aaaaaaaaaa...aaaaaa</code>')
+  expect(html).not.toContain(`>${address}<`)
+  expect(html).toContain('aria-label="Copy If you win, name moves to"')
+})
+
 it('does not repeat the optional private buyer explanation', () => {
   const html = render({ tab: 'sell', sellableNames: [ownedName()] })
   expect(html).toContain('Private buyer (optional)')
@@ -479,3 +479,9 @@ it('does not repeat the optional private buyer explanation', () => {
 })
 
 
+it('rounds a first-bid minimum up in both the headline and the draft', () => {
+  const current = auction({ reservePriceLux: 1_000_000_001 })
+  const html = render({ auctions: [current], selectedAuctionNode: current.node })
+  expect(html).toContain('title="1.000000001 DUSK">1.01 DUSK')
+  expect(html).toContain('value="1.01"')
+})

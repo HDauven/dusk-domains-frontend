@@ -1,4 +1,4 @@
-import { appendPage, readMarketplacePage, type MarketplaceCursors } from './marketplacePages'
+import { appendPage, readMarketplacePage, readMarketplaceWindow, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   userFacingErrorMessage,
@@ -33,7 +33,7 @@ export function useMarketplaceData({
   accountScope: string
   indexerClient: DuskDomainsIndexerClient | null
   mainView: string
-  onLoaded: (snapshot: MarketplaceSnapshot) => void
+  onLoaded?: (snapshot: MarketplaceSnapshot) => void
   selectedAddress: string
   selectedAuctionNode?: string
   selectedAuthority: string
@@ -50,6 +50,8 @@ export function useMarketplaceData({
   const [loading, setLoading] = useState(false)
   const [cursors, setCursors] = useState<MarketplaceCursors>({ fixedSales: null, auctions: null, offers: null })
   const loadingMore = useRef(false)
+  const refreshPending = useRef(false)
+  const loadedPages = useRef(1)
   const requestId = useRef(0)
   const onLoadedRef = useRef(onLoaded)
   const setErrorRef = useRef(setError)
@@ -60,7 +62,10 @@ export function useMarketplaceData({
     selectedAuctionRef.current = selectedAuctionNode
   })
 
-  const loadMarketplace = useCallback(async () => {
+  const loadMarketplace = useCallback(async (background = false) => {
+    if (background && (loadingMore.current || refreshPending.current)) return
+    refreshPending.current = true
+    if (!background) loadedPages.current = 1
     const nextRequestId = requestId.current + 1
     requestId.current = nextRequestId
     const shouldApply = () => requestId.current === nextRequestId
@@ -68,13 +73,14 @@ export function useMarketplaceData({
     loadingMore.current = false
     setCursors({ fixedSales: null, auctions: null, offers: null })
     const reportError = setErrorRef.current
-    reportError('')
+    if (!background) reportError('')
     if (!indexerClient) {
       setFixedSales([])
       setAuctions([])
       setOffers([])
       setOwnedNames([])
       setRefund(null)
+      refreshPending.current = false
       reportError('Marketplace data is unavailable right now.')
       return
     }
@@ -82,7 +88,7 @@ export function useMarketplaceData({
     setLoading(true)
     try {
       const [page, nextOwnedNames, health, nextRefund, config] = await Promise.all([
-        readMarketplacePage(indexerClient),
+        readMarketplaceWindow(indexerClient, loadedPages.current),
         selectedAddress
           ? fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority })
           : Promise.resolve([]),
@@ -107,11 +113,11 @@ export function useMarketplaceData({
       setCurrentBlockHeight(health.currentBlockHeight)
       setUpdatedAt(Date.now())
       setRefund(nextRefund?.amountLux ? nextRefund : null)
-      onLoadedRef.current({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
+      onLoadedRef.current?.({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
     } catch (loadError) {
       if (shouldApply()) reportError(userFacingErrorMessage(loadError))
     } finally {
-      if (shouldApply()) setLoading(false)
+      if (shouldApply()) { setLoading(false); refreshPending.current = false }
     }
   }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund, setFeeBps])
 
@@ -130,6 +136,7 @@ export function useMarketplaceData({
       setAuctions((current) => appendPage(current, page.auctions, (item) => item.node))
       setOffers((current) => appendPage(current, page.offers, (item) => `${item.node}:${item.buyerAuthority}`))
       setCursors(page.cursors)
+      loadedPages.current += 1
     } catch (error) {
       if (currentRequest === requestId.current) reportError(userFacingErrorMessage(error))
     } finally {
@@ -145,8 +152,8 @@ export function useMarketplaceData({
   useEffect(() => {
     if (mainView !== 'marketplace') return
     let disposed = false
-    const refresh = () => { if (!disposed && document.visibilityState !== 'hidden') void loadMarketplace() }
-    globalThis.queueMicrotask(refresh)
+    const refresh = () => { if (!disposed && document.visibilityState !== 'hidden') void loadMarketplace(true) }
+    globalThis.queueMicrotask(() => { if (!disposed) void loadMarketplace() })
     const timer = window.setInterval(refresh, 10_000)
     window.addEventListener('focus', refresh)
     return () => {

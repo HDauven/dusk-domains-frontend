@@ -28,6 +28,7 @@ export async function checkMarketplaceReviews(page) {
     const { useMarketplaceWrites } = await import('/src/features/marketplace/useMarketplaceWrites.ts')
     const { useFixedSales } = await import('/src/features/marketplace/useFixedSales.ts')
     const { useAuctions } = await import('/src/features/marketplace/useAuctions.ts')
+    const { useMarketplaceRefund } = await import('/src/features/marketplace/useMarketplaceRefund.ts')
     const { MarketplaceBidReview } = await import('/src/features/marketplace/MarketplaceBidReview.tsx')
     const { useOffers } = await import('/src/features/marketplace/useOffers.ts')
     const { useSellForm } = await import('/src/features/marketplace/useSellForm.ts')
@@ -39,11 +40,13 @@ export async function checkMarketplaceReviews(page) {
     const offer = { node, name: sale.name, buyerAuthority: buyer, amountLux: 20_123_456_789, expiresAtBlockHeight: 5000, feeBps: 250 }
     const auction = { node, name: sale.name, sellerAuthority: seller, reservePriceLux: 25e9, startBlockHeight: null, endBlockHeight: null, highestBid: null, bidCount: 0, durationBlocks: 8640 }
     const auctions = [auction]
+    const refund = { authority: buyer, amountLux: 25_123_456_789 }
     const owned = { node, canonicalName: sale.name, owner: seller }
     window.reviewCalls = []
     window.changedPrice = false
     const marketplaceOnChainClient = {
       getAuction: async () => ({ ok: true, value: { ...auction, reservePriceLux: 25_000_000_000n, startBlock: null, endBlock: null } }),
+      getRefund: async () => ({ ok: true, value: { ...refund, amountLux: BigInt(refund.amountLux) } }),
       getFixedSale: async () => ({ ok: true, value: { ...sale, priceLux: BigInt(window.changedPrice ? 26e9 : 25_123_456_789), expiresAtBlock: 5000 } }),
       getOffer: async () => ({ ok: true, value: window.existingOffer ? { ...offer, amountLux: 20_123_456_789n, expiresAtBlock: 5000 } : null }),
     }
@@ -62,7 +65,8 @@ export async function checkMarketplaceReviews(page) {
       const offers = useOffers({ ...args, writes, setError, marketplaceContractId: `0x${'44'.repeat(32)}`, ownedNames: [owned] })
       const sell = useSellForm({ ...args, writes, setError, marketplaceContractId: `0x${'44'.repeat(32)}`, selectedName: owned, feeBps: 250 })
       const bids = useAuctions({ ...args, writes, auctions, indexerClient: null, marketScope: 'local', accountScope: `${wallet}:${scope}`, selectedAuctionNode: '', setSelectedAuctionNode: () => {}, onBidPlaced: () => {}, setError, setConfirmation })
-      window.marketProbe = { writes, fixed, offers, sell, sale, offer, bids, auction }
+      const claimRefund = useMarketplaceRefund(refund, writes)
+      window.marketProbe = { writes, fixed, offers, sell, sale, offer, bids, auction, claimRefund }
       return React.createElement(React.Fragment, null,
         React.createElement('output', { id: 'market-review-error' }, error),
         React.createElement('output', { id: 'market-review-confirmation' }, confirmation),
@@ -156,6 +160,9 @@ export async function checkMarketplaceReviews(page) {
   await page.getByRole('button', { name: 'Confirm in wallet' }).click()
   await page.waitForFunction(() => document.querySelector('#market-review-confirmation').textContent.includes('25.123456789 DUSK moved into escrow.'))
   assert.equal(await calls(), 5)
+  await page.evaluate(() => window.marketProbe.claimRefund())
+  await page.waitForFunction(() => document.querySelector('#market-review-confirmation').textContent.includes('25.123456789 DUSK withdrawn to your wallet.'))
+  assert.equal(await calls(), 6)
 }
 
 export async function checkMarketplaceBrowse(page) {
@@ -243,3 +250,23 @@ export async function checkMarketplaceBrowse(page) {
   await checkReviewPhone(page)
 }
 
+export async function checkMarketplaceInventory(page) {
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { useSellInventory } = await import('/src/features/marketplace/useSellInventory.ts')
+    const owner = `0x${'ab'.repeat(32)}`
+    const names = ['one', 'two'].map(node => ({ node, canonicalName: `${node}.dusk`, owner, status: 'active', subnameCount: 0 }))
+    function Inventory({ listed }) {
+      const state = useSellInventory({ accountScope: 'wallet', ownedNames: names, auctions: [], fixedSales: listed ? [{ node: 'one' }] : [], selectedAuthority: owner.toUpperCase() })
+      window.sellInventory = state
+      return React.createElement('output', { id: 'market-inventory' }, state.selectedNode)
+    }
+    window.renderInventory = listed => root.render(React.createElement(Inventory, { listed }))
+    window.renderInventory(false)
+  })
+  await page.waitForFunction(() => document.querySelector('#market-inventory')?.textContent === 'one')
+  await page.evaluate(() => window.sellInventory.setSelectedNode('one'))
+  await page.evaluate(() => window.renderInventory(true))
+  await page.waitForFunction(() => document.querySelector('#market-inventory')?.textContent === 'two')
+  assert.equal(await page.evaluate(() => window.sellInventory.sellableNames.length), 1, 'An escrowed name must leave the seller picker')
+}

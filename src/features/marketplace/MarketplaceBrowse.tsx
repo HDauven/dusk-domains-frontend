@@ -19,9 +19,9 @@ import {
   sameAuthority,
 } from './marketplacePresentation'
 import { useMarketplaceBrowse } from './useMarketplaceBrowse'
-import type { MarketplaceViewProps } from './marketplaceTypes'
+import type { MarketplaceBrowseProps } from './marketplaceTypes'
 
-export function MarketplaceBrowse(props: MarketplaceViewProps) {
+export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
   const { filter, setFilter, query, setQuery, sort, setSort, watched, results } = useMarketplaceBrowse(props.fixedSales, props.auctions, props.watchedNodes)
   if (!props.fixedSales.length && !props.auctions.length) {
     return <PanelMessage icon={<Gavel size={18} />} tone="subtle">No names for sale yet. <Button variant="quiet" onClick={() => props.onTabChange('sell')}>List a name</Button><a href="/">Browse names</a></PanelMessage>
@@ -75,7 +75,7 @@ export function MarketplaceBrowse(props: MarketplaceViewProps) {
   )
 }
 
-function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceAuction; props: MarketplaceViewProps; watched: boolean }) {
+function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceAuction; props: MarketplaceBrowseProps; watched: boolean }) {
   const status = auctionStatus(auction, props.currentBlockHeight)
   const ownAuction = sameAuthority(auction.sellerAuthority, props.selectedAuthority)
   const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
@@ -112,7 +112,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
   )
 }
 
-function FixedSaleCard({ props, sale, watched }: { props: MarketplaceViewProps; sale: IndexedMarketplaceFixedSale; watched: boolean }) {
+function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps; sale: IndexedMarketplaceFixedSale; watched: boolean }) {
   const ownSale = sameAuthority(sale.sellerAuthority, props.selectedAuthority)
   const expired = isExpired(sale.expiresAtBlockHeight, props.currentBlockHeight)
   const allowedBuyer = !sale.privateBuyer || sameAuthority(sale.privateBuyer, props.selectedAuthority)

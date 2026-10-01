@@ -41,7 +41,7 @@ try {
     await page.getByRole('heading', { name: marketplaceName }).waitFor()
     await page.getByRole('heading', { name: 'Details', exact: true }).waitFor()
     await page.getByRole('heading', { name: /^Bids · \d+$/ }).waitFor()
-    await page.getByText('Domain secured in escrow').waitFor()
+    await page.getByText('Name held in escrow').waitFor()
     await page.screenshot({ fullPage: true, path: `${outputDir}/auction-${viewport.name}.png` })
 
     const detailPanel = page.locator('.marketplace-auction-detail')

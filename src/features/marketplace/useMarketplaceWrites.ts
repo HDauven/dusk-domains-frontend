@@ -1,4 +1,5 @@
 import { useScopedState } from '../../utils/useScopedState'
+import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
 import type { MarketplaceReviewDetails } from './marketplaceTypes'
 import { useCallback } from 'react'
 import { waitForIndexerBlock } from '../../app/indexerReadHelpers'
@@ -95,7 +96,7 @@ export function useMarketplaceWrites({
         setConfirmation(`${successMessage} Syncing marketplace data…`)
         const height = await duskDomainsOnChainClient?.getCurrentBlockHeight()
         if (await waitForIndexerBlock(indexerClient, height?.ok ? height.value : null)) await loadMarketplace()
-        else setError('Transaction confirmed, but marketplace data is still syncing. It will update automatically.')
+        else setError(MARKETPLACE_SYNC_MESSAGE)
         setConfirmation(successMessage)
       }
       return finalState

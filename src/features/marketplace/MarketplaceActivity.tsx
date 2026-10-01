@@ -5,9 +5,9 @@ import type { ReactNode } from 'react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import { MarketplaceAmount } from './MarketplaceAmount'
 import { auctionStatus, auctionTimeLabel, expiryTimeLabel, sameAuthority } from './marketplacePresentation'
-import type { MarketplaceViewProps } from './marketplaceTypes'
+import type { MarketplaceActivityProps } from './marketplaceTypes'
 
-export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) {
+export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps }) {
   const topBidder = props.auctions.filter((auction) => sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority))
   const won = topBidder.filter((auction) => auctionStatus(auction, props.currentBlockHeight) === 'ended')
   const leading = topBidder.filter((auction) => auctionStatus(auction, props.currentBlockHeight) !== 'ended')
@@ -42,9 +42,9 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
       {props.refund?.amountLux ? (
         <Panel className="marketplace-balance-card" aria-labelledby="marketplace-balance-heading">
           <div>
-            <span>Withdrawable marketplace balance</span>
-            <strong id="marketplace-balance-heading"><MarketplaceAmount lux={props.refund.amountLux} /></strong>
-            <p>Funds returned from an outbid or closed order are safe in the marketplace contract until withdrawn.</p>
+            <span>Refund ready to withdraw</span>
+            <strong id="marketplace-balance-heading">{<MarketplaceAmount lux={props.refund.amountLux} />}</strong>
+            <p>Funds from an outbid or closed offer stay in marketplace escrow until you withdraw them.</p>
           </div>
           <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={props.onClaimRefund}>Withdraw to wallet</Button>
         </Panel>
@@ -53,7 +53,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
       {!hasActivity ? <PanelMessage icon={<WalletCards size={18} />} tone="subtle">No bids, listings or offers yet. <Button variant="quiet" onClick={() => props.onTabChange('browse')}>Browse listings</Button></PanelMessage> : null}
 
       {won.length ? (
-        <PositionSection count={won.length} description="Won auctions awaiting automatic or manual finalization." heading="Won — finalizing" icon={<Trophy size={17} />}>
+        <PositionSection count={won.length} description="Finalize a won auction to receive the name." heading="Won — finalizing" icon={<Trophy size={17} />}>
           {won.map((auction) => (
             <PositionRow
               action="View result"
@@ -83,7 +83,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
       ) : null}
 
       {sellingAuctions.length || sellingFixed.length ? (
-        <PositionSection count={sellingAuctions.length + sellingFixed.length} description="Domains currently secured in marketplace escrow." heading="Your listings" icon={<Tag size={17} />}>
+        <PositionSection count={sellingAuctions.length + sellingFixed.length} description="Names held in marketplace escrow." heading="Your listings" icon={<Tag size={17} />}>
           {sellingAuctions.map((auction) => (
             <PositionRow
               action="Manage auction"

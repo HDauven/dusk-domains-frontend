@@ -12,7 +12,7 @@ import type {
   IndexedNameSummary,
 } from '../../names/internal'
 
-const changedMessage = 'Marketplace state changed on-chain. Refresh and try again.'
+const changedMessage = 'Marketplace state changed on-chain. Review the latest terms before trying again.'
 
 export async function canonicalOwnedName(
   client: DuskDomainsOnChainClient,

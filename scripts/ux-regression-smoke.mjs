@@ -1,6 +1,6 @@
 import { checkAuctionRoute } from './url-route-smoke.mjs'
 import { checkListingFeeReview } from './marketplace-fee-smoke.mjs'
-import { checkMarketplaceReviews, checkMarketplaceBrowse } from './marketplace-ux-smoke.mjs'
+import { checkMarketplaceReviews, checkMarketplaceBrowse, checkMarketplaceInventory } from './marketplace-ux-smoke.mjs'
 import { checkUiSystem } from './ui-system-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
@@ -384,6 +384,7 @@ try {
   await checkListingFeeReview(page)
   await checkMarketplaceReviews(page)
   await checkMarketplaceBrowse(page)
+  await checkMarketplaceInventory(page)
   await checkUiSystem(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])

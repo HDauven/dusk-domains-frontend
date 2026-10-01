@@ -17,3 +17,16 @@ export async function readMarketplacePage(client: DuskDomainsIndexerClient, curs
 export function appendPage<T>(current: T[], incoming: T[], key: (item: T) => string) {
   return [...new Map([...current, ...incoming].map((item) => [key(item), item])).values()]
 }
+
+// Refresh the loaded window so background updates do not discard later pages.
+export async function readMarketplaceWindow(client: DuskDomainsIndexerClient, pages: number) {
+  const result = await readMarketplacePage(client)
+  for (let page = 1; page < pages && Object.values(result.cursors).some(Boolean); page++) {
+    const next = await readMarketplacePage(client, result.cursors)
+    result.fixedSales = appendPage(result.fixedSales, next.fixedSales, (item) => item.node)
+    result.auctions = appendPage(result.auctions, next.auctions, (item) => item.node)
+    result.offers = appendPage(result.offers, next.offers, (item) => `${item.node}:${item.buyerAuthority}`)
+    result.cursors = next.cursors
+  }
+  return result
+}

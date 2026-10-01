@@ -117,6 +117,7 @@ export type MarketplaceBrowseProps = Pick<MarketplaceViewProps,
 >
 
 export type MarketplaceAuctionDetailProps = Pick<MarketplaceViewProps,
+  | 'updatedAt'
   | 'actionsAvailable'
   | 'auctionActivity'
   | 'auctionActivityHasMore'

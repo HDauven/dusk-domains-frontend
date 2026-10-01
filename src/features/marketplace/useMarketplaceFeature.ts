@@ -1,24 +1,24 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
   isDuskDomainTxBusy,
-  marketplaceClaimRefundRuntimeCall,
-  userFacingErrorMessage,
   type DuskDomainsIndexerClient,
   type DuskDomainsMarketplaceOnChainClient,
   type DuskDomainsOnChainClient,
   type DuskDomainsRuntimeConfig,
   type DuskDomainTxState,
 } from '../../names/internal'
+import { marketplaceErrorAfterRefresh } from './marketplacePresentation'
 import { useScopedState } from '../../utils/useScopedState'
-import { canonicalRefund } from './canonicalMarketplaceState'
 import type { MarketplaceTab, MarketplaceViewProps } from './marketplaceTypes'
 import { useAuctions } from './useAuctions'
-import { useMarketplaceData, type MarketplaceSnapshot } from './useMarketplaceData'
+import { useMarketplaceData } from './useMarketplaceData'
 import { useMarketplaceWrites } from './useMarketplaceWrites'
 import { useFixedSales } from './useFixedSales'
 import { useOffers } from './useOffers'
+import { useSellInventory } from './useSellInventory'
+import { useMarketplaceRefund } from './useMarketplaceRefund'
 import { useSellForm } from './useSellForm'
 import { useWatchlist } from './watchlist'
 
@@ -53,12 +53,11 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const marketScope = `${runtimeConfig.chainId}:${runtimeConfig.contracts.marketplace?.contractId}`
   const accountScope = `${marketScope}:${selectedAuthority}`
   const [tab, setTab] = useState<MarketplaceTab>('browse')
-  const [selectedNode, setSelectedNode] = useScopedState(accountScope, '')
   // Auction selection belongs to the market, so wallet restoration keeps the detail open.
   const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, '')
 
   // Feedback belongs to the tab it came from.
-  const feedbackScope = `${accountScope}:${mainView}:${tab}`
+  const feedbackScope = `${accountScope}:${mainView}:${tab}:${selectedAuctionNode}`
   const [error, setError] = useScopedState(feedbackScope, '')
   const [confirmation, setConfirmation] = useScopedState(feedbackScope, '')
   const [txState, setTxState] = useScopedState<DuskDomainTxState | null>(feedbackScope, null)
@@ -72,15 +71,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     && Boolean(duskDomainsOnChainClient)
   const marketplaceContractId = runtimeConfig.contracts.marketplace?.contractId ?? ''
 
-  // After each load, keep the chosen name to sell if it is still sellable.
-  const onLoaded = ({ auctions, fixedSales, ownedNames }: MarketplaceSnapshot) => {
-    setSelectedNode((current) => {
-      if (current && ownedNames.some((name) => name.node === current)) return current
-      return ownedNames.find((name) => !fixedSales.some((sale) => sale.node === name.node)
-        && !auctions.some((auction) => auction.node === name.node))?.node ?? ''
-    })
-  }
-  const data = useMarketplaceData({ accountScope, indexerClient, mainView, onLoaded, selectedAddress, selectedAuctionNode, selectedAuthority, setError })
+  const data = useMarketplaceData({ accountScope, indexerClient, mainView, onLoaded: () => setError(marketplaceErrorAfterRefresh), selectedAddress, selectedAuctionNode, selectedAuthority, setError })
   const { auctions, fixedSales, loadMarketplace, ownedNames, refund } = data
 
   const writes = useMarketplaceWrites({
@@ -91,17 +82,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     loadMarketplace,
   })
 
-  const activeOrderNodes = useMemo(() => new Set([
-    ...fixedSales.map((sale) => sale.node),
-    ...auctions.map((auction) => auction.node),
-  ]), [auctions, fixedSales])
-  const sellableNames = useMemo(() => ownedNames.filter((name) => (
-    name.status === 'active' && name.owner === selectedAuthority
-      && name.subnameCount === 0 && name.canonicalName.split('.').length === 2 && !activeOrderNodes.has(name.node)
-  )), [activeOrderNodes, ownedNames, selectedAuthority])
-  const selectedName = useMemo(() => (
-    sellableNames.find((name) => name.node === selectedNode) ?? sellableNames[0] ?? null
-  ), [sellableNames, selectedNode])
+  const { sellableNames, selectedName, selectedNode, setSelectedNode } = useSellInventory({ accountScope, ownedNames, auctions, fixedSales, selectedAuthority })
+  const claimRefund = useMarketplaceRefund(refund, writes)
 
   const sell = useSellForm({
     feeBps: data.feeBps, duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
@@ -114,17 +96,6 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   })
 
   const fixedSaleState = useFixedSales({ marketplaceOnChainClient, selectedAddress, selectedAuthority, setError, writes })
-
-  const claimRefund = useCallback(async () => {
-    if (!marketplaceOnChainClient || !refund) return
-    try {
-      await canonicalRefund(marketplaceOnChainClient, refund)
-    } catch (readError) {
-      setError(userFacingErrorMessage(readError))
-      return
-    }
-    await writes.submit('claiming marketplace funds', 'Marketplace refund', marketplaceClaimRefundRuntimeCall(), 0n, 'Refund claimed.')
-  }, [marketplaceOnChainClient, refund, setError, writes])
 
   const marketplaceProps: MarketplaceViewProps = {
     review: writes.review,
