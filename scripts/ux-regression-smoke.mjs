@@ -279,6 +279,56 @@ try {
     assert.ok(await selected.evaluate(element => element === document.activeElement))
     assert.equal(await page.locator('[role="tab"][tabindex="0"]').count(), 1)
   }
+  let releaseBls
+  const blsGate = new Promise(resolve => { releaseBls = resolve })
+  let blsRequested = false
+  await page.route(/bls12-381/, async route => {
+    blsRequested = true
+    await blsGate
+    await route.continue()
+  })
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { useReferralControls } = await import('/src/features/referrals/useReferralControls.ts')
+    localStorage.removeItem('dusk-domains.active-referral')
+    function Referrals() {
+      const controls = useReferralControls({ selectedAddress: '', setReferralError: () => {} })
+      window.referralControls = controls
+      return React.createElement('output', { id: 'referral-probe' }, JSON.stringify(controls.referralState))
+    }
+    root.render(React.createElement(Referrals))
+  })
+  await page.locator('#referral-probe').waitFor()
+  assert.equal(blsRequested, false, 'Empty attribution must not load BLS')
+  const moonlight = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
+  await page.evaluate(input => window.referralControls.handleReferralInputChange(input), moonlight)
+  await page.waitForFunction(input => window.referralControls.referralState.input === input, moonlight)
+  assert.equal(await page.evaluate(() => window.referralControls.referralState.valid), false)
+  assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
+  const blsRequest = await page.waitForRequest(/bls12-381/, { timeout: 1000 }).catch(() => null)
+  assert.ok(blsRequested || blsRequest, 'Moonlight attribution must load BLS')
+  await page.evaluate(() => window.referralControls.clearReferral())
+  await page.waitForFunction(() => window.referralControls.referralState.input === '')
+  releaseBls()
+  await page.evaluate(async input => {
+    const { referralStateFromInput } = await import('/src/features/referrals/referralState.ts')
+    await referralStateFromInput(input)
+  }, moonlight)
+  await page.waitForTimeout(30)
+  assert.equal(await page.evaluate(() => window.referralControls.referralState.input), '', 'Late validation restored a cleared referral')
+  assert.equal(await page.evaluate(() => localStorage.getItem('dusk-domains.active-referral')), null)
+  await page.evaluate(input => window.referralControls.handleReferralInputChange(input), `  ${moonlight}  `)
+  await page.waitForFunction(() => window.referralControls.referralState.valid)
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('dusk-domains.active-referral')).input), moonlight)
+  for (const lastByte of [0, 2]) {
+    await page.evaluate(async lastByte => {
+      const { encodeBase58 } = await import('/src/names/internal.ts')
+      window.referralControls.handleReferralInputChange(encodeBase58([0x80, ...Array(94).fill(0), lastByte]))
+    }, lastByte)
+    await page.waitForFunction(() => window.referralControls.referralState.reason === 'Referral ignored: this address cannot claim rewards.')
+    assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
+    assert.equal(await page.evaluate(() => localStorage.getItem('dusk-domains.active-referral')), null)
+  }
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')
 } finally {

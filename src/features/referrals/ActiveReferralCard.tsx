@@ -31,7 +31,7 @@ export function ActiveReferralCard({
           Clear
         </button>
       </div>
-      {referralState.input && !referralState.valid ? <p className="secure-note danger">{referralState.reason}</p> : null}
+      {referralState.input && !referralState.valid ? <p className="secure-note">{referralState.reason}</p> : null}
       {appliedReferral ? <p className="secure-note">No extra fee for the buyer.</p> : null}
     </AccountCard>
   )
