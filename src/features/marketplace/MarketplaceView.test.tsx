@@ -373,7 +373,10 @@ it('shows one minimum price before the first bid and labels the seller as You', 
 })
 it('sorts fixed listings and auctions together by ending time', () => {
   const html = render({ auctions: [auction({ name: 'later.dusk', startDeadlineBlockHeight: 4000 })], fixedSales: [fixedSale({ name: 'sooner.dusk' })] })
-  expect(html.indexOf('sooner<span>')).toBeLessThan(html.indexOf('later<span>'))
+  const text = html.replace(/<[^>]*>/g, '')
+  expect(text).toContain('sooner.dusk')
+  expect(text).toContain('later.dusk')
+  expect(text.indexOf('sooner.dusk')).toBeLessThan(text.indexOf('later.dusk'))
 })
 it('gives quiet marketplace states a next action without zero stat tiles', () => {
   expect(render()).toContain('Browse names')

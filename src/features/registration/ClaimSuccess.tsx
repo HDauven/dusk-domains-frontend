@@ -13,7 +13,7 @@ export function ClaimSuccess({ name, onOpen, onAddRecords, progress }: {
 }) {
   const [error, setError] = useState('')
   return <section className="claim-success" aria-labelledby="claim-success-heading">
-    <h1 id="claim-success-heading"><NameSignature name={name} /> is yours</h1>
+    <h1 id="claim-success-heading" aria-label={`${name} is yours`}><NameSignature name={name} fit /> is yours</h1>
     <NameCard name={name} />
     <div className="claim-success-actions">
       <Button variant="primary" onClick={onOpen}>Open</Button>

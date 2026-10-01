@@ -4,6 +4,7 @@ import { checkMarketplaceReviews, checkMarketplaceBrowse, checkMarketplaceInvent
 import { checkNameManagement } from './name-management-smoke.mjs'
 import { checkPrimaryNameSwitches } from './primary-name-smoke.mjs'
 import { checkUiSystem } from './ui-system-smoke.mjs'
+import { checkNameFit } from './name-fit-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
 import { checkInitialHydration, checkSelectedAuction } from './indexer-review-smoke.mjs'
@@ -390,6 +391,7 @@ try {
   await checkNameManagement(page)
   await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)
+  await checkNameFit(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')

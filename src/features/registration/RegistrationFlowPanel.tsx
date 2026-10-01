@@ -14,7 +14,7 @@ export function RegistrationFlowPanel({ navigation, resultIssues, status, step, 
       <div className="claim-main register-main">
         <header className="register-head">
           <p className="register-stage">{wizard.registrationStep === 'purchase' ? '2 of 2 · Register' : '1 of 2 · Reserve'}</p>
-          <h1 id="register-heading"><NameSignature name={wizard.displayName} /></h1>
+          <h1 id="register-heading" aria-label={wizard.displayName}><NameSignature name={wizard.displayName} fit /></h1>
         </header>
         <RegistrationStepPanel {...step} />
         <RegistrationPolicyNotes issues={resultIssues} />

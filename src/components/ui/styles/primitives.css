@@ -186,12 +186,23 @@ textarea.input { min-height: 96px; resize: vertical; }
 .tabs .button:focus-visible { outline-offset: -2px; }
 [role="tabpanel"] { min-width: 0; }
 
+@property --name-size { syntax: '<length>'; inherits: true; initial-value: 32px; }
+@property --name-min-size { syntax: '<length>'; inherits: true; initial-value: 24px; }
+
 .name-signature {
+  --name-size: var(--text-2xl);
+  --name-min-size: 1.5rem;
+  display: inline-block;
+  max-width: 100%;
   font: 400 var(--text-2xl)/var(--leading-tight) var(--font-display);
-  overflow-wrap: anywhere;
+  font-size: clamp(var(--name-min-size, 1.5rem), var(--name-fit-size, var(--name-size, var(--text-2xl))), var(--name-size, var(--text-2xl)));
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
   min-width: 0;
 }
-.name-signature em { font-weight: 400; }
+.name-signature-label { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
+.name-signature em { display: inline-block; white-space: nowrap; font-weight: 400; }
 .name-chip {
   display: inline-flex;
   align-items: center;
@@ -202,7 +213,7 @@ textarea.input { min-height: 96px; resize: vertical; }
   color: var(--ink);
   background: var(--surface);
 }
-.name-chip .name-signature { font-size: var(--text-xl); }
+.name-chip .name-signature { --name-size: var(--text-xl); --name-min-size: 1.125rem; }
 .address-chip {
   display: inline-flex;
   flex-wrap: wrap;
@@ -311,7 +322,7 @@ textarea.input { min-height: 96px; resize: vertical; }
   padding: var(--space-5);
   background: var(--planet);
 }
-.name-portrait-content .name-signature { font-size: clamp(2rem, 3vw, 2.75rem); }
+.name-portrait-content .name-signature { --name-size: clamp(2rem, 3vw, 2.75rem); }
 .name-portrait-description {
   color: var(--muted);
   font: 400 var(--text-sm)/var(--leading-body) var(--font-ui);
