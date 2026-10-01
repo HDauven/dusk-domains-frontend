@@ -1,3 +1,6 @@
+import { Badge } from '../../components/ui/Badge'
+import { suggestedNames } from './debouncedSearch'
+import { NameCard } from '../../components/ui/NameCard'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
 import { ArrowRight, Clock } from 'lucide-react'
@@ -27,6 +30,7 @@ export function SearchResultOverview({
   onOpenPendingReservation,
   onOpenPendingReservations,
   onViewDetails,
+  onSuggestion,
   registrationFee,
   resultIssues,
   resultStatus,
@@ -42,6 +46,7 @@ export function SearchResultOverview({
   onDurationChange: (duration: number) => void
   onOpenPendingReservation: (reservation: PendingNameReservation) => void
   onOpenPendingReservations: () => void
+  onSuggestion?: (name: string) => void
   onViewDetails: () => void
   registrationFee: number
   resultIssues: NameResult['issues']
@@ -55,16 +60,16 @@ export function SearchResultOverview({
     return (
       <Panel className="claim-card resume" aria-labelledby="overview-heading">
         <div className="claim-main">
-          <span className="eyebrow"><Clock size={13} /> Registration saved</span>
+          <span className="eyebrow"><Clock size={13} /> {status === 'missing' ? 'Request saved' : 'Reserved'}</span>
           <h2 id="overview-heading">{pendingReservationStatusCopy(status, waitBlocks)}</h2>
-          <p>{pendingReservationNextStepCopy(status, waitBlocks)}</p>
+          <p>{pendingReservationNextStepCopy(status)}</p>
         </div>
         <div className="claim-stub">
           <Button variant="primary" type="button" onClick={() => void onOpenPendingReservation(savedReservation)}>
             {pendingReservationActionCopy(status)} <ArrowRight size={18} />
           </Button>
           <Button type="button" onClick={() => void onOpenPendingReservations()}>
-            All saved registrations
+            All saved reservations
           </Button>
         </div>
       </Panel>
@@ -77,6 +82,7 @@ export function SearchResultOverview({
         <div className="claim-main">
           <h2 id="overview-heading">{resultStatus === 'registered' ? 'This name is taken' : 'This name can’t be claimed'}</h2>
           <p>{overviewCopyForIssues(resultStatus, resultIssues)}</p>
+          {resultStatus === 'registered' && onSuggestion ? <div className="name-suggestions"><p>Try another name</p>{suggestedNames(displayName).map(name => <Button key={name} onClick={() => onSuggestion(name)}>{name}</Button>)}</div> : null}
         </div>
         {resultStatus === 'registered' ? (
           <div className="claim-stub">
@@ -87,18 +93,14 @@ export function SearchResultOverview({
     )
   }
 
-  const perYear = duration > 0 ? registrationFee / duration : 0
-  const label = displayName.replace(/\.dusk$/, '')
 
   return (
     <Panel className="claim-card" aria-labelledby="overview-heading">
       <div className="claim-main">
-        <span className="eyebrow">
-          {label.length} {pluralize(label.length, 'character')} · {feeConfigLoading ? 'loading price' : `${formatDusk(perYear)} DUSK per year`}
-        </span>
-        <h2 id="overview-heading">Claim it for</h2>
+        <NameCard name={displayName}><Badge status="available">Available</Badge></NameCard>
+        <h2 id="overview-heading">Registration term</h2>
         <TermPicker label="Registration term" max={maxDurationYears} min={minDurationYears} value={duration} onChange={onDurationChange} />
-        <p>It points to your wallet from day one, and you can make it your primary name while you claim it.</p>
+        <p>Your wallet will own the name. Network fees are shown before signing.</p>
       </div>
       <div className="claim-stub">
         <div className="claim-price">

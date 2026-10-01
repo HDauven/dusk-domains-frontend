@@ -3,14 +3,15 @@ import type {
   DuskDomainTxState,
   SubnameExpiryPolicy,
   SubnameState,
+  DuskDomainsIndexerClient,
+  DuskDomainsOnChainClient,
 } from '../names/internal'
 import {
   createManagedNameState,
-  fallbackManager,
-  fallbackOwner,
 } from './appHelpers'
+import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
 
-export function useDomainManagementAppState(recordSourceContractId: string) {
+export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null) {
   const [renewalYears, setRenewalYears] = useState(1)
   const [managementTxState, setManagementTxState] = useState<DuskDomainTxState | null>(null)
   const [renewalTxState, setRenewalTxState] = useState<DuskDomainTxState | null>(null)
@@ -26,23 +27,24 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
   const [primaryEndpointValue, setPrimaryEndpointValue] = useState('')
   const [primaryName, setPrimaryName] = useState<string | null>(null)
   const [subnameLabel, setSubnameLabel] = useState('settlement')
-  const [subnameManager, setSubnameManager] = useState(fallbackManager)
-  const [subnameResolver, setSubnameResolver] = useState(recordSourceContractId)
+  const [subnameManager, setSubnameManager] = useState('')
   const [subnameExpiryPolicy, setSubnameExpiryPolicy] = useState<SubnameExpiryPolicy>('inherits_parent')
   const [subnameExpiryDate, setSubnameExpiryDate] = useState('')
   const [subnames, setSubnames] = useState<SubnameState[]>([])
   const [managedName, setManagedName] = useState(() => createManagedNameState(recordSourceContractId))
-  const [draftOwner, setDraftOwner] = useState(fallbackOwner)
-  const [draftManager, setDraftManager] = useState(fallbackManager)
+  const [pendingOwnership, setPendingOwnership] = useState<PendingOwnership[]>([])
+  const ownership = useMemo(() => createOwnershipConfirmation({ indexerClient, onChainClient, setManagedName, setPending: setPendingOwnership }), [indexerClient, onChainClient])
   const activeSubnames = useMemo(() => (
     subnames.filter((subname) => subname.status === 'active')
   ), [subnames])
 
   return {
+    beginOwnershipRead: ownership.beginRead,
+    confirmOwnershipWrite: ownership.afterWrite,
+    pendingOwnership,
+    retryOwnershipConfirmation: ownership.retry,
     activeSubnames,
     confirmationInput,
-    draftManager,
-    draftOwner,
     managedName,
     managementError,
     managementTxState,
@@ -56,9 +58,7 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
     renewalTxState,
     renewalYears,
     setConfirmationInput,
-    setDraftManager,
-    setDraftOwner,
-    setManagedName,
+    setManagedName: ownership.setManagedName,
     setManagementError,
     setManagementTxState,
     setPrimaryEndpointValue,
@@ -75,7 +75,6 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
     setSubnameExpiryPolicy,
     setSubnameLabel,
     setSubnameManager,
-    setSubnameResolver,
     setSubnames,
     setSubnameTxState,
     subnameError,
@@ -83,7 +82,6 @@ export function useDomainManagementAppState(recordSourceContractId: string) {
     subnameExpiryPolicy,
     subnameLabel,
     subnameManager,
-    subnameResolver,
     subnames,
     subnameTxState,
   }

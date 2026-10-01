@@ -29,6 +29,7 @@ describe('name read guard', () => {
     const hydrateNameFromIndexer = vi.fn(async () => {})
     const setIndexerError = vi.fn()
     const props = {
+      setManagedName: vi.fn(),
       beginNameRead: createNameReadGuard(),
       hydrateNameFromIndexer,
       indexerClient: { searchName: (query: keyof typeof searches) => searches[query].promise },
@@ -55,6 +56,7 @@ describe('name read guard', () => {
     const setActivityLoading = vi.fn()
     const setIndexerError = vi.fn()
     const props = {
+      setManagedName: vi.fn(),
       beginNameRead: createNameReadGuard(),
       hydrateNameFromIndexer: vi.fn(async () => {}),
       indexerClient: { searchName: (query: keyof typeof searches) => searches[query].promise },

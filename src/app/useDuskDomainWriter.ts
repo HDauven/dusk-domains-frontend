@@ -14,10 +14,12 @@ export type SubmitNameWrite = ReturnType<typeof useDuskDomainWriter>
 
 // One wallet write at a time; without a live app, writes go to a local preview.
 export function useDuskDomainWriter({
+  confirmOwnershipWrite,
   pause = unpaused,
   contracts,
   liveDuskDomainsApp,
 }: {
+  confirmOwnershipWrite?: (name: string, call: DuskDomainCallMetadata, kind?: 'transfer' | 'manager') => Promise<boolean> | undefined
   pause?: OperatorPause
   contracts: DuskDomainContractMap
   liveDuskDomainsApp: DuskConnectAppLike | null
@@ -31,18 +33,28 @@ export function useDuskDomainWriter({
   return useCallback(async (
     name: string,
     call: DuskDomainCallMetadata,
-    options: SubmitDuskDomainWriteOptions = {},
-  ): Promise<DuskDomainTxState> => {
+    options: SubmitDuskDomainWriteOptions & { ownershipChange?: 'transfer' | 'manager' } = {},
+  ): Promise<DuskDomainTxState & { ownershipConfirmed?: boolean }> => {
     const paused = pauseReason(call, pauseRef.current)
     if (paused) throw new Error(paused)
     if (pendingWrite.current) throw new Error('Finish the pending wallet transaction before starting another.')
     const app = liveDuskDomainsApp ?? createPreviewRegistrationApp(name)
     pendingWrite.current = true
+    const { ownershipChange, ...writeOptions } = options
 
-    return await submitDuskDomainWriteCall(app, call, {
-      contracts,
-      ...options,
-      allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
-    }).finally(() => { pendingWrite.current = false })
-  }, [contracts, liveDuskDomainsApp])
+    try {
+      const state = await submitDuskDomainWriteCall(app, call, {
+        contracts,
+        ...writeOptions,
+        allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
+      })
+      if (liveDuskDomainsApp && state.status === 'executed') {
+        const confirmation = confirmOwnershipWrite?.(name, call, ownershipChange)
+        if (confirmation) return { ...state, ownershipConfirmed: await confirmation }
+      }
+      return state
+    } finally {
+      pendingWrite.current = false
+    }
+  }, [confirmOwnershipWrite, contracts, liveDuskDomainsApp])
 }

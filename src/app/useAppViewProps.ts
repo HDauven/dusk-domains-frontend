@@ -23,13 +23,17 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
     subdomainsProps,
   })
   const runtimeNotice = useRuntimeNotice({
-    indexerConfirmation: inputs.searchState.indexerConfirmation,
+    indexerConfirmation: inputs.searchState.mainView === 'search' ? '' : inputs.searchState.indexerConfirmation,
     indexerError: inputs.searchState.indexerError,
-    walletError: inputs.walletRuntime.walletError,
+    walletError: inputs.searchState.resultView === 'register' ? '' : inputs.walletRuntime.walletError,
   })
 
   return {
     mainContentProps: {
+      ownershipConfirmationProps: {
+        pending: inputs.domainState.pendingOwnership,
+        onRetry: (node: string) => void inputs.domainState.retryOwnershipConfirmation(node),
+      },
       mainView: inputs.searchState.mainView,
       myDomainsProps: inputs.mainViewRuntime.myDomainsProps,
       referralsProps: inputs.economicsRuntime.referralsProps,

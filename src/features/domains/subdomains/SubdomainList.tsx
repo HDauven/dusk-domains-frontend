@@ -4,11 +4,13 @@ import { Button } from '../../../components/ui/Button'
 import {
   subnameExpiryDescription,
 } from '../../../names/internal'
-import { abbreviate } from '../../../utils/format'
+import { OwnerLabel } from '../../identity/OwnerLabel'
 import { formatLifecycleDay } from '../domainFormat'
 import type { SubdomainListProps } from './types'
 
 export function SubdomainList({
+  ownerAddresses,
+  selectedAuthority,
   currentBlockHeight,
   nowSeconds,
   onRecordTargetSelect,
@@ -17,19 +19,19 @@ export function SubdomainList({
   return (
     <div className="subname-list">
       {subnames.map((subname) => (
-        <Button
-          className="subname-row"
+        <div className="subname-row" key={subname.node}>
+        <Button variant="quiet"
           disabled={subname.status !== 'active'}
-          key={subname.node}
-          title={subname.status === 'active' ? `Edit records for ${subname.name}` : undefined}
+          title={subname.status === 'active' ? `Open ${subname.name}` : undefined}
           type="button"
           onClick={() => onRecordTargetSelect(subname)}
         >
           <NameSignature name={subname.name} />
+        </Button>
           <Badge>{subname.status}</Badge>
           <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
-          <code>{abbreviate(subname.manager)}</code>
-        </Button>
+          <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>
+        </div>
       ))}
     </div>
   )

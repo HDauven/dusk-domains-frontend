@@ -26,12 +26,13 @@ export function useIndexerWriteFallback({
   const shouldApplyPreviewWriteFallback = useCallback(async (
     description = 'the latest change',
     check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
-  ) => {
+  ): Promise<boolean | null> => {
+    // True applies a preview; false confirms live data; null keeps the change pending.
     if (!liveDuskDomainsApp) return true
 
     if (!indexerClient) {
       setIndexerError(`Transaction confirmed, but ${description} cannot be refreshed yet. Check again shortly.`)
-      return false
+      return null
     }
 
     setIndexerError('')
@@ -52,11 +53,11 @@ export function useIndexerWriteFallback({
 
     setIndexerConfirmation('')
     setIndexerError(confirmation.indexerConfirmed && !confirmation.refreshed && !confirmation.error
-      ? 'Transaction confirmed, but the latest domain data could not be refreshed yet.'
+      ? 'Transaction confirmed, but the latest name data could not be refreshed yet.'
       : confirmation.error
         ? `Transaction confirmed, but ${description} is still syncing: ${userFacingMessageFromText(confirmation.error)}`
         : `Transaction confirmed, but ${description} is still syncing.`)
-    return false
+    return null
   }, [
     indexerClient,
     liveDuskDomainsApp,

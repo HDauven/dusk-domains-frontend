@@ -8,9 +8,11 @@ import {
   type WalletConnectionStatus,
 } from '../wallet/walletStatus'
 import { formatWait } from './registrationCopy'
-import { RegistrationWalletActionButton } from './RegistrationWalletActionButton'
+import { RegistrationWalletSetupCard } from './setup/RegistrationWalletSetupCard'
 
 export function RegistrationReviewStep({
+  onRefreshWalletProviders,
+  walletDiscoveryRefreshing,
   canPrepareCommit,
   commitBusy,
   commitStale,
@@ -22,6 +24,8 @@ export function RegistrationReviewStep({
   txBusy,
   walletSetupState,
 }: {
+  onRefreshWalletProviders: () => Promise<unknown> | void
+  walletDiscoveryRefreshing: boolean
   canPrepareCommit: boolean
   commitBusy: boolean
   commitStale: boolean
@@ -35,13 +39,15 @@ export function RegistrationReviewStep({
 }) {
   const walletReady = walletSetupState === 'connected'
   const actionTitle = walletReady
-    ? committed ? 'Reservation saved' : 'Sign the reservation'
+    ? committed ? commitTxState?.status === 'executed' ? 'Reserved' : 'Request saved' : 'Sign the reservation'
     : walletSetupActionTitle(walletSetupState)
   const actionCopy = walletReady
     ? committed
-      ? 'Check its status under Complete before signing again.'
-      : `You can complete about ${formatWait(REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)} after it confirms.`
+      ? 'Your reservation is saved in My names.'
+      : `You can register about ${formatWait(REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)} after it confirms.`
     : walletSetupActionCopy(walletSetupState)
+
+  if (!walletReady) return <RegistrationWalletSetupCard installUrl={installUrl} onOpenWalletConnection={onOpenWalletConnection} onRefreshWalletProviders={onRefreshWalletProviders} walletDiscoveryRefreshing={walletDiscoveryRefreshing} walletSetupState={walletSetupState} />
 
   return (
     <div className="register-action">
@@ -49,7 +55,7 @@ export function RegistrationReviewStep({
         <strong>{actionTitle}</strong>
         <span>{actionCopy}</span>
       </div>
-      {walletReady ? (
+      
         <Button variant={committed ? 'secondary' : 'primary'}
           className="compact"
           loading={commitBusy}
@@ -59,14 +65,6 @@ export function RegistrationReviewStep({
         >
           {commitBusy ? txStatusCopy(commitTxState?.status, commitTxState?.message) : commitStale ? 'Start again' : committed ? 'Saved' : 'Reserve'}
         </Button>
-      ) : (
-        <RegistrationWalletActionButton
-          className="button-primary compact"
-          installUrl={installUrl}
-          onOpenWalletConnection={onOpenWalletConnection}
-          walletSetupState={walletSetupState}
-        />
-      )}
       {commitTxState ? <TransactionStatusNotice state={commitTxState} /> : null}
     </div>
   )

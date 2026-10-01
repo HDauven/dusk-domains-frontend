@@ -1,3 +1,4 @@
+import { ReservationCountdown } from './ReservationCountdown'
 import { Button } from '../../components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
@@ -58,20 +59,20 @@ export function RegistrationPurchaseStep({
     ? Math.min(1, Math.max(0.04, 1 - commitWindow.waitBlocks / REGISTRATION_MIN_REVEAL_WAIT_BLOCKS))
     : 1
   const actionTitle = walletReady
-    ? reservationStranded ? 'Reserve again' : commitWindow.status === 'stale' ? 'Reservation expired' : 'Complete the claim'
+    ? reservationStranded ? 'Reserve again' : commitWindow.status === 'stale' ? 'Reservation expired' : 'Register'
     : walletSetupActionTitle(walletSetupState)
   const actionCopy = walletReady
     ? reservationStranded
       ? strandedReservationCopy()
-      : commitWindowCopy(commitWindow.status, commitWindow.waitBlocks, commitWindow.staleInBlocks)
+      : commitWindowCopy(commitWindow.status, commitWindow.staleInBlocks)
     : walletSetupActionCopy(walletSetupState)
 
   return (
     <div className="register-step">
-      {registrationComplete ? null : (
+      {actionDone ? null : (
         <div className={`register-reservation ${reservationStranded ? 'stale' : commitWindow.status}`}>
           <span>Reservation</span>
-          <strong>{reservation}</strong>
+          {commitWindow.status === 'waiting' ? <ReservationCountdown key={commitWindow.waitBlocks} blocks={commitWindow.waitBlocks} /> : <strong>{reservation}</strong>}
           {commitWindow.status === 'waiting' ? (
             <div className="register-settle" role="progressbar" aria-label="Reservation settling" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(settled * 100)}>
               <span style={{ width: `${settled * 100}%` }} />
@@ -83,10 +84,10 @@ export function RegistrationPurchaseStep({
       {actionDone ? null : (
         <div className="register-action">
           <div className="register-action-copy">
-            <strong>{actionTitle}</strong>
+            {!walletReady || reservationStranded || commitWindow.status === 'stale' ? <strong>{actionTitle}</strong> : null}
             <span>{actionCopy}</span>
           </div>
-          {walletReady && reservationStranded ? (
+          {walletReady && (reservationStranded || commitWindow.status === 'stale') ? (
             <Button variant="primary"
               className="compact"
               disabled={!canRestartReservation} loading={txBusy}

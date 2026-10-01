@@ -19,11 +19,8 @@ export async function createSubdomain({
   runtimeConfig,
   selectedAddress,
   selectedAuthority,
-  setCriticalRecordConfirmation,
-  setPublicRecordAcknowledged,
   setRecordDrafts,
   setRecordError,
-  setRecordTargetNode,
   setSubnameError,
   setSubnames,
   setSubnameTxState,
@@ -34,7 +31,7 @@ export async function createSubdomain({
   subnameExpiryPolicy,
   subnameLabel,
   subnameManager,
-  subnameResolver,
+  recordSourceContractId,
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseSubdomainActionsProps) {
@@ -43,24 +40,24 @@ export async function createSubdomain({
     canContinue: Boolean(canCreateSubname && selectedAddress),
     setError: setSubnameError,
       walletSetupState,
-    blockedCopy: 'Connect the parent owner wallet and enter a subdomain label before creating a subdomain.',
+    blockedCopy: 'Connect the parent owner wallet and enter a subname label before creating a subname.',
   })) {
     return
   }
-  if (!ensureContractAuthorityForLiveWrite('create this subdomain', setSubnameError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('creating this subdomain', setSubnameError))) return
+  if (!ensureContractAuthorityForLiveWrite('create this subname', setSubnameError)) return
+  if (!(await ensurePublicBalanceForLiveWrite('creating this subname', setSubnameError))) return
 
   try {
     const requestedExpiresAt = subnameExpiryPolicy === 'fixed_before_parent'
       ? blockHeightFromDateInput(subnameExpiryDate, currentBlockHeight, nowSeconds)
       : null
-    const manager = contractPrincipalInput(subnameManager, 'Subdomain manager')
+    const manager = contractPrincipalInput(subnameManager.trim() || selectedAuthority, 'Subname manager')
     const subname = createSubnameState({
       parentName: displayName,
       label: subnameLabel,
       owner: selectedAuthority,
       manager,
-      resolver: subnameResolver.trim(),
+      resolver: recordSourceContractId.trim(),
       parentExpiresAt: managedNameExpiresAt,
       requestedExpiresAt,
       createdAt: currentUnixSeconds(),
@@ -89,11 +86,8 @@ export async function createSubdomain({
     }))) return
 
     setSubnames((current) => [subname, ...current.filter((existing) => existing.node !== subname.node)])
-    setRecordTargetNode(subname.node)
     setRecordDrafts({})
     setRecordError('')
-    setPublicRecordAcknowledged(false)
-    setCriticalRecordConfirmation('')
     appendActivity({
       eventType: 'subname_created',
       actor: selectedAuthority,

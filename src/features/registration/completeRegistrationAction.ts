@@ -31,7 +31,7 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
 
   const preflight = completeRegistrationPreflight(props)
   if (!preflight.ok) {
-    if (preflight.step === 'setup') setRegistrationStep('setup')
+    if (preflight.step === 'review') setRegistrationStep('review')
     if (preflight.message) setWalletError(preflight.message)
     return
   }

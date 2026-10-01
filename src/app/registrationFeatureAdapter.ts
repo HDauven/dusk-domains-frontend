@@ -25,6 +25,7 @@ export function buildRegistrationFeatureProps(inputs: AppViewModelInputs): UseRe
     ...registrationState,
     ...searchState,
     onBackToOverview: () => searchState.setResultView('overview'),
+    onAddRecords: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, async name => { await searchRuntime.openIndexedName(name); searchState.setResultView('records') }),
     onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),
     showReservationRecovery: Boolean(registrationState.committed && registrationState.preparedCommit && !derivedState.reservationStranded),
     ...mainViewRuntime,

@@ -7,6 +7,7 @@ export const fallbackOwner = 'dusk1owner-preview'
 export const fallbackManager = 'dusk1manager-preview'
 
 export type ManagedNameState = {
+  node: string
   owner: string
   manager: string
   resolver: string
@@ -22,6 +23,7 @@ export function createManagedNameState(resolver: string): ManagedNameState {
     years: 1,
   })
   return {
+    node: '',
     owner: fallbackOwner,
     manager: fallbackManager,
     resolver,

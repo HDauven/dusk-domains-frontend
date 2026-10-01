@@ -24,7 +24,7 @@ export type RegistrationCompletionState = {
 const registrationCompletionStepDefinitions: Array<Omit<RegistrationCompletionStep, 'status' | 'txId' | 'message'>> = [
   {
     id: 'complete_registration',
-    title: 'Register name',
+    title: 'Register',
     description: 'Complete the reservation and activate the name',
   },
 ]
@@ -82,10 +82,9 @@ export function updateRegistrationCompletionState(
     return step
   })
   const failed = steps.some((step) => step.status === 'failed')
-  const executed = steps.every((step) => step.status === 'executed')
   return {
     ...base,
-    status: failed ? 'failed' : executed ? 'executed' : 'running',
+    status: failed ? 'failed' : 'running',
     activeStep: failed || txState.status !== 'executed'
       ? stepId
       : steps.find((step) => step.status === 'active')?.id ?? stepId,

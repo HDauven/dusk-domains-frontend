@@ -19,6 +19,7 @@ export async function checkInitialHydration(page) {
     function Hydration({ name }) {
       const feed = useActivityFeed({ defaultName: name, defaultNode: safeNamehashHex(name), indexerClient: client, setError: noop })
       const hydration = useIndexedNameHydration({ ...feed, displayName: name, indexerClient: client,
+        beginOwnershipRead: () => () => true,
         setCurrentBlockHeight: noop, setResolverRecordSets: noop, setPrimaryEndpointValue: noop, setPrimaryName: noop,
         setManagedName: noop, setDraftOwner: noop, setDraftManager: noop, setSubnameManager: noop, setSubnames: noop,
         setIndexerError: noop, setIndexerConfirmation: noop, setApiSearchResult: noop })

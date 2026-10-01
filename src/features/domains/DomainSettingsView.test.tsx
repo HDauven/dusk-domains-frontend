@@ -5,16 +5,16 @@ import { DomainSettingsView, type DomainSettingsViewProps } from './DomainSettin
 
 const noop = () => {}
 const nowSeconds = 1_790_000_000
-const managedName = { owner: 'owner', manager: 'owner', resolver: 'resolver', expiresAt: 20_000, graceEndsAt: 300_000, expiryPolicy: null }
+const managedName = { node: 'node', owner: 'owner', manager: 'owner', resolver: 'resolver', expiresAt: 20_000, graceEndsAt: 300_000, expiryPolicy: null }
 const day = (height: number) => formatLifecycleDay(height, 1_000, nowSeconds)
 
 function settings(overrides: Partial<DomainSettingsViewProps>) {
   const props: DomainSettingsViewProps = {
     canManageName: false, canRenewName: true, confirmationInput: '', currentBlockHeight: 1_000,
-    displayName: 'alphavnuc.dusk', draftManager: 'owner', draftOwner: 'owner', feeConfigError: '',
+    displayName: 'alphavnuc.dusk', feeConfigError: '',
     feeConfigLoading: false, managedName, managementError: '', managementTxState: null, maxDurationYears: 10,
-    minDurationYears: 1, nowSeconds, onConfirmationInputChange: noop, onDraftManagerChange: noop,
-    onDraftOwnerChange: noop, onOwnershipUpdate: noop, onRenewName: noop, onRenewalYearsChange: noop,
+    minDurationYears: 1, nowSeconds, onConfirmationInputChange: noop,
+    onOwnershipUpdate: async () => undefined, onRenewName: noop, onRenewalYearsChange: noop,
     renewalBusy: false, renewalError: '', renewalFee: 10, renewalPreviewExpiresAt: 40_000,
     renewalTxState: null, renewalYears: 1, ...overrides,
   }

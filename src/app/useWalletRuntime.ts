@@ -12,8 +12,10 @@ type UseWalletRuntimeArgs = Pick<
   AppRuntime,
   'pause' | 'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
 >
+  & Pick<Parameters<typeof useDuskDomainWriter>[0], 'confirmOwnershipWrite'>
 
 export function useWalletRuntime({
+  confirmOwnershipWrite,
   pause,
   connectKit,
   connectOptions,
@@ -52,6 +54,7 @@ export function useWalletRuntime({
   } = selectedAuthorityState
 
   const submitNameWrite = useDuskDomainWriter({
+    confirmOwnershipWrite,
     pause,
     contracts: runtimeConfig.contracts,
     liveDuskDomainsApp,

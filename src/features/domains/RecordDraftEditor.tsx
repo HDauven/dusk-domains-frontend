@@ -10,7 +10,6 @@ import {
 import {
   recordFreshnessCopy,
   recordPlaceholder,
-  recordVisibilityLabel,
 } from './domainFormat'
 
 export function RecordDraftEditor({
@@ -49,7 +48,6 @@ export function RecordDraftEditor({
           <div className="record-draft-row" key={key}>
             <div className="record-draft-label">
               <label htmlFor={`record-draft-${key}`}>{recordLabel(key)}</label>
-              <span>{recordVisibilityLabel(definition?.visibility)}</span>
             </div>
             <div className="record-draft-control">
               <Input
@@ -63,7 +61,7 @@ export function RecordDraftEditor({
                 <Button
                   className="record-wallet-button"
                   disabled={!walletAddressAvailable}
-                  title={walletAddressAvailable ? 'Use connected Dusk public address' : 'Connect wallet first'}
+                  title={walletAddressAvailable ? 'Use connected Dusk address' : 'Connect wallet first'}
                   type="button"
                   onClick={onUseWalletPublicAddress}
                 >
@@ -84,7 +82,7 @@ export function RecordDraftEditor({
                 </Button>
               ) : null}
             </div>
-            <span className="record-draft-help">{recordFreshnessCopy(definition)}</span>
+            <details className="record-draft-help"><summary>Advanced</summary><p>{recordFreshnessCopy(definition)}</p></details>
           </div>
         )
       })}

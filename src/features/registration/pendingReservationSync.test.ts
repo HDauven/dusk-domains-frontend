@@ -1,7 +1,27 @@
-import { describe, expect, it, vi } from 'vitest'
-import type { DuskDomainsIndexerClient } from '../../names/internal'
-import { indexedOwnCommitment, refreshCommitBlockStateFromIndexer } from './pendingReservationSync'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { listPendingNameReservations, upsertPendingNameReservation, type DuskDomainsIndexerClient } from '../../names/internal'
+import { indexedOwnCommitment, refreshCommitBlockStateFromIndexer, refreshPendingReservationsFromIndexer } from './pendingReservationSync'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
+
+afterEach(() => vi.unstubAllGlobals())
+it('removes completed saved claims while preserving available names and uncertain reads', async () => {
+  const data = new Map<string, string>()
+  vi.stubGlobal('localStorage', { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => data.set(key, value) })
+  for (const name of ['registered', 'available', 'offline']) {
+    upsertPendingNameReservation({ name: `${name}.dusk`, node: name, commitment: name, secret: 'secret',
+      controller: 'owner', ownerAddress: 'address', chainId: 'local', durationYears: 1,
+      committedBlockHeight: 100, committedTxId: 'tx', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' })
+  }
+  await refreshPendingReservationsFromIndexer({
+    indexerClient: {
+      getHealth: async () => ({ currentBlockHeight: 110 }), getCommitment: async () => null,
+      searchName: async (name: string) => { if (name === 'offline.dusk') throw new Error('offline'); return { status: name.split('.')[0] } },
+    } as unknown as DuskDomainsIndexerClient,
+    pendingReservations: listPendingNameReservations(), loadPendingReservations: () => listPendingNameReservations(),
+    getCurrentBlockHeight: async () => 110, setCurrentBlockHeight: vi.fn(), setNowSeconds: vi.fn(),
+  })
+  expect(listPendingNameReservations().map(item => item.name).sort()).toEqual(['available.dusk', 'offline.dusk'])
+})
 
 describe('pending reservation block sync', () => {
   it('uses node height when indexer health has no live block height', async () => {

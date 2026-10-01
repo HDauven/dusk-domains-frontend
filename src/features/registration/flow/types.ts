@@ -14,17 +14,10 @@ export type RegistrationWizardProps = {
   displayName: string
   registrationComplete: boolean
   registrationStep: RegistrationStepId
-  registrationStepDescription: string
 }
 
 export type RegistrationNavigationProps = {
-  canContinueRegistrationStep: boolean
   onBackToOverview: () => void
-  onStepChange: (step: RegistrationStepId) => void
-  registrationComplete: boolean
-  registrationNextStep: RegistrationStepId | null
-  registrationPreviousStep: RegistrationStepId | null
-  registrationStep: RegistrationStepId
 }
 
 export type RegistrationStatusProps = {
@@ -50,17 +43,16 @@ export type RegistrationStepPanelProps = {
   expiryDate: string
   feeConfigError: string
   installUrl: string
-  onAddressInputChange: (value: string) => void
   onOpenWalletConnection: () => void
   onPrepareCommit: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
   onRegisterName: () => void
   onRegisterSetsPrimaryChange: (checked: boolean) => void
   onRestartReservation: () => void
+  onAddRecords?: () => void
   onSetAddress: () => void
-  onUseWalletAddress: () => void
+  primaryChoiceLocked: boolean
   registerSetsPrimary: boolean
-  registrationAddressInput: string
   registrationCompletion: RegistrationCompletionState | null
   registrationFee: number
   registrationStep: RegistrationStepId

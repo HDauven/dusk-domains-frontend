@@ -8,11 +8,12 @@ import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubdomainsViewProps } from './subdomains/types'
 
 export function SubdomainsView({
+  ownerAddresses,
+  canEdit = true,
   canCreateSubname,
   currentBlockHeight,
   displayName,
   error,
-  fallbackManager,
   managedNameExpiresAt,
   nowSeconds,
   onCreateSubname,
@@ -21,13 +22,11 @@ export function SubdomainsView({
   onSubnameExpiryPolicyChange,
   onSubnameLabelChange,
   onSubnameManagerChange,
-  onSubnameResolverChange,
   selectedAuthority,
   subnameExpiryDate,
   subnameExpiryPolicy,
   subnameLabel,
   subnameManager,
-  subnameResolver,
   subnames,
   txState,
 }: SubdomainsViewProps) {
@@ -44,17 +43,15 @@ export function SubdomainsView({
         title="Subnames"
       />
 
-      <div className="subname-box" aria-label="Subdomain controls">
-        <SubdomainCreatePanel
+      <div className="subname-box" aria-label="Subname controls">
+        {canEdit ? <SubdomainCreatePanel
           canCreateSubname={canCreateSubname}
           displayName={displayName}
-          fallbackManager={fallbackManager}
           onCreateSubname={onCreateSubname}
           onSubnameExpiryDateChange={onSubnameExpiryDateChange}
           onSubnameExpiryPolicyChange={onSubnameExpiryPolicyChange}
           onSubnameLabelChange={onSubnameLabelChange}
           onSubnameManagerChange={onSubnameManagerChange}
-          onSubnameResolverChange={onSubnameResolverChange}
           parentExpiryDay={parentExpiryDay}
           selectedAuthority={selectedAuthority}
           subdomainPreview={subdomainPreview}
@@ -62,11 +59,12 @@ export function SubdomainsView({
           subnameExpiryPolicy={subnameExpiryPolicy}
           subnameLabel={subnameLabel}
           subnameManager={subnameManager}
-          subnameResolver={subnameResolver}
-        />
+        /> : null}
 
         {subnames.length ? (
           <SubdomainList
+            ownerAddresses={ownerAddresses}
+            selectedAuthority={selectedAuthority}
             currentBlockHeight={currentBlockHeight}
             nowSeconds={nowSeconds}
             onRecordTargetSelect={onRecordTargetSelect}

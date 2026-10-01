@@ -1,7 +1,6 @@
 import type { AppCoreRuntimes } from './useAppCoreRuntimes'
 import { editableRecordKeys } from './appConstants'
 import { deriveAppDerivedState } from './derived/deriveAppDerivedState'
-import { useAppWalletDefaults } from './useAppWalletDefaults'
 import { useRegistrationRuntime } from './useRegistrationRuntime'
 import { useActivityFeed } from '../features/activity/useActivityFeed'
 import { useDomainRecordState } from '../features/domains/useDomainRecordState'
@@ -29,25 +28,18 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     defaultNode: namePreview.nodeHex,
   })
   const registrationRuntime = useRegistrationRuntime({
-    canRegister: namePreview.canRegister,
     chainId: appRuntime.runtimeConfig.chainId,
-    committed: registrationState.committed,
     getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
     indexerClient: appRuntime.indexerClient,
     mainView: searchState.mainView,
     preparedCommit: registrationState.preparedCommit,
-    registerSetsPrimary: registrationState.registerSetsPrimary,
-    registrationAddressInput: registrationState.registrationAddressInput,
-    registrationStep: registrationState.registrationStep,
     selectedAddress: walletRuntime.selectedAddress,
     selectedAuthority: walletRuntime.selectedAuthority,
     setCurrentBlockHeight: searchState.setCurrentBlockHeight,
     setNowSeconds: searchState.setNowSeconds,
     setPreparedCommit: registrationState.setPreparedCommit,
-    walletSetupState: walletRuntime.walletSetupState,
   })
   const domainRecordState = useDomainRecordState({
-    activeSubnames: domainState.activeSubnames,
     displayName: namePreview.displayName,
     editableRecordKeys,
     nodeHex: namePreview.nodeHex,
@@ -59,8 +51,6 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     commitTxState: registrationState.commitTxState,
     committed: registrationState.committed,
     confirmationInput: domainState.confirmationInput,
-    criticalRecordChange: domainRecordState.criticalRecordChange,
-    criticalRecordConfirmationMatches: domainRecordState.criticalRecordConfirmationMatches,
     currentBlockHeight: searchState.currentBlockHeight,
     displayName: namePreview.displayName,
     managedName: domainState.managedName,
@@ -73,7 +63,6 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     primaryEndpointValue: domainState.primaryEndpointValue,
     primaryName: domainState.primaryName,
     primaryTxState: domainState.primaryTxState,
-    publicRecordAcknowledged: domainRecordState.publicRecordAcknowledged,
     recordDraftErrors: domainRecordState.recordDraftErrors,
     recordDraftMutations: domainRecordState.recordDraftMutations,
     recordTxState: domainState.recordTxState,
@@ -91,16 +80,6 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     walletSigningReady: walletRuntime.walletSession.canSign,
   })
 
-  useAppWalletDefaults({
-    selectedAddress: walletRuntime.selectedAddress,
-    selectedAuthority: walletRuntime.selectedAuthority,
-    setDraftManager: domainState.setDraftManager,
-    setDraftOwner: domainState.setDraftOwner,
-    setManagedName: domainState.setManagedName,
-    setRegistrationAddressInput: registrationState.setRegistrationAddressInput,
-    setSubnameManager: domainState.setSubnameManager,
-    walletAuthorized: walletRuntime.walletSession.authorized,
-  })
 
   return {
     activityFeed,

@@ -1,3 +1,4 @@
+import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
 import {
   userFacingErrorMessage,
 } from '../../../names/internal'
@@ -33,7 +34,11 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
   try {
     const nextResult = await indexerClient.searchName(name)
     if (!isCurrent()) return
+    if (nextResult.status === 'registered') {
+      clearRegisteredPendingReservations({ canonicalName: nextResult.canonical, chainId: props.chainId, loadPendingReservations: props.loadPendingReservations })
+    }
     setApiSearchResult(nextResult)
+    setResultView(nextResult.status === 'registered' ? 'details' : 'overview')
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
   } catch (error) {
     if (isCurrent()) setIndexerError(userFacingErrorMessage(error))

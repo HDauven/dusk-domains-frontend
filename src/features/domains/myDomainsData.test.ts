@@ -30,7 +30,7 @@ describe('fetchWalletScopedNames', () => {
     })
   })
 
-  it('only calls the owner-filtered name list for My Domains', async () => {
+  it('only calls the owner-filtered name list for My names', async () => {
     const owner = `0x${'22'.repeat(32)}`
     const names = [{ node: 'node-1', canonicalName: 'mine.dusk', owner }]
     const getAllNames = vi.fn(async () => names)

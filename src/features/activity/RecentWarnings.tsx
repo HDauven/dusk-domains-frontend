@@ -12,7 +12,7 @@ function warningRecord(warning: RecentChangeWarning) {
 function recentWarningMessage(warning: RecentChangeWarning) {
   if (warning.code === 'recent_primary_name_change') return 'Apps check that it matches the address before showing it.'
   if (warning.code === 'recent_resolver_change') return 'Records now come from a different source. Check them before sending funds.'
-  return `If you didn't change ${warningRecord(warning) ?? 'this record'}, check it before sending funds.`
+  return `Someone else changed ${warningRecord(warning) ?? 'this payment record'}. Check it before sending funds.`
 }
 
 function recentWarningTitle(warning: RecentChangeWarning) {
@@ -25,7 +25,7 @@ export function RecentWarningStack({ warnings }: { warnings: RecentChangeWarning
   if (warnings.length === 0) return null
 
   return (
-    <div className="recent-warning-stack" aria-label="Recent domain activity">
+    <div className="recent-warning-stack" aria-label="Recent name activity">
       {warnings.slice(0, 3).map((warning) => (
         <div className="recent-warning" key={`${warning.code}:${warning.node}:${warning.timestamp}:${warning.target ?? ''}`}>
           <Clock3 size={17} />
@@ -56,7 +56,7 @@ export function RecentWarningSummary({
           Recent updates
         </strong>
         <span>
-          {warnings.length === 1 ? 'One domain change is' : `${warnings.length} domain changes are`} in the activity log.
+          {warnings.length === 1 ? 'One name change is' : `${warnings.length} name changes are`} in the activity log.
         </span>
       </div>
       <Button type="button" onClick={onReview}>

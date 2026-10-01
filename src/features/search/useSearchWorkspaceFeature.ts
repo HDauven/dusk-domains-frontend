@@ -1,5 +1,5 @@
+import { ownerAddressCandidates } from '../identity/ownerLabel'
 import type { ComponentProps } from 'react'
-import { fallbackOwner } from '../../app/appHelpers'
 import type { SearchWorkspace } from './SearchWorkspace'
 import { formatActivityTime } from '../domains/domainFormat'
 
@@ -7,6 +7,7 @@ type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
+  priceTiers?: SearchWorkspaceProps['priceTiers']
   activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
   hasMoreActivity?: boolean
   onLoadMoreActivity?: () => void
@@ -49,6 +50,7 @@ type UseSearchWorkspaceFeatureProps = {
 }
 
 export function useSearchWorkspaceFeature({
+  priceTiers,
   activityEntries,
   activityLoading,
   hasMoreActivity,
@@ -89,8 +91,11 @@ export function useSearchWorkspaceFeature({
   subnames,
   viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
+  const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
   const searchProps: SearchWorkspaceProps = {
+    priceTiers,
     activityProps: {
+      ownerAddresses,
       hasMore: hasMoreActivity,
       onLoadMore: onLoadMoreActivity,
       activityEntries,
@@ -116,14 +121,15 @@ export function useSearchWorkspaceFeature({
       subnames,
       viewerAuthority,
     },
-    // A registration that just completed is registered even before the indexer says so.
     headerProps: {
+      ownerAddresses,
+      viewerAuthority,
       displayName,
       lifecycleLabel,
       primaryVerified: primaryProps.primaryVerification.verified,
-      owner: !activityLoading && settingsProps.managedName.owner !== fallbackOwner ? settingsProps.managedName.owner : null,
+      owner: nodeHex && settingsProps.managedName.node === nodeHex ? settingsProps.managedName.owner : null,
       records: resultStatus === 'registered' ? parentResolverRecords : [],
-      reserved: Boolean(savedReservation) && !registrationProps.wizard.registrationComplete,
+      reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
       status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
     },
     loading: activityLoading,
@@ -141,6 +147,7 @@ export function useSearchWorkspaceFeature({
       onDurationChange,
       onOpenPendingReservation,
       onOpenPendingReservations,
+      onSuggestion: onQueryChange,
       onViewDetails: () => onResultViewChange('details'),
       registrationFee,
       resultIssues,

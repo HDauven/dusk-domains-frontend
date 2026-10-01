@@ -1,59 +1,15 @@
 import { Button } from '../../components/ui/Button'
-import { AlertTriangle, ArrowRight, Check, Clock } from 'lucide-react'
-import { abbreviate } from '../../utils/format'
-import type { RegistrationCompletionState, RegistrationCompletionStepStatus } from './registrationCompletionState'
+import type { RegistrationCompletionState } from './registrationCompletionState'
 
-function registrationStepIcon(status: RegistrationCompletionStepStatus) {
-  if (status === 'executed') return <Check size={16} />
-  if (status === 'failed') return <AlertTriangle size={16} />
-  return <Clock size={16} />
-}
-
-function registrationProgressTitle(status: RegistrationCompletionState['status']) {
-  if (status === 'executed') return 'Registration complete'
-  if (status === 'failed') return 'Registration needs attention'
-  return 'Completing registration'
-}
-
-function registrationProgressCopy(status: RegistrationCompletionState['status']) {
-  if (status === 'executed') return 'Your name is active.'
-  if (status === 'failed') return 'The name is still reserved. Retry when the issue is fixed.'
-  return 'Keep the wallet open while this finishes.'
-}
-
-export function RegistrationCompletionProgress({
-  progress,
-  onSetAddress,
-}: {
+export function RegistrationCompletionProgress({ progress, onSetAddress }: {
   progress: RegistrationCompletionState
   onSetAddress: () => void
 }) {
-  return (
-    <div className={`registration-progress ${progress.status}`} aria-live="polite">
-      <div className="registration-progress-header">
-        <strong>{registrationProgressTitle(progress.status)}</strong>
-        <span>{registrationProgressCopy(progress.status)}</span>
-      </div>
-
-      <ol>
-        {progress.steps.map((step) => (
-          <li className={step.status} key={step.id}>
-            {registrationStepIcon(step.status)}
-            <div>
-              <strong>{step.title}</strong>
-              <span>{step.message ?? step.description}</span>
-              {step.txId ? <code>{abbreviate(step.txId)}</code> : null}
-            </div>
-          </li>
-        ))}
-      </ol>
-
-      {progress.status === 'executed' ? (
-        <Button variant="primary" className="compact" type="button" onClick={onSetAddress}>
-          Open domain
-          <ArrowRight size={18} />
-        </Button>
-      ) : null}
-    </div>
-  )
+  const syncing = progress.status === 'running' && progress.steps.every(step => step.status === 'executed')
+  return <div className={`registration-progress ${progress.status}`} role="status">
+    <strong>{progress.status === 'executed' ? 'Registration complete' : progress.status === 'failed' ? 'Registration needs attention' : syncing ? 'Checking registration…' : 'Registering…'}</strong>
+    <p>{progress.status === 'failed' ? progress.message ?? 'Your reservation is saved. Retry when the issue is fixed.' : syncing ? 'Your transaction was submitted. Waiting for the name to appear.' : progress.status === 'running' ? 'Confirm in your wallet and keep it open while this finishes.' : null}</p>
+    {progress.steps.some(step => step.txId) ? <details><summary>Details</summary>{progress.steps.filter(step => step.txId).map(step => <code key={step.id}>{step.txId}</code>)}</details> : null}
+    {progress.status === 'executed' ? <Button variant="primary" onClick={onSetAddress}>Open name</Button> : null}
+  </div>
 }

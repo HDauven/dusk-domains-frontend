@@ -1,3 +1,4 @@
+import { resolveRecipient } from '../identity/resolveRecipient'
 import type { DomainManagementFeatureProps, UseDomainManagementFeatureProps } from './domainManagementFeatureTypes'
 import type { useDomainManagementActionHandlers } from './useDomainManagementActionHandlers'
 
@@ -12,40 +13,24 @@ export function buildDomainManagementProps(
       displayName: props.displayName,
       error: props.primaryError,
       onClearPrimary: () => void actions.handleClearPrimaryName(),
-      onEndpointChange: (value) => {
-        props.setPrimaryEndpointValue(value)
-        props.setPrimaryError('')
-      },
       onSetPrimary: () => void actions.handleSetPrimaryName(),
-      placeholder: props.selectedAddress || props.moonlightRecord?.value || 'dusk1...',
-      primaryEndpointValue: props.primaryEndpointValue,
       primaryVerification: props.primaryVerification,
       txState: props.primaryTxState,
     },
     recordsProps: {
-      activeRecordTarget: props.activeRecordTarget,
       canRemoveRecords: props.canRemoveRecords,
       canSaveRecords: props.canSaveRecords,
       criticalRecordChange: props.criticalRecordChange,
-      criticalRecordConfirmation: props.criticalRecordConfirmation,
       displayName: props.displayName,
       editableRecordKeys: props.editableRecordKeys,
       error: props.recordError,
       onClearRecord: (record) => void actions.handleRecordClear(record),
-      onCriticalRecordConfirmationChange: props.setCriticalRecordConfirmation,
       onDraftValueChange: (key, value) => {
         props.setRecordDrafts((current) => ({ ...current, [key]: value }))
         props.setRecordError('')
       },
-      onPublicRecordAcknowledgedChange: props.setPublicRecordAcknowledged,
-      onRecordTargetChange: (node) => {
-        props.setRecordTargetNode(node)
-        props.setRecordError('')
-        props.setRecordDrafts({})
-        props.setPublicRecordAcknowledged(false)
-        props.setCriticalRecordConfirmation('')
-      },
-      onSaveRecords: () => void actions.handleRecordsSave(),
+      onDiscardDrafts: () => { props.setRecordDrafts({}); props.setRecordError(''); props.setRecordTxState(null) },
+      onSaveRecords: () => actions.handleRecordsSave(),
       onUseWalletPublicAddress: () => {
         props.setRecordDrafts((current) => ({ ...current, moonlight_address: props.selectedAddress }))
         props.setRecordError('')
@@ -59,12 +44,9 @@ export function buildDomainManagementProps(
           props.setRecordError(error instanceof Error ? error.message : 'Could not get shielded address from wallet.')
         }
       },
-      publicRecordAcknowledged: props.publicRecordAcknowledged,
       recordBusy: props.recordBusy,
       recordDraftErrors: props.recordDraftErrors,
-      recordDraftMutationCount: props.recordDraftMutations.length,
       recordDraftValues: props.recordDraftValues,
-      recordTargetOptions: props.recordTargetOptions,
       resolverRecords: props.resolverRecords,
       txState: props.recordTxState,
       walletAddressAvailable: Boolean(props.selectedAddress),
@@ -75,8 +57,6 @@ export function buildDomainManagementProps(
       confirmationInput: props.confirmationInput,
       currentBlockHeight: props.currentBlockHeight,
       displayName: props.displayName,
-      draftManager: props.draftManager,
-      draftOwner: props.draftOwner,
       feeConfigError: props.feeConfigError,
       feeConfigLoading: props.feeConfigLoading,
       managedName: props.managedName,
@@ -86,9 +66,10 @@ export function buildDomainManagementProps(
       minDurationYears: props.minDurationYears,
       nowSeconds: props.nowSeconds,
       onConfirmationInputChange: props.setConfirmationInput,
-      onDraftManagerChange: props.setDraftManager,
-      onDraftOwnerChange: props.setDraftOwner,
-      onOwnershipUpdate: () => void actions.handleOwnershipUpdate(),
+      viewerAuthority: props.selectedAuthority,
+      ownerAddresses: props.moonlightRecord ? [props.moonlightRecord.value] : [],
+      onResolveRecipient: input => resolveRecipient(input, props.indexerClient),
+      onOwnershipUpdate: change => actions.handleOwnershipUpdate(change),
       onRenewName: () => void actions.handleRenewName(),
       onRenewalYearsChange: (years) => props.setRenewalYears(props.clampDurationYears(years)),
       renewalBusy: props.renewalBusy,
@@ -103,28 +84,19 @@ export function buildDomainManagementProps(
       currentBlockHeight: props.currentBlockHeight,
       displayName: props.displayName,
       error: props.subnameError,
-      fallbackManager: props.fallbackManager,
       managedNameExpiresAt: props.managedName.expiresAt,
       nowSeconds: props.nowSeconds,
       onCreateSubname: () => void actions.handleCreateSubname(),
-      onRecordTargetSelect: (subname) => {
-        props.setRecordTargetNode(subname.node)
-        props.setRecordDrafts({})
-        props.setRecordError('')
-        props.setPublicRecordAcknowledged(false)
-        props.setCriticalRecordConfirmation('')
-      },
+      onRecordTargetSelect: () => {},
       onSubnameExpiryDateChange: props.setSubnameExpiryDate,
       onSubnameExpiryPolicyChange: props.setSubnameExpiryPolicy,
       onSubnameLabelChange: props.setSubnameLabel,
       onSubnameManagerChange: props.setSubnameManager,
-      onSubnameResolverChange: props.setSubnameResolver,
       selectedAuthority: props.selectedAuthority,
       subnameExpiryDate: props.subnameExpiryDate,
       subnameExpiryPolicy: props.subnameExpiryPolicy,
       subnameLabel: props.subnameLabel,
       subnameManager: props.subnameManager,
-      subnameResolver: props.subnameResolver,
       subnames: props.subnames,
       txState: props.subnameTxState,
     },

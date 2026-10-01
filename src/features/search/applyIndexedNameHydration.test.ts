@@ -87,39 +87,18 @@ it('hydrates the named owner and manager for an issued reserved root', () => {
   }, null)).toMatchObject({ owner: 'foundation', manager: 'wallet-team', expiresAt: 20_000 })
 })
 
-it('bounds child resolution concurrency and surfaces failed child reads', async () => {
-  let active = 0
-  let peak = 0
+it('reads records only for the opened name, even when it has many subnames', async () => {
   const client = {
     resolveForward: vi.fn(async (name: string) => {
-      if (name === 'parent.dusk') return { records: [] }
-      peak = Math.max(peak, ++active)
-      await new Promise(resolve => setTimeout(resolve, 1))
-      active--
-      if (name === 'child5.parent.dusk') throw new Error('Failed to fetch')
-      return { records: [{ key: 'website', value: name }] }
+      if (name !== 'parent.dusk') throw new Error('Child records should load from their own pages')
+      return { records: [] }
     }),
     getNameState: async () => null,
     getActivityPage: async () => ({ activity: [], nextCursor: null }),
     getAllSubnames: async () => Array.from({ length: 60 }, (_, index) => ({ name: `child${index}.parent.dusk`, node: `child${index}` })),
   }
   const reads = await readIndexedName(client as never, { canonical: 'parent.dusk' } as never)
-  expect(peak).toBe(4)
-  expect(Object.keys(reads!.subnameRecordSets)).toHaveLength(59)
-  expect(reads?.subnameRecordSets.child59).toEqual([{ key: 'website', value: 'child59.parent.dusk' }])
-  expect(reads?.readErrors).toEqual([expect.stringMatching(/not reachable/)])
-})
-
-it('includes child resolution failures in the hydration errors', async () => {
-  const client = {
-    resolveForward: async (name: string) => {
-      if (name !== 'parent.dusk') throw new Error('Failed to fetch')
-      return { records: [] }
-    },
-    getNameState: async () => null,
-    getActivityPage: async () => ({ activity: [], nextCursor: null }),
-    getAllSubnames: async () => [{ name: 'child.parent.dusk', node: 'child' }],
-  }
-  const reads = await readIndexedName(client as never, { canonical: 'parent.dusk' } as never)
-  expect(reads?.readErrors).toEqual([expect.stringMatching(/not reachable/)])
+  expect(client.resolveForward).toHaveBeenCalledExactlyOnceWith('parent.dusk')
+  expect(reads?.hydratedSubnames).toHaveLength(60)
+  expect(reads?.readErrors).toEqual([])
 })

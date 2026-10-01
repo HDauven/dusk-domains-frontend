@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { duskWalletInstallUrl } from '../../app/appConstants'
 import type { DuskDomainTxState, NameResult } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
@@ -8,10 +8,10 @@ import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 import type { RegistrationStepId } from './registrationSteps'
 import { useRegistrationActions } from './useRegistrationActions'
+import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 
 export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   activeReferral: ReferralState | null
-  canContinueRegistrationStep: boolean
   canRevealRegistration: boolean
   commitBusy: boolean
   commitStale: boolean
@@ -21,19 +21,15 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   onBackToOverview: () => void
   onOpenWalletConnection: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
+  onAddRecords?: () => void
   onSetAddress: () => void
   onViewPendingReservation: () => void
-  registrationAddressInput: string
   registrationCompletion: RegistrationCompletionState | null
   registrationFee: number
-  registrationNextStep: RegistrationStepId | null
-  registrationPreviousStep: RegistrationStepId | null
   registrationStep: RegistrationStepId
-  registrationStepDescription: string
   reservationStranded: boolean
   resultIssues: NameResult['issues']
   setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
-  setRegistrationAddressInput: Dispatch<SetStateAction<string>>
   showReservationRecovery: boolean
   txBusy: boolean
   txState: DuskDomainTxState | null
@@ -44,6 +40,17 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
 
 export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
   const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions(props)
+  const primaryChoicePending = useRef(false)
+  const [primaryChoiceLocked, setPrimaryChoiceLocked] = useState(false)
+  async function withPrimaryChoiceLocked(action: () => Promise<void>) {
+    if (primaryChoicePending.current) return
+    primaryChoicePending.current = true
+    setPrimaryChoiceLocked(true)
+    try { await action() } finally {
+      primaryChoicePending.current = false
+      setPrimaryChoiceLocked(false)
+    }
+  }
   const registrationComplete = props.registrationCompletion?.status === 'executed'
 
   const step: RegistrationFlowPanelProps['step'] = {
@@ -63,25 +70,20 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     expiryDate: props.expiryDate,
     feeConfigError: props.feeConfigError,
     installUrl: duskWalletInstallUrl,
-    onAddressInputChange: (value) => {
-      props.setRegistrationAddressInput(value)
-      props.setWalletError('')
-    },
     onOpenWalletConnection: props.onOpenWalletConnection,
-    onPrepareCommit: () => void handlePrepareCommit(),
+    onPrepareCommit: () => void withPrimaryChoiceLocked(handlePrepareCommit),
     onRefreshWalletProviders: props.onRefreshWalletProviders,
-    onRegisterName: () => void handleRegisterName(),
-    onRestartReservation: () => void handleRestartReservation(),
-    onRegisterSetsPrimaryChange: (nextChecked) => {
-      props.setRegisterSetsPrimary(nextChecked)
-      if (!nextChecked && !props.registrationAddressInput.trim() && props.selectedAddress) {
-        props.setRegistrationAddressInput(props.selectedAddress)
-      }
+    onRegisterName: () => void withPrimaryChoiceLocked(handleRegisterName),
+    onRestartReservation: () => void withPrimaryChoiceLocked(handleRestartReservation),
+    primaryChoiceLocked: primaryChoiceLocked || props.commitBusy || props.txBusy,
+    onRegisterSetsPrimaryChange: value => {
+      if (primaryChoicePending.current || props.commitBusy || props.txBusy) return
+      props.setRegisterSetsPrimary(value)
+      if (props.preparedCommit) saveReservationPrimaryChoice({ chainId: props.runtimeConfig.chainId, commitment: props.preparedCommit.commitment }, value)
     },
+    onAddRecords: props.onAddRecords,
     onSetAddress: props.onSetAddress,
-    onUseWalletAddress: () => props.setRegistrationAddressInput(props.selectedAddress),
     registerSetsPrimary: props.registerSetsPrimary,
-    registrationAddressInput: props.registrationAddressInput,
     registrationCompletion: props.registrationCompletion,
     registrationFee: props.registrationFee,
     registrationStep: props.registrationStep,
@@ -97,13 +99,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
 
   const registrationProps: RegistrationFlowPanelProps = {
     navigation: {
-      canContinueRegistrationStep: props.canContinueRegistrationStep,
       onBackToOverview: props.onBackToOverview,
-      onStepChange: props.setRegistrationStep,
-      registrationComplete,
-      registrationNextStep: props.registrationNextStep,
-      registrationPreviousStep: props.registrationPreviousStep,
-      registrationStep: props.registrationStep,
     },
     resultIssues: props.resultIssues,
     status: {
@@ -116,7 +112,6 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
       displayName: props.displayName,
       registrationComplete,
       registrationStep: props.registrationStep,
-      registrationStepDescription: registrationComplete ? 'It points to your wallet now. Add records or subnames whenever you like.' : props.registrationStepDescription,
     },
   }
 

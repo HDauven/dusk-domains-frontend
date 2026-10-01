@@ -35,7 +35,7 @@ export function PendingReservationsList({
                 {reservation.durationYears} {pluralize(reservation.durationYears, 'year')} ·{' '}
                 <em>{pendingReservationStatusCopy(reservationWindow.status, reservationWindow.waitBlocks)}</em>
               </span>
-              <p>{pendingReservationNextStepCopy(reservationWindow.status, reservationWindow.waitBlocks)}</p>
+              <p>{pendingReservationNextStepCopy(reservationWindow.status)}</p>
             </div>
             <div className="pending-reservation-actions">
               <Button variant={reservationWindow.status === 'ready' ? 'primary' : 'secondary'}

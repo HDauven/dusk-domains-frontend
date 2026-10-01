@@ -4,8 +4,6 @@ import type { RecordTargetOption } from '../../features/domains/recordTypes'
 
 export function deriveRecordCapabilities({
   activeRecordTarget,
-  criticalRecordChange,
-  criticalRecordConfirmationMatches,
   currentBlockHeight,
   displayName,
   managedName,
@@ -16,7 +14,6 @@ export function deriveRecordCapabilities({
   primaryEndpointErrors,
   primaryName,
   primaryVerified,
-  publicRecordAcknowledged,
   recordBusy,
   recordDraftErrors,
   recordDraftMutations,
@@ -25,12 +22,9 @@ export function deriveRecordCapabilities({
   selectedAuthority,
   subnameBusy,
   subnameLabel,
-  subnameManager,
   walletAuthorized,
 }: {
   activeRecordTarget: RecordTargetOption | undefined
-  criticalRecordChange: boolean
-  criticalRecordConfirmationMatches: boolean
   currentBlockHeight: number | null
   displayName: string
   managedName: Pick<ManagedNameState, 'owner' | 'manager' | 'expiresAt' | 'graceEndsAt'>
@@ -41,7 +35,6 @@ export function deriveRecordCapabilities({
   primaryEndpointErrors: readonly string[]
   primaryName: string | null
   primaryVerified: boolean
-  publicRecordAcknowledged: boolean
   recordBusy: boolean
   recordDraftErrors: readonly string[]
   recordDraftMutations: readonly unknown[]
@@ -55,7 +48,7 @@ export function deriveRecordCapabilities({
 }) {
   return {
     canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryName && primaryVerified && !primaryBusy),
-    canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && subnameManager.trim() && !subnameBusy),
+    canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && !subnameBusy),
     // Owners and managers can renew root names until grace ends.
     canRenewName: Boolean(
       walletAuthorized
@@ -72,10 +65,8 @@ export function deriveRecordCapabilities({
       walletAuthorized
       && selectedAddress
       && activeRecordTarget
-      && publicRecordAcknowledged
       && recordDraftMutations.length > 0
       && recordDraftErrors.length === 0
-      && (!criticalRecordChange || criticalRecordConfirmationMatches)
       && !recordBusy,
     ),
     canSetPrimary: Boolean(walletAuthorized && selectedAddress && nodeHex && primaryEndpoint && primaryEndpointErrors.length === 0 && !primaryBusy),

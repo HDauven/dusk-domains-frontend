@@ -11,6 +11,7 @@ import {
   userFacingErrorMessage,
 } from '../../names/internal'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
+import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 
 export async function prepareRegistrationCommit({
   canPrepareCommit,
@@ -21,6 +22,7 @@ export async function prepareRegistrationCommit({
   loadPendingReservations,
   nodeHex,
   refreshCommitBlockState,
+  registerSetsPrimary,
   runtimeConfig,
   selectedAddress,
   selectedAuthority,
@@ -73,13 +75,14 @@ export async function prepareRegistrationCommit({
       onUpdate: (state) => {
         if (state.status === 'awaiting_approval') {
           if (listPendingNameReservations({ chainId: runtimeConfig.chainId, controller: selectedAuthority }).some((saved) => saved.node === nodeHex)) {
-            throw new Error('Open the saved reservation in My Domains to check its status before trying again.')
+            throw new Error('Open the saved reservation in My names to check its status before trying again.')
           }
           // Persist before the wallet can broadcast; keep uncertain outcomes recoverable.
           const saved = upsertPendingNameReservation(reservation)
           if (!saved.some((entry) => entry.commitment === commitment && entry.secret === secret)) {
             throw new Error('Cannot save the reservation. Enable browser storage and try again.')
           }
+          saveReservationPrimaryChoice(reservation, registerSetsPrimary)
           loadPendingReservations()
         }
         setCommitTxState(state)

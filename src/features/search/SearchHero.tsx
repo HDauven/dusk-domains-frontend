@@ -6,6 +6,7 @@ import type { ShowcaseName } from '../../app/useSkyNames'
 
 export function SearchHero({
   checked,
+  priceTiers,
   featuredNames = [],
   loading,
   onCheckAvailability,
@@ -13,6 +14,7 @@ export function SearchHero({
   onQueryChange,
   query,
 }: {
+  priceTiers?: { label: string; price: string }[]
   checked: boolean
   featuredNames?: ShowcaseName[]
   loading: boolean
@@ -65,6 +67,8 @@ export function SearchHero({
           </Button>
         </div>
       </form>
+
+      {!checked && priceTiers ? <p className="search-prices">{priceTiers.map(tier => <span key={tier.label}>{tier.label}: {tier.price} DUSK / year</span>)}</p> : null}
 
       {featuredNames.length > 0 ? (
         <div className="hero-showcase" aria-label="Names already on Dusk">

@@ -3,6 +3,7 @@ import { SearchHero } from './SearchHero'
 import { SearchResultPanel, type SearchResultPanelProps, type SearchResultView } from './SearchResultPanel'
 
 type SearchWorkspaceProps = SearchResultPanelProps & {
+  priceTiers?: { label: string; price: string }[]
   checked: boolean
   featuredNames?: ShowcaseName[]
   loading: boolean
@@ -14,6 +15,7 @@ type SearchWorkspaceProps = SearchResultPanelProps & {
 }
 
 export function SearchWorkspace({
+  priceTiers,
   activityProps,
   checked,
   detailsProps,
@@ -38,6 +40,7 @@ export function SearchWorkspace({
   return (
     <>
       <SearchHero
+        priceTiers={priceTiers}
         checked={checked}
         featuredNames={featuredNames}
         loading={loading}
@@ -53,6 +56,7 @@ export function SearchWorkspace({
 
       {checked && resultReady ? (
         <SearchResultPanel
+          onOpenName={onOpenName}
           activityProps={activityProps}
           detailsProps={detailsProps}
           headerProps={headerProps}

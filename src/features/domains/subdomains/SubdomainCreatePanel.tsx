@@ -9,13 +9,11 @@ import type { SubdomainCreatePanelProps } from './types'
 export function SubdomainCreatePanel({
   canCreateSubname,
   displayName,
-  fallbackManager,
   onCreateSubname,
   onSubnameExpiryDateChange,
   onSubnameExpiryPolicyChange,
   onSubnameLabelChange,
   onSubnameManagerChange,
-  onSubnameResolverChange,
   parentExpiryDay,
   selectedAuthority,
   subdomainPreview,
@@ -23,13 +21,12 @@ export function SubdomainCreatePanel({
   subnameExpiryPolicy,
   subnameLabel,
   subnameManager,
-  subnameResolver,
 }: SubdomainCreatePanelProps) {
   return (
     <>
       <div>
-        <h3>Create subdomain</h3>
-        <p>Use short operational labels such as settlement.{displayName}.</p>
+        <h3>Create subname</h3>
+        <p>Create a name such as pay.{displayName}.</p>
       </div>
 
       <div className="subname-quick-create">
@@ -49,7 +46,7 @@ export function SubdomainCreatePanel({
             type="button"
             onClick={() => void onCreateSubname()}
           >
-            Create subdomain
+            Create subname
           </Button>
         </div>
       </div>
@@ -59,19 +56,11 @@ export function SubdomainCreatePanel({
         <div className="subname-editor">
           <TextField
             id="subname-manager"
-            hint="Use a Dusk public account or contract:0x..."
+            hint="Leave empty to manage it yourself. Otherwise enter a Dusk address."
             label="Manager"
-            placeholder={selectedAuthority || fallbackManager}
-            value={subnameManager}
+            placeholder="Dusk address"
+            value={subnameManager === selectedAuthority ? '' : subnameManager}
             onChange={(event) => onSubnameManagerChange(event.target.value)}
-          />
-
-          <TextField
-            id="subname-resolver"
-            hint="Independent record source for this subdomain"
-            label="Record source"
-            value={subnameResolver}
-            onChange={(event) => onSubnameResolverChange(event.target.value)}
           />
 
           <SelectField

@@ -3,12 +3,14 @@ import { currentBlockHeightFromHealth } from '../../app/appHelpers'
 import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import {
   currentUnixSeconds,
+  removePendingNameReservation,
   updatePendingNameReservationBlock,
   type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
 import { inferredCommittedBlockHeightFromReservation } from './pendingReservationBlockRecovery'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
+import { clearReservationPrimaryChoice } from './reservationPrimaryChoice'
 
 // Commitments are kept per controller, so ask the indexer for this controller's commit. An
 // indexer that predates the controller parameter returns the latest commit for the hash, so a
@@ -143,21 +145,25 @@ export async function refreshPendingReservationsFromIndexer({
   setNowSeconds(currentUnixSeconds())
 
   const indexedReservations = await Promise.all(pendingReservations.map(async (reservation) => {
-    try {
-      return {
-        reservation,
-        indexedCommit: await indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
-      }
-    } catch {
-      return {
-        reservation,
-        indexedCommit: null,
-      }
+    const [commit, name] = await Promise.allSettled([
+      indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
+      indexerClient.searchName(reservation.name),
+    ])
+    return {
+      reservation,
+      indexedCommit: commit.status === 'fulfilled' ? commit.value : null,
+      registered: health.ok !== false && name.status === 'fulfilled' && name.value.status === 'registered',
     }
   }))
 
   let changed = false
-  for (const { reservation, indexedCommit } of indexedReservations) {
+  for (const { reservation, indexedCommit, registered } of indexedReservations) {
+    if (registered) {
+      removePendingNameReservation(reservation)
+      clearReservationPrimaryChoice(reservation)
+      changed = true
+      continue
+    }
     const committedBlockHeight = indexedCommit?.committedBlockHeight
       ?? inferredCommittedBlockHeightFromReservation(reservation, nextBlockHeight)
     const committedTxId = indexedCommit?.committedTxId ?? reservation.committedTxId

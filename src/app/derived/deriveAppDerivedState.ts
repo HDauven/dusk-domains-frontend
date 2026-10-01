@@ -16,8 +16,6 @@ export function deriveAppDerivedState({
   commitTxState,
   committed,
   confirmationInput,
-  criticalRecordChange,
-  criticalRecordConfirmationMatches,
   currentBlockHeight,
   displayName,
   managedName,
@@ -30,7 +28,6 @@ export function deriveAppDerivedState({
   primaryEndpointValue,
   primaryName,
   primaryTxState,
-  publicRecordAcknowledged,
   recordDraftErrors,
   recordDraftMutations,
   recordTxState,
@@ -128,9 +125,7 @@ export function deriveAppDerivedState({
     canSetPrimary,
   } = deriveRecordCapabilities({
     activeRecordTarget,
-    criticalRecordChange,
-    criticalRecordConfirmationMatches,
-    currentBlockHeight,
+      currentBlockHeight,
     displayName,
     managedName,
     nodeHex,
@@ -140,7 +135,6 @@ export function deriveAppDerivedState({
     primaryEndpointErrors,
     primaryName,
     primaryVerified: primaryVerification.verified,
-    publicRecordAcknowledged,
     recordBusy,
     recordDraftErrors,
     recordDraftMutations,
@@ -153,8 +147,9 @@ export function deriveAppDerivedState({
     walletAuthorized: walletSigningReady,
   })
 
-  const parentAuthorized = canManageActiveName(managedName, selectedAuthority, currentBlockHeight)
-  const recordTarget = activeRecordTarget?.node === nodeHex ? managedName
+  const managedTarget = nodeHex && managedName.node === nodeHex ? managedName : undefined
+  const parentAuthorized = canManageActiveName(managedTarget, selectedAuthority, currentBlockHeight)
+  const recordTarget = activeRecordTarget?.node === nodeHex ? managedTarget
     : subnames.find(name => name.node === activeRecordTarget?.node && name.status === 'active')
   const recordAuthorized = canManageActiveName(recordTarget, selectedAuthority, currentBlockHeight)
 
@@ -163,7 +158,7 @@ export function deriveAppDerivedState({
     canCreateSubname: canCreateSubname && parentAuthorized,
     canManageName: canManageName && parentAuthorized,
     canPrepareCommit,
-    canRenewName: canRenewName && currentBlockHeight !== null,
+    canRenewName: canRenewName && Boolean(managedTarget) && currentBlockHeight !== null,
     canRestartReservation,
     canRevealRegistration,
     canRemoveRecords: walletSigningReady && recordAuthorized && !recordBusy,

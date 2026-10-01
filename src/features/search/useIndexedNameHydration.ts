@@ -29,10 +29,11 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     isCurrent: () => boolean = () => true,
   ) => {
     const isCurrentActivity = props.beginActivityRead(safeNamehashHex(searchResult.canonical))
-    const shouldApply = () => isCurrent() && isCurrentActivity()
+    const isCurrentOwnership = props.beginOwnershipRead(safeNamehashHex(searchResult.canonical))
+    const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership()
     const health = await client.getHealth()
     if (!shouldApply()) return
-    if (!health.ok) throw new Error('Domain data is still syncing. Refresh and try again shortly.')
+    if (!health.ok) throw new Error('Name data is still syncing. Refresh and try again shortly.')
     const currentBlockHeight = currentBlockHeightFromHealth(health)
     const reads = await readIndexedName(client, searchResult)
     if (!shouldApply()) return

@@ -93,6 +93,7 @@ export function useMarketplaceWrites({
       })
       setTxState(finalState)
       if (finalState.status === 'executed') {
+        if (finalState.ownershipConfirmed === false) return finalState
         setConfirmation(`${successMessage} Syncing marketplace data…`)
         const height = await duskDomainsOnChainClient?.getCurrentBlockHeight()
         if (await waitForIndexerBlock(indexerClient, height?.ok ? height.value : null)) await loadMarketplace()

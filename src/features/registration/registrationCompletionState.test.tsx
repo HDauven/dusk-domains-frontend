@@ -17,7 +17,7 @@ it('keeps the submitted payment and expiry after hydration changes availability'
     installUrl="" onOpenWalletConnection={noop} onRegisterName={noop} onRestartReservation={noop} onSetAddress={noop}
     registrationCompletion={completed} reservationStranded={false} txBusy={false} txState={null} walletSetupState="connected"
   />) + renderToStaticMarkup(<RegistrationSummary
-    activeReferral={null} appliedReferral={null} committed={true} displayName="aurora.dusk" duration={1}
+    activeReferral={null} appliedReferral={null} committed={true} duration={1}
     expiryDate={completed.summary?.expiryDate ?? '-'} feeConfigError="" onChangeTerm={noop}
     registerSetsPrimary={true} registrationComplete={true} registrationFee={completed.summary?.registrationFee ?? 0}
     registrationTargetAddress="account" selectedAddress="account"

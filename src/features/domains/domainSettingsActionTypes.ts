@@ -5,6 +5,7 @@ import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import type {
   CoreFeeConfig,
+  DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
 } from '../../names/internal'
@@ -20,13 +21,12 @@ export type AppendDomainSettingsActivity = (input: {
 }) => void
 
 export type UseDomainSettingsActionsProps = {
+  indexerClient: DuskDomainsIndexerClient | null
   appendActivity: AppendDomainSettingsActivity
   canManageName: boolean
   canRenewName: boolean
   currentBlockHeight: number | null
   displayName: string
-  draftManager: string
-  draftOwner: string
   feeConfig: CoreFeeConfig
   lifecycleBaseBlockHeight: number
   managedName: ManagedNameState
@@ -36,8 +36,6 @@ export type UseDomainSettingsActionsProps = {
   resultLabel: string
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAuthority: string
-  setDraftManager: Dispatch<SetStateAction<string>>
-  setDraftOwner: Dispatch<SetStateAction<string>>
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setManagementError: Dispatch<SetStateAction<string>>
   setManagementTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>

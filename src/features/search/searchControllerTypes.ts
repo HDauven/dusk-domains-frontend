@@ -1,3 +1,4 @@
+import type { ManagedNameState } from '../../app/managedNameState'
 import type { Dispatch, SetStateAction } from 'react'
 import type {
   ActivityEntry,
@@ -36,11 +37,11 @@ export type UseSearchControllerProps = {
   setCommitTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setCommitted: Dispatch<SetStateAction<boolean>>
   setConfirmationInput: Dispatch<SetStateAction<string>>
-  setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
   setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
   setDuration: Dispatch<SetStateAction<number>>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>
+  setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setManagementError: Dispatch<SetStateAction<string>>
   setManagementTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>
@@ -48,14 +49,11 @@ export type UseSearchControllerProps = {
   setPrimaryError: Dispatch<SetStateAction<string>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
-  setPublicRecordAcknowledged: Dispatch<SetStateAction<boolean>>
   setQuery: Dispatch<SetStateAction<string>>
   setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>
-  setRecordTargetNode: Dispatch<SetStateAction<string>>
   setRecordTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
-  setRegistrationAddressInput: Dispatch<SetStateAction<string>>
   setRegistrationCompletion: Dispatch<SetStateAction<RegistrationCompletionState | null>>
   setRegistrationStep: Dispatch<SetStateAction<RegistrationStepId>>
   setRenewalError: Dispatch<SetStateAction<string>>
@@ -68,7 +66,6 @@ export type UseSearchControllerProps = {
   setSubnameExpiryPolicy: Dispatch<SetStateAction<SubnameExpiryPolicy>>
   setSubnameLabel: Dispatch<SetStateAction<string>>
   setSubnameManager: Dispatch<SetStateAction<string>>
-  setSubnameResolver: Dispatch<SetStateAction<string>>
   setSubnameTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>
   setTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>

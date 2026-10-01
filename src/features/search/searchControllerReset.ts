@@ -1,9 +1,9 @@
-import { fallbackManager } from '../../app/appHelpers'
+import { createManagedNameState } from '../../app/managedNameState'
 import type { UseSearchControllerProps } from './searchControllerTypes'
 
 export function resetSearchState({
   recordSourceContractId,
-  selectedAuthority,
+  setManagedName,
   setActivityEntries,
   setActivityCursor,
   setActivityLoading,
@@ -12,7 +12,6 @@ export function resetSearchState({
   setCommitTxState,
   setCommitted,
   setConfirmationInput,
-  setCriticalRecordConfirmation,
   setIndexerConfirmation,
   setIndexerError,
   setManagementError,
@@ -22,14 +21,11 @@ export function resetSearchState({
   setPrimaryError,
   setPrimaryName,
   setPrimaryTxState,
-  setPublicRecordAcknowledged,
   setQuery,
   setRecordDrafts,
   setRecordError,
-  setRecordTargetNode,
   setRecordTxState,
   setRegisterSetsPrimary,
-  setRegistrationAddressInput,
   setRegistrationCompletion,
   setRegistrationStep,
   setRenewalError,
@@ -42,18 +38,17 @@ export function resetSearchState({
   setSubnameExpiryPolicy,
   setSubnameLabel,
   setSubnameManager,
-  setSubnameResolver,
   setSubnameTxState,
   setSubnames,
   setTxState,
 }: UseSearchControllerProps, nextValue: string) {
+  setManagedName(createManagedNameState(recordSourceContractId))
   setQuery(nextValue)
   setCommitted(false)
   setPreparedCommit(null)
   setChecked(false)
   setRegisterSetsPrimary(true)
-  setRegistrationAddressInput('')
-  setRegistrationStep('setup')
+  setRegistrationStep('review')
   setResultView('overview')
   setTxState(null)
   setCommitTxState(null)
@@ -77,15 +72,11 @@ export function resetSearchState({
   setIndexerConfirmation('')
   setResolverRecordSets({})
   setRecordDrafts({})
-  setRecordTargetNode('')
-  setPublicRecordAcknowledged(false)
-  setCriticalRecordConfirmation('')
   setPrimaryEndpointValue('')
   setPrimaryName(null)
   setSubnames([])
   setSubnameLabel('settlement')
-  setSubnameManager(selectedAuthority || fallbackManager)
-  setSubnameResolver(recordSourceContractId)
+  setSubnameManager('')
   setSubnameExpiryPolicy('inherits_parent')
   setSubnameExpiryDate('')
   setRenewalYears(1)

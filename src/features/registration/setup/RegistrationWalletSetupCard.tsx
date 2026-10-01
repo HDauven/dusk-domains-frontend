@@ -1,7 +1,6 @@
 import { Button } from '../../../components/ui/Button'
 import { useState } from 'react'
-import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react'
-import { abbreviate } from '../../../utils/format'
+import { ExternalLink } from 'lucide-react'
 import {
   walletActionLabel,
   walletSetupActionCopy,
@@ -13,19 +12,17 @@ export function RegistrationWalletSetupCard({
   installUrl,
   onOpenWalletConnection,
   onRefreshWalletProviders,
-  selectedAddress,
   walletDiscoveryRefreshing,
   walletSetupState,
 }: {
   installUrl: string
   onOpenWalletConnection: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
-  selectedAddress: string
   walletDiscoveryRefreshing: boolean
   walletSetupState: WalletConnectionStatus
 }) {
   const [showMissingWalletRetryHelp, setShowMissingWalletRetryHelp] = useState(false)
-  const showMissingWalletRetryFailure = walletSetupState === 'missing' && !selectedAddress && showMissingWalletRetryHelp
+  const showMissingWalletRetryFailure = walletSetupState === 'missing' && showMissingWalletRetryHelp
 
   async function handleMissingWalletRetry() {
     setShowMissingWalletRetryHelp(false)
@@ -42,15 +39,6 @@ export function RegistrationWalletSetupCard({
 
   return (
     <>
-      {selectedAddress ? (
-        <div className={walletSetupState === 'connected' ? 'register-wallet' : 'register-wallet blocked'}>
-          {walletSetupState === 'connected' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
-          <div>
-            <strong>Owner wallet</strong>
-            <code>{abbreviate(selectedAddress)}</code>
-          </div>
-        </div>
-      ) : null}
       {/* A wallet on another network or locked still has an address; it cannot sign here yet. */}
       {walletSetupState !== 'connected' ? (
         <div className={`register-action ${walletSetupState}`}>

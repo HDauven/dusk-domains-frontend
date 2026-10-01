@@ -1,3 +1,4 @@
+import { createManagedNameState } from '../../../app/managedNameState'
 import {
   userFacingErrorMessage,
 } from '../../../names/internal'
@@ -24,10 +25,11 @@ export async function checkAvailability(props: UseSearchControllerProps) {
     setResultView,
   } = props
 
+  props.setManagedName(createManagedNameState(props.recordSourceContractId))
   setChecked(true)
   setApiSearchResult(null)
   setResultView('overview')
-  setRegistrationStep('setup')
+  setRegistrationStep('review')
   if (!indexerClient) return
 
   setActivityLoading(true)
@@ -50,7 +52,6 @@ export async function checkAvailability(props: UseSearchControllerProps) {
       setCommitted(false)
       setPreparedCommit(null)
       setRegistrationCompletion(null)
-      setResultView('details')
     }
   } catch (error) {
     if (isCurrent()) setIndexerError(userFacingErrorMessage(error))

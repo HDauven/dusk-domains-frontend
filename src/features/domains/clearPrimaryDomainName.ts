@@ -26,12 +26,12 @@ export async function clearPrimaryDomainName({
     canContinue: canClearPrimary,
     setError: setPrimaryError,
       walletSetupState,
-    blockedCopy: 'Connect the manager wallet and enter the current Dusk Public Address before clearing the primary domain.',
+    blockedCopy: 'Connect the manager wallet and enter the current Dusk address before clearing the primary name.',
   })) {
     return
   }
-  if (!ensureContractAuthorityForLiveWrite('clear the primary domain', setPrimaryError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('clearing the primary domain', setPrimaryError))) return
+  if (!ensureContractAuthorityForLiveWrite('clear the primary name', setPrimaryError)) return
+  if (!(await ensurePublicBalanceForLiveWrite('clearing the primary name', setPrimaryError))) return
 
   try {
     const call = coreClearPrimaryNameRuntimeCall({
@@ -44,7 +44,7 @@ export async function clearPrimaryDomainName({
     })
 
     if (finalState.status === 'executed') {
-      if (!(await shouldApplyPreviewWriteFallback('cleared primary domain', async (client) => {
+      if (!(await shouldApplyPreviewWriteFallback('cleared primary name', async (client) => {
         const indexed = await client.getPrimaryName({
           type: 'moonlight_address',
           value: primaryEndpoint,

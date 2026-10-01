@@ -1,7 +1,5 @@
 import {
   createManagedNameState,
-  fallbackManager,
-  fallbackOwner,
 } from '../../app/appHelpers'
 import { lifecycleHeightFromIndexed, renewalGraceEnd, unixSecondsFromIso } from '../domains/domainFormat'
 import { userFacingMessageFromText } from '../../names/internal'
@@ -13,17 +11,13 @@ export function applyIndexedNameHydration(
     currentBlockHeight,
     nowSeconds,
     recordSourceContractId,
-    selectedAuthority,
     setActivityEntries,
     setActivityCursor,
-    setDraftManager,
-    setDraftOwner,
     setIndexerError,
     setManagedName,
     setPrimaryEndpointValue,
     setPrimaryName,
     setResolverRecordSets,
-    setSubnameManager,
     setSubnames,
   }: UseIndexedNameHydrationProps,
   reads: IndexedNameReadBundle,
@@ -37,7 +31,6 @@ export function applyIndexedNameHydration(
     primaryName,
     readErrors,
     stateRead,
-    subnameRecordSets,
   } = reads
 
   if (forwardRead.value) {
@@ -69,10 +62,11 @@ export function applyIndexedNameHydration(
         expiresAt: unixSecondsFromIso(indexed.expiresAt) ?? 0,
         graceEndsAt: indexed.graceEndsAtBlockHeight ?? unixSecondsFromIso(indexed.graceEndsAt) ?? 0,
       })
-    setManagedName((current) => ({
-      owner: stateRead.value?.owner ?? current.owner,
-      manager: stateRead.value?.manager ?? current.manager,
-      resolver: stateRead.value?.resolverId ?? current.resolver,
+    setManagedName({
+      node,
+      owner: indexed.owner ?? '',
+      manager: indexed.manager ?? '',
+      resolver: indexed.resolverId ?? recordSourceContractId,
       expiresAt: lifecycleHeightFromIndexed(
         stateRead.value?.expiresAt,
         stateRead.value?.expiresAtBlockHeight,
@@ -81,18 +75,10 @@ export function applyIndexedNameHydration(
       ) ?? 0,
       graceEndsAt,
       expiryPolicy: ownSubnameRead.value?.expiryPolicy ?? null,
-    }))
-    if (stateRead.value.owner) setDraftOwner(stateRead.value.owner)
-    if (stateRead.value.manager) setDraftManager(stateRead.value.manager)
-    const defaultSubnameManager = stateRead.value.manager || selectedAuthority || fallbackManager
-    setSubnameManager((current) => (
-      !current || current === fallbackManager || current === selectedAuthority ? defaultSubnameManager : current
-    ))
+    })
+
   } else {
-    setManagedName(createManagedNameState(recordSourceContractId))
-    setDraftOwner(fallbackOwner)
-    setDraftManager(fallbackManager)
-    setSubnameManager(selectedAuthority || fallbackManager)
+    setManagedName({ ...createManagedNameState(recordSourceContractId), node, owner: '', manager: '', expiresAt: 0, graceEndsAt: 0 })
   }
 
   setActivityEntries(activityRead.value ?? [])
@@ -100,15 +86,11 @@ export function applyIndexedNameHydration(
 
   if (hydratedSubnames) {
     setSubnames(hydratedSubnames)
-    setResolverRecordSets((current) => ({
-      ...current,
-      ...subnameRecordSets,
-    }))
   } else {
     setSubnames([])
   }
 
   if (readErrors.length > 0) {
-    setIndexerError(userFacingMessageFromText(readErrors[0], 'Some domain data is still syncing. Refresh and try again.'))
+    setIndexerError(userFacingMessageFromText(readErrors[0], 'Some name data is still syncing. Refresh and try again.'))
   }
 }

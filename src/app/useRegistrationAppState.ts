@@ -8,8 +8,7 @@ import type { PreparedRegistrationCommit } from '../features/registration/usePen
 export function useRegistrationAppState() {
   const [duration, setDuration] = useState(1)
   const [registerSetsPrimary, setRegisterSetsPrimary] = useState(true)
-  const [registrationAddressInput, setRegistrationAddressInput] = useState('')
-  const [registrationStep, setRegistrationStep] = useState<RegistrationStepId>('setup')
+  const [registrationStep, setRegistrationStep] = useState<RegistrationStepId>('review')
   const [committed, setCommitted] = useState(false)
   const [preparedCommit, setPreparedCommit] = useState<PreparedRegistrationCommit | null>(null)
   const [txState, setTxState] = useState<DuskDomainTxState | null>(null)
@@ -24,7 +23,6 @@ export function useRegistrationAppState() {
     duration,
     preparedCommit,
     registerSetsPrimary,
-    registrationAddressInput,
     registrationCompletion,
     registrationStep,
     setCommitTxState,
@@ -32,7 +30,6 @@ export function useRegistrationAppState() {
     setDuration,
     setPreparedCommit,
     setRegisterSetsPrimary,
-    setRegistrationAddressInput,
     setRegistrationCompletion,
     setRegistrationStep,
     setStrandedCommitment,

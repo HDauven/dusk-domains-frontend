@@ -8,7 +8,7 @@ function readUiSource() {
     'src/features/activity/ActivityHistoryView.tsx',
     'src/features/domains/domainFormat.ts',
     'src/features/domains/DomainSettingsView.tsx',
-    'src/features/domains/PrimaryDomainView.tsx',
+    'src/features/domains/PrimaryNameControl.tsx',
     'src/features/domains/RecordsView.tsx',
     'src/features/domains/SubdomainsView.tsx',
     'src/features/referrals/ActiveReferralCard.tsx',
@@ -19,13 +19,11 @@ function readUiSource() {
     'src/features/registration/registrationCopy.ts',
     'src/features/registration/RegistrationCompletionProgress.tsx',
     'src/features/registration/RegistrationFlowPanel.tsx',
-    'src/features/registration/RegistrationNavigation.tsx',
     'src/features/registration/RegistrationPolicyNotes.tsx',
     'src/features/registration/RegistrationPurchaseStep.tsx',
     'src/features/registration/RegistrationReviewStep.tsx',
-    'src/features/registration/RegistrationSetupStep.tsx',
-    'src/features/registration/RegistrationStepper.tsx',
     'src/features/registration/RegistrationSummary.tsx',
+    'src/features/registration/ClaimSuccess.tsx',
     'src/features/registration/ReservationRecoveryNotice.tsx',
     'src/features/registration/setup/RegistrationWalletSetupCard.tsx',
     'src/features/search/NameHeader.tsx',
@@ -92,7 +90,7 @@ describe('App user-facing copy', () => {
 
     expect(source).toContain('Registration complete')
     expect(source).toContain('is yours')
-    expect(source).toContain('Open domain')
+    expect(source).toContain('Open name')
     expect(source).not.toContain('Review setup')
   })
 })

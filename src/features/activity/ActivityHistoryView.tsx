@@ -1,13 +1,16 @@
+import { OwnerLabel } from '../identity/OwnerLabel'
+import { activityActions, paymentWarnings } from './activityActions'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
 import { Clock } from 'lucide-react'
 import type { ActivityEntry, RecentChangeWarning } from '../../names/internal'
-import { activityActor, activityDetail, activityTitle } from './activityCopy'
+import { activityDetail, activityEventDetail, activityTitle } from './activityCopy'
 import { activityWhen } from './activityTime'
 import { RecentWarningStack } from './RecentWarnings'
 
 export function ActivityHistoryView({
+  ownerAddresses = [],
   activityEntries,
   hasMore,
   onLoadMore,
@@ -18,6 +21,7 @@ export function ActivityHistoryView({
   recentWarnings,
   viewerAuthority,
 }: {
+  ownerAddresses?: string[]
   hasMore?: boolean
   onLoadMore?: () => void
   activityEntries: ActivityEntry[]
@@ -37,7 +41,7 @@ export function ActivityHistoryView({
         </div>
       </div>
 
-      <RecentWarningStack warnings={recentWarnings} />
+      <RecentWarningStack warnings={paymentWarnings(recentWarnings, viewerAuthority)} />
 
       {loading ? (
         <EmptyState loading icon={<Clock size={18} />}>Loading activity</EmptyState>
@@ -45,17 +49,21 @@ export function ActivityHistoryView({
         <EmptyState icon={<Clock size={18} />}>No activity recorded for this name.</EmptyState>
       ) : (
         <ol className="timeline">
-          {activityEntries.map((entry) => (
+          {activityActions(activityEntries).map(({ entry, events }) => (
             <li key={entry.id}>
               <div className="timeline-copy">
                 <strong>{activityTitle(entry)}</strong>
-                <span>{activityDetail(entry, viewerAuthority)}</span>
+                <span>{activityDetail(entry, viewerAuthority, ownerAddresses)}</span>
               </div>
               <div className="timeline-meta">
-                <time title={entry.blockHeight ? `Block ${entry.blockHeight}` : undefined}>
+                <time>
                   {activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}
                 </time>
-                <code>{activityActor(entry.actor, viewerAuthority)}</code>
+                {entry.actor === 'marketplace' ? <span>Marketplace</span> : entry.actor ? <OwnerLabel authority={entry.actor} viewerAuthority={viewerAuthority} addresses={ownerAddresses} /> : null}
+                <details><summary>Details</summary>
+                  <ul>{events.map(event => <li key={event.id}>{activityTitle(event)} {activityEventDetail(event, viewerAuthority, ownerAddresses)}</li>)}</ul>
+                  {entry.txId ? <code>{entry.txId}</code> : null}
+                </details>
               </div>
             </li>
           ))}

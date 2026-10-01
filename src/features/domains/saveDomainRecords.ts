@@ -11,15 +11,12 @@ export async function saveDomainRecords({
   activeRecordTarget,
   appendActivity,
   canSaveRecords,
-  criticalRecordChange,
   nodeHex,
   recordDraftErrors,
   recordDraftMutations,
   runtimeConfig,
   selectedAuthority,
-  setCriticalRecordConfirmation,
   setPrimaryEndpointValue,
-  setPublicRecordAcknowledged,
   setRecordDrafts,
   setRecordError,
   setRecordTxState,
@@ -44,9 +41,7 @@ export async function saveDomainRecords({
       canContinue: false,
       setError: setRecordError,
       walletSetupState,
-      blockedCopy: criticalRecordChange
-        ? 'Confirm the domain, check the public-record notice, and connect the manager wallet before saving.'
-        : 'Check the public-record notice and connect the manager wallet before saving.',
+      blockedCopy: 'Connect the owner or manager wallet before saving.',
     })
     return
   }
@@ -69,7 +64,8 @@ export async function saveDomainRecords({
 
     if (finalState.status !== 'executed') return
 
-    if (!(await shouldApplyPreviewWriteFallback('record update', async (client) => {
+    setRecordError('Saved on chain, still confirming. Keep this draft until confirmation completes.')
+    const applyLocally = await shouldApplyPreviewWriteFallback('record update', async (client) => {
       const indexed = await client.resolveForward(target.name)
       return mutations.every((mutation) => {
         if (mutation.action === 'clear') {
@@ -79,7 +75,11 @@ export async function saveDomainRecords({
           existing.key === mutation.key && existing.value === mutation.value
         ))
       })
-    }))) return
+    })
+    if (applyLocally === null) return false
+    setRecordError('')
+    setRecordDrafts({})
+    if (!applyLocally) return true
 
     setResolverRecordSets((current) => ({
       ...current,
@@ -99,9 +99,7 @@ export async function saveDomainRecords({
       node: target.node,
       name: target.name,
     })
-    setRecordDrafts({})
-    setPublicRecordAcknowledged(false)
-    setCriticalRecordConfirmation('')
+    return true
   } catch (error) {
     setRecordError(userFacingErrorMessage(error))
   }
