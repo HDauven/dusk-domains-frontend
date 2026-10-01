@@ -1,0 +1,81 @@
+:root {
+  /* Afterglow: roles, then artwork. Controls always use solid surfaces. */
+  --night: #0c0919;
+  --surface: #171222;
+  --ink: #fff5ee;
+  --muted: #c4b6cb;
+  --line: #403244;
+  --peach: #f2c5ab;
+  --mint: #bde5cc;
+  --error: #ffb3b3;
+  --surface-raised: #231b2e;
+  --surface-hover: #302639;
+  --control-line: #8e7c93;
+  --peach-hover: #ffdcc6;
+  --error-hover: #ffd0d0;
+  --success-surface: #1b302b;
+  --error-surface: #3c222d;
+  --warning-surface: #342b30;
+  --selection: #654558;
+  --overlay: rgb(12 9 25 / 80%);
+  --shadow-color: rgb(0 0 0 / 32%);
+
+  --sunset: #d79588;
+  --sunset-glow: rgb(215 149 136 / 24%);
+  --sunset-dim: #58344b;
+  --horizon-lilac: rgb(177 115 223 / 90%);
+  --horizon-peach: rgb(242 197 171 / 72%);
+  --atmosphere-shadow: 0 -2px 0 var(--horizon-peach), 0 -12px 40px var(--horizon-peach);
+  --planet: #201529;
+  --portrait-sky: #35223c;
+  --portrait-gradient: linear-gradient(165deg, var(--portrait-sky), var(--sunset-dim) 55%, var(--planet));
+  --horizon-gradient: radial-gradient(ellipse 85% 22% at 50% 100%, var(--sunset-glow), transparent 80%), var(--night);
+  --horizon-shadow: 0 -2px 0 var(--sunset), 0 -10px 40px var(--sunset-glow), 0 -30px 100px var(--sunset-glow);
+
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-ui: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.75rem;
+  --text-title: clamp(2.75rem, 5.4vw, 4rem);
+  --text-name: clamp(3.25rem, 7vw, 5.75rem);
+  --text-hero: clamp(3.5rem, 7.8vw, 7rem);
+  --leading-tight: 1.05;
+  --leading-body: 1.5;
+
+  --domain-flow-width: 1060px;
+  --domain-page-gutter: clamp(20px, 6vw, 120px);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --radius-sm: 0.625rem;
+  --radius: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-pill: 999px;
+  --shadow-sm: 0 8px 24px var(--shadow-color);
+  --shadow-lg: 0 30px 80px var(--shadow-color);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-feedback: 180ms;
+  --motion-hover: 300ms;
+  --motion-enter: 650ms;
+  --motion-breathe: 8s;
+  --motion-spin: 900ms;
+}
+
+@media (max-width: 720px) {
+  :root { --domain-page-gutter: var(--space-4); }
+}

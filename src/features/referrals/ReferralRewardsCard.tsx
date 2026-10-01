@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
 import { txStatusCopy } from '../../components/status/txStatus'
 import { AccountCard, AccountDetailItem, AccountDetailList } from '../../components/ui/AccountCard'
@@ -70,14 +71,14 @@ export function ReferralRewardsCard({
             ]}
           />
           {referralRewardClaimReady ? (
-            <button
-              className="primary-button compact"
+            <Button variant="primary"
+              className="compact"
               disabled={!referralClaimable || referralBusy}
               type="button"
               onClick={() => void onClaimReferralRewards()}
             >
               {referralBusy ? txStatusCopy(referralTxState?.status, referralTxState?.message) : 'Claim rewards'}
-            </button>
+            </Button>
           ) : null}
         </>
       ) : null}

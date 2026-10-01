@@ -1,9 +1,12 @@
+import { EmptyState } from '../../components/ui/EmptyState'
+import { AddressChip } from '../../components/ui/AddressChip'
+import { Button } from '../../components/ui/Button'
 import { AlertTriangle, ArrowRight } from 'lucide-react'
 import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import { RefreshButton } from '../../components/ui/RefreshButton'
 import type { IndexedNameSummary, PendingNameReservation } from '../../names/internal'
-import { abbreviate, pluralize } from '../../utils/format'
+import { pluralize } from '../../utils/format'
 import { NameCard } from './my-domains/NameCard'
 import { PendingReservationsList } from './my-domains/PendingReservationsList'
 
@@ -54,7 +57,7 @@ export function MyDomainsView({
         actions={selectedAddress ? <RefreshButton loading={loading} onRefresh={onRefresh} /> : null}
         description={(
           <>
-            {selectedAddress ? <>Held by <code>{abbreviate(selectedAddress)}</code></> : 'Connect a wallet to see the names it holds.'}
+            {selectedAddress ? <>Held by <AddressChip value={selectedAddress} /></> : 'Connect a wallet to see the names it holds.'}
             {myNames.length ? <> · {myNames.length} {pluralize(myNames.length, 'name')}{primaryCount ? ` · ${primaryCount} primary` : ''}</> : null}
           </>
         )}
@@ -92,24 +95,22 @@ export function MyDomainsView({
 
       {loading && empty ? (
         <div className="name-card-grid" aria-busy="true" aria-label="Loading names">
-          {[0, 1, 2].map((index) => <div className="name-card skeleton" key={index} />)}
+          {[0, 1, 2].map((index) => <div className="name-portrait skeleton" key={index} />)}
         </div>
       ) : empty && !myNamesError ? (
-        <div className="my-names-empty">
-          <div className="my-names-empty-orb" aria-hidden="true" />
-          <h2>{selectedAddress ? 'No names here yet' : 'Your names live here'}</h2>
-          <p>{selectedAddress ? 'This wallet doesn’t hold any names. The good ones go first.' : 'Connect the wallet that holds them, or find your first one.'}</p>
+        <EmptyState className="my-names-empty" title={selectedAddress ? 'No names yet' : 'Connect your wallet'}>
+          <p>{selectedAddress ? 'This wallet has no names. Search for a name to register.' : 'Connect a wallet to see its names.'}</p>
           <div className="my-names-empty-actions">
             {selectedAddress ? null : (
-              <button className="primary-button compact" type="button" onClick={onConnectWallet}>
+              <Button variant="primary" className="compact" type="button" onClick={onConnectWallet}>
                 Connect wallet
-              </button>
+              </Button>
             )}
-            <button className={selectedAddress ? 'primary-button compact' : 'commit-button'} type="button" onClick={onSearchHome}>
-              Find a name <ArrowRight size={17} />
-            </button>
+            <Button variant={selectedAddress ? 'primary' : 'secondary'} type="button" onClick={onSearchHome}>
+              Search names <ArrowRight size={17} />
+            </Button>
           </div>
-        </div>
+        </EmptyState>
       ) : null}
     </section>
   )

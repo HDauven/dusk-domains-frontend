@@ -1,3 +1,4 @@
+import { Input } from '../../components/ui/Input'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import { RegistrationAddressField } from './setup/RegistrationAddressField'
 import { RegistrationWalletSetupCard } from './setup/RegistrationWalletSetupCard'
@@ -48,7 +49,7 @@ export function RegistrationSetupStep({
           <strong>Make it my primary name</strong>
           <em>{selectedAddress ? registerSetsPrimary ? `Apps show ${displayName} instead of this wallet's address.` : 'Not now. You can set it any time.' : 'Available once a wallet is connected.'}</em>
         </span>
-        <input
+        <Input
           checked={Boolean(selectedAddress && registerSetsPrimary)}
           disabled={!canRegister || !selectedAddress}
           role="switch"

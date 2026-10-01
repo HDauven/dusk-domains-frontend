@@ -1,3 +1,4 @@
+import { Panel } from '../../components/ui/Panel'
 import {
   type DuskDomainTxState,
   type ResolverRecord,
@@ -72,7 +73,7 @@ export function RecordsView({
   const targetName = activeRecordTarget?.name ?? displayName
 
   return (
-    <section className="records-panel" aria-labelledby="records-heading">
+    <Panel className="records-panel" aria-labelledby="records-heading">
       <RecordsHeader displayName={displayName} />
 
       <RecordTargetSelect
@@ -124,6 +125,6 @@ export function RecordsView({
       />
 
       <ManagementFeedback error={error} txState={txState} />
-    </section>
+    </Panel>
   )
 }

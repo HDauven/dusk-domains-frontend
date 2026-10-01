@@ -54,11 +54,11 @@ export function auctionStatusLabel(status: AuctionStatus) {
 
 // Badge tones shared with the rest of the app.
 export function auctionStatusTone(status: AuctionStatus) {
-  if (status === 'live') return 'ok'
-  if (status === 'ending') return 'warn'
-  if (status === 'ended') return 'dusk'
+  if (status === 'live') return 'success'
+  if (status === 'ending') return 'warning'
+  if (status === 'ended') return 'neutral'
   if (status === 'expired') return 'danger'
-  return ''
+  return 'neutral'
 }
 
 export function marketplaceFeeLabel(feeBps: number) {

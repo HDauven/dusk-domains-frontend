@@ -1,3 +1,6 @@
+import { Panel } from '../../components/ui/Panel'
+import { Button } from '../../components/ui/Button'
+import { Input, Select } from '../../components/ui/Input'
 import { HandCoins } from 'lucide-react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import type { IndexedMarketplaceOffer } from '../../names/internal'
@@ -13,8 +16,8 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
   const incomingOffers = props.offers.filter((offer) => ownedNodes.has(offer.node) && !sameAuthority(offer.buyerAuthority, props.selectedAuthority))
 
   return (
-    <div className="marketplace-offers-layout" role="tabpanel">
-      <section className="marketplace-editor" aria-labelledby="make-offer-heading">
+    <div className="marketplace-offers-layout">
+      <Panel className="marketplace-editor" aria-labelledby="make-offer-heading">
         <div className="marketplace-section-heading">
           <div>
             <h2 id="make-offer-heading">Make an offer</h2>
@@ -22,29 +25,29 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
           </div>
         </div>
         {!props.selectedAddress ? (
-          <button className="primary-button compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet</button>
+          <Button variant="primary" className="compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet</Button>
         ) : (
           <>
             <div className="marketplace-form">
               <label className="marketplace-field-wide">
                 <span>Name</span>
-                <input placeholder="name.dusk" type="text" value={props.offerName} onChange={(event) => props.onOfferNameChange(event.target.value)} />
+                <Input placeholder="name.dusk" type="text" value={props.offerName} onChange={(event) => props.onOfferNameChange(event.target.value)} />
               </label>
               <label>
                 <span>Offer</span>
-                <div className="marketplace-input-suffix"><input inputMode="decimal" type="text" value={props.offerAmountDusk} onChange={(event) => props.onOfferAmountDuskChange(event.target.value)} /><span>DUSK</span></div>
+                <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.offerAmountDusk} onChange={(event) => props.onOfferAmountDuskChange(event.target.value)} /><span>DUSK</span></div>
               </label>
               <label>
                 <span>Valid for</span>
-                <select value={props.offerDurationDays} onChange={(event) => props.onOfferDurationDaysChange(event.target.value)}>
+                <Select value={props.offerDurationDays} onChange={(event) => props.onOfferDurationDaysChange(event.target.value)}>
                   {durations.map((days) => <option key={days} value={days}>{days} {days === 1 ? 'day' : 'days'}</option>)}
-                </select>
+                </Select>
               </label>
             </div>
-            <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</button>
+            <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</Button>
           </>
         )}
-      </section>
+      </Panel>
 
       <section className="marketplace-section" aria-labelledby="your-offers-heading">
         <div className="marketplace-section-heading">
@@ -72,11 +75,11 @@ function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: Indexe
       <div><span>{expired ? 'Status' : 'Expires'}</span><strong>{expiryTimeLabel(offer.expiresAtBlockHeight, props.currentBlockHeight)}</strong></div>
       <div className="marketplace-order-action">
         {expired ? (
-          <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireOffer(offer)}>Close</button>
+          <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireOffer(offer)}>Close</Button>
         ) : incoming ? (
-          <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onAcceptOffer(offer)}>Accept</button>
+          <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onAcceptOffer(offer)}>Accept</Button>
         ) : (
-          <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelOffer(offer)}>Cancel</button>
+          <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelOffer(offer)}>Cancel</Button>
         )}
       </div>
     </article>

@@ -11,7 +11,6 @@
   width: 32px;
   height: 32px;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(143, 107, 255, 0.45));
 }
 
 .name-avatar {
@@ -20,11 +19,12 @@
   flex: 0 0 auto;
   border-radius: 50%;
   object-fit: cover;
-  background: var(--night-2);
+  background: var(--night);
 }
 
 .name-avatar.monogram {
-  color: #1a0b1f;
+  color: var(--ink);
+  background: var(--portrait-gradient);
   font-family: var(--font-display);
   line-height: 1;
 }

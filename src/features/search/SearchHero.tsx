@@ -1,5 +1,7 @@
+import { Input } from '../../components/ui/Input'
+import { Button } from '../../components/ui/Button'
 import { Search, X } from 'lucide-react'
-import { NameAvatar } from '../../components/brand/NameAvatar'
+import { NameChip } from '../../components/ui/NameChip'
 import type { ShowcaseName } from '../../app/useSkyNames'
 
 export function SearchHero({
@@ -25,10 +27,9 @@ export function SearchHero({
     <section className={checked ? 'hero checked' : 'hero'} id="search" aria-labelledby="hero-heading">
       <div className="hero-copy">
         <h1 id="hero-heading">
-          <span>Your name,</span>
-          <em>on Dusk.</em>
+          Find your <em>.dusk</em> name
         </h1>
-        <p>One name for your wallet, your apps and your contracts. Claim it once and keep it for up to ten years.</p>
+        <p>One readable name for your Dusk address.</p>
       </div>
 
       <form
@@ -43,7 +44,7 @@ export function SearchHero({
         <div className="hero-search-field">
           <Search className="hero-search-icon" size={20} aria-hidden="true" />
           <div className="hero-search-input">
-            <input
+            <Input
               id="name-search"
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
@@ -55,13 +56,13 @@ export function SearchHero({
             {label && !query.includes('.') ? <span className="hero-search-tld" aria-hidden="true">{label}<b>.dusk</b></span> : null}
           </div>
           {query ? (
-            <button className="hero-search-clear" type="button" aria-label="Clear search" onClick={() => onQueryChange('')}>
+            <Button variant="quiet" className="hero-search-clear" type="button" aria-label="Clear search" onClick={() => onQueryChange('')}>
               <X size={18} />
-            </button>
+            </Button>
           ) : null}
-          <button className="primary-button hero-search-submit" type="submit" disabled={loading || !label}>
+          <Button variant="primary" className="hero-search-submit" type="submit" disabled={!label} loading={loading}>
             {loading ? 'Checking…' : 'Search'}
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -71,10 +72,7 @@ export function SearchHero({
           <ul>
             {featuredNames.map((entry) => (
               <li key={entry.name}>
-                <button type="button" onClick={() => onOpenName?.(entry.name)}>
-                  <NameAvatar name={entry.name} src={entry.avatar} size={26} />
-                  {entry.name}
-                </button>
+                <NameChip name={entry.name} onClick={() => onOpenName?.(entry.name)} />
               </li>
             ))}
           </ul>

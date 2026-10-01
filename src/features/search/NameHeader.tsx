@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react'
-import { abbreviate } from '../../utils/format'
+import { AddressChip } from '../../components/ui/AddressChip'
+import { Badge } from '../../components/ui/Badge'
 import { NameAvatar } from '../../components/brand/NameAvatar'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
@@ -8,13 +9,6 @@ function splitName(displayName: string) {
   return displayName.endsWith('.dusk')
     ? { label: displayName.slice(0, -'.dusk'.length), tld: '.dusk' }
     : { label: displayName, tld: '' }
-}
-
-const statusTone: Record<NameStatus, string> = {
-  available: 'ok',
-  registered: '',
-  reserved: 'warn',
-  invalid: 'danger',
 }
 
 export function NameHeader({
@@ -36,6 +30,7 @@ export function NameHeader({
 }) {
   const { label, tld } = splitName(displayName)
   const avatar = records.find((record) => record.key === 'avatar')?.value ?? null
+  const description = records.find((record) => record.key === 'text.description')?.value
   const registered = status === 'registered'
 
   return (
@@ -51,15 +46,16 @@ export function NameHeader({
         <h1 className="name-hero-title">
           {label}<span>{tld}</span>
         </h1>
-        {registered && owner ? <p className="name-hero-owner">Owner <code title={owner}>{abbreviate(owner)}</code></p> : null}
+        {registered && description ? <p className="name-hero-description">{description}</p> : null}
+        {registered && owner ? <div className="name-hero-owner">Owner <AddressChip value={owner} label="owner address" /></div> : null}
         <div className="name-hero-badges">
           {reserved ? (
-            <span className="status-badge dusk">Registration saved</span>
+            <Badge status="reserved">Registration saved</Badge>
           ) : (
-            <span className={`status-badge ${statusTone[status]}`}>{statusCopy(status)}</span>
+            <Badge status={status === 'invalid' ? undefined : status === 'registered' ? 'taken' : status} tone="danger">{status === 'registered' ? 'Taken' : statusCopy(status)}</Badge>
           )}
-          {registered && primaryVerified ? <span className="status-badge ok">Primary name</span> : null}
-          {registered && lifecycleLabel ? <span className="status-badge">{lifecycleLabel}</span> : null}
+          {registered && primaryVerified ? <Badge tone="success">Primary name</Badge> : null}
+          {registered && lifecycleLabel ? <Badge>{lifecycleLabel}</Badge> : null}
         </div>
       </div>
     </header>

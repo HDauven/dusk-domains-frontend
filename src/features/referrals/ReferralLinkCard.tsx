@@ -1,3 +1,5 @@
+import { Input } from '../../components/ui/Input'
+import { Button } from '../../components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import { AccountCard } from '../../components/ui/AccountCard'
 import {
@@ -35,14 +37,14 @@ export function ReferralLinkCard({
     >
       {selectedAddress ? (
         <div className="copy-row">
-          <input aria-label="Referral link" readOnly value={referralLink} />
-          <button className="commit-button" disabled={!referralLink} type="button" onClick={() => void onCopyReferralLink()}>
+          <Input aria-label="Referral link" readOnly value={referralLink} />
+          <Button disabled={!referralLink} type="button" onClick={() => void onCopyReferralLink()}>
             {referralCopied ? 'Copied' : 'Copy'}
-          </button>
+          </Button>
         </div>
       ) : (
-        <button
-          className="primary-button compact"
+        <Button variant="primary"
+          className="compact"
           disabled={walletSetupState === 'detecting'}
           title={walletActionTitle(walletSetupState)}
           type="button"
@@ -50,7 +52,7 @@ export function ReferralLinkCard({
         >
           {walletActionLabel(walletSetupState)}
           <ArrowRight size={18} />
-        </button>
+        </Button>
       )}
     </AccountCard>
   )

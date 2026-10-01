@@ -9,30 +9,30 @@
   display: grid;
   gap: 9px;
   min-height: 94px;
-  padding: 14px 16px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--surface-soft);
+  padding: 14px var(--space-4);
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .primary-status.success {
-  border-color: rgba(93, 219, 128, 0.22);
-  background: var(--surface-soft);
+  border-color: var(--line);
+  background: var(--surface);
 }
 
 .primary-status.danger {
-  border-color: rgba(255, 110, 110, 0.22);
-  background: var(--surface-soft);
+  border-color: var(--line);
+  background: var(--surface);
 }
 
 .primary-status strong {
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .primary-status span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
@@ -40,14 +40,14 @@
   width: fit-content;
   max-width: 100%;
   overflow: hidden;
-  color: #d8d1e8;
+  color: var(--muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .primary-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   margin-top: 14px;
 }
 
@@ -56,7 +56,7 @@
     grid-template-columns: 1fr;
   }
 
-  .primary-actions .commit-button {
+  .primary-actions .button-secondary {
     width: 100%;
   }
 

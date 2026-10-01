@@ -1,12 +1,12 @@
 .tx-status {
   display: grid;
   gap: 13px;
-  margin-top: 16px;
-  padding: 15px 16px;
-  border: 1px solid rgba(167, 139, 255, 0.24);
-  border-radius: 9px;
+  margin-top: var(--space-4);
+  padding: 15px var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
   background:
-    linear-gradient(180deg, rgba(11, 9, 22, 0.82), rgba(5, 5, 12, 0.72));
+    linear-gradient(180deg, var(--surface), var(--surface));
 }
 
 .tx-status > div:first-child {
@@ -16,40 +16,40 @@
 
 .tx-status strong {
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .tx-status span,
 .tx-status p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .tx-status .tx-reference {
   width: fit-content;
   max-width: 100%;
-  padding: 5px 8px;
+  padding: 5px var(--space-2);
   overflow: hidden;
-  color: var(--violet);
-  border: 1px solid rgba(167, 139, 255, 0.22);
+  color: var(--muted);
+  border: 1px solid var(--line);
   border-radius: 6px;
-  background: rgba(5, 5, 12, 0.74);
+  background: var(--surface);
   text-overflow: ellipsis;
 }
 
 .tx-status.executed {
-  border-color: rgba(93, 219, 128, 0.34);
-  background: rgba(52, 154, 83, 0.11);
+  border-color: var(--line);
+  background: var(--success-surface);
 }
 
 .tx-status.failed,
 .tx-status.rejected,
 .tx-status.timeout {
-  border-color: rgba(255, 110, 110, 0.34);
-  background: rgba(132, 35, 35, 0.16);
+  border-color: var(--line);
+  background: var(--error-surface);
 }
 
 .tx-status p {
   margin: 0;
-  color: #ffb2b2;
+  color: var(--error);
 }

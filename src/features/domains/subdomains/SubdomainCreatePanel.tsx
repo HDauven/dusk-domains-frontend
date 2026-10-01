@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button'
 import {
   subnameExpiryDescription,
   type SubnameExpiryPolicy,
@@ -42,14 +43,14 @@ export function SubdomainCreatePanel({
         />
 
         <div className="subname-create-action">
-          <button
-            className="commit-button save-record"
+          <Button
+            className="save-record"
             disabled={!canCreateSubname}
             type="button"
             onClick={() => void onCreateSubname()}
           >
             Create subdomain
-          </button>
+          </Button>
         </div>
       </div>
 

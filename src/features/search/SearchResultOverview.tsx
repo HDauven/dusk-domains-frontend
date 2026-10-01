@@ -1,3 +1,5 @@
+import { Panel } from '../../components/ui/Panel'
+import { Button } from '../../components/ui/Button'
 import { ArrowRight, Clock } from 'lucide-react'
 import type { NameResult, NameStatus, PendingNameReservation } from '../../names/internal'
 import {
@@ -51,37 +53,37 @@ export function SearchResultOverview({
     const status = savedReservationWindow?.status ?? 'missing'
     const waitBlocks = savedReservationWindow?.waitBlocks ?? 0
     return (
-      <section className="claim-card resume" aria-labelledby="overview-heading">
+      <Panel className="claim-card resume" aria-labelledby="overview-heading">
         <div className="claim-main">
           <span className="eyebrow"><Clock size={13} /> Registration saved</span>
           <h2 id="overview-heading">{pendingReservationStatusCopy(status, waitBlocks)}</h2>
           <p>{pendingReservationNextStepCopy(status, waitBlocks)}</p>
         </div>
         <div className="claim-stub">
-          <button className="primary-button" type="button" onClick={() => void onOpenPendingReservation(savedReservation)}>
+          <Button variant="primary" type="button" onClick={() => void onOpenPendingReservation(savedReservation)}>
             {pendingReservationActionCopy(status)} <ArrowRight size={18} />
-          </button>
-          <button className="commit-button" type="button" onClick={() => void onOpenPendingReservations()}>
+          </Button>
+          <Button type="button" onClick={() => void onOpenPendingReservations()}>
             All saved registrations
-          </button>
+          </Button>
         </div>
-      </section>
+      </Panel>
     )
   }
 
   if (!canRegister) {
     return (
-      <section className="claim-card blocked" aria-labelledby="overview-heading">
+      <Panel className="claim-card blocked" aria-labelledby="overview-heading">
         <div className="claim-main">
           <h2 id="overview-heading">{resultStatus === 'registered' ? 'This name is taken' : 'This name can’t be claimed'}</h2>
           <p>{overviewCopyForIssues(resultStatus, resultIssues)}</p>
         </div>
         {resultStatus === 'registered' ? (
           <div className="claim-stub">
-            <button className="commit-button" type="button" onClick={onViewDetails}>View profile</button>
+            <Button type="button" onClick={onViewDetails}>View profile</Button>
           </div>
         ) : null}
-      </section>
+      </Panel>
     )
   }
 
@@ -89,7 +91,7 @@ export function SearchResultOverview({
   const label = displayName.replace(/\.dusk$/, '')
 
   return (
-    <section className="claim-card" aria-labelledby="overview-heading">
+    <Panel className="claim-card" aria-labelledby="overview-heading">
       <div className="claim-main">
         <span className="eyebrow">
           {label.length} {pluralize(label.length, 'character')} · {feeConfigLoading ? 'loading price' : `${formatDusk(perYear)} DUSK per year`}
@@ -103,10 +105,10 @@ export function SearchResultOverview({
           <strong>{feeConfigLoading ? '…' : formatDusk(registrationFee)} <small>DUSK</small></strong>
           <span>for {duration} {pluralize(duration, 'year')} · until {expiryDate}</span>
         </div>
-        <button className="primary-button" type="button" disabled={feeConfigLoading} onClick={onContinueRegistration}>
+        <Button variant="primary" type="button" disabled={feeConfigLoading} onClick={onContinueRegistration}>
           Claim {displayName}
-        </button>
+        </Button>
       </div>
-    </section>
+    </Panel>
   )
 }

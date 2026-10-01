@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import {
   walletActionLabel,
@@ -18,7 +19,7 @@ export function RegistrationWalletActionButton({
 }) {
   if (walletSetupState === 'missing') {
     return (
-      <a className={className} href={installUrl} target="_blank" rel="noreferrer">
+      <a className={`button ${className}`} href={installUrl} target="_blank" rel="noreferrer">
         Install wallet
         <ExternalLink size={16} />
       </a>
@@ -26,15 +27,15 @@ export function RegistrationWalletActionButton({
   }
 
   return (
-    <button
-      className={className}
-      disabled={walletSetupState === 'detecting'}
+    <Button variant="primary"
+      className="compact"
+      loading={walletSetupState === 'detecting'}
       title={walletActionTitle(walletSetupState)}
       type="button"
       onClick={() => void onOpenWalletConnection()}
     >
       {walletActionLabel(walletSetupState)}
       <ArrowRight size={16} />
-    </button>
+    </Button>
   )
 }

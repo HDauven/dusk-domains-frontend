@@ -1,3 +1,4 @@
+import { Button } from './Button'
 import { pluralize } from '../../utils/format'
 
 const termChoices = [1, 2, 3, 5, 10]
@@ -25,7 +26,7 @@ export function TermPicker({
   return (
     <div className="term-picker" role="group" aria-label={label}>
       {terms.map((years) => (
-        <button
+        <Button
           key={years}
           className={years === value ? 'active' : ''}
           aria-pressed={years === value}
@@ -34,7 +35,7 @@ export function TermPicker({
           onClick={() => onChange(years)}
         >
           {years} {pluralize(years, 'year')}
-        </button>
+        </Button>
       ))}
     </div>
   )

@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { Clock3 } from 'lucide-react'
 import type { RecentChangeWarning } from '../../names/internal'
 import { recentTargetLabel, recordLabel } from './activityCopy'
@@ -58,9 +59,9 @@ export function RecentWarningSummary({
           {warnings.length === 1 ? 'One domain change is' : `${warnings.length} domain changes are`} in the activity log.
         </span>
       </div>
-      <button className="commit-button" type="button" onClick={onReview}>
+      <Button type="button" onClick={onReview}>
         View activity
-      </button>
+      </Button>
     </div>
   )
 }

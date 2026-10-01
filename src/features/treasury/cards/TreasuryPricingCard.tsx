@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button'
 import { ArrowRight, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { TransactionStatusNotice } from '../../../components/status/TransactionStatusNotice'
 import { txStatusCopy } from '../../../components/status/txStatus'
@@ -79,8 +80,8 @@ export function TreasuryPricingCard({
       ) : null}
       <div className="fee-config-actions">
         {!selectedAddress ? (
-          <button
-            className="primary-button compact"
+          <Button variant="primary"
+            className="compact"
             disabled={walletSetupState === 'detecting'}
             title={walletActionTitle(walletSetupState)}
             type="button"
@@ -88,16 +89,16 @@ export function TreasuryPricingCard({
           >
             {walletActionLabel(walletSetupState)}
             <ArrowRight size={18} />
-          </button>
+          </Button>
         ) : null}
-        <button
-          className="commit-button save-record"
+        <Button
+          className="save-record"
           disabled={!canUpdateFeeConfig}
           type="button"
           onClick={() => void onUpdateFeeConfig()}
         >
           {feeConfigBusy ? txStatusCopy(feeConfigTxState?.status, feeConfigTxState?.message) : 'Update pricing'}
-        </button>
+        </Button>
       </div>
       {selectedAddress && !connectedAsTreasuryOperator ? <p className="secure-note">Only the operator wallet can update pricing.</p> : null}
       {feeConfigTxState ? <TransactionStatusNotice state={feeConfigTxState} /> : null}

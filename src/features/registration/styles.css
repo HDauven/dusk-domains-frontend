@@ -23,7 +23,7 @@
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -31,12 +31,12 @@
   content: '';
   flex: 1;
   height: 1px;
-  margin: 0 12px 0 2px;
-  background: var(--line-strong);
+  margin: 0 var(--space-3) 0 2px;
+  background: var(--control-line);
 }
 
 .register-stepper li.complete:not(:last-child)::after {
-  background: linear-gradient(90deg, var(--rose), var(--dawn));
+  background: var(--mint);
 }
 
 .register-stepper li:last-child {
@@ -49,9 +49,9 @@
   flex: 0 0 auto;
   width: 26px;
   height: 26px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--control-line);
   border-radius: 50%;
-  font: 600 12px var(--font-mono);
+  font: 600 var(--text-xs) var(--font-ui);
 }
 
 .register-stepper li.active {
@@ -61,17 +61,17 @@
 .register-stepper li.active .register-stepper-dot {
   border-color: transparent;
   color: var(--night);
-  background: var(--grad-dusk);
-  box-shadow: 0 0 18px rgba(255, 111, 145, 0.45);
+  background: var(--peach);
+  box-shadow: 0 0 18px var(--shadow-color);
 }
 
 .register-stepper li.complete {
-  color: var(--ink-2);
+  color: var(--muted);
 }
 
 .register-stepper li.complete .register-stepper-dot {
-  border-color: rgba(255, 214, 176, 0.5);
-  color: var(--dawn);
+  border-color: var(--mint);
+  color: var(--mint);
 }
 
 .register-head h2 {
@@ -87,24 +87,24 @@
 .register-wallet {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--space-3);
+  padding: 14px var(--space-4);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(246, 241, 255, 0.03);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
 }
 
 .register-wallet svg {
   flex: 0 0 auto;
-  color: var(--ok);
+  color: var(--mint);
 }
 
 .register-wallet.blocked {
-  border-color: rgba(255, 207, 122, 0.3);
+  border-color: var(--line);
 }
 
 .register-wallet.blocked svg {
-  color: var(--warn);
+  color: var(--muted);
 }
 
 .register-wallet div {
@@ -120,17 +120,17 @@
 
 .register-wallet code {
   color: var(--ink);
-  font: 500 14px var(--font-mono);
+  font: 500 var(--text-sm) var(--font-mono);
 }
 
 .register-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
+  gap: var(--space-4);
+  padding: 14px var(--space-4);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
@@ -146,7 +146,7 @@
 
 .register-toggle em {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-style: normal;
 }
 
@@ -157,12 +157,12 @@
   width: 42px;
   height: 24px;
   margin: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: rgba(246, 241, 255, 0.08);
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
   cursor: pointer;
   appearance: none;
-  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+  transition: background var(--motion-feedback) var(--ease), border-color var(--motion-feedback) var(--ease);
 }
 
 .register-toggle input::after {
@@ -173,13 +173,13 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--ink-2);
-  transition: transform 160ms var(--ease), background 160ms var(--ease);
+  background: var(--muted);
+  transition: transform var(--motion-feedback) var(--ease), background var(--motion-feedback) var(--ease);
 }
 
 .register-toggle input:checked {
   border-color: transparent;
-  background: var(--grad-dusk);
+  background: var(--peach);
 }
 
 .register-toggle input:checked::after {
@@ -193,14 +193,14 @@
 }
 
 .register-toggle input:focus-visible {
-  outline: 2px solid var(--dawn);
+  outline: 2px solid var(--peach);
   outline-offset: 3px;
 }
 
 .registration-address-input-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 /* Action: what to do now, and the one button that does it. */
@@ -210,23 +210,23 @@
   gap: 14px 18px;
   align-items: center;
   padding: 18px;
-  border: 1px solid rgba(255, 214, 176, 0.22);
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 111, 145, 0.08), rgba(123, 97, 255, 0.06));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 .register-action-copy {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .register-action-copy strong {
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--text-base);
 }
 
 .register-action-copy span {
-  color: var(--ink-2);
+  color: var(--muted);
   font-size: 13.5px;
 }
 
@@ -239,16 +239,16 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px 14px;
+  gap: var(--space-2) 14px;
 }
 
 .register-wallet-help {
   display: grid;
   flex-basis: 100%;
   justify-items: end;
-  gap: 4px;
-  color: var(--ink-2);
-  font-size: 13px;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
   text-align: right;
 }
 
@@ -261,38 +261,38 @@
 
 .register-reservation span {
   color: var(--muted);
-  font: 500 11px var(--font-mono);
+  font: 500 var(--text-xs) var(--font-ui);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .register-reservation strong {
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--text-base);
 }
 
 .register-reservation.ready strong,
 .register-reservation.executed strong {
-  color: var(--ok);
+  color: var(--mint);
 }
 
 .register-reservation.stale strong {
-  color: var(--warn);
+  color: var(--muted);
 }
 
 .register-settle {
   grid-column: 1 / -1;
   height: 4px;
   overflow: hidden;
-  border-radius: 999px;
-  background: rgba(246, 241, 255, 0.08);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
 }
 
 .register-settle span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--violet), var(--rose), var(--dawn));
+  background: var(--mint);
   transition: width 600ms var(--ease);
 }
 
@@ -302,17 +302,17 @@
   gap: 14px;
   padding: 18px;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(246, 241, 255, 0.03);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
 }
 
 .registration-progress.executed {
-  border-color: rgba(141, 240, 192, 0.3);
-  background: rgba(141, 240, 192, 0.05);
+  border-color: var(--line);
+  background: var(--success-surface);
 }
 
 .registration-progress.failed {
-  border-color: rgba(255, 138, 150, 0.35);
+  border-color: var(--line);
 }
 
 .registration-progress-header {
@@ -325,7 +325,7 @@
 }
 
 .registration-progress-header span {
-  color: var(--ink-2);
+  color: var(--muted);
   font-size: 13.5px;
 }
 
@@ -350,15 +350,15 @@
 }
 
 .registration-progress li.executed {
-  color: var(--ink-2);
+  color: var(--muted);
 }
 
 .registration-progress li.executed svg {
-  color: var(--ok);
+  color: var(--mint);
 }
 
 .registration-progress li.failed svg {
-  color: var(--danger);
+  color: var(--error);
 }
 
 .registration-progress li div {
@@ -368,14 +368,14 @@
 
 .registration-progress li strong {
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .registration-progress li code {
-  font: 500 12px var(--font-mono);
+  font: 500 var(--text-xs) var(--font-ui);
 }
 
-.registration-progress > .primary-button {
+.registration-progress > .button-primary {
   justify-self: start;
 }
 
@@ -383,16 +383,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.register-nav .text-button {
+.register-nav .button-quiet {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--ink-2);
+  color: var(--muted);
 }
 
 /* Summary stub */
@@ -410,7 +410,7 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--space-3);
   padding: 9px 0;
   border-bottom: 1px solid var(--line);
   font-size: 13.5px;
@@ -436,12 +436,12 @@
   font: 500 12.5px var(--font-mono);
 }
 
-.register-facts .text-button {
+.register-facts .button-quiet {
   font-size: 12.5px;
 }
 
 .register-summary .claim-price strong {
-  font-size: 44px;
+  font-size: var(--text-3xl);
 }
 
 @media (max-width: 860px) {
@@ -450,7 +450,7 @@
   }
 
   .register-summary .claim-price strong {
-    font-size: 36px;
+    font-size: var(--text-3xl);
   }
 }
 
@@ -467,8 +467,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .register-action > .primary-button,
-  .register-action > .commit-button,
+  .register-action > .button-primary,
+  .register-action > .button-secondary,
   .register-wallet-actions {
     width: 100%;
     justify-content: stretch;

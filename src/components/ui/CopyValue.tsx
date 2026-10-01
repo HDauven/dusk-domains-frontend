@@ -1,26 +1,30 @@
 import { Check, Copy } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import { Button } from './Button'
+import { Toast } from './Toast'
 
-export function CopyValue({ value, label }: { value: string, label: string }) {
-  const [copied, setCopied] = useState(false)
+export function CopyValue({ value, label = 'address', disabled = false }: { value: string, label?: string, disabled?: boolean }) {
+  return <CopyAction key={value} value={value} label={label} disabled={disabled} />
+}
 
-  useEffect(() => {
-    if (!copied) return
-    const timer = window.setTimeout(() => setCopied(false), 1600)
-    return () => window.clearTimeout(timer)
-  }, [copied])
-
-  return (
-    <button
-      className="copy-value"
-      type="button"
-      aria-label={copied ? `${label} copied` : `Copy ${label}`}
-      onClick={() => {
-        void navigator.clipboard?.writeText(value).then(() => setCopied(true), () => undefined)
-      }}
-    >
-      {copied ? <Check size={15} /> : <Copy size={15} />}
-      <span>{copied ? 'Copied' : 'Copy'}</span>
-    </button>
-  )
+function CopyAction({ value, label, disabled }: { value: string, label: string, disabled: boolean }) {
+  const [state, setState] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle')
+  const mounted = useRef(false)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  return <span className="copy-control">
+    <Button className="copy-value" disabled={disabled || !value} loading={state === 'copying'} aria-label={`Copy ${label}`} onClick={async () => {
+      setState('copying')
+      try {
+        await navigator.clipboard.writeText(value)
+        if (mounted.current) setState('copied')
+      } catch {
+        if (mounted.current) setState('error')
+      }
+    }}>
+      {state === 'copied' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+      {state === 'copied' ? 'Copied' : state === 'copying' ? 'Copying' : 'Copy'}
+    </Button>
+    <Toast message={state === 'copied' ? `${label} copied.` : state === 'error' ? `Could not copy ${label}. Select the full value and copy it.` : ''}
+      tone={state === 'error' ? 'danger' : 'success'} onDismiss={() => setState('idle')} />
+  </span>
 }

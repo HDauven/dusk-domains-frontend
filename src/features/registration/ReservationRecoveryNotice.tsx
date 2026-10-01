@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { Clock } from 'lucide-react'
 
 export function ReservationRecoveryNotice({
@@ -9,9 +10,9 @@ export function ReservationRecoveryNotice({
     <p className="reservation-recovery">
       <Clock size={15} />
       <span>If you leave, this reservation waits for you under My names.</span>
-      <button className="text-button" type="button" onClick={onView}>
+      <Button variant="quiet" type="button" onClick={onView}>
         View
-      </button>
+      </Button>
     </p>
   )
 }

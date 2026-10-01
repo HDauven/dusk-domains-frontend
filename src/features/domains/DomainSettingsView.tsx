@@ -1,3 +1,4 @@
+import { Panel } from '../../components/ui/Panel'
 import { PanelHeader } from '../../components/ui/PanelHeader'
 import { isSubname } from './domainFormat'
 import { AuthoritySettingsPanel } from './settings/AuthoritySettingsPanel'
@@ -35,7 +36,7 @@ export function DomainSettingsView({
   renewalYears,
 }: DomainSettingsViewProps) {
   return (
-    <section className="management-panel" id="my-names" aria-labelledby="management-heading">
+    <Panel className="management-panel" id="my-names" aria-labelledby="management-heading">
       <PanelHeader
         headingId="management-heading"
         subtitle={`Who owns ${displayName}, who manages it, and how long it lasts.`}
@@ -84,7 +85,7 @@ export function DomainSettingsView({
           renewalYears={renewalYears}
         />
       )}
-    </section>
+    </Panel>
   )
 }
 

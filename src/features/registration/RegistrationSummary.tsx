@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { abbreviate, formatDusk, pluralize } from '../../utils/format'
 import type { ReferralState } from '../referrals/referralState'
 
@@ -46,7 +47,7 @@ export function RegistrationSummary({
           <dd>
             {duration} {pluralize(duration, 'year')}
             {committed || registrationComplete ? null : (
-              <button className="text-button" type="button" onClick={onChangeTerm}>Change</button>
+              <Button variant="quiet" type="button" onClick={onChangeTerm}>Change</Button>
             )}
           </dd>
         </div>

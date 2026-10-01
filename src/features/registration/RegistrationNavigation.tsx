@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { RegistrationStepId } from './registrationSteps'
 
@@ -18,13 +19,13 @@ export function RegistrationNavigation({
 
   return (
     <div className="register-nav">
-      <button className="text-button" type="button" onClick={onBack}>
+      <Button variant="quiet" type="button" onClick={onBack}>
         <ArrowLeft size={15} /> Back
-      </button>
+      </Button>
       {nextStep ? (
-        <button className="primary-button compact" disabled={!canContinue} type="button" onClick={() => onNext(nextStep)}>
+        <Button variant="primary" className="compact" disabled={!canContinue} type="button" onClick={() => onNext(nextStep)}>
           Continue <ArrowRight size={17} />
-        </button>
+        </Button>
       ) : null}
     </div>
   )

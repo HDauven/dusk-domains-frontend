@@ -1,3 +1,5 @@
+import { Input } from '../../../components/ui/Input'
+import { Button } from '../../../components/ui/Button'
 import { FieldHelp, FieldShell } from '../../../components/ui/FormControls'
 
 export function RegistrationAddressField({
@@ -20,15 +22,15 @@ export function RegistrationAddressField({
       labelFor="registration-address"
     >
       <div className="registration-address-input-row">
-        <input
+        <Input
           id="registration-address"
           value={registrationAddressInput}
           onChange={(event) => onAddressInputChange(event.target.value)}
           placeholder={selectedAddress}
         />
-        <button className="commit-button" type="button" onClick={onUseWalletAddress}>
+        <Button type="button" onClick={onUseWalletAddress}>
           Use my wallet
-        </button>
+        </Button>
       </div>
       <FieldHelp>Payments to this name go to this address. You can change it later.</FieldHelp>
       {registrationTargetAddressErrors.length ? (

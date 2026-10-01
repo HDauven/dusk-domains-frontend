@@ -2,7 +2,7 @@
 
 .my-names-header code {
   color: var(--ink);
-  font: 500 14px var(--font-mono);
+  font: 500 var(--text-sm) var(--font-mono);
 }
 
 /* Unfinished claims */
@@ -19,21 +19,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px 24px;
-  padding: 18px 20px;
-  border: 1px solid rgba(255, 214, 176, 0.22);
-  border-radius: 18px;
-  background: linear-gradient(120deg, rgba(255, 111, 145, 0.09), rgba(123, 97, 255, 0.05) 60%, transparent), var(--surface);
-  backdrop-filter: blur(16px);
-}
-
-.pending-reservation.ready {
-  border-color: rgba(141, 240, 192, 0.32);
-}
-
-.pending-reservation.stale {
-  border-color: var(--line);
-  background: var(--surface);
+  gap: var(--space-4) var(--space-6);
+  padding: 18px var(--space-5);
 }
 
 .pending-reservation-main {
@@ -44,32 +31,32 @@
 
 .pending-reservation-main strong {
   color: var(--ink);
-  font: 400 26px/1.1 var(--font-display);
+  font: 400 var(--text-2xl)/1.1 var(--font-display);
   overflow-wrap: anywhere;
 }
 
 .pending-reservation-main span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .pending-reservation-main em {
-  color: var(--dawn);
+  color: var(--peach);
   font-style: normal;
   font-weight: 600;
 }
 
 .pending-reservation.ready em {
-  color: var(--ok);
+  color: var(--mint);
 }
 
 .pending-reservation.stale em {
-  color: var(--warn);
+  color: var(--muted);
 }
 
 .pending-reservation-main p {
-  margin: 4px 0 0;
-  color: var(--ink-2);
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
   font-size: 13.5px;
 }
 
@@ -77,31 +64,12 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 8px;
-}
-
-.icon-button {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--muted);
-  background: transparent;
-  cursor: pointer;
-  transition: color 160ms var(--ease), border-color 160ms var(--ease);
-}
-
-.icon-button:hover {
-  color: var(--ink);
-  border-color: var(--line-strong);
+  gap: var(--space-2);
 }
 
 /* Name cards */
 .my-names-section {
-  margin: 8px 0 -4px;
+  margin: var(--space-2) 0 -4px;
 }
 
 .name-card-grid {
@@ -110,91 +78,17 @@
   gap: 14px;
 }
 
-.name-card {
-  position: relative;
-  display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: 8px;
-  min-height: 190px;
-  padding: 22px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  color: inherit;
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-  transition: border-color 200ms var(--ease), transform 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-
-/* A faint horizon glow that rises on hover. */
-.name-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -20% -60% -20%;
-  height: 80%;
-  background: radial-gradient(ellipse at 50% 100%, rgba(255, 111, 145, 0.22), transparent 70%);
-  opacity: 0.4;
-  pointer-events: none;
-  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
-}
-
-.name-card:hover {
-  border-color: rgba(255, 214, 176, 0.32);
-  box-shadow: 0 18px 40px rgba(4, 3, 20, 0.5);
-  transform: translateY(-2px);
-}
-
-.name-card:hover::after {
-  opacity: 1;
-  transform: translateY(-10%);
-}
-
-.name-card:focus-visible {
-  outline: 2px solid var(--dawn);
-  outline-offset: 3px;
-}
-
-.name-card-orb {
-  display: grid;
-  place-items: center;
-  margin-bottom: 6px;
-  padding: 3px;
-  border-radius: 50%;
-  background: conic-gradient(from 200deg, var(--dawn), var(--rose), var(--violet), var(--dawn));
-}
-
-.name-card-orb .name-avatar {
-  border: 3px solid var(--night);
-}
-
-.name-card-name {
-  max-width: 100%;
-  color: var(--ink);
-  font: 400 32px/1.02 var(--font-display);
-  letter-spacing: -0.01em;
-  overflow-wrap: anywhere;
-}
-
-.name-card-name span {
-  color: var(--muted);
-  font-style: italic;
-}
-
 .name-card-life {
-  color: var(--ink-2);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
 .name-card-life.warn {
-  color: var(--warn);
+  color: var(--muted);
 }
 
 .name-card-life.danger {
-  color: var(--danger);
+  color: var(--error);
 }
 
 .name-card-tags {
@@ -205,49 +99,26 @@
   padding-top: 6px;
 }
 
-.name-card.skeleton {
-  cursor: default;
-  background: linear-gradient(100deg, var(--surface) 30%, rgba(246, 241, 255, 0.07) 50%, var(--surface) 70%) 0 0 / 300% 100%;
-  animation: shimmer 1.4s linear infinite;
-}
-
-.name-card.skeleton::after {
-  display: none;
-}
-
-@keyframes shimmer {
-  to { background-position: -150% 0; }
-}
 
 /* Empty */
 .my-names-empty {
   display: grid;
   justify-items: center;
   gap: 10px;
-  padding: 56px 20px 64px;
+  padding: 56px var(--space-5) var(--space-16);
   text-align: center;
-}
-
-.my-names-empty-orb {
-  width: 88px;
-  height: 88px;
-  margin-bottom: 12px;
-  border: 1.5px dashed rgba(255, 214, 176, 0.45);
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 120%, rgba(255, 111, 145, 0.35), transparent 65%);
-  box-shadow: 0 0 60px rgba(255, 111, 145, 0.18);
 }
 
 .my-names-empty h2 {
   margin: 0;
   color: var(--ink);
-  font: 400 36px/1.05 var(--font-display);
+  font: 400 var(--text-3xl)/1.05 var(--font-display);
 }
 
 .my-names-empty p {
   max-width: 40ch;
   margin: 0 0 10px;
-  color: var(--ink-2);
+  color: var(--muted);
 }
 
 .my-names-empty-actions {
@@ -257,17 +128,6 @@
   gap: 10px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .name-card,
-  .name-card::after {
-    transition: none;
-  }
-
-  .name-card.skeleton {
-    animation: none;
-  }
-}
-
 @media (max-width: 640px) {
   .pending-reservation {
     display: grid;
@@ -275,24 +135,6 @@
 
   .pending-reservation-actions > :first-child {
     flex: 1;
-  }
-
-  .name-card {
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: 14px;
-    row-gap: 4px;
-    min-height: 0;
-    padding: 16px;
-  }
-
-  .name-card-orb {
-    grid-row: span 3;
-    align-self: start;
-    margin: 0;
-  }
-
-  .name-card-name {
-    font-size: 26px;
   }
 
   .name-card-tags {

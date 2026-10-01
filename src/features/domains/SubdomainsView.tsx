@@ -1,3 +1,4 @@
+import { Panel } from '../../components/ui/Panel'
 import { Info } from 'lucide-react'
 import { PanelHeader } from '../../components/ui/PanelHeader'
 import { formatLifecycleDay } from './domainFormat'
@@ -36,7 +37,7 @@ export function SubdomainsView({
     : `label.${displayName}`
 
   return (
-    <section className="subnames-panel" aria-labelledby="subnames-heading">
+    <Panel className="subnames-panel" aria-labelledby="subnames-heading">
       <PanelHeader
         headingId="subnames-heading"
         subtitle={`Names under ${displayName}, like pay.${displayName}. Each can point somewhere else and have its own manager.`}
@@ -80,7 +81,7 @@ export function SubdomainsView({
 
         <ManagementFeedback error={error} txState={txState} />
       </div>
-    </section>
+    </Panel>
   )
 }
 

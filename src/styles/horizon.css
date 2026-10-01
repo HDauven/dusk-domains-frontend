@@ -18,7 +18,7 @@
 .my-names-panel {
   display: grid;
   gap: 18px;
-  padding: 18px 0 48px;
+  padding: 18px 0 var(--space-12);
 }
 
 /* Page header: a display headline, a line of context, actions on the right. */
@@ -27,22 +27,22 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 18px 24px;
+  gap: 18px var(--space-6);
   padding: 10px 0 6px;
 }
 
 .my-names-header h1 {
   margin: 0;
   color: var(--ink);
-  font: 400 clamp(44px, 5.4vw, 64px)/0.95 var(--font-display);
+  font: 400 var(--text-title)/var(--leading-tight) var(--font-display);
   letter-spacing: -0.02em;
 }
 
 .my-names-header p {
   max-width: 56ch;
   margin: 10px 0 0;
-  color: var(--ink-2);
-  font-size: 15px;
+  color: var(--muted);
+  font-size: var(--text-base);
 }
 
 .my-names-actions {
@@ -61,35 +61,26 @@
 .activity-panel,
 .primary-panel {
   display: grid;
-  gap: 20px;
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+  gap: var(--space-5);
+  padding: var(--space-7);
 }
 
 .account-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .account-card {
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: var(--space-4);
   min-width: 0;
-  padding: 24px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface);
-  backdrop-filter: blur(18px);
+  padding: var(--space-6);
 }
 
-.account-card > .primary-button,
-.account-card > .commit-button {
+.account-card > .button-primary,
+.account-card > .button-secondary {
   justify-self: start;
 }
 
@@ -102,7 +93,7 @@
 .account-card-heading span,
 .eyebrow {
   color: var(--muted);
-  font: 500 11px var(--font-mono);
+  font: 500 var(--text-xs) var(--font-ui);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -110,15 +101,15 @@
 .account-card-heading strong {
   min-width: 0;
   color: var(--ink);
-  font: 400 30px/1.05 var(--font-display);
+  font: 400 var(--text-2xl)/1.05 var(--font-display);
   overflow-wrap: anywhere;
 }
 
 .account-card-intro {
   max-width: 54ch;
   margin: 0;
-  color: var(--ink-2);
-  font-size: 14px;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
 /* Section header inside a surface */
@@ -127,20 +118,20 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px 20px;
+  gap: 14px var(--space-5);
 }
 
 .management-header h2 {
   margin: 0;
   color: var(--ink);
-  font: 400 34px/1 var(--font-display);
+  font: 400 var(--text-2xl)/1 var(--font-display);
   letter-spacing: -0.01em;
 }
 
 .management-header p {
-  margin: 8px 0 0;
-  color: var(--ink-2);
-  font-size: 14px;
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
   overflow-wrap: anywhere;
 }
 
@@ -149,48 +140,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-}
-
-/* Badges */
-.management-badge,
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  color: var(--ink-2);
-  background: rgba(246, 241, 255, 0.05);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.management-badge.verified,
-.status-badge.ok {
-  color: var(--ok);
-  border-color: rgba(141, 240, 192, 0.3);
-  background: rgba(141, 240, 192, 0.08);
-}
-
-.management-badge.warning,
-.status-badge.warn {
-  color: var(--warn);
-  border-color: rgba(255, 207, 122, 0.3);
-  background: rgba(255, 207, 122, 0.08);
-}
-
-.status-badge.danger {
-  color: var(--danger);
-  border-color: rgba(255, 122, 133, 0.3);
-  background: rgba(255, 122, 133, 0.08);
-}
-
-.status-badge.dusk {
-  color: var(--dawn);
-  border-color: rgba(255, 214, 176, 0.3);
-  background: rgba(255, 111, 145, 0.08);
 }
 
 /* Label and value rows */
@@ -202,10 +151,10 @@
 }
 
 .claim-review {
-  padding: 4px 16px;
+  padding: var(--space-1) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: rgba(6, 6, 26, 0.4);
+  background: var(--surface);
 }
 
 .account-detail-list p,
@@ -214,11 +163,11 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 16px;
+  gap: var(--space-4);
   margin: 0;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--line);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .claim-review p:last-child {
@@ -248,7 +197,7 @@
 
 .account-detail-list code,
 .claim-review code {
-  font: 500 13px var(--font-mono);
+  font: 500 var(--text-sm) var(--font-mono);
 }
 
 /* Metric chips */
@@ -262,102 +211,32 @@
   display: grid;
   gap: 2px;
   min-width: 120px;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface-soft);
+  background: var(--surface);
 }
 
 .my-names-summary strong {
   color: var(--ink);
-  font: 400 28px/1 var(--font-display);
+  font: 400 var(--text-2xl)/1 var(--font-display);
 }
 
 .my-names-summary span {
   color: var(--muted);
-  font-size: 12px;
-}
-
-/* Buttons */
-.primary-button.compact {
-  min-width: 0;
-  min-height: 46px;
-  padding: 0 20px;
-  font-size: 15px;
-}
-
-.commit-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 0 16px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  color: var(--ink);
-  background: rgba(246, 241, 255, 0.05);
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition:
-    background 160ms var(--ease),
-    border-color 160ms var(--ease),
-    color 160ms var(--ease),
-    transform 160ms var(--ease);
-}
-
-.commit-button:not(:disabled):hover {
-  border-color: rgba(246, 241, 255, 0.34);
-  background: rgba(246, 241, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.commit-button:not(:disabled):active {
-  transform: translateY(0);
-}
-
-.commit-button.ready {
-  color: var(--ok);
-  border-color: rgba(141, 240, 192, 0.36);
-  background: rgba(141, 240, 192, 0.08);
-}
-
-.commit-button.danger {
-  color: var(--danger);
-  border-color: rgba(255, 122, 133, 0.36);
-}
-
-.primary-button:disabled,
-.commit-button:disabled {
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* A disabled primary action goes flat: the gradient only ever means "you can do this now". */
-.primary-button:disabled {
-  color: var(--muted);
-  background: rgba(246, 241, 255, 0.07);
-  filter: none;
-}
-
-.commit-button:disabled {
-  opacity: 0.45;
+  font-size: var(--text-xs);
 }
 
 /* Forms */
 .control-group {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .control-group label {
-  color: var(--ink-2);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -367,35 +246,6 @@
 .copy-row input {
   width: 100%;
   min-width: 0;
-  min-height: 46px;
-  padding: 0 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  color: var(--ink);
-  background: rgba(6, 6, 26, 0.6);
-  font: inherit;
-  font-size: 15px;
-  outline: none;
-  transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
-}
-
-.control-group textarea {
-  min-height: 96px;
-  padding: 12px 14px;
-  resize: vertical;
-}
-
-.control-group input:focus,
-.control-group select:focus,
-.control-group textarea:focus,
-.copy-row input:focus {
-  border-color: rgba(255, 214, 176, 0.5);
-  box-shadow: 0 0 0 4px rgba(255, 111, 145, 0.12);
-}
-
-.control-group input:disabled,
-.control-group select:disabled {
-  opacity: 0.55;
 }
 
 .control-group > span,
@@ -407,7 +257,7 @@
 
 .field-note.warning,
 .field-note.danger {
-  color: var(--warn);
+  color: var(--muted);
 }
 
 .copy-row {
@@ -423,12 +273,12 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 13px 16px;
+  padding: 13px var(--space-4);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  color: var(--ink-2);
-  background: var(--surface-soft);
-  font-size: 14px;
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
@@ -437,34 +287,34 @@
 .runtime-notice svg {
   flex: 0 0 auto;
   margin-top: 1px;
-  color: var(--violet-soft);
+  color: var(--muted);
 }
 
 .activity-empty.danger,
 .runtime-notice.danger {
-  color: #ffc2c8;
-  border-color: rgba(255, 122, 133, 0.3);
-  background: rgba(255, 122, 133, 0.07);
+  color: var(--error);
+  border-color: var(--line);
+  background: var(--error-surface);
 }
 
 .activity-empty.danger svg,
 .runtime-notice.danger svg {
-  color: var(--danger);
+  color: var(--error);
 }
 
 .activity-empty.success {
-  color: #c6f7df;
-  border-color: rgba(141, 240, 192, 0.28);
-  background: rgba(141, 240, 192, 0.07);
+  color: var(--mint);
+  border-color: var(--line);
+  background: var(--success-surface);
 }
 
 .activity-empty.success svg {
-  color: var(--ok);
+  color: var(--mint);
 }
 
 .activity-empty.subtle {
   border-style: dashed;
-  background: transparent;
+  background: var(--surface);
 }
 
 .runtime-notice {
@@ -483,47 +333,21 @@
 }
 
 .secure-note.danger {
-  color: #ffc2c8;
+  color: var(--error);
 }
 
 .reservation-recovery {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
-  color: var(--ink-2);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
 .reservation-recovery svg {
-  color: var(--dawn);
-}
-
-
-
-/* Inline actions that read as links */
-.text-button,
-.profile-empty button {
-  padding: 0;
-  border: 0;
-  color: var(--dawn);
-  background: none;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.text-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.text-button:hover,
-.profile-empty button:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--muted);
 }
 
 .sr-only {
@@ -538,50 +362,8 @@
   border: 0;
 }
 
-/* Tabs: a segmented row of views; scrolls sideways when it runs out of room. */
-.tabs {
-  display: flex;
-  gap: 4px;
-  padding: 5px;
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface-soft);
-  backdrop-filter: blur(12px);
-  scrollbar-width: none;
-}
-
-.tabs button {
-  flex: 1 0 auto;
-  padding: 9px 16px;
-  border: 0;
-  border-radius: 11px;
-  color: var(--ink-2);
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 560;
-  white-space: nowrap;
-  transition: color 160ms var(--ease), background 160ms var(--ease);
-}
-
-.tabs button:hover {
-  color: var(--ink);
-}
-
-.tabs button.active {
-  color: var(--ink);
-  background: rgba(246, 241, 255, 0.1);
-}
-
-.tabs button:focus-visible {
-  outline: 2px solid var(--dawn);
-  outline-offset: -2px;
-}
-
 .spin {
-  animation: spin 900ms linear infinite;
+  animation: spin var(--motion-spin) linear infinite;
 }
 
 @keyframes spin {
@@ -598,35 +380,7 @@
 .term-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-.term-picker button {
-  padding: 10px 16px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  color: var(--ink-2);
-  background: transparent;
-  cursor: pointer;
-  font: 500 14px var(--font-mono);
-  transition: all 160ms var(--ease);
-}
-
-.term-picker button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.term-picker button:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: rgba(246, 241, 255, 0.34);
-}
-
-.term-picker button.active {
-  color: var(--ink);
-  border-color: rgba(255, 214, 176, 0.55);
-  background: rgba(255, 111, 145, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(255, 214, 176, 0.2);
+  gap: var(--space-2);
 }
 
 @media (max-width: 860px) {
@@ -641,12 +395,11 @@
   .subnames-panel,
   .activity-panel,
   .primary-panel {
-    padding: 20px;
-    border-radius: 20px;
+    padding: var(--space-5);
   }
 
   .account-card {
-    padding: 20px;
+    padding: var(--space-5);
   }
 
   .my-names-header {

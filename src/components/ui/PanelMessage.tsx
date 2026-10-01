@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { EmptyState } from './EmptyState'
 
 type PanelMessageTone = 'default' | 'danger' | 'success' | 'subtle'
 
@@ -14,9 +15,6 @@ export function PanelMessage({
   const className = tone === 'default' ? 'activity-empty' : `activity-empty ${tone}`
 
   return (
-    <div className={className}>
-      {icon}
-      <span>{children}</span>
-    </div>
+    <EmptyState className={className} icon={icon}>{children}</EmptyState>
   )
 }

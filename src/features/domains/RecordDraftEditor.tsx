@@ -1,5 +1,8 @@
+import { Input } from '../../components/ui/Input'
+import { Button } from '../../components/ui/Button'
 import { Shield, Wallet } from 'lucide-react'
 import { useState } from 'react'
+import { recordLabel } from './recordPresentation'
 import {
   getRecordDefinition,
   type ResolverRecordKey,
@@ -45,19 +48,19 @@ export function RecordDraftEditor({
         return (
           <div className="record-draft-row" key={key}>
             <div className="record-draft-label">
-              <label htmlFor={`record-draft-${key}`}>{definition?.label ?? key}</label>
+              <label htmlFor={`record-draft-${key}`}>{recordLabel(key)}</label>
               <span>{recordVisibilityLabel(definition?.visibility)}</span>
             </div>
             <div className="record-draft-control">
-              <input
+              <Input
                 id={`record-draft-${key}`}
-                aria-label={`${definition?.label ?? key} record`}
+                aria-label={`${recordLabel(key)} record`}
                 value={value}
                 onChange={(event) => onDraftValueChange(key, event.target.value)}
                 placeholder={recordPlaceholder(key)}
               />
               {walletAction === 'public' ? (
-                <button
+                <Button
                   className="record-wallet-button"
                   disabled={!walletAddressAvailable}
                   title={walletAddressAvailable ? 'Use connected Dusk public address' : 'Connect wallet first'}
@@ -66,10 +69,10 @@ export function RecordDraftEditor({
                 >
                   <Wallet size={15} />
                   Use wallet
-                </button>
+                </Button>
               ) : null}
               {walletAction === 'shielded' ? (
-                <button
+                <Button
                   className="record-wallet-button"
                   disabled={!walletAddressAvailable || shieldedBusy}
                   title={walletAddressAvailable ? 'Request shielded address from wallet' : 'Connect wallet first'}
@@ -78,7 +81,7 @@ export function RecordDraftEditor({
                 >
                   <Shield size={15} />
                   {shieldedBusy ? 'Waiting' : 'Use wallet'}
-                </button>
+                </Button>
               ) : null}
             </div>
             <span className="record-draft-help">{recordFreshnessCopy(definition)}</span>

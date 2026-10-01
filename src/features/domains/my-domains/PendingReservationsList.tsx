@@ -1,3 +1,5 @@
+import { Panel } from '../../../components/ui/Panel'
+import { Button } from '../../../components/ui/Button'
 import { ArrowRight, X } from 'lucide-react'
 import { registrationCommitWindow, type PendingNameReservation } from '../../../names/internal'
 import { pluralize } from '../../../utils/format'
@@ -26,7 +28,7 @@ export function PendingReservationsList({
       {pendingReservations.map((reservation) => {
         const reservationWindow = registrationCommitWindow(reservation.committedBlockHeight, currentBlockHeight)
         return (
-          <article className={`pending-reservation ${reservationWindow.status}`} key={reservation.commitment}>
+          <Panel as="article" className={`pending-reservation ${reservationWindow.status}`} key={reservation.commitment}>
             <div className="pending-reservation-main">
               <strong>{reservation.name}</strong>
               <span>
@@ -36,14 +38,14 @@ export function PendingReservationsList({
               <p>{pendingReservationNextStepCopy(reservationWindow.status, reservationWindow.waitBlocks)}</p>
             </div>
             <div className="pending-reservation-actions">
-              <button
-                className={reservationWindow.status === 'ready' ? 'primary-button compact' : 'commit-button'}
+              <Button variant={reservationWindow.status === 'ready' ? 'primary' : 'secondary'}
+                className="compact"
                 type="button"
                 onClick={() => void onOpenPendingReservation(reservation)}
               >
                 {pendingReservationActionCopy(reservationWindow.status)} <ArrowRight size={16} />
-              </button>
-              <button
+              </Button>
+              <Button variant="quiet"
                 className="icon-button"
                 type="button"
                 aria-label={`Forget the saved claim for ${reservation.name}`}
@@ -51,9 +53,9 @@ export function PendingReservationsList({
                 onClick={() => onForgetPendingReservation(reservation)}
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
-          </article>
+          </Panel>
         )
       })}
     </section>

@@ -1,3 +1,5 @@
+import { Panel } from '../../components/ui/Panel'
+import { Button } from '../../components/ui/Button'
 import { Info } from 'lucide-react'
 import { TextField } from '../../components/ui/FormControls'
 import { PanelHeader } from '../../components/ui/PanelHeader'
@@ -39,9 +41,9 @@ export function PrimaryDomainView({
   txState: DuskDomainTxState | null
 }) {
   return (
-    <section className="primary-panel" aria-labelledby="primary-heading">
+    <Panel className="primary-panel" aria-labelledby="primary-heading">
       <PanelHeader
-        badge={primaryVerification.verified ? 'Verified' : 'Address fallback'}
+        badge={primaryVerification.verified ? 'Primary name' : 'Address fallback'}
         badgeClassName={primaryVerification.verified ? 'verified' : 'warning'}
         headingId="primary-heading"
         subtitle="The name apps show for a wallet instead of its address."
@@ -66,22 +68,22 @@ export function PrimaryDomainView({
       </div>
 
       <div className="primary-actions">
-        <button
-          className="commit-button save-record"
+        <Button
+          className="save-record"
           disabled={!canSetPrimary}
           type="button"
           onClick={() => void onSetPrimary()}
         >
           Set as primary
-        </button>
-        <button
-          className="commit-button danger-action"
+        </Button>
+        <Button variant="destructive"
+          className="danger-action"
           disabled={!canClearPrimary}
           type="button"
           onClick={() => void onClearPrimary()}
         >
           Clear primary
-        </button>
+        </Button>
       </div>
 
       <div className="public-warning record">
@@ -90,6 +92,6 @@ export function PrimaryDomainView({
       </div>
 
       <ManagementFeedback error={error} txState={txState} />
-    </section>
+    </Panel>
   )
 }

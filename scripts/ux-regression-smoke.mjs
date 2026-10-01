@@ -1,3 +1,4 @@
+import { checkUiSystem } from './ui-system-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
 import { checkInitialHydration, checkSelectedAuction } from './indexer-review-smoke.mjs'
@@ -193,7 +194,7 @@ try {
       assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width, `Open clipped at ${width}px`)
     }
     assert.ok(await page.locator('.pending-reservation-main p').evaluate(element => element.scrollWidth <= element.clientWidth), `Recovery instructions clipped at ${width}px`)
-    const card = await page.locator('.name-card').boundingBox()
+    const card = await page.locator('.name-portrait').boundingBox()
     assert.ok(card.x >= 0 && card.x + card.width <= width, `Name card clipped at ${width}px`)
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `Page overflows at ${width}px`)
   }
@@ -376,6 +377,7 @@ try {
   const staleSubmit = await page.evaluate(() => window.firstSubmit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' })
     .then(() => 'submitted', (error) => error.message))
   assert.match(staleSubmit, /Marketplace trading is paused/)
+  await checkUiSystem(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')

@@ -1,3 +1,5 @@
+import { Input } from '../../components/ui/Input'
+import { Button } from '../../components/ui/Button'
 import { AccountCard } from '../../components/ui/AccountCard'
 import { abbreviate } from '../../utils/format'
 import type { ReferralsViewProps } from './referralsViewTypes'
@@ -22,14 +24,14 @@ export function ActiveReferralCard({
       title="Referred by"
     >
       <div className="copy-row">
-        <input
+        <Input
           value={referralState.input}
           placeholder="Their wallet address"
           onChange={(event) => onReferralInputChange(event.target.value)}
         />
-        <button className="commit-button" disabled={!referralState.input} type="button" onClick={onClearReferral}>
+        <Button disabled={!referralState.input} type="button" onClick={onClearReferral}>
           Clear
-        </button>
+        </Button>
       </div>
       {referralState.input && !referralState.valid ? <p className="secure-note">{referralState.reason}</p> : null}
       {appliedReferral ? <p className="secure-note">No extra fee for the buyer.</p> : null}
