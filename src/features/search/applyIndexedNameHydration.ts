@@ -15,6 +15,7 @@ export function applyIndexedNameHydration(
     setManagedName,
     setPrimaryEndpointValue,
     setPrimaryName,
+    setConnectedPrimaryName,
     setResolverRecordSets,
     setSubnames,
   }: UseIndexedNameHydrationProps,
@@ -27,6 +28,8 @@ export function applyIndexedNameHydration(
     node,
     ownSubnameRead,
     primaryName,
+    connectedPrimaryName,
+    primaryEndpoint,
     readErrors,
     stateRead,
   } = reads
@@ -36,19 +39,17 @@ export function applyIndexedNameHydration(
       ...current,
       [node]: forwardRead.value.records,
     }))
-
-    const moonlight = forwardRead.value.records.find((record) => record.key === 'moonlight_address')
-    setPrimaryEndpointValue(moonlight?.value ?? '')
-    setPrimaryName(moonlight ? primaryName : null)
   } else {
     setResolverRecordSets((current) => {
       const next = { ...current }
       delete next[node]
       return next
     })
-    setPrimaryEndpointValue('')
-    setPrimaryName(null)
   }
+
+  setPrimaryEndpointValue(primaryEndpoint)
+  setPrimaryName(primaryName)
+  setConnectedPrimaryName(connectedPrimaryName)
 
   if (stateRead.value) {
     // An unreported expiry stays unknown (0): the current one may be a placeholder.
@@ -62,6 +63,7 @@ export function applyIndexedNameHydration(
       })
     setManagedName({
       node,
+      ancestors: indexed.namespace?.ancestors,
       owner: indexed.owner ?? '',
       manager: indexed.manager ?? '',
       resolver: indexed.resolverId ?? recordSourceContractId,

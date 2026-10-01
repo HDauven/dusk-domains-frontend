@@ -20,6 +20,7 @@ export function resetSearchState({
   setPrimaryEndpointValue,
   setPrimaryError,
   setPrimaryName,
+  setConnectedPrimaryName,
   setPrimaryTxState,
   setQuery,
   setRecordDrafts,
@@ -74,6 +75,7 @@ export function resetSearchState({
   setRecordDrafts({})
   setPrimaryEndpointValue('')
   setPrimaryName(null)
+  setConnectedPrimaryName(null)
   setSubnames([])
   setSubnameLabel('settlement')
   setSubnameManager('')

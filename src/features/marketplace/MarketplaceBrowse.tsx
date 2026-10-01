@@ -1,3 +1,4 @@
+import { NamespaceSummary } from './NamespaceSummary'
 import { OwnerLabel } from '../identity/OwnerLabel'
 import { Badge } from '../../components/ui/Badge'
 import { Input, Select } from '../../components/ui/Input'
@@ -97,6 +98,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
         </Button>
       </div>
       <ListingName name={auction.name} />
+      <NamespaceSummary namespace={auction.namespace} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} compact /></div>
       {leading ? <p className="marketplace-personal-status leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
       {ownAuction ? <><p className="marketplace-personal-status selling">Your auction</p><p>Renewal is available after the listing closes.</p></> : null}
@@ -134,6 +136,7 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps
         </Button>
       </div>
       <ListingName name={sale.name} />
+      <NamespaceSummary namespace={sale.namespace} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={sale.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} compact /></div>
       {ownSale ? <><p className="marketplace-personal-status selling">Your listing</p><p>Renewal is available after the listing closes.</p></> : null}
       <dl className="marketplace-card-metrics">

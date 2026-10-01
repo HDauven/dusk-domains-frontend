@@ -1,3 +1,6 @@
+import { purchaseTakeBackCall, sellerHeldSubnames } from './namespaceTakeBack'
+import { canonicalOwnedName } from './canonicalMarketplaceState'
+import { userFacingErrorMessage, type IndexedNameSummary } from '../../names/internal'
 import { useMarketAddresses } from './useMarketAddresses'
 import { useState } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
@@ -101,7 +104,19 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
 
   const ownerAddresses = useMarketAddresses(indexerClient, [...auctions, ...fixedSales, ...data.offers].map(order => order.name), mainView === 'marketplace')
 
+  const takeBackSubnames = async (name: IndexedNameSummary) => {
+    if (!indexerClient || !duskDomainsOnChainClient) return
+    try {
+      await canonicalOwnedName(duskDomainsOnChainClient, name, selectedAuthority)
+      const fresh = await indexerClient.getNameState(name.node)
+      if (!fresh) throw new Error('Name data is still syncing.')
+      const call = purchaseTakeBackCall({ ...name, ...fresh }, selectedAuthority)
+      await writes.submit('taking back subnames', name.canonicalName, call, 0n, 'Subnames taken back. Their previous records and primary names were cleared.')
+    } catch (error) { setError(userFacingErrorMessage(error)) }
+  }
+
   const marketplaceProps: MarketplaceViewProps = {
+    takeBackOffers: ownedNames.map(name => ({ name: name.canonicalName, count: sellerHeldSubnames(name, selectedAuthority).length, takeBack: () => void takeBackSubnames(name) })).filter(offer => offer.count > 0),
     ownerAddresses,
     review: writes.review,
     onCancelReview: writes.cancelReview,

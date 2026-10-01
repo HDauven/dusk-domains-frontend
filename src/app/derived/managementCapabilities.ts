@@ -1,7 +1,7 @@
 import type { ManagedNameState } from '../managedNameState'
 
 export function canManageActiveName(
-  name: Pick<ManagedNameState, 'owner' | 'manager' | 'expiresAt'> | undefined,
+  name: Pick<ManagedNameState, 'owner' | 'manager' | 'expiresAt' | 'ancestors'> | undefined,
   authority: string,
   height: number | null,
 ) {
@@ -48,4 +48,10 @@ export function deriveManagementCapabilities({
     connectedAsNameOwner,
     managementConfirmationMatches,
   }
+}
+
+export function canControlThroughAncestor(name: Pick<ManagedNameState, 'ancestors'> | null | undefined, authority: string, height: number | null) {
+  return Boolean(authority && height !== null && name?.ancestors?.some(ancestor =>
+    ancestor.expiresAtBlockHeight !== null && height < ancestor.expiresAtBlockHeight
+    && [ancestor.owner, ancestor.manager].some(value => value?.toLowerCase() === authority.toLowerCase())))
 }

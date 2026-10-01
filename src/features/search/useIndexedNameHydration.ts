@@ -5,6 +5,7 @@ import { safeNamehashHex } from '../domains/domainFormat'
 import { currentBlockHeightFromHealth } from '../../app/indexerReadHelpers'
 import type {
   DuskDomainsIndexerClient,
+  DuskDomainsOnChainClient,
   NameResult,
 } from '../../names/internal'
 import { userFacingErrorMessage } from '../../names/internal'
@@ -13,24 +14,29 @@ import { readIndexedName } from './indexedNameReads'
 import { createNameReadGuard } from './nameReadGuard'
 import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
 
-async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult) {
+async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult, selectedAddress: string, onChainClient: DuskDomainsOnChainClient | null) {
   const health = await client.getHealth()
   if (!health.ok) throw new Error('Name data is still syncing. It will update automatically.')
-  return { currentBlockHeight: currentBlockHeightFromHealth(health), reads: await readIndexedName(client, searchResult) }
+  return { currentBlockHeight: currentBlockHeightFromHealth(health), reads: await readIndexedName(client, searchResult, selectedAddress, onChainClient) }
 }
 
 export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
   const {
     displayName,
     indexerClient,
+    onChainClient,
+    selectedAddress,
     setActivityLoading,
     setApiSearchResult,
     setIndexerConfirmation,
     setIndexerError,
   } = props
 
-  const refreshScope = useMemo(() => ({ displayName, indexerClient }), [displayName, indexerClient])
+  const refreshScope = useMemo(() => ({ displayName, indexerClient, onChainClient, selectedAddress }), [displayName, indexerClient, onChainClient, selectedAddress])
   const beginNameRead = useMemo(() => createNameReadGuard(), [])
+
+  const currentAddress = useRef(selectedAddress)
+  useLayoutEffect(() => { currentAddress.current = selectedAddress }, [selectedAddress])
 
   const currentName = useRef(displayName)
   useLayoutEffect(() => { currentName.current = displayName }, [displayName])
@@ -48,12 +54,12 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
   ) => {
     const isCurrentActivity = props.beginActivityRead(safeNamehashHex(searchResult.canonical))
     const isCurrentOwnership = props.beginOwnershipRead(safeNamehashHex(searchResult.canonical))
-    const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership()
-    const { currentBlockHeight, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult), [client, searchResult.canonical], options?.fresh)
+    const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership() && currentAddress.current === selectedAddress
+    const { currentBlockHeight, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult, selectedAddress, onChainClient), [client, searchResult.canonical, selectedAddress, onChainClient], options?.fresh)
     if (!shouldApply()) return
     props.setCurrentBlockHeight(currentBlockHeight)
     if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight }, reads)
-  }, [hydrationFlight, props])
+  }, [hydrationFlight, props, selectedAddress, onChainClient])
 
   const readData = useCallback(async (options?: RefreshOptions) => {
     if (!indexerClient) return false
@@ -63,7 +69,7 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     setIndexerConfirmation('')
 
     const isLatestRead = beginNameRead()
-    const isCurrent = () => isLatestRead() && currentName.current === displayName
+    const isCurrent = () => isLatestRead() && currentName.current === displayName && currentAddress.current === selectedAddress
     try {
       const nextResult = await searchNameFromIndexer(indexerClient, displayName, options)
       if (!isCurrent()) return false
@@ -82,6 +88,7 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     displayName,
     hydrateNameFromIndexer,
     indexerClient,
+    selectedAddress,
     setActivityLoading,
     setApiSearchResult,
     setIndexerConfirmation,

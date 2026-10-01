@@ -63,6 +63,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     preparedCommit: registrationState.preparedCommit,
     primaryEndpointValue: domainState.primaryEndpointValue,
     primaryName: domainState.primaryName,
+    connectedPrimaryName: domainState.connectedPrimaryName,
     primaryTxState: domainState.primaryTxState,
     recordDraftErrors: domainRecordState.recordDraftErrors,
     recordDraftMutations: domainRecordState.recordDraftMutations,

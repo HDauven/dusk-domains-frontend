@@ -22,9 +22,11 @@ export async function applyCompleteRegistrationSuccess(
     registrationTargetAddress,
     runtimeConfig,
     selectedAuthority,
+    selectedAddress,
     setManagedName,
     setPrimaryEndpointValue,
     setPrimaryName,
+    setConnectedPrimaryName,
     setRegistrationCompletion,
     setResolverRecordSets,
     shouldApplyPreviewWriteFallback,
@@ -89,6 +91,7 @@ export async function applyCompleteRegistrationSuccess(
     ],
   }))
   setPrimaryName(registerSetsPrimary ? displayName : null)
+  if (registerSetsPrimary && registrationTargetAddress === selectedAddress) setConnectedPrimaryName(displayName)
   setPrimaryEndpointValue(registrationTargetAddress)
   appendActivity({
     eventType: 'registration',

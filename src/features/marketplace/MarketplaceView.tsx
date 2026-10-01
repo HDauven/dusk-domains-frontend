@@ -45,6 +45,10 @@ export function MarketplaceView(props: MarketplaceViewProps) {
 
       {!props.selectedAuctionNode ? <div className="marketplace-navigation"><Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" /><MarketplaceFreshness updatedAt={syncing ? null : props.updatedAt} /></div> : null}
 
+      {props.takeBackOffers?.map(offer => <Panel key={offer.name}>
+        <p>{offer.name}: the seller still holds {offer.count} subnames. Taking them back clears their records and primary names.</p>
+        <Button disabled={!actionsAvailable} onClick={offer.takeBack}>Take back {offer.count} subnames</Button>
+      </Panel>)}
       <PanelFeedbackStack confirmation={confirmation} error={syncing ? undefined : error} />
       {syncing && !networkNotice ? <p className="marketplace-freshness" role="status">{error}</p> : null}
 

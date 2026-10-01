@@ -9,6 +9,10 @@ import type { SubdomainsViewProps } from './subdomains/types'
 
 export function SubdomainsView({
   ownerAddresses,
+  canControlSubname,
+  onReassignSubname,
+  onRemoveSubname,
+  onTakeBackSubname,
   canEdit = true,
   canCreateSubname,
   currentBlockHeight,
@@ -63,6 +67,10 @@ export function SubdomainsView({
 
         {subnames.length ? (
           <SubdomainList
+            canControlSubname={canControlSubname}
+            onReassignSubname={onReassignSubname}
+            onRemoveSubname={onRemoveSubname}
+            onTakeBackSubname={onTakeBackSubname}
             ownerAddresses={ownerAddresses}
             selectedAuthority={selectedAuthority}
             currentBlockHeight={currentBlockHeight}

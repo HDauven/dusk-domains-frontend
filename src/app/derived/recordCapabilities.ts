@@ -12,8 +12,7 @@ export function deriveRecordCapabilities({
   primaryBusy,
   primaryEndpoint,
   primaryEndpointErrors,
-  primaryName,
-  primaryVerified,
+  connectedPrimaryName,
   recordBusy,
   recordDraftErrors,
   recordDraftMutations,
@@ -33,8 +32,7 @@ export function deriveRecordCapabilities({
   primaryBusy: boolean
   primaryEndpoint: string
   primaryEndpointErrors: readonly string[]
-  primaryName: string | null
-  primaryVerified: boolean
+  connectedPrimaryName: string | null
   recordBusy: boolean
   recordDraftErrors: readonly string[]
   recordDraftMutations: readonly unknown[]
@@ -47,7 +45,7 @@ export function deriveRecordCapabilities({
   walletAuthorized: boolean
 }) {
   return {
-    canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryName && primaryVerified && !primaryBusy),
+    canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryEndpoint === selectedAddress && connectedPrimaryName && connectedPrimaryName === displayName && !primaryBusy),
     canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && !subnameBusy),
     // Marketplace escrow must close before any payer can renew.
     canRenewName: Boolean(

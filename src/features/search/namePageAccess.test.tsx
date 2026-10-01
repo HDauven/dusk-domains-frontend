@@ -59,3 +59,30 @@ it('offers no Renew tab or controls for marketplace escrow even when the owner i
   expect(html).not.toContain('aria-label="Renewal controls"')
   expect(html).toContain('Send to alpha.dusk')
 })
+
+it.each(['details', 'records', 'subnames'] as const)('shows ancestor actions without holder editing on %s', resultView => {
+  const parent = {node:'parent',name:'alice.dusk',owner:'parent-owner',manager:'parent-manager',expiresAtBlockHeight:200}
+  const subnameProps = {...props,primaryProps:{primaryVerification:{verified:false}},resultView,headerProps:{...props.headerProps,displayName:'docs.alice.dusk',viewerAuthority:'parent-manager'},
+    settingsProps:{...props.settingsProps,currentBlockHeight:100,managedName:{...props.settingsProps.managedName,ancestors:[parent]}}} as SearchResultPanelProps
+  const html = renderToStaticMarkup(<SearchResultPanel {...subnameProps} />)
+  expect(html).toContain('The owner of alice.dusk can take this name back, and it expires with alice.dusk.')
+  expect(html).not.toContain('>Records</')
+  expect(html).not.toContain('Create subname')
+  expect(html).not.toContain('primary-control')
+  expect(html).toContain('>Reassign</')
+  expect(html).toContain('>Take back</')
+  expect(html).toContain('>Remove</')
+})
+
+
+it('shows primary clearing to the endpoint holder without name editing controls', () => {
+  const html = renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+    headerProps={{ ...props.headerProps, viewerAuthority: 'former-owner' }}
+    primaryProps={{ canClearPrimary: true, canSetPrimary: false, displayName: 'alpha.dusk', error: '', txState: null,
+      primaryVerification: { verified: true }, onClearPrimary: () => {}, onSetPrimary: () => {} }} />)
+  expect(html).toContain('primary-control')
+  expect(html).toContain('aria-checked="true"')
+  expect(html).not.toContain('disabled=""')
+  expect(html).not.toContain('>Records</')
+  expect(html).not.toContain('>Settings</')
+})

@@ -25,6 +25,7 @@ export type MarketplaceReviewDetails = {
 }
 
 export type MarketplaceViewProps = {
+  takeBackOffers?: Array<{ name: string; count: number; takeBack: () => void }>
   ownerAddresses?: string[]
   review?: MarketplaceReviewDetails | null
   onCancelReview?: () => void

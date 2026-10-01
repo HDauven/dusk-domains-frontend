@@ -1,3 +1,4 @@
+import { NamespaceSummary } from './NamespaceSummary'
 import { Button } from '../../components/ui/Button'
 import { Panel } from '../../components/ui/Panel'
 import { Select, Input } from '../../components/ui/Input'
@@ -23,7 +24,7 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
           <Button variant="quiet" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</Button> to sell a name.
         </PanelMessage>
       ) : props.sellableNames.length === 0 ? (
-        <PanelMessage icon={<Store size={18} />} tone="subtle">No eligible names to sell. You need an active .dusk name with no subnames and no existing listing. <a href="/">Find a name</a></PanelMessage>
+        <PanelMessage icon={<Store size={18} />} tone="subtle">No eligible names to sell. You need an active .dusk name with no existing listing. <a href="/">Find a name</a></PanelMessage>
       ) : (
         <Panel className="marketplace-editor" aria-labelledby="sell-domain-heading">
           <div className="marketplace-section-heading">
@@ -79,7 +80,8 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
             <code>{abbreviate(props.selectedAddress)}</code>
           </div>
 
-          <p className="field-note">Only names with no subnames can be listed. Subnames themselves can’t be sold.</p>
+          <NamespaceSummary namespace={selectedName?.namespace} />
+          <p className="field-note">The buyer controls the whole namespace. Subnames themselves can’t be sold.</p>
 
           <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || props.feeBps == null || !selectedName} type="button" onClick={() => props.onCreateListing()}>
             {props.saleMode === 'auction' ? 'Start auction' : 'List for sale'}

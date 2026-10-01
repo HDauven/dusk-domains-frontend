@@ -27,3 +27,13 @@ it('disables only when the action for the current primary state is unavailable',
     }
   }
 })
+
+
+it('offers clearing for an unverified primary without enabling setting', () => {
+  const html = renderToStaticMarkup(<PrimaryNameControl canClearPrimary canSetPrimary={false}
+    displayName="alpha.dusk" error="" txState={null} primaryVerification={{ verified: false }}
+    onClearPrimary={vi.fn()} onSetPrimary={vi.fn()} />)
+  expect(html).toContain('>Clear primary name</button>')
+  expect(html).toMatch(/<button[^>]*disabled=""[^>]*role="switch"/)
+  expect(html).toContain('aria-checked="false"')
+})

@@ -15,12 +15,14 @@ export function RecipientSettingsPanel({ canManageName, confirmationInput, displ
   const [recipient, setRecipient] = useState<ResolvedRecipient | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [clearRecords, setClearRecords] = useState(true)
   const revision = useRef(0)
   const writing = isDuskDomainTxBusy(managementTxState)
   function reset(nextMode: typeof mode) {
     revision.current += 1
     setMode(nextMode); setInput(''); setRecipient(null); setError(''); setBusy(false)
     onConfirmationInputChange('')
+    setClearRecords(true)
   }
   return <div className="recipient-settings">
     <div className="manager-summary"><div><h3>Manager</h3><p>Who can edit records.</p><OwnerLabel authority={managedName.manager} viewerAuthority={viewerAuthority} addresses={ownerAddresses} /></div><Button disabled={busy || writing} onClick={() => reset('manager')}>Change manager</Button></div>
@@ -37,10 +39,11 @@ export function RecipientSettingsPanel({ canManageName, confirmationInput, displ
       }).catch(error => { if (revision.current === request) setError(error.message) }).finally(() => { if (revision.current === request) setBusy(false) })
     }}>
       <TextField id="recipient-address" label={mode === 'transfer' ? 'New owner' : 'New manager'} hint="Dusk address or .dusk name" value={input} onChange={event => { revision.current += 1; setInput(event.target.value); setRecipient(null); setBusy(false); setError(''); onConfirmationInputChange('') }} disabled={busy || writing} />
+      {mode === 'transfer' ? <label className="field-note"><input type="checkbox" checked={clearRecords} onChange={event => setClearRecords(event.target.checked)} disabled={busy || writing} /> Clear records and primary name<span className="field-note">Clear these so payments don't keep going to your address.</span></label> : null}
       {!recipient ? <Button type="submit" disabled={!input.trim() || Boolean(writing)} loading={busy}>Check recipient</Button> : <>
         <p>Resolves to <span className="address-chip"><code>{recipient.address}</code><CopyValue value={recipient.address} label="Recipient Dusk address" /></span></p>
-        {mode === 'transfer' ? <><p className="secure-note danger">You will lose ownership and management of {displayName}. The new owner must review its payment records.</p><TextField id="transfer-confirm" label={`Type ${displayName} to confirm`} value={confirmationInput} onChange={event => onConfirmationInputChange(event.target.value)} disabled={busy || writing} /></> : <p>This wallet will be able to edit records. You keep ownership.</p>}
-        <Button variant={mode === 'transfer' ? 'destructive' : 'primary'} disabled={!canManageName || busy} loading={Boolean(writing)} onClick={() => { setBusy(true); void onOwnershipUpdate({kind:mode,recipient}).then(saved => { if (saved) reset(null) }).finally(() => setBusy(false)) }}>{mode === 'transfer' ? 'Confirm transfer' : 'Save manager'}</Button>
+        {mode === 'transfer' ? <><p className="secure-note danger">You will lose ownership and management of {displayName}. Both owner and manager will pass to the recipient.</p><TextField id="transfer-confirm" label={`Type ${displayName} to confirm`} value={confirmationInput} onChange={event => onConfirmationInputChange(event.target.value)} disabled={busy || writing} /></> : <p>This wallet will be able to edit records. You keep ownership.</p>}
+        <Button variant={mode === 'transfer' ? 'destructive' : 'primary'} disabled={!canManageName || busy} loading={Boolean(writing)} onClick={() => { setBusy(true); void onOwnershipUpdate({kind:mode,recipient,clearRecords:mode === 'transfer' && clearRecords}).then(saved => { if (saved) reset(null) }).finally(() => setBusy(false)) }}>{mode === 'transfer' ? 'Confirm transfer' : 'Save manager'}</Button>
       </>}
       <Button variant="quiet" disabled={busy || writing} onClick={() => reset(null)}>Cancel</Button>
       {error ? <p role="alert" className="secure-note danger">{error}</p> : null}

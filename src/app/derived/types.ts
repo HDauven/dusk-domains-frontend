@@ -28,6 +28,7 @@ export type UseAppDerivedStateArgs = {
   preparedCommit: PreparedRegistrationCommit | null
   primaryEndpointValue: string
   primaryName: string | null
+  connectedPrimaryName: string | null
   primaryTxState: DuskDomainTxState | null
   recordDraftErrors: readonly string[]
   recordDraftMutations: readonly unknown[]

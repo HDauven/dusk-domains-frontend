@@ -6,6 +6,20 @@ import { RegistrationReviewStep } from './RegistrationReviewStep'
 import { createRegistrationCompletionState, updateRegistrationCompletionState } from './registrationCompletionState'
 import { applyCompleteRegistrationSuccess } from './completeRegistrationSuccess'
 
+it.each([true, false])('keeps the connected primary state current after registration with primary=%s', async registerSetsPrimary => {
+  const setPrimaryName = vi.fn(), setConnectedPrimaryName = vi.fn()
+  await applyCompleteRegistrationSuccess({
+    preparedCommit: { commitment: 'commit' }, displayName: 'alpha.dusk', nodeHex: 'node', selectedAuthority: 'owner',
+    selectedAddress: 'address', registrationTargetAddress: 'address', registerSetsPrimary, runtimeConfig: { chainId: 'local' },
+    loadPendingReservations: vi.fn(), setRegistrationCompletion: vi.fn(), setManagedName: vi.fn(), setResolverRecordSets: vi.fn(),
+    setPrimaryName, setConnectedPrimaryName, setPrimaryEndpointValue: vi.fn(), appendActivity: vi.fn(),
+    shouldApplyPreviewWriteFallback: async () => true,
+  } as never, { finalState: { status: 'executed' }, request: { lifecycle: { expiresAt: 200, graceEndsAt: 300 } } } as never)
+  expect(setPrimaryName).toHaveBeenCalledWith(registerSetsPrimary ? 'alpha.dusk' : null)
+  if (registerSetsPrimary) expect(setConnectedPrimaryName).toHaveBeenCalledWith('alpha.dusk')
+  else expect(setConnectedPrimaryName).not.toHaveBeenCalled()
+})
+
 it('does not declare an executed wallet transaction a confirmed registration', async () => {
   let progress = updateRegistrationCompletionState(createRegistrationCompletionState(), 'complete_registration', {status:'executed',txId:'tx'} as never)
   expect(progress.status).toBe('running')

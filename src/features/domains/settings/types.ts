@@ -23,7 +23,7 @@ export type DomainSettingsViewProps = {
   viewerAuthority?: string
   ownerAddresses?: string[]
   onResolveRecipient?: (input: string) => Promise<ResolvedRecipient>
-  onOwnershipUpdate: (change: { kind: 'transfer' | 'manager'; recipient: ResolvedRecipient }) => Promise<boolean | undefined>
+  onOwnershipUpdate: (change: { kind: 'transfer' | 'manager'; recipient: ResolvedRecipient; clearRecords?: boolean }) => Promise<boolean | undefined>
   onRenewName: () => void
   onRenewalYearsChange: (years: number) => void
   renewalBusy: boolean

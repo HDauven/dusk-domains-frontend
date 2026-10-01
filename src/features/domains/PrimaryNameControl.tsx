@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { Button } from '../../components/ui/Button'
 import { Switch } from '../../components/ui/Switch'
 import type { DuskDomainTxState } from '../../names/internal'
 import { ManagementFeedback } from './ManagementFeedback'
@@ -20,6 +21,7 @@ export function PrimaryNameControl({ canClearPrimary, canSetPrimary, displayName
       <div><label id={`${id}-label`} htmlFor={id}>Primary name</label><p id={`${id}-description`}>Apps show {displayName} for this Dusk address.</p></div>
       <Switch id={id} aria-labelledby={`${id}-label`} aria-describedby={`${id}-description`} checked={enabled} disabled={enabled ? !canClearPrimary : !canSetPrimary} onCheckedChange={checked => checked ? onSetPrimary() : onClearPrimary()} />
     </div>
+    {!enabled && canClearPrimary ? <Button type="button" variant="quiet" onClick={onClearPrimary}>Clear primary name</Button> : null}
     <ManagementFeedback error={error} txState={txState} />
   </div>
 }

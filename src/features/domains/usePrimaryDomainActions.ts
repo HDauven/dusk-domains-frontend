@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
-import type { DuskDomainTxState, DuskDomainsRuntimeConfig } from '../../names/internal'
+import type { DuskDomainTxState, DuskDomainsRuntimeConfig, ResolverRecord } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import { clearPrimaryDomainName } from './clearPrimaryDomainName'
 import { setPrimaryDomainName } from './setPrimaryDomainName'
@@ -21,10 +21,13 @@ export type UsePrimaryDomainActionsProps = {
   displayName: string
   nodeHex: string
   primaryEndpoint: string
+  moonlightRecord: ResolverRecord | undefined
+  selectedAddress: string
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAuthority: string
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
   setPrimaryError: Dispatch<SetStateAction<string>>
+  setConnectedPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback

@@ -7,7 +7,7 @@ import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'
 function hydrate(managedName: ManagedNameState, stateValue: object, subnameValue: object | null) {
   let managed = managedName
   const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setDraftManager', 'setDraftOwner', 'setIndexerError',
-    'setPrimaryEndpointValue', 'setPrimaryName', 'setResolverRecordSets', 'setSubnameManager', 'setSubnames']
+    'setPrimaryEndpointValue', 'setConnectedPrimaryName', 'setPrimaryName', 'setResolverRecordSets', 'setSubnameManager', 'setSubnames']
     .map((name) => [name, vi.fn()]))
   const setManagedName = (update: ManagedNameState | ((current: ManagedNameState) => ManagedNameState)) => {
     managed = typeof update === 'function' ? update(managed) : update
@@ -102,3 +102,30 @@ it('reads records only for the opened name, even when it has many subnames', asy
   expect(reads?.hydratedSubnames).toHaveLength(60)
   expect(reads?.readErrors).toEqual([])
 })
+
+it('hydrates all namespace descendants including nested and expired names', async () => {
+  const namespace = {subnames:[{node:'child',name:'docs.alice.dusk',status:'active'},{node:'leaf',name:'api.docs.alice.dusk',status:'expired'}],ancestors:[]}
+  const client = {getNameState:async()=>({namespace}),resolveForward:async()=>({records:[]}),getActivityPage:async()=>({activity:[]}),getAllSubnames:async()=>[namespace.subnames[0]]}
+  const reads = await readIndexedName(client as never, {canonical:'alice.dusk'} as never)
+  expect(reads?.hydratedSubnames?.map(name=>[name.node,name.status])).toEqual([['child','active'],['leaf','expired']])
+})
+
+
+it.each([null, { records: [] }, { records: [{ key: 'moonlight_address', value: 'new-owner-address' }] }])(
+  'hydrates the connected endpoint’s primary when the old name no longer resolves to it: %j', async forward => {
+    const client = {
+      resolveForward: async () => forward, getNameState: async () => null,
+      getActivityPage: async () => ({ activity: [] }), getAllSubnames: async () => [],
+      getPrimaryName: vi.fn(async () => 'alice.dusk'),
+    }
+    const reads = await readIndexedName(client as never, { canonical: 'alice.dusk' } as never, 'alice-address')
+    expect(client.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: 'alice-address' })
+    expect(reads?.connectedPrimaryName).toBe('alice.dusk')
+    const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setIndexerError', 'setManagedName',
+      'setPrimaryEndpointValue', 'setConnectedPrimaryName', 'setPrimaryName', 'setResolverRecordSets', 'setSubnames'].map(key => [key, vi.fn()]))
+    applyIndexedNameHydration({ ...setters, currentBlockHeight: 100, nowSeconds: 0, recordSourceContractId: 'resolver' } as never, reads!)
+    expect(setters.setPrimaryEndpointValue).toHaveBeenCalledWith('alice-address')
+    expect(setters.setConnectedPrimaryName).toHaveBeenCalledWith('alice.dusk')
+    expect(setters.setPrimaryName).toHaveBeenCalledWith(forward?.records.length ? 'alice.dusk' : null)
+  },
+)

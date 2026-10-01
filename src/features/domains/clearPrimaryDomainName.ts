@@ -10,10 +10,12 @@ export async function clearPrimaryDomainName({
   canClearPrimary,
   displayName,
   primaryEndpoint,
+  moonlightRecord,
   runtimeConfig,
   selectedAuthority,
   setPrimaryError,
   setPrimaryName,
+  setConnectedPrimaryName,
   setPrimaryTxState,
   shouldApplyPreviewWriteFallback,
   submitNameWrite,
@@ -27,7 +29,7 @@ export async function clearPrimaryDomainName({
     canContinue: canClearPrimary,
     setError: setPrimaryError,
       walletSetupState,
-    blockedCopy: 'Connect the manager wallet and enter the current Dusk address before clearing the primary name.',
+    blockedCopy: 'Connect the wallet for this Dusk address before clearing its primary name.',
   })) {
     return
   }
@@ -58,7 +60,8 @@ export async function clearPrimaryDomainName({
       }, workspace))) return
       if (!workspace()) return
 
-      setPrimaryName(null)
+      setConnectedPrimaryName(null)
+      if (moonlightRecord?.value === primaryEndpoint) setPrimaryName(null)
       appendActivity({
         eventType: 'primary_name',
         actor: selectedAuthority,
