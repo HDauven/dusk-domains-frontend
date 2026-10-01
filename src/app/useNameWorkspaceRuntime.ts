@@ -90,8 +90,6 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
   useAppWalletDefaults({
     selectedAddress: walletRuntime.selectedAddress,
     selectedAuthority: walletRuntime.selectedAuthority,
-    setDraftManager: domainState.setDraftManager,
-    setDraftOwner: domainState.setDraftOwner,
     setManagedName: domainState.setManagedName,
     setRegistrationAddressInput: registrationState.setRegistrationAddressInput,
     setSubnameManager: domainState.setSubnameManager,

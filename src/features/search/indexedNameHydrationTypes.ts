@@ -11,6 +11,7 @@ import type { ManagedNameState } from '../../app/appHelpers'
 export type ResolverRecordSets = Record<string, ResolverRecord[]>
 
 export type UseIndexedNameHydrationProps = {
+  beginOwnershipRead: (node: string) => () => boolean
   beginActivityRead: (node: string) => () => boolean
   currentBlockHeight: number | null
   displayName: string
@@ -23,8 +24,6 @@ export type UseIndexedNameHydrationProps = {
   setActivityLoading: Dispatch<SetStateAction<boolean>>
   setApiSearchResult: Dispatch<SetStateAction<NameResult | null>>
   setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
-  setDraftManager: Dispatch<SetStateAction<string>>
-  setDraftOwner: Dispatch<SetStateAction<string>>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>

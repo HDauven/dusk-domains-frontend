@@ -37,7 +37,7 @@ it('limits active name actions to that target’s owner or manager, and blocks r
 it('refreshes unknown height before applying lifecycle state and refuses unhealthy hydration', async () => {
   let hydrate!: ReturnType<typeof useIndexedNameHydration>['hydrateNameFromIndexer']
   const setCurrentBlockHeight = vi.fn()
-  const props = { currentBlockHeight: null, setCurrentBlockHeight, beginActivityRead: () => () => true }
+  const props = { currentBlockHeight: null, setCurrentBlockHeight, beginActivityRead: () => () => true, beginOwnershipRead: () => () => true }
   function Probe() {
     hydrate = useIndexedNameHydration(props as never).hydrateNameFromIndexer
     return null

@@ -20,8 +20,6 @@ export async function applyCompleteRegistrationSuccess(
     registrationTargetAddress,
     runtimeConfig,
     selectedAuthority,
-    setDraftManager,
-    setDraftOwner,
     setManagedName,
     setPrimaryEndpointValue,
     setPrimaryName,
@@ -83,8 +81,6 @@ export async function applyCompleteRegistrationSuccess(
   }))
   setPrimaryName(registerSetsPrimary ? displayName : null)
   setPrimaryEndpointValue(registrationTargetAddress)
-  setDraftOwner(selectedAuthority)
-  setDraftManager(selectedAuthority)
   appendActivity({
     eventType: 'registration',
     actor: selectedAuthority,

@@ -5,8 +5,6 @@ import { fallbackManager, fallbackOwner } from './appHelpers'
 export type UseAppWalletDefaultsArgs = {
   selectedAddress: string | undefined
   selectedAuthority: string | undefined
-  setDraftManager: Dispatch<SetStateAction<string>>
-  setDraftOwner: Dispatch<SetStateAction<string>>
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setRegistrationAddressInput: Dispatch<SetStateAction<string>>
   setSubnameManager: Dispatch<SetStateAction<string>>
@@ -16,8 +14,6 @@ export type UseAppWalletDefaultsArgs = {
 export function useAppWalletDefaults({
   selectedAddress,
   selectedAuthority,
-  setDraftManager,
-  setDraftOwner,
   setManagedName,
   setRegistrationAddressInput,
   setSubnameManager,
@@ -30,12 +26,8 @@ export function useAppWalletDefaults({
       if (current.owner !== fallbackOwner) return current
       return { ...current, owner: address, manager: address }
     })
-    setDraftOwner((current) => current === fallbackOwner ? address : current)
-    setDraftManager((current) => current === fallbackManager ? address : current)
     setSubnameManager((current) => current === fallbackManager ? address : current)
   }, [
-    setDraftManager,
-    setDraftOwner,
     setManagedName,
     setSubnameManager,
   ])

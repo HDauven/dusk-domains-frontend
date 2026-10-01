@@ -30,6 +30,10 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
 
   return {
     mainContentProps: {
+      ownershipConfirmationProps: {
+        pending: inputs.domainState.pendingOwnership,
+        onRetry: (node: string) => void inputs.domainState.retryOwnershipConfirmation(node),
+      },
       mainView: inputs.searchState.mainView,
       myDomainsProps: inputs.mainViewRuntime.myDomainsProps,
       referralsProps: inputs.economicsRuntime.referralsProps,

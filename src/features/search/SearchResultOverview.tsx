@@ -1,3 +1,4 @@
+import { Badge } from '../../components/ui/Badge'
 import { suggestedNames } from './debouncedSearch'
 import { NameCard } from '../../components/ui/NameCard'
 import { Panel } from '../../components/ui/Panel'
@@ -96,7 +97,7 @@ export function SearchResultOverview({
   return (
     <Panel className="claim-card" aria-labelledby="overview-heading">
       <div className="claim-main">
-        <NameCard name={displayName} />
+        <NameCard name={displayName}><Badge status="available">Available</Badge></NameCard>
         <h2 id="overview-heading">Registration term</h2>
         <TermPicker label="Registration term" max={maxDurationYears} min={minDurationYears} value={duration} onChange={onDurationChange} />
         <p>Your wallet will own the name. Network fees are shown before signing.</p>

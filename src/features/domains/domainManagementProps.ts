@@ -1,3 +1,4 @@
+import { resolveRecipient } from '../identity/resolveRecipient'
 import type { DomainManagementFeatureProps, UseDomainManagementFeatureProps } from './domainManagementFeatureTypes'
 import type { useDomainManagementActionHandlers } from './useDomainManagementActionHandlers'
 
@@ -56,8 +57,6 @@ export function buildDomainManagementProps(
       confirmationInput: props.confirmationInput,
       currentBlockHeight: props.currentBlockHeight,
       displayName: props.displayName,
-      draftManager: props.draftManager,
-      draftOwner: props.draftOwner,
       feeConfigError: props.feeConfigError,
       feeConfigLoading: props.feeConfigLoading,
       managedName: props.managedName,
@@ -67,9 +66,10 @@ export function buildDomainManagementProps(
       minDurationYears: props.minDurationYears,
       nowSeconds: props.nowSeconds,
       onConfirmationInputChange: props.setConfirmationInput,
-      onDraftManagerChange: props.setDraftManager,
-      onDraftOwnerChange: props.setDraftOwner,
-      onOwnershipUpdate: () => void actions.handleOwnershipUpdate(),
+      viewerAuthority: props.selectedAuthority,
+      ownerAddresses: props.moonlightRecord ? [props.moonlightRecord.value] : [],
+      onResolveRecipient: input => resolveRecipient(input, props.indexerClient),
+      onOwnershipUpdate: change => actions.handleOwnershipUpdate(change),
       onRenewName: () => void actions.handleRenewName(),
       onRenewalYearsChange: (years) => props.setRenewalYears(props.clampDurationYears(years)),
       renewalBusy: props.renewalBusy,

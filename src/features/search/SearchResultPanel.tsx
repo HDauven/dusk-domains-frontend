@@ -32,7 +32,7 @@ export type SearchResultPanelProps = {
 export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
   const managedName = nodeHex && settingsProps?.managedName.node === nodeHex ? settingsProps.managedName : null
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
-  const tabs = nameSections(canEdit, subdomainsProps.subnames.length > 0)
+  const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length))
   const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView

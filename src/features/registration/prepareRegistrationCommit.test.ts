@@ -117,7 +117,7 @@ it('does not call a rejected saved request signed or submitted after reopening P
   const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, view as never))
     + renderToStaticMarkup(createElement(RegistrationReviewStep, view as never))
   expect(html).toContain('Unconfirmed')
-  expect(html).toContain('Reservation saved')
+  expect(html).toContain('Reserved')
   expect(html).toContain('Check your wallet before retrying')
   expect(html).not.toMatch(/Reservation signed|Reservation submitted|>Reserved</)
   expect(html).not.toContain('Start by reserving the name')

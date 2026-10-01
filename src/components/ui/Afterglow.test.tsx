@@ -50,9 +50,9 @@ describe('Afterglow names and copy', () => {
     }
   })
 
-  it('labels a registered search result as taken without a primary-name claim', () => {
+  it('does not label an owned profile as taken or invent a primary-name claim', () => {
     const html = text(renderToStaticMarkup(<NameHeader displayName="aurora.dusk" status="registered" records={[]} reserved={false} lifecycleLabel={null} primaryVerified={false} />))
-    expect(html).toContain('Taken')
+    expect(html).not.toContain('Taken')
     expect(html).not.toContain('Primary name')
   })
 

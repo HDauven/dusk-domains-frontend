@@ -1,7 +1,6 @@
 import {
   createManagedNameState,
   fallbackManager,
-  fallbackOwner,
 } from '../../app/appHelpers'
 import { lifecycleHeightFromIndexed, renewalGraceEnd, unixSecondsFromIso } from '../domains/domainFormat'
 import { userFacingMessageFromText } from '../../names/internal'
@@ -16,8 +15,6 @@ export function applyIndexedNameHydration(
     selectedAuthority,
     setActivityEntries,
     setActivityCursor,
-    setDraftManager,
-    setDraftOwner,
     setIndexerError,
     setManagedName,
     setPrimaryEndpointValue,
@@ -83,16 +80,12 @@ export function applyIndexedNameHydration(
       graceEndsAt,
       expiryPolicy: ownSubnameRead.value?.expiryPolicy ?? null,
     })
-    if (stateRead.value.owner) setDraftOwner(stateRead.value.owner)
-    if (stateRead.value.manager) setDraftManager(stateRead.value.manager)
     const defaultSubnameManager = stateRead.value.manager || selectedAuthority || fallbackManager
     setSubnameManager((current) => (
       !current || current === fallbackManager || current === selectedAuthority ? defaultSubnameManager : current
     ))
   } else {
-    setManagedName(createManagedNameState(recordSourceContractId))
-    setDraftOwner(fallbackOwner)
-    setDraftManager(fallbackManager)
+    setManagedName({ ...createManagedNameState(recordSourceContractId), node, owner: '', manager: '', expiresAt: 0, graceEndsAt: 0 })
     setSubnameManager(selectedAuthority || fallbackManager)
   }
 

@@ -4,7 +4,7 @@ import { updateDomainAuthorities } from './updateDomainAuthorities'
 
 export function useDomainSettingsActions(props: UseDomainSettingsActionsProps) {
   return {
-    handleOwnershipUpdate: () => updateDomainAuthorities(props),
+    handleOwnershipUpdate: (change: Parameters<typeof updateDomainAuthorities>[1]) => updateDomainAuthorities(props, change),
     handleRenewName: () => renewDomainName(props),
   }
 }

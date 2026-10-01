@@ -6,26 +6,28 @@ export async function downloadNameCard(name: string) {
   canvas.height = 630
   const context = canvas.getContext('2d')
   if (!context) throw new Error('Image download is unavailable in this browser.')
-  context.fillStyle = '#171222'
+  const styles = getComputedStyle(document.documentElement)
+  const colour = (token: string) => styles.getPropertyValue(token).trim()
+  context.fillStyle = colour('--surface')
   context.fillRect(0, 0, 1200, 630)
   const glow = context.createRadialGradient(600, 970, 310, 600, 970, 850)
-  glow.addColorStop(0, '#f2c5ab')
-  glow.addColorStop(0.25, '#684153')
-  glow.addColorStop(1, '#171222')
+  glow.addColorStop(0, colour('--sunset'))
+  glow.addColorStop(0.25, colour('--sunset-dim'))
+  glow.addColorStop(1, colour('--surface'))
   context.fillStyle = glow
   context.fillRect(0, 0, 1200, 630)
-  context.fillStyle = '#0c0919'
+  context.fillStyle = colour('--night')
   context.beginPath()
   context.ellipse(600, 970, 730, 450, 0, 0, Math.PI * 2)
   context.fill()
-  context.fillStyle = '#fff5ee'
+  context.fillStyle = colour('--ink')
   context.textAlign = 'center'
   const label = name.replace(/\.dusk$/, '')
   let size = 110
   do { context.font = `${size}px "Instrument Serif", serif`; size -= 2 } while (context.measureText(label).width > 1060 && size > 30)
   context.fillText(label, 600, 265)
   context.font = 'italic 80px "Instrument Serif", serif'
-  context.fillStyle = '#c4b6cb'
+  context.fillStyle = colour('--muted')
   context.fillText('.dusk', 600, 360)
   const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
   if (!blob) throw new Error('Could not create the image. Try again.')

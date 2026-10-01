@@ -92,3 +92,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+.recipient-settings { display: grid; gap: 20px; }
+.manager-summary { display: flex; justify-content: space-between; align-items: center; gap: 18px; border-top: 1px solid var(--line); padding-top: 18px; }
+.manager-summary h3 { margin: 0; }
+.manager-summary p { color: var(--muted); }
+.recipient-form { display: grid; gap: 16px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.recipient-form .address-chip { overflow-wrap: anywhere; }
+.recipient-settings > a { justify-self: start; }
+@media (max-width: 600px) { .manager-summary { flex-wrap: wrap; } }

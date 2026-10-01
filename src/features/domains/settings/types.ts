@@ -1,3 +1,4 @@
+import type { ResolvedRecipient } from '../../identity/resolveRecipient'
 import type { DuskDomainTxState } from '../../../names/internal'
 
 import type { ManagedNameState } from '../../../app/managedNameState'
@@ -10,8 +11,6 @@ export type DomainSettingsViewProps = {
   confirmationInput: string
   currentBlockHeight: number | null
   displayName: string
-  draftManager: string
-  draftOwner: string
   feeConfigError: string
   feeConfigLoading: boolean
   managedName: ManagedNameState
@@ -21,9 +20,10 @@ export type DomainSettingsViewProps = {
   minDurationYears: number
   nowSeconds: number
   onConfirmationInputChange: (value: string) => void
-  onDraftManagerChange: (value: string) => void
-  onDraftOwnerChange: (value: string) => void
-  onOwnershipUpdate: () => void
+  viewerAuthority?: string
+  ownerAddresses?: string[]
+  onResolveRecipient?: (input: string) => Promise<ResolvedRecipient>
+  onOwnershipUpdate: (change: { kind: 'transfer' | 'manager'; recipient: ResolvedRecipient }) => Promise<boolean | undefined>
   onRenewName: () => void
   onRenewalYearsChange: (years: number) => void
   renewalBusy: boolean
@@ -34,20 +34,19 @@ export type DomainSettingsViewProps = {
   renewalYears: number
 }
 
-export type AuthoritySettingsPanelProps = Pick<
+export type RecipientSettingsPanelProps = Pick<
   DomainSettingsViewProps,
   | 'canManageName'
   | 'confirmationInput'
   | 'displayName'
-  | 'draftManager'
-  | 'draftOwner'
   | 'managedName'
   | 'managementError'
   | 'managementTxState'
   | 'onConfirmationInputChange'
-  | 'onDraftManagerChange'
-  | 'onDraftOwnerChange'
   | 'onOwnershipUpdate'
+  | 'viewerAuthority'
+  | 'ownerAddresses'
+  | 'onResolveRecipient'
 >
 
 export type RenewalPanelProps = Pick<

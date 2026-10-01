@@ -62,8 +62,6 @@ export type UseRegistrationActionsProps = {
   setCommitTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setCommitted: Dispatch<SetStateAction<boolean>>
   setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
-  setDraftManager: Dispatch<SetStateAction<string>>
-  setDraftOwner: Dispatch<SetStateAction<string>>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>

@@ -106,7 +106,7 @@ try {
     window.renderReadReady(true)
   })
   await page.getByRole('button', { name: 'Claim owned.dusk' }).waitFor()
-  assert.equal(await page.locator('.name-hero-badges .status-badge').textContent(), 'Available')
+  assert.equal(await page.locator('.claim-card .status-badge').textContent(), 'Available')
   await page.evaluate(() => window.renderReadReady(false))
   await page.getByRole('status').filter({ hasText: 'Name data is unavailable' }).waitFor()
   assert.equal(await page.getByText('Available', { exact: true }).count(), 0)
