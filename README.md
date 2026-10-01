@@ -154,3 +154,34 @@ MIT
 Search trusts the indexer's registered status for issued reserved names and shows the owner and normal profile. Unissued and released protected labels remain reserved. There is no operator issuance UI.
 
 The SDK's official profiles carry `saleLocked: true` policy metadata. This frontend does not enforce that flag; issued names use the ordinary owner and marketplace controls. The contracts do not lock sales. The SDK archive pin is unchanged.
+
+## Paginated indexer reads
+
+My Domains and marketplace name selection use `getAllNames({ owner })`, with the
+SDK's 10,000-item ceiling and an explicit error on overflow. Empty owner results
+no longer trigger a global namespace scan. Subname management uses the same
+capped traversal through `getAllSubnames`; record hydration uses four concurrent
+workers and reports child read failures. A healthy indexer check is reused for
+five seconds, with concurrent checks sharing one request. Explicit health reads
+remain fresh for confirmation polling.
+
+Marketplace Browse, Yours, and Offers load one page per collection and share a
+Load more control. Name activity and auction activity have their own Load more
+controls. Refresh starts from the first page; pending continuations are ignored
+after a refresh or name switch, as are stale initial hydration results. Tab
+switches preserve loaded marketplace pages. A real reload re-fetches an open
+auction separately when it falls outside page one. The decorative name sky
+intentionally samples only the first name page; search remains a single availability lookup. Treasury
+and referral views keep their existing bounded histories.
+
+The browser smoke counts 49 indexer requests for home (3), search (6), opening a
+name with 20 subnames (27), opening the marketplace with two wallet owner keys
+(7), and paging all three collections twice (6). This fixture session runs within
+one health-cache interval; slower sessions may need additional health checks.
+The production default is 200 requests per client budget per 60 seconds. Searching
+and hydrating a name with 60 children takes 67 requests, with all children read.
+
+The SDK archive pin is unchanged. To test this change before a separately
+approved SDK pin update, run `npm ci`, then copy the SDK worktree's `src` directory
+and `package.json` into `node_modules/@duskdomains/sdk/` before the frontend checks.
+The new pagination methods require that updated SDK at build time.

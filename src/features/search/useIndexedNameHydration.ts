@@ -1,4 +1,5 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
+import { safeNamehashHex } from '../domains/domainFormat'
 import { currentBlockHeightFromHealth } from '../../app/appHelpers'
 import type {
   DuskDomainsIndexerClient,
@@ -7,6 +8,7 @@ import type {
 import { userFacingErrorMessage } from '../../names/internal'
 import { applyIndexedNameHydration } from './applyIndexedNameHydration'
 import { readIndexedName } from './indexedNameReads'
+import { createNameReadGuard } from './nameReadGuard'
 import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
 
 export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
@@ -19,15 +21,22 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     setIndexerError,
   } = props
 
+  const beginNameRead = useMemo(() => createNameReadGuard(), [])
+
   const hydrateNameFromIndexer = useCallback(async (
     client: DuskDomainsIndexerClient,
     searchResult: NameResult,
+    isCurrent: () => boolean = () => true,
   ) => {
+    const isCurrentActivity = props.beginActivityRead(safeNamehashHex(searchResult.canonical))
+    const shouldApply = () => isCurrent() && isCurrentActivity()
     const health = await client.getHealth()
+    if (!shouldApply()) return
     if (!health.ok) throw new Error('Domain data is still syncing. Refresh and try again shortly.')
     const currentBlockHeight = currentBlockHeightFromHealth(health)
-    props.setCurrentBlockHeight(currentBlockHeight)
     const reads = await readIndexedName(client, searchResult)
+    if (!shouldApply()) return
+    props.setCurrentBlockHeight(currentBlockHeight)
     if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight }, reads)
   }, [props])
 
@@ -38,18 +47,21 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     setIndexerError('')
     setIndexerConfirmation('')
 
+    const isCurrent = beginNameRead()
     try {
       const nextResult = await indexerClient.searchName(displayName)
+      if (!isCurrent()) return false
       setApiSearchResult(nextResult)
-      await hydrateNameFromIndexer(indexerClient, nextResult)
-      return true
+      await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
+      return isCurrent()
     } catch (error) {
-      setIndexerError(userFacingErrorMessage(error))
+      if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
       return false
     } finally {
-      setActivityLoading(false)
+      if (isCurrent()) setActivityLoading(false)
     }
   }, [
+    beginNameRead,
     displayName,
     hydrateNameFromIndexer,
     indexerClient,
@@ -60,6 +72,7 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
   ])
 
   return {
+    beginNameRead,
     hydrateNameFromIndexer,
     refreshCurrentNameFromIndexer,
   }

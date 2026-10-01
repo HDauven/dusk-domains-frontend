@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
+import { checkInitialHydration, checkSelectedAuction } from './indexer-review-smoke.mjs'
+import { checkIndexerPagination } from './indexer-pagination-smoke.mjs'
 import { chromium } from '@playwright/test'
 
 const baseUrl = process.env.DUSK_DOMAINS_E2E_BASE_URL || 'http://127.0.0.1:5189/'
@@ -329,6 +332,10 @@ try {
     assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
     assert.equal(await page.evaluate(() => localStorage.getItem('dusk-domains.active-referral')), null)
   }
+  await checkIndexerPagination(page)
+  await checkInitialHydration(page)
+  await checkSelectedAuction(page)
+  await checkIndexerSessionBudget(page)
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')
 } finally {

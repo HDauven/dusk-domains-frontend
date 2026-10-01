@@ -101,7 +101,7 @@ it('does not call a rejected saved request signed or submitted after reopening P
     setCommitted: (value: boolean) => { committed = value },
     setCurrentBlockHeight: (value: number | null) => { currentBlockHeight = value },
     openSearchView: noop, setDuration: noop, setChecked: noop, setResultView: noop,
-    setActivityLoading: noop, setApiSearchResult: noop, hydrateNameFromIndexer: noop,
+    setActivityLoading: noop, setApiSearchResult: noop, beginNameRead: () => () => true, hydrateNameFromIndexer: noop,
     indexerClient: { getCommitment, getHealth: async () => ({ ok: true, currentBlockHeight: 500 }),
       searchName: async () => ({ canonical: saved.name, status: 'available' }) } } as never, saved)
   expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment, controller)

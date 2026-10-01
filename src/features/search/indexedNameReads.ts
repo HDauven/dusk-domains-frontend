@@ -16,6 +16,7 @@ import type {
 import { isSubname, safeNamehashHex } from '../domains/domainFormat'
 
 export type IndexedNameReadBundle = {
+  activityCursor: string | null
   activityRead: IndexerReadResult<ActivityEntry[]>
   forwardRead: IndexerReadResult<ForwardResolutionResponse>
   hydratedSubnames: SubnameState[] | null
@@ -41,25 +42,27 @@ export async function readIndexedName(
   const [forwardRead, stateRead, activityRead, subnameRead, ownSubnameRead] = await Promise.all([
     indexerRead(client.resolveForward(canonicalName)),
     indexerRead(client.getNameState(node)),
-    indexerRead(client.getActivity(node)),
-    indexerRead(client.getSubnames(node)),
+    indexerRead(client.getActivityPage(node)),
+    indexerRead(client.getAllSubnames(node)),
     isSubname(canonicalName) ? indexerRead(client.getSubname(node)) : rootName,
   ])
   const primaryName = await readPrimaryNameForForwardRecord(client, forwardRead.value?.records)
   const hydratedSubnames = subnameRead.value?.map(indexedSubnameToState) ?? null
-  const subnameRecordSets = hydratedSubnames
+  const subnameRecords = hydratedSubnames
     ? await readSubnameRecordSets(client, hydratedSubnames)
-    : {}
+    : { records: {}, errors: [] }
   const readErrors = [
     forwardRead.error,
     stateRead.error,
     activityRead.error,
     subnameRead.error,
     ownSubnameRead.error,
+    ...subnameRecords.errors,
   ].filter((message): message is string => Boolean(message))
 
   return {
-    activityRead,
+    activityCursor: activityRead.value?.nextCursor ?? null,
+    activityRead: activityRead.error ? { value: null, error: activityRead.error } : { value: activityRead.value?.activity ?? [], error: null },
     forwardRead,
     hydratedSubnames,
     node,
@@ -68,7 +71,7 @@ export async function readIndexedName(
     readErrors,
     stateRead,
     subnameRead,
-    subnameRecordSets,
+    subnameRecordSets: subnameRecords.records,
   }
 }
 
@@ -90,11 +93,16 @@ async function readSubnameRecordSets(
   client: DuskDomainsIndexerClient,
   hydratedSubnames: SubnameState[],
 ) {
-  const subnameRecordReads = await Promise.all(hydratedSubnames.map((subname) => (
-    indexerRead(client.resolveForward(subname.name))
-  )))
-
-  return Object.fromEntries(subnameRecordReads.flatMap((read, index) => (
-    read.value ? [[hydratedSubnames[index].node, read.value.records]] : []
-  )))
+  const records: Record<string, ResolverRecord[]> = {}
+  const errors: string[] = []
+  let next = 0
+  await Promise.all(Array.from({ length: Math.min(4, hydratedSubnames.length) }, async () => {
+    while (next < hydratedSubnames.length) {
+      const subname = hydratedSubnames[next++]
+      const read = await indexerRead(client.resolveForward(subname.name))
+      if (read.value) records[subname.node] = read.value.records
+      if (read.error) errors.push(read.error)
+    }
+  }))
+  return { records, errors }
 }

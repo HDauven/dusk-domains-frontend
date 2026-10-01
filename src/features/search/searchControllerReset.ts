@@ -5,6 +5,7 @@ export function resetSearchState({
   recordSourceContractId,
   selectedAuthority,
   setActivityEntries,
+  setActivityCursor,
   setActivityLoading,
   setApiSearchResult,
   setChecked,
@@ -69,6 +70,7 @@ export function resetSearchState({
   setSubnameError('')
   setConfirmationInput('')
   setActivityEntries([])
+  setActivityCursor(null)
   setActivityLoading(false)
   setApiSearchResult(null)
   setIndexerError('')

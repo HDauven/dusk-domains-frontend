@@ -23,6 +23,8 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     renewalYears: domainState.renewalYears,
   })
   const activityFeed = useActivityFeed({
+    indexerClient: appRuntime.indexerClient,
+    setError: searchState.setIndexerError,
     defaultName: namePreview.displayName,
     defaultNode: namePreview.nodeHex,
   })

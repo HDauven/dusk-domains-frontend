@@ -15,6 +15,7 @@ export function applyIndexedNameHydration(
     recordSourceContractId,
     selectedAuthority,
     setActivityEntries,
+    setActivityCursor,
     setDraftManager,
     setDraftOwner,
     setIndexerError,
@@ -95,6 +96,7 @@ export function applyIndexedNameHydration(
   }
 
   setActivityEntries(activityRead.value ?? [])
+  setActivityCursor({ node, cursor: reads.activityCursor })
 
   if (hydratedSubnames) {
     setSubnames(hydratedSubnames)

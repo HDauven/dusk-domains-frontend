@@ -8,6 +8,8 @@ type SearchResultView = SearchWorkspaceProps['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
   activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
+  hasMoreActivity?: boolean
+  onLoadMoreActivity?: () => void
   activityLoading: boolean
   canRegister: boolean
   checked: SearchWorkspaceProps['checked']
@@ -49,6 +51,8 @@ type UseSearchWorkspaceFeatureProps = {
 export function useSearchWorkspaceFeature({
   activityEntries,
   activityLoading,
+  hasMoreActivity,
+  onLoadMoreActivity,
   canRegister,
   checked,
   currentBlockHeight,
@@ -87,6 +91,8 @@ export function useSearchWorkspaceFeature({
 }: UseSearchWorkspaceFeatureProps) {
   const searchProps: SearchWorkspaceProps = {
     activityProps: {
+      hasMore: hasMoreActivity,
+      onLoadMore: onLoadMoreActivity,
       activityEntries,
       currentBlockHeight,
       displayName,

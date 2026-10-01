@@ -83,6 +83,8 @@ export function useAppSearchProps({
   } = mainViewRuntime
 
   return useSearchWorkspaceFeature({
+    hasMoreActivity: activityFeed.hasMoreActivity,
+    onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),
     activityEntries,
     activityLoading,
     canRegister,

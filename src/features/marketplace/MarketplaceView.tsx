@@ -92,6 +92,9 @@ export function MarketplaceView(props: MarketplaceViewProps) {
       {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity props={props} /> : null}
       {marketplaceEnabled && tab === 'sell' ? <MarketplaceSell {...props} /> : null}
       {marketplaceEnabled && tab === 'offers' ? <MarketplaceOffers {...props} /> : null}
+      {marketplaceEnabled && props.hasMore && !selectedAuction && tab !== 'sell' ? (
+        <button className="text-button" disabled={loading} type="button" onClick={props.onLoadMore}>Load more marketplace results</button>
+      ) : null}
       <MarketplaceBidReview props={props} />
     </AccountPanel>
   )

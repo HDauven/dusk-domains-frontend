@@ -6,6 +6,7 @@ import type { UseSearchControllerProps } from '../searchControllerTypes'
 
 export async function openIndexedName(props: UseSearchControllerProps, name: string) {
   const {
+    beginNameRead,
     hydrateNameFromIndexer,
     indexerClient,
     openSearchView,
@@ -28,13 +29,15 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
   setIndexerError('')
   setIndexerConfirmation('')
 
+  const isCurrent = beginNameRead()
   try {
     const nextResult = await indexerClient.searchName(name)
+    if (!isCurrent()) return
     setApiSearchResult(nextResult)
-    await hydrateNameFromIndexer(indexerClient, nextResult)
+    await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
   } catch (error) {
-    setIndexerError(userFacingErrorMessage(error))
+    if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
   } finally {
-    setActivityLoading(false)
+    if (isCurrent()) setActivityLoading(false)
   }
 }
