@@ -67,7 +67,7 @@ describe('MarketplaceView actions', () => {
     })
 
     expect(dormantHtml).toContain('>Cancel auction</button>')
-    expect(liveHtml).toContain('Your domain remains in escrow')
+    expect(liveHtml).toContain('Your name remains in escrow')
     expect(liveHtml).not.toContain('>Cancel auction</button>')
   })
 
@@ -390,4 +390,46 @@ it('keeps browse cards to status, name, amount, time and action', () => {
   expect(html).toContain('36.47 DUSK')
   expect(html).toContain('title="36.4651875 DUSK"')
   for (const detail of ['Minimum next bid', '>Seller</dt>', 'last 10 minutes', 'Secured in escrow', 'Available to anyone']) expect(html).not.toContain(detail)
+})
+
+it('shows only bids from the current auction and one authoritative count', () => {
+  const current = auction({ createdAtBlockHeight: 1000, bidCount: 1 })
+  const entry = { id: 'bid', eventType: 'domain_bid_placed' as const, actor: buyer, target: '25000000000', blockHeight: 1100, timestamp: '2026-10-01T00:00:00Z', name: current.name, node: current.node, txId: 'bid' }
+  const html = render({ auctions: [current], selectedAuctionNode: current.node, auctionActivity: [entry, { ...entry, id: 'create', eventType: 'domain_auction_created' }, { ...entry, id: 'old', blockHeight: 900 }] })
+  expect(html).toContain('Bids · 1')
+  expect(html.match(/>Bid placed</g)).toHaveLength(1)
+  expect(html).not.toContain('Auction created')
+  expect(html).not.toContain('Marketplace views')
+})
+it('collapses raising a winning bid and labels the seller as You', () => {
+  const current = auction({ highestBid: { bidderAuthority: buyer, amountLux: 25000000000, placedAtBlockHeight: 1000 }, bidCount: 1 })
+  const html = render({ auctions: [current], selectedAuctionNode: current.node })
+  expect(html).toContain('<details class="marketplace-raise-bid"><summary>Raise bid</summary>')
+  expect(render({ auctions: [current], selectedAuctionNode: current.node, selectedAuthority: seller })).toContain('<code>You</code>')
+})
+it('shows a successful transaction once with its reference behind Details', () => {
+  const html = render({ confirmation: 'Bid placed.', txState: { status: 'executed', txId: 'reference', context: { title: 'Bid', fields: [] }, call: { contract: 'marketplace', functionName: 'place_bid_runtime' } } as unknown as MarketplaceViewProps['txState'] })
+  expect(html).toContain('Bid placed.')
+  expect(html).not.toContain('Transaction confirmed')
+  expect(html).toContain('<summary>Details</summary>')
+  expect(html).not.toContain('Refresh</button>')
+})
+
+it('states the closing rule once beside the timer and keeps freshness in navigation', () => {
+  const live = auction({ startBlockHeight: 900, endBlockHeight: 2000 })
+  const html = render({ auctions: [live], selectedAuctionNode: live.node, updatedAt: 1000 })
+  expect(html.match(/Bids in the last 10 minutes/g)).toHaveLength(1)
+  expect(html).not.toContain('Closing rule')
+  expect(html).toMatch(/marketplace-bid-timer[\s\S]*?Bids in the last 10 minutes extend it to 10 minutes remaining/)
+  for (const view of [html, render({ updatedAt: 1000 })]) {
+    expect(view).toMatch(/class="marketplace-navigation">[\s\S]*?<p class="marketplace-freshness">Updated <time[^>]*>[^<]*<\/time><\/p><\/div>/)
+    expect(view.match(/>Updated /g)).toHaveLength(1)
+  }
+})
+
+it('rounds a first-bid minimum up in both the headline and the draft', () => {
+  const current = auction({ reservePriceLux: 1_000_000_001 })
+  const html = render({ auctions: [current], selectedAuctionNode: current.node })
+  expect(html).toContain('title="1.000000001 DUSK">1.01 DUSK')
+  expect(html).toContain('value="1.01"')
 })

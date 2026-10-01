@@ -172,6 +172,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     bidReview: auctionState.bidReview,
     confirmation,
     currentBlockHeight: data.currentBlockHeight,
+    updatedAt: data.updatedAt,
     durationDays: sell.durationDays,
     error,
     fixedPriceDusk: sell.fixedPriceDusk,

@@ -20,7 +20,7 @@ export function minimumBidLux(auction: IndexedMarketplaceAuction) {
 }
 
 export function minimumBidDusk(auction: IndexedMarketplaceAuction) {
-  return formatLuxAsDusk(minimumBidLux(auction))
+  return compactLuxAsDusk(minimumBidLux(auction), true)
 }
 
 export function formatLuxAsDusk(lux: bigint) {

@@ -45,6 +45,7 @@ export function useMarketplaceData({
   const [refund, setRefund] = useScopedState<IndexedMarketplaceRefund | null>(accountScope, null)
   const [ownedNames, setOwnedNames] = useScopedState<IndexedNameSummary[]>(accountScope, [])
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [cursors, setCursors] = useState<MarketplaceCursors>({ fixedSales: null, auctions: null, offers: null })
   const loadingMore = useRef(false)
@@ -101,6 +102,7 @@ export function useMarketplaceData({
       setCursors(page.cursors)
       setOwnedNames(nextOwnedNames)
       setCurrentBlockHeight(health.currentBlockHeight)
+      setUpdatedAt(Date.now())
       setRefund(nextRefund?.amountLux ? nextRefund : null)
       onLoadedRef.current({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
     } catch (loadError) {
@@ -139,8 +141,17 @@ export function useMarketplaceData({
 
   useEffect(() => {
     if (mainView !== 'marketplace') return
-    globalThis.queueMicrotask(() => void loadMarketplace())
+    let disposed = false
+    const refresh = () => { if (!disposed && document.visibilityState !== 'hidden') void loadMarketplace() }
+    globalThis.queueMicrotask(refresh)
+    const timer = window.setInterval(refresh, 10_000)
+    window.addEventListener('focus', refresh)
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+    }
   }, [loadMarketplace, mainView])
 
-  return { hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
+  return { updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
 }

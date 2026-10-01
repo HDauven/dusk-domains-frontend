@@ -172,6 +172,7 @@
   border: 2px solid var(--night);
 }
 
+.listing-name h1,
 .listing-name h2,
 .listing-name h3 {
   min-width: 0;
@@ -181,11 +182,13 @@
   overflow-wrap: anywhere;
 }
 
+.listing-name h1,
 .listing-name h2 {
   font-size: clamp(var(--text-3xl), 6vw, 72px);
   line-height: 0.95;
 }
 
+.listing-name h1 span,
 .listing-name h2 span,
 .listing-name h3 span {
   color: var(--muted);
@@ -791,3 +794,14 @@
 
 .marketplace-panel .marketplace-amount,
 .marketplace-bid-review .marketplace-amount { font: inherit; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; color: inherit; }
+
+.marketplace-bid-timer [role="timer"] { font: inherit; text-transform: none; letter-spacing: normal; color: var(--ink); }
+.marketplace-raise-bid summary { cursor: pointer; color: var(--peach); }
+.marketplace-raise-bid[open] summary { margin-bottom: var(--space-4); }
+@media (max-width: 900px) { .marketplace-bid-panel { grid-row: 1; } }
+
+.marketplace-freshness { margin: 0; color: var(--muted); font-size: var(--text-xs); }
+.marketplace-tx-details { color: var(--muted); font-size: var(--text-sm); }
+.marketplace-tx-details code { overflow-wrap: anywhere; }
+
+.marketplace-navigation { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }

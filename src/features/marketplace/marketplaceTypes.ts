@@ -29,6 +29,7 @@ export type MarketplaceViewProps = {
   bidDrafts: Record<string, string>
   bidReview: MarketplaceBidReview | null
   confirmation: string
+  updatedAt?: number | null
   currentBlockHeight: number | null
   durationDays: string
   error: string
