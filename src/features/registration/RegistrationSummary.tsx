@@ -1,4 +1,6 @@
+import { useId } from 'react'
 import { Button } from '../../components/ui/Button'
+import { Switch } from '../../components/ui/Switch'
 import { abbreviate, formatDusk, pluralize } from '../../utils/format'
 import type { ReferralState } from '../referrals/referralState'
 
@@ -12,6 +14,7 @@ export function RegistrationSummary({
   expiryDate,
   feeConfigError,
   onChangeTerm,
+  onRegisterSetsPrimaryChange,
   registerSetsPrimary,
   registrationComplete,
   registrationFee,
@@ -25,6 +28,7 @@ export function RegistrationSummary({
   duration: number
   expiryDate: string
   feeConfigError: string
+  onRegisterSetsPrimaryChange?: (checked: boolean) => void
   onChangeTerm: () => void
   registerSetsPrimary: boolean
   registrationComplete: boolean
@@ -33,6 +37,7 @@ export function RegistrationSummary({
   selectedAddress: string
 }) {
   const pointsElsewhere = registrationTargetAddress && registrationTargetAddress !== selectedAddress
+  const primaryLabelId = useId()
 
   return (
     <aside className="claim-stub register-summary" aria-label="Your claim">
@@ -58,7 +63,7 @@ export function RegistrationSummary({
         {selectedAddress ? (
           <div>
             <dt>Owner</dt>
-            <dd><code>{abbreviate(selectedAddress)}</code></dd>
+            <dd>You</dd>
           </div>
         ) : null}
         {pointsElsewhere ? (
@@ -68,9 +73,9 @@ export function RegistrationSummary({
           </div>
         ) : null}
         {selectedAddress ? (
-          <div>
-            <dt>Primary name</dt>
-            <dd>{registerSetsPrimary ? 'Yes' : 'Not now'}</dd>
+          <div className="register-primary">
+            <dt id={primaryLabelId}>Primary name</dt>
+            <dd>{!registrationComplete && onRegisterSetsPrimaryChange ? <Switch aria-labelledby={primaryLabelId} checked={registerSetsPrimary} onCheckedChange={onRegisterSetsPrimaryChange} /> : registerSetsPrimary ? 'On' : 'Off'}</dd>
           </div>
         ) : null}
         {activeReferral ? (
@@ -82,7 +87,7 @@ export function RegistrationSummary({
       </dl>
       <div className="claim-price">
         <strong>{formatDusk(registrationFee)} <small>DUSK</small></strong>
-        <span>{registrationComplete ? 'Paid.' : 'Paid when you complete.'} Network fees show in your wallet.</span>
+        <span>{registrationComplete ? 'Paid.' : 'Paid when you register.'} Network fees show in your wallet.</span>
         {feeConfigError ? <span>Live pricing is unavailable, so this uses the default price list.</span> : null}
       </div>
     </aside>

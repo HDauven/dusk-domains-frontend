@@ -487,3 +487,13 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.register-head h1 { margin: 8px 0; font: 400 var(--text-name)/1.1 var(--font-display); overflow-wrap: anywhere; }
+.register-stage { color: var(--muted); }
+.claim-success { display: grid; justify-items: center; gap: 22px; padding: 24px 0; }
+.claim-success h1 { margin: 0; font: 400 var(--text-3xl)/1.2 var(--font-display); overflow-wrap: anywhere; text-align: center; }
+.claim-success .name-portrait { width: min(100%, 620px); min-height: 300px; }
+.claim-success-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.claim-success details { color: var(--muted); max-width: 100%; overflow-wrap: anywhere; }
+.register-card button:disabled { opacity: .45; cursor: not-allowed; }
+.register-facts .register-primary { align-items: center; }

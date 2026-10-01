@@ -26,7 +26,7 @@ export function formatWait(blocks: number) {
 export function revealButtonCopy(status: CommitWindowStatus) {
   if (status === 'missing') return 'Waiting for confirmation'
   if (status === 'stale') return 'Start again'
-  return 'Register name'
+  return 'Register'
 }
 
 export function completeRegistrationButtonCopy(
@@ -53,7 +53,7 @@ export function pendingReservationStatusCopy(status: CommitWindowStatus, waitBlo
 }
 
 export function pendingReservationActionCopy(status: CommitWindowStatus) {
-  if (status === 'ready') return 'Finish'
+  if (status === 'ready') return 'Register'
   if (status === 'stale') return 'Start over'
   return 'Open'
 }
@@ -61,15 +61,15 @@ export function pendingReservationActionCopy(status: CommitWindowStatus) {
 export function pendingReservationNextStepCopy(status: CommitWindowStatus, waitBlocks: number) {
   if (status === 'missing') return 'Check your wallet before retrying. If you canceled approval, forget this saved request to start again.'
   if (status === 'waiting') return `Registration unlocks in about ${formatWait(waitBlocks)}.`
-  if (status === 'stale') return 'This reservation expired. Forget the saved request in My Domains before reserving again.'
-  return 'Ready to complete now.'
+  if (status === 'stale') return 'This reservation expired. Forget the saved request in My names before reserving again.'
+  return 'Ready to register.'
 }
 
 export function savedReservationOverviewCopy(
   status: CommitWindowStatus = 'missing',
   waitBlocks = 0,
 ) {
-  if (status === 'ready') return 'Your reservation is ready. Finish registration to activate the name.'
+  if (status === 'ready') return 'Your reservation is ready. Register to activate the name.'
   if (status === 'waiting') return `Your reservation is saved. Registration unlocks in about ${formatWait(waitBlocks)}.`
   if (status === 'stale') return 'Your saved reservation expired. Start again to claim this name.'
   return 'Your reservation is saved and waiting for confirmation.'
@@ -91,3 +91,8 @@ export function commitWindowCopy(
 export function strandedReservationCopy() {
   return `Dusk Domains added capacity since you reserved, so this reservation can't be completed. Reserve again; you can complete about ${formatWait(REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)} after it confirms.`
 }
+
+export function countdownCopy(seconds: number) {
+  return seconds > 0 ? `Ready in about ${Math.ceil(seconds)} s` : 'Waiting for the next block…'
+}
+

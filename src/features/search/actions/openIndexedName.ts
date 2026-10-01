@@ -34,6 +34,7 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
     const nextResult = await indexerClient.searchName(name)
     if (!isCurrent()) return
     setApiSearchResult(nextResult)
+    setResultView(nextResult.status === 'registered' ? 'details' : 'overview')
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
   } catch (error) {
     if (isCurrent()) setIndexerError(userFacingErrorMessage(error))

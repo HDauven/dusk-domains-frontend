@@ -49,6 +49,40 @@
   animation: spin var(--motion-spin) linear infinite;
 }
 .button.compact { min-width: 0; }
+.switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 56px;
+  min-height: 44px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+}
+.switch-track {
+  display: flex;
+  align-items: center;
+  width: 48px;
+  height: 28px;
+  padding: 3px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+}
+.switch-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  transition: transform var(--motion-feedback) var(--ease);
+}
+.switch[aria-checked="true"] .switch-track { background: var(--peach); border-color: var(--peach); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(20px); background: var(--night); }
+.switch:hover:not(:disabled) .switch-track { border-color: var(--ink); }
+.switch:disabled { opacity: .45; cursor: not-allowed; }
 .icon-button, .hero-search-clear {
   width: 44px;
   padding: var(--space-2);

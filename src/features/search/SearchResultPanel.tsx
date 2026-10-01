@@ -67,7 +67,7 @@ export function SearchResultPanel({
 
   return (
     <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
-      <NameHeader {...headerProps} />
+      {resultView !== 'register' && !(resultView === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} /> : null}
 
       {tabbed ? (
         <Tabs id="name-sections" label="Name sections" items={nameTabs.map(({ view, label }) => ({ id: view, label }))} value={resultView} onChange={onResultViewChange} />

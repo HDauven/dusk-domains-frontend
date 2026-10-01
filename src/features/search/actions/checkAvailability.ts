@@ -50,7 +50,7 @@ export async function checkAvailability(props: UseSearchControllerProps) {
       setCommitted(false)
       setPreparedCommit(null)
       setRegistrationCompletion(null)
-      setResultView('details')
+
     }
   } catch (error) {
     if (isCurrent()) setIndexerError(userFacingErrorMessage(error))

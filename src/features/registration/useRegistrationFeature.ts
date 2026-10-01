@@ -21,6 +21,7 @@ export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
   onBackToOverview: () => void
   onOpenWalletConnection: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
+  onAddRecords?: () => void
   onSetAddress: () => void
   onViewPendingReservation: () => void
   registrationAddressInput: string
@@ -78,6 +79,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
         props.setRegistrationAddressInput(props.selectedAddress)
       }
     },
+    onAddRecords: props.onAddRecords,
     onSetAddress: props.onSetAddress,
     onUseWalletAddress: () => props.setRegistrationAddressInput(props.selectedAddress),
     registerSetsPrimary: props.registerSetsPrimary,

@@ -7,6 +7,7 @@ type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
+  priceTiers?: SearchWorkspaceProps['priceTiers']
   activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
   hasMoreActivity?: boolean
   onLoadMoreActivity?: () => void
@@ -49,6 +50,7 @@ type UseSearchWorkspaceFeatureProps = {
 }
 
 export function useSearchWorkspaceFeature({
+  priceTiers,
   activityEntries,
   activityLoading,
   hasMoreActivity,
@@ -90,6 +92,7 @@ export function useSearchWorkspaceFeature({
   viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
   const searchProps: SearchWorkspaceProps = {
+    priceTiers,
     activityProps: {
       hasMore: hasMoreActivity,
       onLoadMore: onLoadMoreActivity,
@@ -142,6 +145,7 @@ export function useSearchWorkspaceFeature({
       onDurationChange,
       onOpenPendingReservation,
       onOpenPendingReservations,
+      onSuggestion: onQueryChange,
       onViewDetails: () => onResultViewChange('details'),
       registrationFee,
       resultIssues,

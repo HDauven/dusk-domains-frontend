@@ -57,6 +57,7 @@ export type RegistrationStepPanelProps = {
   onRegisterName: () => void
   onRegisterSetsPrimaryChange: (checked: boolean) => void
   onRestartReservation: () => void
+  onAddRecords?: () => void
   onSetAddress: () => void
   onUseWalletAddress: () => void
   registerSetsPrimary: boolean

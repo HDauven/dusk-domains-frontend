@@ -23,9 +23,9 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
     subdomainsProps,
   })
   const runtimeNotice = useRuntimeNotice({
-    indexerConfirmation: inputs.searchState.indexerConfirmation,
+    indexerConfirmation: inputs.searchState.resultView === 'register' ? '' : inputs.searchState.indexerConfirmation,
     indexerError: inputs.searchState.indexerError,
-    walletError: inputs.walletRuntime.walletError,
+    walletError: inputs.searchState.resultView === 'register' ? '' : inputs.walletRuntime.walletError,
   })
 
   return {

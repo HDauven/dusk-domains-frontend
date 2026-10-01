@@ -1,3 +1,5 @@
+import { registrationPrice } from '../names/internal'
+import { formatDusk } from '../utils/format'
 import type { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import type { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspaceFeature'
@@ -83,6 +85,7 @@ export function useAppSearchProps({
   } = mainViewRuntime
 
   return useSearchWorkspaceFeature({
+    priceTiers: ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
     hasMoreActivity: activityFeed.hasMoreActivity,
     onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),
     activityEntries,
