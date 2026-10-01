@@ -1,15 +1,17 @@
+import { MarketplaceFreshness } from './MarketplaceFreshness'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Panel } from '../../components/ui/Panel'
 import { Input } from '../../components/ui/Input'
 import { ArrowLeft, Clock3, Gavel, ShieldCheck, Star, UserRound } from 'lucide-react'
-import { activityLabel, type ActivityEntry, type IndexedMarketplaceAuction } from '../../names/internal'
+import { type ActivityEntry, type IndexedMarketplaceAuction } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
 import { activityActor } from '../activity/activityCopy'
 import { activityWhen } from '../activity/activityTime'
 import { formatActivityTime } from '../domains/domainFormat'
-import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
-import { minimumBidDusk } from './auctionMath'
+import { MarketplaceAmount } from './MarketplaceAmount'
+import { formatLuxAsDusk, minimumBidDusk, minimumBidLux } from './auctionMath'
+import { AuctionCountdown } from './AuctionCountdown'
 import { ListingName } from './ListingName'
 import {
   auctionDurationLabel,
@@ -17,32 +19,31 @@ import {
   auctionStatus,
   auctionStatusLabel,
   auctionStatusTone,
-  auctionTimeLabel,
   marketplaceFeeLabel,
   sameAuthority,
 } from './marketplacePresentation'
-import type { MarketplaceViewProps } from './marketplaceTypes'
+import type { MarketplaceAuctionDetailProps } from './marketplaceTypes'
 
-export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedMarketplaceAuction; props: MarketplaceViewProps }) {
+export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedMarketplaceAuction; props: MarketplaceAuctionDetailProps }) {
   const status = auctionStatus(auction, props.currentBlockHeight)
   const ownAuction = sameAuthority(auction.sellerAuthority, props.selectedAuthority)
   const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
   const watched = props.watchedNodes.includes(auction.node)
   const minimum = minimumBidDusk(auction)
-  const marketplaceActivity = props.auctionActivity.filter((entry) => entry.eventType.startsWith('domain_'))
+  const marketplaceActivity = props.auctionActivity.filter((entry) => entry.eventType === 'domain_bid_placed' && (entry.blockHeight === null || entry.blockHeight >= auction.createdAtBlockHeight))
 
   return (
     <div className="marketplace-auction-detail">
-      <Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
+      <div className="marketplace-navigation"><Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
         <ArrowLeft aria-hidden="true" size={15} /> All listings
-      </Button>
+      </Button><MarketplaceFreshness updatedAt={props.updatedAt} /></div>
 
       <div className="marketplace-auction-hero">
         <div>
-          <ListingName heading="h2" name={auction.name} size={64} />
+          <ListingName id="marketplace-heading" heading="h1" name={auction.name} size={64} />
           <p>{auction.startBlockHeight === null
-            ? `The first confirmed bid starts a ${auctionDurationLabel(auction.durationBlocks)} countdown.`
-            : 'The highest confirmed bid wins when the protected countdown ends.'}</p>
+            ? `Starts when someone bids, then runs ${auctionDurationLabel(auction.durationBlocks)}.`
+            : 'The highest bid wins when the auction ends.'}</p>
         </div>
         <div className="marketplace-auction-hero-actions">
           <Badge tone={auctionStatusTone(status)}>{auctionStatusLabel(status)}</Badge>
@@ -65,18 +66,18 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
               <h3 id="auction-details-heading" className="eyebrow">Details</h3>
             </div>
             <dl>
-              <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><code>{abbreviate(auction.sellerAuthority)}</code></dd></div>
+              <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><code>{ownAuction ? 'You' : abbreviate(auction.sellerAuthority)}</code></dd></div>
               <div><dt><Clock3 aria-hidden="true" size={14} /> Duration</dt><dd>{auctionDurationLabel(auction.durationBlocks)}</dd></div>
               <div><dt>Bids</dt><dd>{auction.bidCount}</dd></div>
               <div><dt>Marketplace fee</dt><dd>{marketplaceFeeLabel(auction.feeBps)} from seller proceeds</dd></div>
-              <div><dt><ShieldCheck aria-hidden="true" size={14} /> Custody</dt><dd>{auction.escrowed ? 'Domain secured in escrow' : 'Escrow verification failed'}</dd></div>
-              <div><dt>{auction.startBlockHeight === null ? 'Start window' : 'Closing rule'}</dt><dd>{auction.startBlockHeight === null ? auctionStartWindowLabel(auction, props.currentBlockHeight) : 'Late bids restore 10 minutes'}</dd></div>
+              <div><dt><ShieldCheck aria-hidden="true" size={14} /> Custody</dt><dd>{auction.escrowed ? 'Name held in escrow' : 'Escrow verification failed'}</dd></div>
+              {auction.startBlockHeight === null ? <div><dt>Start window</dt><dd>{auctionStartWindowLabel(auction, props.currentBlockHeight)}</dd></div> : null}
             </dl>
           </Panel>
 
           <Panel className="marketplace-auction-activity" aria-labelledby="auction-activity-heading">
             <div className="marketplace-section-heading">
-              <h3 id="auction-activity-heading" className="eyebrow">Bids · {marketplaceActivity.length}</h3>
+              <h3 id="auction-activity-heading" className="eyebrow">Bids · {auction.bidCount}</h3>
             </div>
             {props.auctionActivityLoading ? (
               <p className="marketplace-activity-empty">Loading auction activity…</p>
@@ -95,16 +96,16 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
 
         <Panel as="aside" className="marketplace-bid-panel" aria-label={`Bid on ${auction.name}`}>
           {leading ? <p className="marketplace-bidder-banner leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
-          {ownAuction ? <p className="marketplace-bidder-banner selling">You’re selling this domain</p> : null}
+          {ownAuction ? <p className="marketplace-bidder-banner selling">You’re selling this name</p> : null}
           <div className="marketplace-bid-price">
-            <span>{auction.highestBid ? 'Current bid' : 'Reserve'}</span>
-            <strong>{formatLuxNumberAsDusk(auction.highestBid?.amountLux ?? auction.reservePriceLux)}</strong>
+            <span>{auction.highestBid ? 'Current bid' : 'Minimum bid'}</span>
+            <strong><MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} roundUp={!auction.highestBid} /></strong>
             <small>{auction.bidCount} confirmed {auction.bidCount === 1 ? 'bid' : 'bids'}</small>
           </div>
           <div className="marketplace-bid-timer">
             <span>{auction.endBlockHeight === null ? 'Starts with first bid' : 'Time remaining'}</span>
-            <strong>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : auctionTimeLabel(auction, props.currentBlockHeight)}</strong>
-            <small>{auction.endBlockHeight === null ? `Start window: ${auctionStartWindowLabel(auction, props.currentBlockHeight)}` : 'Late bids can extend the closing time.'}</small>
+            <strong>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : <AuctionCountdown endBlock={auction.endBlockHeight} currentBlock={props.currentBlockHeight} />}</strong>
+            <small>{auction.endBlockHeight === null ? `Start window: ${auctionStartWindowLabel(auction, props.currentBlockHeight)}` : 'Estimated from chain time.'} Bids in the last 10 minutes extend it to 10 minutes remaining.</small>
           </div>
 
           <AuctionAction auction={auction} minimum={minimum} ownAuction={ownAuction} props={props} status={status} />
@@ -124,13 +125,13 @@ function AuctionAction({
   auction: IndexedMarketplaceAuction
   minimum: string
   ownAuction: boolean
-  props: MarketplaceViewProps
+  props: MarketplaceAuctionDetailProps
   status: ReturnType<typeof auctionStatus>
 }) {
   if (status === 'ended') {
     return (
       <div className="marketplace-auction-action-stack">
-        <p>The auction is over. Finalization transfers the domain and pays the seller.</p>
+        <p>The auction is over. Finalization transfers the name and pays the seller.</p>
         <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onSettleAuction(auction)}>Finalize auction</Button>
       </div>
     )
@@ -150,13 +151,13 @@ function AuctionAction({
         <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelAuction(auction)}>Cancel auction</Button>
       </div>
     ) : (
-      <div className="marketplace-auction-action-stack"><p>Your domain remains in escrow until the auction is finalized.</p></div>
+      <div className="marketplace-auction-action-stack"><p>Your name remains in escrow until the auction is finalized.</p></div>
     )
   }
   if (!props.selectedAddress) {
     return <Button variant="primary" className="compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet to bid</Button>
   }
-  return (
+  const form = (
     <div className="marketplace-auction-action-stack">
       <label className="marketplace-bid-field">
         <span>Your bid</span>
@@ -174,13 +175,17 @@ function AuctionAction({
         </div>
       </label>
       <div className="marketplace-minimum-row" id={`bid-help-${auction.node}`}>
-        <span>Minimum {minimum} DUSK</span>
+        {auction.highestBid ? <span title={`${formatLuxAsDusk(minimumBidLux(auction))} DUSK`}>Minimum {minimum} DUSK</span> : null}
         <Button type="button" onClick={() => props.onBidDraftChange(auction.node, minimum)}>Use minimum</Button>
       </div>
       <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.onReviewBid(auction)}>Review bid</Button>
       <p className="marketplace-custody-note">Your full bid is locked in the marketplace contract. If you’re outbid, it becomes withdrawable marketplace balance.</p>
     </div>
   )
+  return sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
+    ? <details className="marketplace-raise-bid"><summary>Raise bid</summary>{form}</details>
+    : form
+
 }
 
 function AuctionActivityRow({ currentBlockHeight, entry, viewerAuthority }: { currentBlockHeight: number | null; entry: ActivityEntry; viewerAuthority: string }) {
@@ -189,7 +194,7 @@ function AuctionActivityRow({ currentBlockHeight, entry, viewerAuthority }: { cu
     <li>
       <span className="marketplace-activity-icon"><Gavel aria-hidden="true" size={14} /></span>
       <div>
-        <strong>{activityLabel(entry.eventType)}</strong>
+        <strong>Bid placed</strong>
         <span>{activityActor(entry.actor, viewerAuthority) || 'Marketplace'}</span>
       </div>
       <div className="marketplace-activity-value">
@@ -206,5 +211,5 @@ function marketplaceActivityAmount(entry: ActivityEntry) {
   if (!entry.target || !/^\d+$/u.test(entry.target)) return ''
   const value = Number(entry.target)
   if (!Number.isSafeInteger(value) || value <= 0) return ''
-  return formatLuxNumberAsDusk(value)
+  return <MarketplaceAmount lux={value} />
 }

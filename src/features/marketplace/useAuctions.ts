@@ -13,7 +13,7 @@ import {
   type IndexedMarketplaceAuction,
 } from '../../names/internal'
 import { useScopedState } from '../../utils/useScopedState'
-import { currentBidDraft, formatLuxAsDusk, validLuxAmount } from './auctionMath'
+import { compactLuxAsDusk, currentBidDraft, formatLuxAsDusk, validLuxAmount } from './auctionMath'
 import { canonicalAuction, minimumCanonicalBidLux } from './canonicalMarketplaceState'
 import type { MarketplaceViewProps } from './marketplaceTypes'
 import type { MarketplaceWrites } from './useMarketplaceWrites'
@@ -89,6 +89,12 @@ export function useAuctions({
     }
   }, [indexerClient, setError])
 
+  const selectedBidCount = auctions.find((auction) => auction.node === selectedAuctionNode)?.bidCount
+  useEffect(() => {
+    if (!selectedAuctionNode) return
+    queueMicrotask(() => void loadAuctionActivity(selectedAuctionNode))
+  }, [loadAuctionActivity, selectedAuctionNode, selectedBidCount])
+
   // The contract's current minimum, or null after reporting why it could not be read.
   const canonicalMinimum = useCallback(async (auction: IndexedMarketplaceAuction) => {
     if (!marketplaceOnChainClient) return null
@@ -109,8 +115,8 @@ export function useAuctions({
     const minimumBid = await canonicalMinimum(auction)
     if (minimumBid === null) return
     if (amountLux < minimumBid) {
-      setError(`Bid at least ${formatLuxAsDusk(minimumBid)} DUSK.`)
-      setBidDrafts((current) => ({ ...current, [auction.node]: formatLuxAsDusk(minimumBid) }))
+      setError(`Bid at least ${compactLuxAsDusk(minimumBid, true)} DUSK.`)
+      setBidDrafts((current) => ({ ...current, [auction.node]: compactLuxAsDusk(minimumBid, true) }))
       return
     }
     setError('')
@@ -129,8 +135,8 @@ export function useAuctions({
     const minimumBid = await canonicalMinimum(auction)
     if (minimumBid === null) return
     if (amountLux < minimumBid) {
-      setBidDrafts((current) => ({ ...current, [auction.node]: formatLuxAsDusk(minimumBid) }))
-      setError(`The minimum bid is now ${formatLuxAsDusk(minimumBid)} DUSK.`)
+      setBidDrafts((current) => ({ ...current, [auction.node]: compactLuxAsDusk(minimumBid, true) }))
+      setError(`The minimum bid is now ${compactLuxAsDusk(minimumBid, true)} DUSK.`)
       await loadMarketplace()
       return
     }
@@ -143,7 +149,7 @@ export function useAuctions({
         bidderManager: selectedAuthority || null,
       }),
       amountLux,
-      'Bid placed.',
+      `Bid placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
     if (result?.status === 'executed') {
       onBidPlaced(auction.node)
@@ -164,8 +170,7 @@ export function useAuctions({
   const openAuction = useCallback((node: string) => {
     setAuctionActivity([])
     setSelectedAuctionNode(node)
-    void loadAuctionActivity(node)
-  }, [loadAuctionActivity, setSelectedAuctionNode])
+  }, [setSelectedAuctionNode])
 
   const closeAuction = useCallback(() => {
     activityRequest.current += 1

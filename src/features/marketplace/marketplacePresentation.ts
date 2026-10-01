@@ -87,3 +87,9 @@ export function blocksTimeLabel(blocks: number, zeroLabel: string) {
 function authorityKey(value: string) {
   return value.trim().toLowerCase().replace(/^0x/, '')
 }
+
+export const MARKETPLACE_SYNC_MESSAGE = 'Marketplace data is still syncing. It will update automatically.'
+
+export function marketplaceErrorAfterRefresh(error: string) {
+  return error === MARKETPLACE_SYNC_MESSAGE ? '' : error
+}

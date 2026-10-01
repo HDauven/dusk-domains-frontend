@@ -1,4 +1,4 @@
-import { appendPage, readMarketplacePage, type MarketplaceCursors } from './marketplacePages'
+import { appendPage, readMarketplacePage, readMarketplaceWindow, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   userFacingErrorMessage,
@@ -33,21 +33,25 @@ export function useMarketplaceData({
   accountScope: string
   indexerClient: DuskDomainsIndexerClient | null
   mainView: string
-  onLoaded: (snapshot: MarketplaceSnapshot) => void
+  onLoaded?: (snapshot: MarketplaceSnapshot) => void
   selectedAddress: string
   selectedAuctionNode?: string
   selectedAuthority: string
   setError: (message: string) => void
 }) {
+  const [feeBps, setFeeBps] = useScopedState<number | null>(accountScope, null)
   const [fixedSales, setFixedSales] = useState<IndexedMarketplaceFixedSale[]>([])
   const [auctions, setAuctions] = useState<IndexedMarketplaceAuction[]>([])
   const [offers, setOffers] = useState<IndexedMarketplaceOffer[]>([])
   const [refund, setRefund] = useScopedState<IndexedMarketplaceRefund | null>(accountScope, null)
   const [ownedNames, setOwnedNames] = useScopedState<IndexedNameSummary[]>(accountScope, [])
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [cursors, setCursors] = useState<MarketplaceCursors>({ fixedSales: null, auctions: null, offers: null })
   const loadingMore = useRef(false)
+  const refreshPending = useRef(false)
+  const loadedPages = useRef(1)
   const requestId = useRef(0)
   const onLoadedRef = useRef(onLoaded)
   const setErrorRef = useRef(setError)
@@ -58,7 +62,10 @@ export function useMarketplaceData({
     selectedAuctionRef.current = selectedAuctionNode
   })
 
-  const loadMarketplace = useCallback(async () => {
+  const loadMarketplace = useCallback(async (background = false) => {
+    if (background && (loadingMore.current || refreshPending.current)) return
+    refreshPending.current = true
+    if (!background) loadedPages.current = 1
     const nextRequestId = requestId.current + 1
     requestId.current = nextRequestId
     const shouldApply = () => requestId.current === nextRequestId
@@ -66,26 +73,28 @@ export function useMarketplaceData({
     loadingMore.current = false
     setCursors({ fixedSales: null, auctions: null, offers: null })
     const reportError = setErrorRef.current
-    reportError('')
+    if (!background) reportError('')
     if (!indexerClient) {
       setFixedSales([])
       setAuctions([])
       setOffers([])
       setOwnedNames([])
       setRefund(null)
+      refreshPending.current = false
       reportError('Marketplace data is unavailable right now.')
       return
     }
 
     setLoading(true)
     try {
-      const [page, nextOwnedNames, health, nextRefund] = await Promise.all([
-        readMarketplacePage(indexerClient),
+      const [page, nextOwnedNames, health, nextRefund, config] = await Promise.all([
+        readMarketplaceWindow(indexerClient, loadedPages.current),
         selectedAddress
           ? fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority })
           : Promise.resolve([]),
         indexerClient.getHealth(),
         selectedAuthority ? indexerClient.getMarketplaceRefund(selectedAuthority) : Promise.resolve(null),
+        indexerClient.getMarketplaceConfig?.() ?? Promise.resolve(null),
       ])
       if (!shouldApply()) return
 
@@ -95,20 +104,22 @@ export function useMarketplaceData({
         if (!shouldApply()) return
         if (selected) page.auctions = [...page.auctions, selected]
       }
+      setFeeBps(config?.feeBps ?? null)
       setFixedSales(page.fixedSales)
       setAuctions(page.auctions)
       setOffers(page.offers)
       setCursors(page.cursors)
       setOwnedNames(nextOwnedNames)
       setCurrentBlockHeight(health.currentBlockHeight)
+      setUpdatedAt(Date.now())
       setRefund(nextRefund?.amountLux ? nextRefund : null)
-      onLoadedRef.current({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
+      onLoadedRef.current?.({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
     } catch (loadError) {
       if (shouldApply()) reportError(userFacingErrorMessage(loadError))
     } finally {
-      if (shouldApply()) setLoading(false)
+      if (shouldApply()) { setLoading(false); refreshPending.current = false }
     }
-  }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund])
+  }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund, setFeeBps])
 
   const hasMore = Object.values(cursors).some(Boolean)
   const loadMore = useCallback(async () => {
@@ -125,6 +136,7 @@ export function useMarketplaceData({
       setAuctions((current) => appendPage(current, page.auctions, (item) => item.node))
       setOffers((current) => appendPage(current, page.offers, (item) => `${item.node}:${item.buyerAuthority}`))
       setCursors(page.cursors)
+      loadedPages.current += 1
     } catch (error) {
       if (currentRequest === requestId.current) reportError(userFacingErrorMessage(error))
     } finally {
@@ -139,8 +151,17 @@ export function useMarketplaceData({
 
   useEffect(() => {
     if (mainView !== 'marketplace') return
-    globalThis.queueMicrotask(() => void loadMarketplace())
+    let disposed = false
+    const refresh = () => { if (!disposed && document.visibilityState !== 'hidden') void loadMarketplace(true) }
+    globalThis.queueMicrotask(() => { if (!disposed) void loadMarketplace() })
+    const timer = window.setInterval(refresh, 10_000)
+    window.addEventListener('focus', refresh)
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+    }
   }, [loadMarketplace, mainView])
 
-  return { hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
+  return { feeBps, updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
 }

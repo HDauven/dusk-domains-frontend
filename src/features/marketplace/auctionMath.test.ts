@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { IndexedMarketplaceAuction } from '../../names/internal'
 import {
+  compactLuxAsDusk,
+  currentBidDraft,
+  validLuxAmount,
   durationBlocks,
   MIN_MARKETPLACE_AMOUNT_LUX,
   minimumBidDusk,
@@ -25,7 +28,7 @@ describe('auction math', () => {
     })
 
     expect(minimumBidLux(auction)).toBe(1_050_000_002n)
-    expect(minimumBidDusk(auction)).toBe('1.050000002')
+    expect(minimumBidDusk(auction)).toBe('1.06')
   })
 
   it('converts days to Dusk block durations', () => {
@@ -59,3 +62,27 @@ function fixtureAuction(overrides: Partial<IndexedMarketplaceAuction> = {}): Ind
     ...overrides,
   }
 }
+
+
+it('keeps displayed amounts short without hiding tiny nonzero values', () => {
+  for (const [lux, expected] of [
+    [36_465_187_500n, '36.47'], [38_288_446_875n, '38.29'],
+    [24_375_000_000n, '24.38'], [625_000_000n, '0.63'],
+    [0n, '0'], [1n, '0.000000001'], [4_900_000n, '0.005'],
+    [5_000_000n, '0.01'], [250_000_000_000_000n, '250000'],
+    [9_007_199_254_740_991n, '9007199.25'],
+  ] as const) expect(compactLuxAsDusk(lux)).toBe(expected)
+})
+
+it('rounds displayed minimums up, including reserves, and preserves valid typed bids', () => {
+  for (const auction of [
+    fixtureAuction({ reservePriceLux: 1_000_000_001 }),
+    fixtureAuction({ highestBid: { amountLux: 36_465_187_500, bidderAuthority: 'buyer', placedAtBlockHeight: 1 } }),
+  ]) {
+    const shown = minimumBidDusk(auction)
+    expect(shown).toBe(auction.highestBid ? '38.29' : '1.01')
+    expect(validLuxAmount(shown)).toBeGreaterThanOrEqual(minimumBidLux(auction))
+    expect(currentBidDraft('0', auction)).toBe(shown)
+    expect(currentBidDraft('50.123456789', auction)).toBe('50.123456789')
+  }
+})

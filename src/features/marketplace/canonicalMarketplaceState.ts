@@ -12,7 +12,7 @@ import type {
   IndexedNameSummary,
 } from '../../names/internal'
 
-const changedMessage = 'Marketplace state changed on-chain. Refresh and try again.'
+const changedMessage = 'Marketplace state changed on-chain. Review the latest terms before trying again.'
 
 export async function canonicalOwnedName(
   client: DuskDomainsOnChainClient,
@@ -23,7 +23,7 @@ export async function canonicalOwnedName(
   const response = await required(client.getName(indexed.canonicalName))
   const record = response.record
   if (!response.marketplaceTransferable) {
-    throw new Error('Only second-level domains without subdomains can be sold.')
+    throw new Error('Only .dusk names without subnames can be sold.')
   }
   if (!record
     || response.node !== indexed.node
@@ -48,7 +48,7 @@ export async function canonicalOfferTarget(
     throw new Error(`${name} is not registered on this network.`)
   }
   if (!response.marketplaceTransferable) {
-    throw new Error('Offers are only available for second-level domains without subdomains.')
+    throw new Error('Offers are only available for .dusk names without subnames.')
   }
   if (response.node !== expectedNode
     || response.canonicalName !== name

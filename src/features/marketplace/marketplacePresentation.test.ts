@@ -6,6 +6,8 @@ import {
   auctionStatus,
   auctionStatusLabel,
   marketplaceFeeLabel,
+  marketplaceErrorAfterRefresh,
+  MARKETPLACE_SYNC_MESSAGE,
 } from './marketplacePresentation'
 
 describe('marketplace auction presentation', () => {
@@ -54,3 +56,8 @@ function fixtureAuction(overrides: Partial<IndexedMarketplaceAuction> = {}): Ind
     ...overrides,
   }
 }
+
+it('clears a syncing notice after a successful refresh while keeping action errors', () => {
+  expect(marketplaceErrorAfterRefresh(MARKETPLACE_SYNC_MESSAGE)).toBe('')
+  expect(marketplaceErrorAfterRefresh('Bid at least 25 DUSK.')).toBe('Bid at least 25 DUSK.')
+})

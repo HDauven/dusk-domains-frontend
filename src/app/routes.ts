@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import type { AppMainView } from './AppTypes'
 
-export type AppRoute = { view: AppMainView, name?: string }
+export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string }
 
 const viewPaths: Record<AppMainView, string> = {
   search: '/',
@@ -13,6 +13,8 @@ const viewPaths: Record<AppMainView, string> = {
 
 export function parseRoute(pathname: string): AppRoute {
   const path = pathname.replace(/\/+$/, '') || '/'
+  const auction = /^\/market\/auction\/(0x[0-9a-f]{64})$/i.exec(path)
+  if (auction) return { view: 'marketplace', auctionNode: auction[1].toLowerCase() }
   const name = /^\/name\/([^/]+)$/.exec(path)
   if (name) {
     const decoded = decodeURIComponent(name[1]).trim().toLowerCase()
@@ -23,6 +25,7 @@ export function parseRoute(pathname: string): AppRoute {
 }
 
 export function routePath(route: AppRoute) {
+  if (route.view === 'marketplace' && route.auctionNode) return `/market/auction/${route.auctionNode}`
   return route.name ? `/name/${encodeURIComponent(route.name)}` : viewPaths[route.view]
 }
 

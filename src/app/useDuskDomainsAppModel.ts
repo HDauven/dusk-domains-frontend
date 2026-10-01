@@ -56,13 +56,7 @@ export function useDuskDomainsAppModel() {
     else void handleMainViewChange(view)
   }
 
-  useUrlRoute({
-    checked: searchState.checked,
-    mainView,
-    onOpenName: openName,
-    onOpenView: openView,
-    searchedName: searchState.apiSearchResult?.canonical ?? null,
-  })
+
 
   const {
     mainContentProps,
@@ -87,6 +81,16 @@ export function useDuskDomainsAppModel() {
     selectedAddress,
     selectedAuthority,
     submitNameWrite,
+  })
+
+  useUrlRoute({
+    selectedAuctionNode: marketplaceProps.selectedAuctionNode,
+    onOpenAuction: marketplaceProps.onOpenAuction,
+    checked: searchState.checked,
+    mainView,
+    onOpenName: openName,
+    onOpenView: openView,
+    searchedName: searchState.apiSearchResult?.canonical ?? null,
   })
 
   return {

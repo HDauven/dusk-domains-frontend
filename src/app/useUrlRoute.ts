@@ -4,7 +4,9 @@ import { parseRoute, routePath, type AppRoute } from './routes'
 
 // Keeps the address bar and the app in step: every view and every searched name has a URL,
 // the back button works, and a refresh or a shared link opens the same place.
-export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searchedName }: {
+export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searchedName, selectedAuctionNode, onOpenAuction }: {
+  selectedAuctionNode?: string
+  onOpenAuction?: (node: string) => void
   checked: boolean
   mainView: AppMainView
   onOpenName: (name: string) => void
@@ -14,9 +16,9 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
   // The route taken from the address bar that the app is still catching up to. It is fresh until
   // the app has rendered once after applying it, since that render still shows the old state.
   const pending = useRef<{ route: AppRoute, fresh: boolean } | null>(null)
-  const open = useRef({ onOpenName, onOpenView })
+  const open = useRef({ onOpenName, onOpenView, onOpenAuction })
   useEffect(() => {
-    open.current = { onOpenName, onOpenView }
+    open.current = { onOpenName, onOpenView, onOpenAuction }
   })
 
   useEffect(() => {
@@ -24,7 +26,10 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
       const route = parseRoute(window.location.pathname)
       pending.current = { route, fresh: true }
       if (route.name) open.current.onOpenName(route.name)
-      else open.current.onOpenView(route.view)
+      else {
+        open.current.onOpenView(route.view)
+        open.current.onOpenAuction?.(route.auctionNode ?? '')
+      }
     }
     apply()
     window.addEventListener('popstate', apply)
@@ -33,7 +38,7 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
 
   const current: AppRoute = mainView === 'search' && checked && searchedName
     ? { view: 'search', name: searchedName }
-    : { view: mainView }
+    : mainView === 'marketplace' && selectedAuctionNode ? { view: mainView, auctionNode: selectedAuctionNode } : { view: mainView }
   const path = routePath(current)
 
   useEffect(() => {
@@ -47,8 +52,8 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
     }
     const target = pending.current?.route
     if (target) {
-      // A shortened name link (/name/pie) settles on its canonical address.
-      if (target.name && current.name === target.name) {
+      // Once the parsed route is applied, normalize aliases and trailing slashes.
+      if (routePath(target) === path) {
         pending.current = null
         window.history.replaceState(null, '', `${path}${window.location.search}`)
         return
