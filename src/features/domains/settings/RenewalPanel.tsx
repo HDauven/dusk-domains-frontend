@@ -1,6 +1,6 @@
 import { TermPicker } from '../../../components/ui/TermPicker'
 import { formatDusk } from '../../../utils/format'
-import { formatLifecycleDay, lifecycleHeightReached, renewalWindowCopy } from '../domainFormat'
+import { formatLifecycleDay, lifecycleHeightReached, renewalDeadline, renewalWindowCopy } from '../domainFormat'
 import { ManagementFeedback } from '../ManagementFeedback'
 import type { RenewalPanelProps } from './types'
 
@@ -22,8 +22,7 @@ export function RenewalPanel({
   renewalTxState,
   renewalYears,
 }: RenewalPanelProps) {
-  // An expired name cannot be renewed, so there is no term or price to offer.
-  const expired = lifecycleHeightReached(managedName.expiresAt, currentBlockHeight, nowSeconds)
+  const renewalClosed = lifecycleHeightReached(renewalDeadline(managedName), currentBlockHeight, nowSeconds)
 
   return (
     <div className="renewal-box" aria-label="Renewal controls">
@@ -32,7 +31,7 @@ export function RenewalPanel({
         <p>{renewalWindowCopy(managedName, currentBlockHeight, nowSeconds)}</p>
       </div>
 
-      {expired ? null : (
+      {renewalClosed ? null : (
         <>
           <TermPicker
             disabled={renewalBusy}

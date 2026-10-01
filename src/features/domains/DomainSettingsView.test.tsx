@@ -38,18 +38,51 @@ it('offers a subname no renewal and says how its expiry works', () => {
   expect(settings({ displayName: 'pay.alphavnuc.dusk' })).toContain('Subnames can\'t be renewed on their own.')
 })
 
-it('asks for renewal before expiry, and offers none once the name has expired', () => {
+it('offers renewal through grace and explains the deadline and old-expiry basis', () => {
   const active = settings({})
   expect(active).toContain('Renewal term')
-  expect(active).toContain(`Runs until ${day(20_000)}. Renew it before then. After that it can't be renewed; it is held until ${day(300_000)}, then anyone can register it.`)
-  expect(active).not.toContain('only its owner')
-  // No grace end from the index: no grace date at all.
-  expect(settings({ managedName: { ...managedName, graceEndsAt: 0 } }))
-    .toContain(`Runs until ${day(20_000)}. Renew it before then. After that it can't be renewed.</p>`)
+  expect(active).toContain(`Runs until ${day(20_000)}. You can renew until ${day(300_000)}; after that anyone can register it.`)
+  expect(active).toContain('Renewal extends from the previous expiry.')
+  for (const currentBlockHeight of [20_000, 20_001, 299_999]) {
+    const expired = settings({ currentBlockHeight })
+    expect(expired).toContain('Renewal term')
+    expect(expired).toContain('DUSK')
+    expect(expired).toContain(`Renew by ${formatLifecycleDay(300_000, currentBlockHeight, nowSeconds)} to keep it.`)
+    expect(expired).toContain('Renewal extends from the previous expiry.')
+    expect(expired).toMatch(/<button class="primary-button compact" type="button">Renew<\/button>/)
+  }
+  for (const currentBlockHeight of [300_000, 300_001]) {
+    const released = settings({ currentBlockHeight })
+    expect(released).not.toContain('Renewal term')
+    expect(released).not.toContain('DUSK')
+    expect(released).toContain('Anyone can register it now.')
+  }
+})
 
-  const expired = settings({ currentBlockHeight: 20_000 })
-  expect(expired).not.toContain('Renewal term')
-  expect(expired).not.toContain('DUSK')
-  expect(expired).toContain('so it can\'t be renewed. It is held until')
-  expect(settings({ currentBlockHeight: 300_000 })).toContain('so it can\'t be renewed. Anyone can register it now.')
+it('uses the derived grace end for renewal controls and copy when grace is unknown', () => {
+  for (const currentBlockHeight of [1_000, 20_000, 20_001, 279_199, 279_200]) {
+    const markup = settings({ currentBlockHeight, managedName: { ...managedName, graceEndsAt: 0 } })
+    const grace = formatLifecycleDay(279_200, currentBlockHeight, nowSeconds)
+    if (currentBlockHeight < 279_200) {
+      expect(markup).toContain('Renewal term')
+      expect(markup).toContain(currentBlockHeight < 20_000 ? `You can renew until ${grace}` : `Renew by ${grace} to keep it.`)
+    } else {
+      expect(markup).not.toContain('Renewal term')
+      expect(markup).toContain('Anyone can register it now.')
+    }
+  }
+})
+
+it.each([0, 1_802_592_000])('uses the estimate margin for renewal controls and copy with grace end %s', (graceEndsAt) => {
+  const name = { ...managedName, expiresAt: 1_800_000_000, graceEndsAt }
+  const open = settings({ managedName: name, nowSeconds: 1_802_588_399 })
+  expect(open).toContain('Renewal term')
+  expect(open).toContain(`Renew by ${formatLifecycleDay(1_802_588_400, null, 0)} to keep it.`)
+  expect(open).toContain('Renewal closes one hour before the estimated grace end.')
+  for (const nowSeconds of [1_802_588_400, 1_802_591_999, 1_802_592_000]) {
+    const closed = settings({ managedName: name, nowSeconds })
+    expect(closed).not.toContain('Renewal term')
+    expect(closed).toContain('Renewal is closed near the estimated grace end.')
+    expect(closed).not.toContain('Anyone can register it now.')
+  }
 })

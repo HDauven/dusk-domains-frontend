@@ -39,7 +39,7 @@ export async function renewDomainName({
     canContinue: canRenewName,
     setError: setRenewalError,
       walletSetupState,
-    blockedCopy: 'Connect the owner wallet before renewing this name.',
+    blockedCopy: 'Connect the owner or manager wallet before renewing this name.',
   })) {
     return
   }

@@ -2,6 +2,7 @@ import { expect, it, vi } from 'vitest'
 import { createManagedNameState, type ManagedNameState } from '../../app/appHelpers'
 import { applyIndexedNameHydration } from './applyIndexedNameHydration'
 import { readIndexedName, type IndexedNameReadBundle } from './indexedNameReads'
+import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'
 
 function hydrate(managedName: ManagedNameState, stateValue: object, subnameValue: object | null) {
   let managed = managedName
@@ -45,4 +46,33 @@ it('reads a name’s own subname entry only for a subname', async () => {
   const subname = await readIndexedName(client as never, { canonical: 'pay.alphavnuc.dusk' } as never)
   expect(client.getSubname).toHaveBeenCalledExactlyOnceWith(subname?.node)
   expect(subname?.ownSubnameRead.value).toEqual({ expiryPolicy: 'inherits_parent' })
+})
+
+it.each([null, '2027-02-14T08:00:00.000Z'])('preserves date-only grace estimates for the renewal margin with grace end %s', (graceEndsAt) => {
+  const managedName = hydrate(createManagedNameState('resolver'), {
+    expiresAt: new Date(1_800_000_000 * 1000).toISOString(), expiresAtBlockHeight: null,
+    graceEndsAt, graceEndsAtBlockHeight: null,
+  }, null)
+  expect(managedName.expiresAt).toBe(1_001_000)
+  expect(managedName.graceEndsAt).toBe(1_802_592_000)
+  for (const nowSeconds of [1_802_588_399, 1_802_588_400]) {
+    expect(deriveRecordCapabilities({ managedName, nowSeconds, currentBlockHeight: 1_000,
+      displayName: 'alphavnuc.dusk', walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner',
+      nodeHex: 'node', subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [],
+    } as never).canRenewName).toBe(nowSeconds < 1_802_588_400)
+  }
+})
+
+it('uses block expiry to derive missing grace heights instead of trusting an indexed date', () => {
+  const managedName = hydrate(createManagedNameState('resolver'), {
+    expiresAt: '2027-01-15T08:00:00.000Z', expiresAtBlockHeight: 200,
+    graceEndsAt: '2027-02-14T08:00:00.000Z', graceEndsAtBlockHeight: null,
+  }, null)
+  expect(managedName).toMatchObject({ expiresAt: 200, graceEndsAt: 0 })
+  for (const currentBlockHeight of [259_399, 259_400]) {
+    expect(deriveRecordCapabilities({ managedName, currentBlockHeight, nowSeconds: 1_790_000_000,
+      displayName: 'alphavnuc.dusk', walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner',
+      nodeHex: 'node', subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [],
+    } as never).canRenewName).toBe(currentBlockHeight < 259_400)
+  }
 })

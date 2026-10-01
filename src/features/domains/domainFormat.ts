@@ -1,4 +1,5 @@
 import {
+  DEFAULT_GRACE_PERIOD_BLOCKS,
   DUSK_APPROX_BLOCK_TIME_SECONDS,
   getRecordDefinition,
   namehashHex,
@@ -12,7 +13,8 @@ import {
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
 // Lifecycle values are block heights, or unix seconds when no block height was known.
-const unixSecondsLifecycleFloor = 100_000_000
+// Heights stay below a billion for about 300 years; Unix time passed it in 2001.
+const unixSecondsLifecycleFloor = 1_000_000_000
 
 export function unixSecondsFromIso(value: string | null | undefined) {
   if (!value) return null
@@ -58,39 +60,65 @@ export function lifecycleHeightReached(
   return currentBlockHeight !== null && currentBlockHeight >= lifecycleHeight
 }
 
+export function renewalGraceEnd({ expiresAt, graceEndsAt }: { expiresAt: number, graceEndsAt: number }) {
+  if (graceEndsAt > 0) return graceEndsAt
+  if (expiresAt <= 0) return 0
+  return expiresAt + DEFAULT_GRACE_PERIOD_BLOCKS * (expiresAt > unixSecondsLifecycleFloor ? DUSK_APPROX_BLOCK_TIME_SECONDS : 1)
+}
+
+export function renewalDeadline(lifecycle: { expiresAt: number, graceEndsAt: number }) {
+  const graceEndsAt = renewalGraceEnd(lifecycle)
+  // Stop an hour early when only dates are known: the estimate may be late.
+  return graceEndsAt > unixSecondsLifecycleFloor ? graceEndsAt - 60 * 60 : graceEndsAt
+}
+
 // Only label.dusk is registered; every deeper name is a subname.
 export function isSubname(name: string) {
   return name.replace(/\.dusk$/u, '').includes('.')
 }
 
-// The contract takes renewals only before expiry. After it the name is held until grace ends,
-// when anyone can register it. The indexer may not report a grace end; then none is shown.
+// Renewal extends from the old expiry until grace ends, with a margin for date estimates.
 export function renewalWindowCopy(
   { expiresAt, graceEndsAt }: { expiresAt: number, graceEndsAt: number },
   currentBlockHeight: number | null,
   nowSeconds: number,
 ) {
   const expiry = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
-  const grace = graceEndsAt > 0 ? formatLifecycleDay(graceEndsAt, currentBlockHeight, nowSeconds) : null
-  if (!lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)) {
-    return grace
-      ? `Runs until ${expiry}. Renew it before then. After that it can't be renewed; it is held until ${grace}, then anyone can register it.`
-      : `Runs until ${expiry}. Renew it before then. After that it can't be renewed.`
-  }
-  if (lifecycleHeightReached(graceEndsAt, currentBlockHeight, nowSeconds)) {
+  const deadline = renewalDeadline({ expiresAt, graceEndsAt })
+  const grace = deadline > 0 ? formatLifecycleDay(deadline, currentBlockHeight, nowSeconds) : null
+  const estimated = deadline > unixSecondsLifecycleFloor
+  const expired = lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)
+  if (lifecycleHeightReached(deadline, currentBlockHeight, nowSeconds)) {
+    if (estimated) return `Expired on ${expiry}. Renewal is closed near the estimated grace end.`
     return `Expired on ${expiry}, so it can't be renewed. Anyone can register it now.`
   }
-  return grace
-    ? `Expired on ${expiry}, so it can't be renewed. It is held until ${grace}, then anyone can register it.`
-    : `Expired on ${expiry}, so it can't be renewed.`
+  if (!grace) {
+    return expired
+      ? `Expired on ${expiry}.`
+      : `Runs until ${expiry}. Renew before then.`
+  }
+  if (estimated) {
+    return `${expired ? 'Expired on' : 'Runs until'} ${expiry}. Renew by ${grace} to keep it. Renewal closes one hour before the estimated grace end. Renewal extends from the previous expiry.`
+  }
+  return expired
+    ? `Expired on ${expiry}. Renew by ${grace} to keep it. After that anyone can register it. Renewal extends from the previous expiry.`
+    : `Runs until ${expiry}. You can renew until ${grace}; after that anyone can register it. Renewal extends from the previous expiry.`
 }
 
-// The name header's badge. Renewal closes at expiry, and a subname is never renewed on its own.
-export function lifecycleBadgeCopy(name: string, expiresAt: number, currentBlockHeight: number | null, nowSeconds: number) {
+// Subnames show their expiry; expired root names also show the renewal deadline.
+export function lifecycleBadgeCopy(name: string, expiresAt: number, currentBlockHeight: number | null, nowSeconds: number, graceEndsAt = 0) {
   if (!Number.isFinite(expiresAt) || expiresAt <= 0) return null
   const expiry = formatLifecycleDay(expiresAt, currentBlockHeight, nowSeconds)
-  if (lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)) return `Expired ${expiry}`
-  return isSubname(name) ? `Expires ${expiry}` : `Renews by ${expiry}`
+  const expired = lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds)
+  if (isSubname(name)) return `${expired ? 'Expired' : 'Expires'} ${expiry}`
+  if (!expired) return `Renews by ${expiry}`
+  const deadline = renewalDeadline({ expiresAt, graceEndsAt })
+  if (lifecycleHeightReached(deadline, currentBlockHeight, nowSeconds)) {
+    if (deadline > unixSecondsLifecycleFloor) return `Expired ${expiry}. Renewal closed`
+    return `Expired ${expiry}. Anyone can register it`
+  }
+  const grace = formatLifecycleDay(deadline, currentBlockHeight, nowSeconds)
+  return `Expired ${expiry}. Renew by ${grace}`
 }
 
 // Subnames are never renewed on their own. Renewing a root name renews its inheriting subnames,

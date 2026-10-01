@@ -91,7 +91,7 @@ export function useAppSearchProps({
     displayName,
     duration,
     lifecycleLabel: result.status === 'registered'
-      ? lifecycleBadgeCopy(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds)
+      ? lifecycleBadgeCopy(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds, managedName.graceEndsAt)
       : null,
     expiryDate,
     feeConfigLoading: economicsRuntime.feeConfigLoading,
