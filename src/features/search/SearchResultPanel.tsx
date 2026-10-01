@@ -3,32 +3,25 @@ import type { ComponentProps } from 'react'
 import { ActivityHistoryView } from '../activity/ActivityHistoryView'
 import { DomainDetailsView } from '../domains/DomainDetailsView'
 import { DomainSettingsView } from '../domains/DomainSettingsView'
-import { PrimaryDomainView } from '../domains/PrimaryDomainView'
+import { PrimaryNameControl } from '../domains/PrimaryNameControl'
 import { RecordsView } from '../domains/RecordsView'
 import { SubdomainsView } from '../domains/SubdomainsView'
 import { RegistrationFlowPanel } from '../registration/RegistrationFlowPanel'
 import { NameHeader } from './NameHeader'
 import { SearchResultOverview } from './SearchResultOverview'
+import { namePageAccess, nameSections } from './namePageAccess'
 
-export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'primary' | 'subnames' | 'activity'
-
-const nameTabs: Array<{ view: SearchResultView, label: string }> = [
-  { view: 'details', label: 'Profile' },
-  { view: 'records', label: 'Records' },
-  { view: 'subnames', label: 'Subnames' },
-  { view: 'primary', label: 'Primary name' },
-  { view: 'manage', label: 'Settings' },
-  { view: 'activity', label: 'Activity' },
-]
+export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'subnames' | 'activity'
 
 export type SearchResultPanelProps = {
   activityProps: ComponentProps<typeof ActivityHistoryView>
   detailsProps: ComponentProps<typeof DomainDetailsView>
   headerProps: ComponentProps<typeof NameHeader>
   nodeHex: string
+  onOpenName?: (name: string) => void
   onResultViewChange: (view: SearchResultView) => void
   overviewProps: ComponentProps<typeof SearchResultOverview>
-  primaryProps: ComponentProps<typeof PrimaryDomainView>
+  primaryProps: ComponentProps<typeof PrimaryNameControl>
   recordsProps: ComponentProps<typeof RecordsView>
   registrationProps: ComponentProps<typeof RegistrationFlowPanel>
   resultView: SearchResultView
@@ -36,45 +29,28 @@ export type SearchResultPanelProps = {
   subdomainsProps: ComponentProps<typeof SubdomainsView>
 }
 
-export function SearchResultPanel({
-  activityProps,
-  detailsProps,
-  headerProps,
-  nodeHex,
-  onResultViewChange,
-  overviewProps,
-  primaryProps,
-  recordsProps,
-  registrationProps,
-  resultView,
-  settingsProps,
-  subdomainsProps,
-}: SearchResultPanelProps) {
-  const registered = headerProps.status === 'registered'
-  const tabbed = registered && nodeHex && resultView !== 'overview' && resultView !== 'register'
-
-  const content = (
-    <>
-      {resultView === 'details' ? <DomainDetailsView {...detailsProps} /> : null}
-      {nodeHex && resultView === 'manage' ? <DomainSettingsView {...settingsProps} /> : null}
-      {nodeHex && resultView === 'subnames' ? <SubdomainsView {...subdomainsProps} /> : null}
-      {nodeHex && resultView === 'records' ? <RecordsView {...recordsProps} /> : null}
-      {nodeHex && resultView === 'primary' ? <PrimaryDomainView {...primaryProps} /> : null}
-      {resultView === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}
-      {resultView === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
-    </>
-  )
-
-  return (
-    <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
-      {resultView !== 'register' && !(resultView === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} /> : null}
-
-      {tabbed ? (
-        <Tabs id="name-sections" label="Name sections" items={nameTabs.map(({ view, label }) => ({ id: view, label }))} value={resultView} onChange={onResultViewChange} />
-      ) : null}
-
-      {resultView === 'overview' ? <SearchResultOverview {...overviewProps} /> : null}
-      {tabbed ? <TabPanel id="name-sections" value={resultView}>{content}</TabPanel> : content}
-    </section>
-  )
+export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
+  const managedName = nodeHex && settingsProps?.managedName.node === nodeHex ? settingsProps.managedName : null
+  const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
+  const tabs = nameSections(canEdit, subdomainsProps.subnames.length > 0)
+  const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
+  // A wallet can disconnect while an owner tab is selected. Never retain those controls.
+  const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
+  const content = <>
+    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
+    {nodeHex && view === 'manage' && canEdit ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
+    {nodeHex && view === 'subnames' ? <SubdomainsView {...subdomainsProps} canEdit={canEdit} onRecordTargetSelect={subname => onOpenName?.(subname.name)} /> : null}
+    {nodeHex && view === 'records' && canEdit ? <RecordsView {...recordsProps} /> : null}
+    {view === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}
+    {view === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
+  </>
+  return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
+    {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} /> : null}
+    {tabbed ? <>
+      <label className="name-section-select">Section<select value={view} onChange={event => onResultViewChange(event.target.value as SearchResultView)}>{tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}</select></label>
+      <Tabs className="name-section-tabs" id="name-sections" label="Name sections" items={tabs} value={view} onChange={onResultViewChange} />
+    </> : null}
+    {view === 'overview' ? <SearchResultOverview {...overviewProps} /> : null}
+    {tabbed ? <TabPanel id="name-sections" value={view}>{content}</TabPanel> : content}
+  </section>
 }

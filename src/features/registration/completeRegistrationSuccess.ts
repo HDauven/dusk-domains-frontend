@@ -66,6 +66,7 @@ export async function applyCompleteRegistrationSuccess(
   if (!applyLocally) return
 
   setManagedName({
+    node: nodeHex,
     owner: selectedAuthority,
     manager: selectedAuthority,
     resolver: indexedResolver ?? recordSourceContractId,

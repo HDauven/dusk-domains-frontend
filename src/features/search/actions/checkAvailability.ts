@@ -1,3 +1,4 @@
+import { createManagedNameState } from '../../../app/managedNameState'
 import {
   userFacingErrorMessage,
 } from '../../../names/internal'
@@ -24,6 +25,7 @@ export async function checkAvailability(props: UseSearchControllerProps) {
     setResultView,
   } = props
 
+  props.setManagedName(createManagedNameState(props.recordSourceContractId))
   setChecked(true)
   setApiSearchResult(null)
   setResultView('overview')

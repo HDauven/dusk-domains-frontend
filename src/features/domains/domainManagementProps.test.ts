@@ -21,12 +21,8 @@ it('preserves record consent resets, wallet errors, primary fallback and renewal
     handleCreateSubname: vi.fn(),
   }
   const views = buildDomainManagementProps(props, actions)
-  expect(views.primaryProps.placeholder).toBe('public')
   expect(views.recordsProps.recordDraftMutationCount).toBe(2)
   expect(views.subdomainsProps.managedNameExpiresAt).toBe(123)
-  views.primaryProps.onEndpointChange('new-endpoint')
-  expect(setters.setPrimaryEndpointValue).toHaveBeenCalledWith('new-endpoint')
-  expect(setters.setPrimaryError).toHaveBeenCalledWith('')
   views.settingsProps.onRenewalYearsChange(100)
   expect(setters.setRenewalYears).toHaveBeenCalledWith(10)
 
@@ -55,6 +51,4 @@ it('preserves record consent resets, wallet errors, primary fallback and renewal
     expect(setters.setPublicRecordAcknowledged).toHaveBeenCalledWith(false)
     expect(setters.setCriticalRecordConfirmation).toHaveBeenCalledWith('')
   }
-  expect(buildDomainManagementProps({ ...props, selectedAddress: '' }, actions).primaryProps.placeholder).toBe('forward-record')
-  expect(buildDomainManagementProps({ ...props, selectedAddress: '', moonlightRecord: undefined }, actions).primaryProps.placeholder).toBe('dusk1...')
 })

@@ -1,3 +1,4 @@
+import type { ManagedNameState } from '../../app/managedNameState'
 import type { Dispatch, SetStateAction } from 'react'
 import type {
   ActivityEntry,
@@ -41,6 +42,7 @@ export type UseSearchControllerProps = {
   setDuration: Dispatch<SetStateAction<number>>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>
+  setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setManagementError: Dispatch<SetStateAction<string>>
   setManagementTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>

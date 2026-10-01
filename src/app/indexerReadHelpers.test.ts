@@ -55,6 +55,7 @@ it('clears the previous availability before a retry that fails', async () => {
   const setApiSearchResult = vi.fn()
   const setIndexerError = vi.fn()
   await checkAvailability({
+    setManagedName: vi.fn(),
     query: 'owned.dusk', beginNameRead: () => () => true,
     indexerClient: { searchName: async () => { throw new Error('Failed to fetch') } },
     setApiSearchResult, setIndexerError, setChecked: vi.fn(), setResultView: vi.fn(),

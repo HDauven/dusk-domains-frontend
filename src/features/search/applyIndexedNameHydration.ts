@@ -69,10 +69,11 @@ export function applyIndexedNameHydration(
         expiresAt: unixSecondsFromIso(indexed.expiresAt) ?? 0,
         graceEndsAt: indexed.graceEndsAtBlockHeight ?? unixSecondsFromIso(indexed.graceEndsAt) ?? 0,
       })
-    setManagedName((current) => ({
-      owner: stateRead.value?.owner ?? current.owner,
-      manager: stateRead.value?.manager ?? current.manager,
-      resolver: stateRead.value?.resolverId ?? current.resolver,
+    setManagedName({
+      node,
+      owner: indexed.owner ?? '',
+      manager: indexed.manager ?? '',
+      resolver: indexed.resolverId ?? recordSourceContractId,
       expiresAt: lifecycleHeightFromIndexed(
         stateRead.value?.expiresAt,
         stateRead.value?.expiresAtBlockHeight,
@@ -81,7 +82,7 @@ export function applyIndexedNameHydration(
       ) ?? 0,
       graceEndsAt,
       expiryPolicy: ownSubnameRead.value?.expiryPolicy ?? null,
-    }))
+    })
     if (stateRead.value.owner) setDraftOwner(stateRead.value.owner)
     if (stateRead.value.manager) setDraftManager(stateRead.value.manager)
     const defaultSubnameManager = stateRead.value.manager || selectedAuthority || fallbackManager

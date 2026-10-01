@@ -5,7 +5,7 @@ import { DomainSettingsView, type DomainSettingsViewProps } from './DomainSettin
 
 const noop = () => {}
 const nowSeconds = 1_790_000_000
-const managedName = { owner: 'owner', manager: 'owner', resolver: 'resolver', expiresAt: 20_000, graceEndsAt: 300_000, expiryPolicy: null }
+const managedName = { node: 'node', owner: 'owner', manager: 'owner', resolver: 'resolver', expiresAt: 20_000, graceEndsAt: 300_000, expiryPolicy: null }
 const day = (height: number) => formatLifecycleDay(height, 1_000, nowSeconds)
 
 function settings(overrides: Partial<DomainSettingsViewProps>) {

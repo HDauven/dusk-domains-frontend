@@ -81,7 +81,7 @@ it('allows owner and manager renewal until grace ends, but never subname renewal
 
 it('derives a missing grace end from expiry and closes renewal exactly at that block', () => {
   const ready = { walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'node',
-    displayName: 'alphavnuc.dusk', managedName: { owner: 'owner', manager: 'manager', expiresAt: 200, graceEndsAt: 0 },
+    displayName: 'alphavnuc.dusk', managedName: { node: 'node', owner: 'owner', manager: 'manager', expiresAt: 200, graceEndsAt: 0 },
     nowSeconds: 1_790_000_000, subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [] }
   for (const selectedAuthority of ['owner', 'manager']) {
     for (const currentBlockHeight of [200, 259_399, 259_400]) {
@@ -93,7 +93,7 @@ it('derives a missing grace end from expiry and closes renewal exactly at that b
 
 it.each([0, 1_802_592_000])('leaves an hour before a date-only grace end of %s', (graceEndsAt) => {
   const ready = { walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'node',
-    displayName: 'alphavnuc.dusk', managedName: { owner: 'owner', manager: 'manager', expiresAt: 1_800_000_000, graceEndsAt },
+    displayName: 'alphavnuc.dusk', managedName: { node: 'node', owner: 'owner', manager: 'manager', expiresAt: 1_800_000_000, graceEndsAt },
     subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [] }
   for (const currentBlockHeight of [null, 1_000]) {
     for (const nowSeconds of [1_802_588_399, 1_802_588_400, 1_802_591_999, 1_802_592_000]) {
@@ -105,7 +105,7 @@ it.each([0, 1_802_592_000])('leaves an hour before a date-only grace end of %s',
 
 it('keeps a prepaid name renewable when its grace end exceeds 100 million blocks', () => {
   const ready = { walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'node',
-    displayName: 'alphavnuc.dusk', managedName: { owner: 'owner', manager: 'manager', expiresAt: 100_000_000, graceEndsAt: 100_259_200 },
+    displayName: 'alphavnuc.dusk', managedName: { node: 'node', owner: 'owner', manager: 'manager', expiresAt: 100_000_000, graceEndsAt: 100_259_200 },
     nowSeconds: 1_790_000_000, subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [] }
   for (const currentBlockHeight of [1_000_000, 100_259_199, 100_259_200]) {
     expect(deriveRecordCapabilities({ ...ready, currentBlockHeight } as never).canRenewName)
@@ -115,7 +115,7 @@ it('keeps a prepaid name renewable when its grace end exceeds 100 million blocks
 
 it('keeps grace renewal available through the app while other management stays closed', () => {
   const ready = { walletSigningReady: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'node',
-    displayName: 'alphavnuc.dusk', managedName: { owner: 'owner', manager: 'manager', expiresAt: 200, graceEndsAt: 300 },
+    displayName: 'alphavnuc.dusk', managedName: { node: 'node', owner: 'owner', manager: 'manager', expiresAt: 200, graceEndsAt: 300 },
     currentBlockHeight: 201, nowSeconds: 0, pendingReservations: [], subnames: [], primaryEndpointValue: '',
     confirmationInput: 'alphavnuc.dusk', subnameLabel: 'pay', subnameManager: 'owner',
     recordDraftMutations: [], recordDraftErrors: [] }

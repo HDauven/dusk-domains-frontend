@@ -1,15 +1,10 @@
-import type { DuskDomainTxState, SubnameExpiryPolicy } from '../../../names/internal'
+import type { DuskDomainTxState } from '../../../names/internal'
 
-export type ManagedNameState = {
-  owner: string
-  manager: string
-  resolver: string
-  expiresAt: number
-  graceEndsAt: number
-  expiryPolicy: SubnameExpiryPolicy | null
-}
+import type { ManagedNameState } from '../../../app/managedNameState'
+export type { ManagedNameState } from '../../../app/managedNameState'
 
 export type DomainSettingsViewProps = {
+  isOwner?: boolean
   canManageName: boolean
   canRenewName: boolean
   confirmationInput: string

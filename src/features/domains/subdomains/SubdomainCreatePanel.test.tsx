@@ -20,7 +20,7 @@ it('offers manager assignment and both expiry policies without revocation or del
 })
 
 it('shows expiry and manager without revocation copy on existing subdomains', () => {
-  const markup = renderToStaticMarkup(<SubdomainList currentBlockHeight={100} nowSeconds={1_790_000_000}
+  const markup = renderToStaticMarkup(<SubdomainList selectedAuthority="owner" currentBlockHeight={100} nowSeconds={1_790_000_000}
     onRecordTargetSelect={noop} subnames={[{
       parentName: 'acme.dusk', parentNode: 'parent', label: 'pay', name: 'pay.acme.dusk', node: 'child',
       owner: 'owner', manager: 'manager', resolver: '', expiresAt: 1000, parentExpiresAt: 1000,

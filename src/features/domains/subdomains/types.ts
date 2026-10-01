@@ -5,6 +5,7 @@ import type {
 } from '../../../names/internal'
 
 export type SubdomainsViewProps = {
+  canEdit?: boolean
   canCreateSubname: boolean
   currentBlockHeight: number | null
   displayName: string
@@ -53,6 +54,7 @@ export type SubdomainCreatePanelProps = Pick<
 
 export type SubdomainListProps = Pick<
   SubdomainsViewProps,
+  | 'selectedAuthority'
   | 'currentBlockHeight'
   | 'nowSeconds'
   | 'onRecordTargetSelect'

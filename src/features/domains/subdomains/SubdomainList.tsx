@@ -4,11 +4,12 @@ import { Button } from '../../../components/ui/Button'
 import {
   subnameExpiryDescription,
 } from '../../../names/internal'
-import { abbreviate } from '../../../utils/format'
+import { ownerLabel } from '../../identity/ownerLabel'
 import { formatLifecycleDay } from '../domainFormat'
 import type { SubdomainListProps } from './types'
 
 export function SubdomainList({
+  selectedAuthority,
   currentBlockHeight,
   nowSeconds,
   onRecordTargetSelect,
@@ -21,14 +22,14 @@ export function SubdomainList({
           className="subname-row"
           disabled={subname.status !== 'active'}
           key={subname.node}
-          title={subname.status === 'active' ? `Edit records for ${subname.name}` : undefined}
+          title={subname.status === 'active' ? `Open ${subname.name}` : undefined}
           type="button"
           onClick={() => onRecordTargetSelect(subname)}
         >
           <NameSignature name={subname.name} />
           <Badge>{subname.status}</Badge>
           <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
-          <code>{abbreviate(subname.manager)}</code>
+          <span>Manager: {ownerLabel(subname.manager, { viewerAuthority: selectedAuthority }).label}</span>
         </Button>
       ))}
     </div>

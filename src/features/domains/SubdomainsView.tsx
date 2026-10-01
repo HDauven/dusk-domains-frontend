@@ -8,6 +8,7 @@ import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubdomainsViewProps } from './subdomains/types'
 
 export function SubdomainsView({
+  canEdit = true,
   canCreateSubname,
   currentBlockHeight,
   displayName,
@@ -45,7 +46,7 @@ export function SubdomainsView({
       />
 
       <div className="subname-box" aria-label="Subdomain controls">
-        <SubdomainCreatePanel
+        {canEdit ? <SubdomainCreatePanel
           canCreateSubname={canCreateSubname}
           displayName={displayName}
           fallbackManager={fallbackManager}
@@ -63,10 +64,11 @@ export function SubdomainsView({
           subnameLabel={subnameLabel}
           subnameManager={subnameManager}
           subnameResolver={subnameResolver}
-        />
+        /> : null}
 
         {subnames.length ? (
           <SubdomainList
+            selectedAuthority={selectedAuthority}
             currentBlockHeight={currentBlockHeight}
             nowSeconds={nowSeconds}
             onRecordTargetSelect={onRecordTargetSelect}

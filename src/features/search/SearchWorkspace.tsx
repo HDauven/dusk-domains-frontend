@@ -56,6 +56,7 @@ export function SearchWorkspace({
 
       {checked && resultReady ? (
         <SearchResultPanel
+          onOpenName={onOpenName}
           activityProps={activityProps}
           detailsProps={detailsProps}
           headerProps={headerProps}

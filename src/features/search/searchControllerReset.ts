@@ -1,9 +1,11 @@
 import { fallbackManager } from '../../app/appHelpers'
+import { createManagedNameState } from '../../app/managedNameState'
 import type { UseSearchControllerProps } from './searchControllerTypes'
 
 export function resetSearchState({
   recordSourceContractId,
   selectedAuthority,
+  setManagedName,
   setActivityEntries,
   setActivityCursor,
   setActivityLoading,
@@ -47,6 +49,7 @@ export function resetSearchState({
   setSubnames,
   setTxState,
 }: UseSearchControllerProps, nextValue: string) {
+  setManagedName(createManagedNameState(recordSourceContractId))
   setQuery(nextValue)
   setCommitted(false)
   setPreparedCommit(null)

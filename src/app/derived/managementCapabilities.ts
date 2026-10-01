@@ -29,6 +29,7 @@ export function deriveManagementCapabilities({
   walletAuthorized: boolean
 }) {
   const connectedAsNameOwner = Boolean(
+    nodeHex && managedName.node === nodeHex &&
     selectedAuthority &&
     managedName.owner &&
     selectedAuthority.toLowerCase() === managedName.owner.toLowerCase(),

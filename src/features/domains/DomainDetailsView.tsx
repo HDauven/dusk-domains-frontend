@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
 import { ArrowUpRight } from 'lucide-react'
@@ -17,7 +18,7 @@ import { isIdentifierRecord, recordLabel } from './recordPresentation'
 
 // Records a sender needs, in the order a wallet would look for them.
 const payableKeys = ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address', 'dusk_contract', 'dusk_asset']
-const hiddenKeys = new Set(payableKeys)
+const hiddenKeys = new Set([...payableKeys, 'text.description', 'avatar'])
 
 function safeLink(value: string) {
   return /^https:\/\//i.test(value) ? value : null
@@ -25,6 +26,8 @@ function safeLink(value: string) {
 
 // A registered name's public profile: where to send, what it links to, and what changed lately.
 export function DomainDetailsView({
+  canEdit = false,
+  primaryControl,
   activityEntries,
   currentBlockHeight,
   displayName,
@@ -38,6 +41,8 @@ export function DomainDetailsView({
   subnames,
   viewerAuthority,
 }: {
+  canEdit?: boolean
+  primaryControl?: ReactNode
   activityEntries: ActivityEntry[]
   currentBlockHeight: number | null
   displayName: string
@@ -74,7 +79,7 @@ export function DomainDetailsView({
           </ul>
         ) : (
           <p className="profile-empty">
-            No addresses yet. Its owner can add them under <Button type="button" onClick={onManageRecords}>Records</Button>.
+            No addresses yet. {canEdit ? <Button type="button" onClick={onManageRecords}>Add an address</Button> : null}
           </p>
         )}
         {paysPreviousOwner ? (
@@ -83,9 +88,7 @@ export function DomainDetailsView({
             <Button variant="quiet" type="button" onClick={onManageRecords}>Update it under Records</Button>
           </p>
         ) : null}
-        <p className={`primary-line ${primaryVerification.tone}`}>
-          <strong>{primaryVerification.title}.</strong> {primaryVerification.description}
-        </p>
+        {primaryControl ?? <p className="primary-line">{primaryVerification.tone === 'success' ? `Apps show ${displayName} for this Dusk address.` : 'This name is not the primary name for its Dusk address.'}</p>}
       </Panel>
 
       <div className="profile-side">
@@ -114,19 +117,19 @@ export function DomainDetailsView({
           </Panel>
         ) : null}
 
-        <Panel className="profile-card" aria-labelledby="subnames-heading">
+        {canEdit || subnames.length ? <Panel className="profile-card" aria-labelledby="subnames-heading">
           <div className="profile-card-head">
             <h2 id="subnames-heading">Subnames</h2>
-            <Button variant="quiet" type="button" onClick={onSubdomains}>Manage</Button>
+            <Button variant="quiet" type="button" onClick={onSubdomains}>{canEdit ? 'Manage' : 'View'}</Button>
           </div>
           {subnames.length ? (
             <ul className="chip-list">
               {subnames.slice(0, 8).map((subname) => <li key={subname.node}><NameChip name={subname.name} /></li>)}
             </ul>
           ) : (
-            <EmptyState>No subnames. Add one under Subnames.</EmptyState>
+            <EmptyState>{canEdit ? 'No subnames. Add one under Subnames.' : 'No subnames.'}</EmptyState>
           )}
-        </Panel>
+        </Panel> : null}
 
         <Panel className="profile-card" aria-labelledby="recent-heading">
           <div className="profile-card-head">

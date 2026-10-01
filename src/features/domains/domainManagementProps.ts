@@ -12,13 +12,7 @@ export function buildDomainManagementProps(
       displayName: props.displayName,
       error: props.primaryError,
       onClearPrimary: () => void actions.handleClearPrimaryName(),
-      onEndpointChange: (value) => {
-        props.setPrimaryEndpointValue(value)
-        props.setPrimaryError('')
-      },
       onSetPrimary: () => void actions.handleSetPrimaryName(),
-      placeholder: props.selectedAddress || props.moonlightRecord?.value || 'dusk1...',
-      primaryEndpointValue: props.primaryEndpointValue,
       primaryVerification: props.primaryVerification,
       txState: props.primaryTxState,
     },

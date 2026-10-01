@@ -28,7 +28,7 @@ describe('record presentation', () => {
       expect(recordLabel(definition.key)).toBe(definition.key === 'moonlight_address' ? 'Dusk address' : definition.label)
     }
     const html = profile()
-    for (const label of ['Description', 'Display name', 'Website', 'Avatar', 'Chat endpoint', 'Attestation reference', 'Dusk address']) {
+    for (const label of ['Display name', 'Website', 'Chat endpoint', 'Attestation reference', 'Dusk address']) {
       expect(html).toContain(`<span>${label}</span>`)
     }
     expect(html).not.toContain('text.description')
@@ -37,21 +37,21 @@ describe('record presentation', () => {
 
   it('renders prose in full as text, identifiers as code, and HTTPS records as links', () => {
     const html = profile()
-    expect(html).toContain('<p>Building tools for Dusk.</p>')
-    expect(html).toContain('<p>ipfs://avatar</p>')
+    expect(html).not.toContain('Building tools for Dusk.')
+    expect(html).not.toContain('ipfs://avatar')
     expect(html).toContain('<code>urn:example:123</code>')
     expect(html).toContain('href="https://example.test"')
     expect(html).toContain('href="https://example.test/chat"')
-    expect(profile([record('text.description', 'https://example.test')])).toContain('<p>https://example.test</p>')
+    expect(profile([record('text.description', 'https://example.test')])).not.toContain('https://example.test')
     expect(profile([record('website', 'javascript:alert(1)')])).not.toContain('href="javascript:')
   })
 
   it('shows a supplied description in the registered name header only', () => {
     const props = { displayName: 'aurora.dusk', lifecycleLabel: null, primaryVerified: false, reserved: false }
     const header = (status: 'registered' | 'available', values: ResolverRecord[]) => renderToStaticMarkup(<NameHeader {...props} status={status} records={values} />)
-    expect(header('registered', records)).toContain('<p class="name-hero-description">Building tools for Dusk.</p>')
-    expect(header('registered', [])).not.toContain('name-hero-description')
-    expect(header('available', records)).not.toContain('name-hero-description')
+    expect(header('registered', records)).toContain('<span class="name-portrait-description">Building tools for Dusk.</span>')
+    expect(header('registered', [])).not.toContain('name-portrait-description')
+    expect(header('available', records)).not.toContain('name-portrait-description')
   })
 
   it('keeps record labels and prose consistent in the list', () => {

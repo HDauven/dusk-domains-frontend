@@ -8,7 +8,7 @@ function readUiSource() {
     'src/features/activity/ActivityHistoryView.tsx',
     'src/features/domains/domainFormat.ts',
     'src/features/domains/DomainSettingsView.tsx',
-    'src/features/domains/PrimaryDomainView.tsx',
+    'src/features/domains/PrimaryNameControl.tsx',
     'src/features/domains/RecordsView.tsx',
     'src/features/domains/SubdomainsView.tsx',
     'src/features/referrals/ActiveReferralCard.tsx',

@@ -7,6 +7,7 @@ import { SubnameExpiryPanel } from './settings/SubnameExpiryPanel'
 import type { DomainSettingsViewProps } from './settings/types'
 
 export function DomainSettingsView({
+  isOwner = true,
   canManageName,
   canRenewName,
   confirmationInput,
@@ -43,7 +44,7 @@ export function DomainSettingsView({
         title="Settings"
       />
 
-      <AuthoritySettingsPanel
+      {isOwner ? <AuthoritySettingsPanel
         canManageName={canManageName}
         confirmationInput={confirmationInput}
         displayName={displayName}
@@ -56,7 +57,7 @@ export function DomainSettingsView({
         onDraftManagerChange={onDraftManagerChange}
         onDraftOwnerChange={onDraftOwnerChange}
         onOwnershipUpdate={onOwnershipUpdate}
-      />
+      /> : null}
 
       {isSubname(displayName) ? (
         <SubnameExpiryPanel
