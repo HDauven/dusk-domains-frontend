@@ -9,7 +9,9 @@ import { MyDomainsView, type MyDomainsViewProps } from '../features/domains/MyDo
 import { usePendingReservationList } from '../features/registration/usePendingReservationList'
 import { createDuskDomainsRuntimeConfig, upsertPendingNameReservation, type PendingNameReservation } from '../names/internal'
 import { SearchResultOverview } from '../features/search/SearchResultOverview'
+import { RegistrationCompletionProgress } from '../features/registration/RegistrationCompletionProgress'
 import { SearchWorkspace } from '../features/search/SearchWorkspace'
+import { TransactionStatusNotice } from '../components/status/TransactionStatusNotice'
 
 const noop = () => {}
 afterEach(() => vi.unstubAllGlobals())
@@ -90,9 +92,35 @@ it('shows saved claims and an unlock action while the wallet is locked, without 
   expect(html).not.toContain('Connect wallet')
   expect(html).not.toContain('Refresh')
 })
+it('keeps a pending transaction reference behind Details and offers a confirmation read retry', () => {
+  const state = {status:'executing',message:'Still confirming…',context:{title:'Register'},txId:'transaction-reference',retryConfirmation:noop} as const
+  const html = renderToStaticMarkup(<TransactionStatusNotice state={state as never} />)
+  expect(html).toContain('Still confirming…')
+  expect(html).toMatch(/<details><summary>Details<\/summary>[\s\S]*transaction-reference/)
+  expect(html).toContain('Retry confirmation')
+  expect(html).not.toContain('Transaction timed out')
+})
+
 it('keeps search on home and result pages and removes it from name and claim pages', () => {
   const props = {checked:true,resultReady:false,query:'name',loading:false,onCheckAvailability:noop,onQueryChange:noop} as unknown as ComponentProps<typeof SearchWorkspace>
   expect(renderToStaticMarkup(<SearchWorkspace {...props} checked={false} resultView="overview" />)).toContain('role="search"')
   expect(renderToStaticMarkup(<SearchWorkspace {...props} resultView="overview" />)).toContain('role="search"')
   for (const view of ['details','register'] as const) expect(renderToStaticMarkup(<SearchWorkspace {...props} resultView={view} />)).not.toContain('role="search"')
+})
+it('keeps slow registration feedback and its retry visible in the claim flow', () => {
+  const progress = {status:'running',steps:[{id:'register',status:'executing',txId:'registration-reference'}]} as unknown as ComponentProps<typeof RegistrationCompletionProgress>['progress']
+  const state = {status:'executing',message:'Still confirming…',txId:'registration-reference',retryConfirmation:noop} as const
+  const html = renderToStaticMarkup(<RegistrationCompletionProgress progress={progress} txState={state as never} onSetAddress={noop} />)
+  expect(html).toContain('Still confirming…')
+  expect(html).toContain('registration-reference')
+  expect(html).toContain('Retry confirmation')
+})
+
+it('keeps the app-level confirmation retry visible away from its name', () => {
+  const pendingConfirmation = {name:'original.dusk',state:{status:'executing',message:'Still confirming…',context:{title:'Register'},txId:'original-transaction',retryConfirmation:noop}} as const
+  const html = renderToStaticMarkup(<AppShell {...{mainView:'treasury',network:{label:'Local',tone:'local'},launchLinks:{},walletState:{accounts:[]},walletStatus:'disconnected',skyNames:[],pendingReservationCount:0} as unknown as ComponentProps<typeof AppShell>} pendingConfirmation={pendingConfirmation as never}>Another page</AppShell>)
+  expect(html).toContain('aria-label="Pending transaction"')
+  expect(html).toContain('original.dusk')
+  expect(html).toContain('original-transaction')
+  expect(html).toContain('Retry confirmation')
 })

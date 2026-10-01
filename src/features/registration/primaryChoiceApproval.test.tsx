@@ -22,9 +22,11 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
   const balance = deferred<boolean>(), approval = deferred<DuskDomainTxState>()
   const setRegisterSetsPrimary = vi.fn(), setPreparedCommit = vi.fn(), setCommitTxState = vi.fn()
   const submitNameWrite = vi.fn(async (_name, _call, options) => {
+    options.beforeSign()
     options.onUpdate({status:'awaiting_approval'})
     return approval.promise
   })
+  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
   const props = new Proxy({ registerSetsPrimary, setRegisterSetsPrimary, setPreparedCommit, setCommitTxState, submitNameWrite,
     displayName: 'approval.dusk', nodeHex: namehashHex('approval.dusk'), duration: 1,
     selectedAuthority: `0x${'11'.repeat(32)}`, selectedAddress: 'wallet', canPrepareCommit: true,

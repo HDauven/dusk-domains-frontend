@@ -37,9 +37,9 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
   }), [wallet])
   const liveDuskDomainsApp = useMemo(() => (
     canUseLiveDuskDomainsWrites(runtimeConfig)
-      ? createDuskDomainsLiveApp({ runtimeConfig, wallet: baseWallet, autoConnect: false }).names
+      ? createDuskDomainsLiveApp({ runtimeConfig, wallet: baseWallet, session: wallet, autoConnect: false }).names
       : null
-  ), [runtimeConfig, baseWallet])
+  ), [runtimeConfig, baseWallet, wallet])
   const writeAccess = useMemo(() => createWriteAccess(runtimeConfig, liveDuskDomainsApp, pause), [runtimeConfig, liveDuskDomainsApp, pause])
   const onChainReadTransport = useMemo(() => (
     liveDuskDomainsApp

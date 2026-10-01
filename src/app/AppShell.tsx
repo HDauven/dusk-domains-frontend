@@ -1,3 +1,5 @@
+import type { PendingConfirmation } from './confirmationRead'
+import { TransactionStatusNotice } from '../components/status/TransactionStatusNotice'
 import { NetworkFreshnessContext } from './networkFreshness'
 import { useIndexerFreshness } from './useIndexerFreshness'
 import { NetworkStatus } from './NetworkStatus'
@@ -15,6 +17,7 @@ import { TopBar, type NetworkBadge } from './TopBar'
 
 export function AppShell({
   networkStatus,
+  pendingConfirmation,
   walletDialog,
   pause = unpaused,
   children,
@@ -32,6 +35,7 @@ export function AppShell({
   walletState,
   walletStatus,
 }: {
+  pendingConfirmation?: PendingConfirmation | null
   networkStatus?: { config: DuskDomainsRuntimeConfig; client: DuskDomainsIndexerClient | null; readOnly?: boolean }
   walletDialog?: ComponentProps<typeof WalletDialog>
   pause?: OperatorPause
@@ -74,6 +78,10 @@ export function AppShell({
 
       <main className="page-main">
         <OperatorPauseBanner pause={pause} />
+        {pendingConfirmation?.state.retryConfirmation ? <section aria-label="Pending transaction" key={pendingConfirmation.state.txId}>
+          <p>{pendingConfirmation.name}</p>
+          <TransactionStatusNotice state={pendingConfirmation.state} />
+        </section> : null}
         <NetworkFreshnessContext value={freshness}>{children}</NetworkFreshnessContext>
       </main>
 

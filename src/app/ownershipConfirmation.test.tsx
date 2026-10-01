@@ -12,6 +12,8 @@ import { createOwnershipConfirmation, type PendingOwnership } from './ownershipC
 import { OwnershipConfirmationNotice } from './OwnershipConfirmationNotice'
 import { useDuskDomainWriter } from './useDuskDomainWriter'
 
+const wallet = { state: { installed: true, authorized: true, chainId: 'dusk:0', profiles: [{ account: 'owner', profileId: 'primary' }], selectedProfile: { account: 'owner', profileId: 'primary' } } as import('@dusk/connect').DuskWalletState }
+
 vi.mock('../names/internal', async importOriginal => ({
   ...await importOriginal<typeof import('../names/internal')>(), submitDuskDomainWrite: vi.fn(),
 }))
@@ -38,7 +40,7 @@ function harness(nextOwner = 'recipient') {
     setManagedName,setPending:changes=>{pending=changes}})
   let submit!: ReturnType<typeof useDuskDomainWriter>
   function Probe() {
-    submit = useDuskDomainWriter({contracts:{} as never,writeAccess:createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, {} as never, unpaused),liveDuskDomainsApp:{} as never,confirmOwnershipWrite:ownership.afterWrite})
+    submit = useDuskDomainWriter({ wallet, chainId: 'dusk:0',contracts:{} as never,writeAccess:createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, {} as never, unpaused),liveDuskDomainsApp:{} as never,confirmOwnershipWrite:ownership.afterWrite})
     return null
   }
   renderToStaticMarkup(<Probe />)

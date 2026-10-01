@@ -32,8 +32,10 @@ export async function applyCompleteRegistrationSuccess(
   {
     finalState,
     request,
+    workspace = () => true,
   }: {
     finalState: DuskDomainTxState
+    workspace?: () => boolean
     request: ReturnType<typeof createCompleteRegistrationRequest>
   },
 ) {
@@ -50,7 +52,8 @@ export async function applyCompleteRegistrationSuccess(
       && state?.owner === selectedAuthority
       && state.manager === selectedAuthority
     return registered
-  })
+  }, workspace)
+  if (!workspace()) return
   // A wallet can report a reverted reveal as executed. Keep the saved reservation, so the
   // registration can be retried, until the index shows the name registered to this account.
   if (!applyLocally && !registered) {

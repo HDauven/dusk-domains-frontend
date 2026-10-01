@@ -1,5 +1,5 @@
 import type { DuskDomainTxState } from '../../names/internal'
-import { abbreviate } from '../../utils/format'
+import { ConfirmationRetry } from './ConfirmationRetry'
 import { txStatusCopy, txStatusDataAttrs, userFacingTxMessage } from './txStatus'
 
 export function TransactionStatusNotice({
@@ -10,7 +10,6 @@ export function TransactionStatusNotice({
   className?: string
 }) {
   const message = userFacingTxMessage(state)
-  const reference = state.txId ? abbreviate(state.txId) : ''
   const classNames = ['tx-status', className, state.status].filter(Boolean).join(' ')
 
   return (
@@ -19,8 +18,9 @@ export function TransactionStatusNotice({
         <strong>{txStatusCopy(state.status, state.message)}</strong>
         <span>{state.context.title}</span>
       </div>
-      {reference ? <span className="tx-reference">Reference {reference}</span> : null}
-      {message ? <p>{message}</p> : null}
+      {state.txId ? <details><summary>Details</summary><p>Transaction <code>{state.txId}</code></p></details> : null}
+      <ConfirmationRetry state={state} />
+      {message && message !== 'Still confirming…' ? <p>{message}</p> : null}
     </div>
   )
 }

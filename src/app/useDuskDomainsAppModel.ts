@@ -109,6 +109,7 @@ export function useDuskDomainsAppModel() {
       },
     },
     shellProps: {
+      pendingConfirmation: walletRuntime.pendingConfirmation,
       networkStatus: { config: appRuntime.runtimeConfig, client: appRuntime.indexerClient, readOnly: appRuntime.writeAccess.readOnly },
       walletDialog: {
         open: appRuntime.walletOpen,

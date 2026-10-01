@@ -35,6 +35,7 @@ export async function createSubdomain({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseSubdomainActionsProps) {
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   setSubnameError('')
   if (!guardDomainActionPrerequisite({
     canContinue: Boolean(canCreateSubname && selectedAddress),
@@ -45,7 +46,9 @@ export async function createSubdomain({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('create this subname', setSubnameError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('creating this subname', setSubnameError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('creating this subname', message => { if (workspace()) setSubnameError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const requestedExpiresAt = subnameExpiryPolicy === 'fixed_before_parent'
@@ -74,16 +77,19 @@ export async function createSubdomain({
       expiryPolicy: subname.expiryPolicy,
     })
     const finalState = await submitNameWrite(displayName, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setSubnameTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status !== 'executed') return
 
     if (!(await shouldApplyPreviewWriteFallback(`${subname.name} creation`, async (client) => {
       const indexed = await client.getSubname(subname.node)
       return indexed?.name === subname.name && indexed.status === 'active'
-    }))) return
+    }, workspace))) return
+    if (!workspace()) return
 
     setSubnames((current) => [subname, ...current.filter((existing) => existing.node !== subname.node)])
     setRecordDrafts({})
@@ -97,6 +103,7 @@ export async function createSubdomain({
       name: subname.name,
     })
   } catch (error) {
+    if (!workspace()) return
     setSubnameError(userFacingErrorMessage(error))
   }
 }

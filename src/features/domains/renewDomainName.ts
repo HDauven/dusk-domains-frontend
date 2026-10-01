@@ -34,6 +34,7 @@ export async function renewDomainName({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseDomainSettingsActionsProps) {
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   setRenewalError('')
   if (!guardDomainActionPrerequisite({
     canContinue: canRenewName,
@@ -47,10 +48,12 @@ export async function renewDomainName({
   const feeLux = registrationFeeLux(resultLabel, renewalYears, feeConfig)
   if (!(await ensurePublicBalanceForLiveWrite(
     'renewing this name',
-    setRenewalError,
+    message => { if (workspace()) setRenewalError(message) },
     1,
     BigInt(feeLux),
   ))) return
+
+  if (!workspace()) return
 
   try {
     const lifecycle = renewRegistrationLifecycle({
@@ -64,9 +67,11 @@ export async function renewDomainName({
       feeLux,
     })
     const finalState = await submitNameWrite(displayName, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setRenewalTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status !== 'executed') return
 
@@ -78,7 +83,8 @@ export async function renewDomainName({
         currentBlockHeight,
         nowSeconds,
       ) === lifecycle.expiresAt
-    }))) return
+    }, workspace))) return
+    if (!workspace()) return
 
     setManagedName((current) => ({
       ...current,
@@ -92,6 +98,7 @@ export async function renewDomainName({
       txId: finalState.txId,
     })
   } catch (error) {
+    if (!workspace()) return
     setRenewalError(userFacingErrorMessage(error))
   }
 }

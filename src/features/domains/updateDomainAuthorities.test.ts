@@ -25,7 +25,7 @@ it('accepts Dusk addresses and resolved names, rejecting internal IDs and names 
 
 it('transfers owner and manager together, changes only the manager when requested, and rechecks named recipients', async () => {
   const recipient=await resolveRecipient(address,null)
-  const submitNameWrite=vi.fn().mockResolvedValue({status:'executed',txId:'tx'})
+  const submitNameWrite=Object.assign(vi.fn().mockResolvedValue({status:'executed',txId:'tx'}), { captureWorkspace: () => () => true })
   const setManagementError=vi.fn(), setManagedName=vi.fn()
   const resolveForward=vi.fn().mockResolvedValue({...verified,records:[{key:'moonlight_address',value:address}]})
   const props={canManageName:true,managedName:{owner,manager:owner},displayName:'alpha.dusk',nodeHex:'node',indexerClient:{resolveForward,getHealth},
@@ -75,7 +75,7 @@ it.each([
   expect(recipient.address).toBe(address)
   resolveForward.mockResolvedValue({ ...verified, ...invalid, records: [{key:'moonlight_address',value:address}] })
   await expect(resolveRecipient('alice.dusk', indexerClient)).rejects.toThrow('Enter a Dusk address instead')
-  const submitNameWrite = vi.fn(), setManagementError = vi.fn()
+  const submitNameWrite = Object.assign(vi.fn(), { captureWorkspace: () => () => true }), setManagementError = vi.fn()
   for (const kind of ['transfer', 'manager'] as const) {
     await updateDomainAuthorities({ canManageName:true, indexerClient, submitNameWrite, setManagementError,
       ensureContractAuthorityForLiveWrite:()=>true, ensurePublicBalanceForLiveWrite:async()=>true,
@@ -94,7 +94,7 @@ it('refetches stale named recipients and uses only the fresh address at lookup a
   expect(recipient.address).toBe(address)
   expect(resolveForward).toHaveBeenCalledTimes(2)
   resolveForward.mockResolvedValueOnce(stale).mockResolvedValue({ ...fresh, records: [{key:'moonlight_address',value:otherAddress}] })
-  const submitNameWrite = vi.fn(), setManagementError = vi.fn()
+  const submitNameWrite = Object.assign(vi.fn(), { captureWorkspace: () => () => true }), setManagementError = vi.fn()
   await updateDomainAuthorities({ canManageName:true, indexerClient, submitNameWrite, setManagementError,
     ensureContractAuthorityForLiveWrite:()=>true, ensurePublicBalanceForLiveWrite:async()=>true,
   } as never, { kind:'transfer', recipient })
@@ -117,7 +117,7 @@ it.each(['transfer','manager'] as const)('refuses a recipient that becomes stale
   const indexerClient = {resolveForward,getHealth}
   const recipient = await resolveRecipient('alice.dusk',indexerClient)
   resolveForward.mockClear().mockResolvedValue({...response,cache:{staleAt:'2020-01-01T00:00:00Z'}})
-  const submitNameWrite = vi.fn(), setManagementError = vi.fn()
+  const submitNameWrite = Object.assign(vi.fn(), { captureWorkspace: () => () => true }), setManagementError = vi.fn()
   await updateDomainAuthorities({canManageName:true,managedName:{owner,manager:owner},indexerClient,submitNameWrite,setManagementError,
     displayName:'alpha.dusk',nodeHex:'node',runtimeConfig:{contracts:{}},
     ensureContractAuthorityForLiveWrite:()=>true,ensurePublicBalanceForLiveWrite:async()=>true,
@@ -140,7 +140,7 @@ it('does not report success when all 15 ownership confirmation reads fail', asyn
   renderToStaticMarkup(createElement(Probe))
   const setManagedName = vi.fn()
   const pending = updateDomainAuthorities({canManageName:true,managedName:{owner,manager:owner},displayName:'alpha.dusk',nodeHex:'node',
-    runtimeConfig:{contracts:{}}, submitNameWrite:async()=>({status:'executed'}), setManagementError:vi.fn(), setManagedName,
+    runtimeConfig:{contracts:{}}, submitNameWrite:Object.assign(async()=>({status:'executed'}), { captureWorkspace: () => () => true }), setManagementError:vi.fn(), setManagedName,
     ensureContractAuthorityForLiveWrite:()=>true, ensurePublicBalanceForLiveWrite:async()=>true, shouldApplyPreviewWriteFallback:fallback,
   } as never, {kind:'transfer',recipient})
   await vi.runAllTimersAsync()
@@ -154,7 +154,7 @@ it.each([false, true])('uses the shared live ownership confirmation result (%s) 
   const recipient = await resolveRecipient(address, null)
   const shouldApplyPreviewWriteFallback = vi.fn(), setManagedName = vi.fn()
   const result = await updateDomainAuthorities({canManageName:true,managedName:{owner,manager:owner},displayName:'alpha.dusk',nodeHex:'node',
-    runtimeConfig:{contracts:{}},submitNameWrite:async()=>({status:'executed',ownershipConfirmed}),setManagementError:vi.fn(),setManagedName,
+    runtimeConfig:{contracts:{}},submitNameWrite:Object.assign(async()=>({status:'executed',ownershipConfirmed}), { captureWorkspace: () => () => true }),setManagementError:vi.fn(),setManagedName,
     ensureContractAuthorityForLiveWrite:()=>true,ensurePublicBalanceForLiveWrite:async()=>true,shouldApplyPreviewWriteFallback,
   } as never, {kind:'transfer',recipient})
   expect(result).toBe(ownershipConfirmed)

@@ -6,6 +6,8 @@ import { createWriteAccess } from './writeAccess'
 import { unpaused } from './operatorPause'
 import { createDuskDomainsRuntimeConfig, submitDuskDomainWrite } from '../names/internal'
 
+const wallet = { state: { installed: true, authorized: true, chainId: 'dusk:0', profiles: [{ account: 'owner', profileId: 'primary' }], selectedProfile: { account: 'owner', profileId: 'primary' } } as import('@dusk/connect').DuskWalletState }
+
 vi.mock('../names/internal', async original => ({ ...await original<typeof import('../names/internal')>(), submitDuskDomainWrite: vi.fn() }))
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks() })
 
@@ -34,7 +36,7 @@ it('rejects preview submissions even when a transaction-capable app exists', asy
   const app = {} as never
   let submit!: ReturnType<typeof useDuskDomainWriter>
   function Probe() {
-    submit = useDuskDomainWriter({ contracts: config.contracts, liveDuskDomainsApp: app, writeAccess: createWriteAccess(config, app, unpaused) })
+    submit = useDuskDomainWriter({ wallet, chainId: 'dusk:0', contracts: config.contracts, liveDuskDomainsApp: app, writeAccess: createWriteAccess(config, app, unpaused) })
     return null
   }
   renderToStaticMarkup(<Probe />)

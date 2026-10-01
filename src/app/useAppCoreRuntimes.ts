@@ -1,3 +1,4 @@
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import type { DuskDomainsRuntimeEnv } from '../names/internal'
 import { useDomainManagementAppState } from './useDomainManagementAppState'
 import { useEconomicsRuntime } from './useEconomicsRuntime'
@@ -19,7 +20,11 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
   } = appRuntime
   const registrationState = useRegistrationAppState()
   const domainState = useDomainManagementAppState(recordSourceContractId, indexerClient, appRuntime.duskDomainsOnChainClient)
+  const openWorkspace = useRef<{ name: string } | null>(null)
+  const getWorkspaceToken = useCallback((name: string) => openWorkspace.current?.name === name ? openWorkspace.current : null, [])
   const walletRuntime = useWalletRuntime({
+    getWorkspaceToken,
+    indexerClient,
     confirmOwnershipWrite: domainState.confirmOwnershipWrite,
     writeAccess: appRuntime.writeAccess,
     connectKit,
@@ -40,6 +45,11 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     walletSession,
   } = walletRuntime
   const searchState = useSearchAppState(`${runtimeConfig.chainId}:${walletRuntime.selectedAddress}`)
+  useLayoutEffect(() => {
+    const name = searchState.mainView === 'search' && searchState.checked ? searchState.apiSearchResult?.canonical : null
+    openWorkspace.current = name ? { name } : null
+    return () => { openWorkspace.current = null }
+  }, [searchState.mainView, searchState.checked, searchState.apiSearchResult?.canonical])
   const economicsRuntime = useEconomicsRuntime({
     indexerClient,
     liveDuskDomainsApp,

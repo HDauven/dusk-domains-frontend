@@ -24,7 +24,7 @@ it('limits active name actions to that target’s owner or manager, and blocks r
   const child = { ...parent, owner: 'child-owner', manager: 'child-manager' }
   expect(canManageActiveName(child, 'owner', 100)).toBe(false)
   expect(canManageActiveName(child, 'child-manager', 100)).toBe(true)
-  const submitNameWrite = vi.fn(), ensureContractAuthorityForLiveWrite = vi.fn(), setRecordError = vi.fn()
+  const submitNameWrite = Object.assign(vi.fn(), { captureWorkspace: () => () => true }), ensureContractAuthorityForLiveWrite = vi.fn(), setRecordError = vi.fn()
   await clearDomainRecord({ activeRecordTarget: { name: 'name.dusk', node: 'node' }, canRemoveRecords: false,
     walletSetupState: 'connected', walletAuthorized: true, selectedAddress: 'owner', recordBusy: false,
     setRecordError, submitNameWrite, ensureContractAuthorityForLiveWrite } as never,

@@ -24,6 +24,7 @@ export function useSearchRuntime({
   } = useIndexedNameHydration(props)
 
   const shouldApplyPreviewWriteFallback = useIndexerWriteFallback({
+    displayName: props.displayName,
     indexerClient: props.indexerClient,
     liveDuskDomainsApp,
     refreshCurrentNameFromIndexer,

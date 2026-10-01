@@ -7,11 +7,12 @@ import {
   REGISTRATION_MIN_REVEAL_WAIT_BLOCKS,
   registrationCommitmentHex,
   registrationRegistry,
+  removePendingNameReservation,
   upsertPendingNameReservation,
   userFacingErrorMessage,
 } from '../../names/internal'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
-import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { clearReservationPrimaryChoice, saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 
 export async function prepareRegistrationCommit({
   canPrepareCommit,
@@ -42,12 +43,15 @@ export async function prepareRegistrationCommit({
   ensurePublicBalanceForLiveWrite,
   getCurrentBlockHeight,
 }: UseRegistrationActionsProps) {
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   if (!canPrepareCommit || !selectedAddress) return
 
   setWalletError('')
   setRegistrationCompletion(null)
   if (!ensureContractAuthorityForLiveWrite('reserve this name', setWalletError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('reserving this name', setWalletError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('reserving this name', message => { if (workspace()) setWalletError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const secret = createRegistrationSecret()
@@ -71,29 +75,39 @@ export async function prepareRegistrationCommit({
       : null
     const call = { ...coreCommitRuntimeCall({ commitment }), ...(registry ? { contractId: registry } : {}) }
     const finalState = await submitNameWrite(displayName, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
-      onUpdate: (state) => {
-        if (state.status === 'awaiting_approval') {
-          if (listPendingNameReservations({ chainId: runtimeConfig.chainId, controller: selectedAuthority }).some((saved) => saved.node === nodeHex)) {
-            throw new Error('Open the saved reservation in My names to check its status before trying again.')
-          }
-          // Persist before the wallet can broadcast; keep uncertain outcomes recoverable.
-          const saved = upsertPendingNameReservation(reservation)
-          if (!saved.some((entry) => entry.commitment === commitment && entry.secret === secret)) {
-            throw new Error('Cannot save the reservation. Enable browser storage and try again.')
-          }
-          saveReservationPrimaryChoice(reservation, registerSetsPrimary)
-          loadPendingReservations()
+      beforeSign: () => {
+        if (listPendingNameReservations({ chainId: runtimeConfig.chainId, controller: selectedAuthority }).some(saved => saved.node === nodeHex)) {
+          throw new Error('Open the saved reservation in My names to check its status before trying again.')
         }
-        setCommitTxState(state)
+        const saved = upsertPendingNameReservation(reservation)
+        if (!saved.some(entry => entry.commitment === commitment && entry.secret === secret)) {
+          throw new Error('Cannot save the reservation. Enable browser storage and try again.')
+        }
+        saveReservationPrimaryChoice(reservation, registerSetsPrimary)
+        loadPendingReservations()
       },
+      onNotBroadcast: () => {
+        removePendingNameReservation({ chainId: reservation.chainId, controller: reservation.controller, commitment })
+        clearReservationPrimaryChoice(reservation)
+        loadPendingReservations()
+      },
+      onUpdate: setCommitTxState,
     })
-
     if (finalState.status !== 'executed') return
 
     const liveBlockHeight = liveDuskDomainsApp ? await getCurrentBlockHeight() : null
     const initialBlockHeight = liveDuskDomainsApp ? liveBlockHeight : 0
     const initialCurrentBlockHeight = liveDuskDomainsApp ? liveBlockHeight : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
+    upsertPendingNameReservation({
+      ...reservation,
+      updatedAt: new Date().toISOString(),
+      committedBlockHeight: initialBlockHeight,
+      committedTxId: finalState.txId ?? null,
+    })
+    loadPendingReservations()
+    if (!workspace()) return
     setPreparedCommit({
       commitment,
       secret,
@@ -105,13 +119,6 @@ export async function prepareRegistrationCommit({
     setCommitted(true)
     setRegistrationStep('purchase')
     setTxState(null)
-    upsertPendingNameReservation({
-      ...reservation,
-      updatedAt: new Date().toISOString(),
-      committedBlockHeight: initialBlockHeight,
-      committedTxId: finalState.txId ?? null,
-    })
-    loadPendingReservations()
 
     if (!liveDuskDomainsApp) return
 
@@ -126,10 +133,12 @@ export async function prepareRegistrationCommit({
       commitment,
       refresh: refreshCommitBlockState,
     })
+    if (!workspace()) return
     setIndexerConfirmation(confirmed
       ? 'Reservation confirmed.'
       : 'Reservation submitted, but confirmation is still syncing.')
   } catch (error) {
+    if (!workspace()) return
     const message = userFacingErrorMessage(error)
     setWalletError(message)
     setRegistrationCompletion(null)

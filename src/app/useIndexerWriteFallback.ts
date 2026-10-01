@@ -1,4 +1,4 @@
-import { useCallback, type Dispatch, type SetStateAction } from 'react'
+import { useCallback, useLayoutEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import {
   waitForConfirmedIndexerRefresh,
   userFacingMessageFromText,
@@ -9,24 +9,31 @@ import {
 export type ConfirmedWriteFallback = ReturnType<typeof useIndexerWriteFallback>
 
 type UseIndexerWriteFallbackArgs = {
+  displayName: string
   indexerClient: DuskDomainsIndexerClient | null
   liveDuskDomainsApp: DuskConnectAppLike | null
-  refreshCurrentNameFromIndexer: () => Promise<boolean>
+  refreshCurrentNameFromIndexer: (options?: { fresh?: boolean }) => Promise<boolean>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
   setIndexerError: Dispatch<SetStateAction<string>>
 }
 
 export function useIndexerWriteFallback({
+  displayName,
   indexerClient,
   liveDuskDomainsApp,
   refreshCurrentNameFromIndexer,
   setIndexerConfirmation,
   setIndexerError,
 }: UseIndexerWriteFallbackArgs) {
+  const currentName = useRef(displayName)
+  useLayoutEffect(() => { currentName.current = displayName }, [displayName])
   const shouldApplyPreviewWriteFallback = useCallback(async (
     description = 'the latest change',
     check?: (client: DuskDomainsIndexerClient) => Promise<boolean>,
+    isWorkspaceCurrent?: () => boolean,
   ): Promise<boolean | null> => {
+    const isCurrent = () => currentName.current === displayName && isWorkspaceCurrent?.() !== false
+    if (!isCurrent()) return null
     // True applies a preview; false confirms live data; null keeps the change pending.
     if (!liveDuskDomainsApp) return true
 
@@ -42,10 +49,11 @@ export function useIndexerWriteFallback({
       description,
       attempts: 15,
       delayMs: 1_000,
-      check: async () => check ? await check(indexerClient) : await refreshCurrentNameFromIndexer(),
-      refresh: refreshCurrentNameFromIndexer,
+      check: async () => !isCurrent() ? true : check ? await check(indexerClient) : await refreshCurrentNameFromIndexer(),
+      refresh: () => isCurrent() ? refreshCurrentNameFromIndexer({ fresh: true }) : Promise.resolve(false),
     })
 
+    if (!isCurrent()) return null
     if (confirmation.confirmed && confirmation.refreshed) {
       setIndexerConfirmation(`Dusk Domains confirmed ${description}.`)
       return false
@@ -59,6 +67,7 @@ export function useIndexerWriteFallback({
         : `Transaction confirmed, but ${description} is still syncing.`)
     return null
   }, [
+    displayName,
     indexerClient,
     liveDuskDomainsApp,
     refreshCurrentNameFromIndexer,

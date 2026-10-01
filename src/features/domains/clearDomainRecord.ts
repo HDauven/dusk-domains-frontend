@@ -26,6 +26,7 @@ export async function clearDomainRecord({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseDomainRecordActionsProps, record: ResolverRecord) {
+  const workspace = submitNameWrite.captureWorkspace(activeRecordTarget?.name ?? '')
   setRecordError('')
   const target = activeRecordTarget
   if (!guardDomainActionPrerequisite({
@@ -38,7 +39,9 @@ export async function clearDomainRecord({
   }
   if (!target) return
   if (!ensureContractAuthorityForLiveWrite('remove this record', setRecordError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('removing this record', setRecordError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('removing this record', message => { if (workspace()) setRecordError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const mutation = { action: 'clear', key: record.key } satisfies CoreRecordMutationInput
@@ -47,9 +50,11 @@ export async function clearDomainRecord({
       mutations: [mutation],
     })
     const finalState = await submitNameWrite(target.name, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setRecordTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status !== 'executed') return
 
@@ -57,7 +62,8 @@ export async function clearDomainRecord({
     if (!(await shouldApplyPreviewWriteFallback(`${recordLabel.toLowerCase()} removal`, async (client) => {
       const indexed = await client.resolveForward(target.name)
       return !indexed.records.some((existing) => existing.key === record.key)
-    }))) return
+    }, workspace))) return
+    if (!workspace()) return
 
     setResolverRecordSets((current) => ({
       ...current,
@@ -75,6 +81,7 @@ export async function clearDomainRecord({
       name: target.name,
     })
   } catch (error) {
+    if (!workspace()) return
     setRecordError(userFacingErrorMessage(error))
   }
 }
