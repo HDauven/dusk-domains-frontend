@@ -148,3 +148,9 @@ cache after replacing SDK sources. Do not change the archive pin for this workfl
 ## License
 
 MIT
+
+## Issued reserved names
+
+Search trusts the indexer's registered status for issued reserved names and shows the owner and normal profile. Unissued and released protected labels remain reserved. There is no operator issuance UI.
+
+The SDK's official profiles carry `saleLocked: true` policy metadata. This frontend does not enforce that flag; issued names use the ordinary owner and marketplace controls. The contracts do not lock sales. The SDK archive pin is unchanged.

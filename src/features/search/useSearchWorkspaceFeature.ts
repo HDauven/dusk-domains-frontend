@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react'
+import { fallbackOwner } from '../../app/appHelpers'
 import type { SearchWorkspace } from './SearchWorkspace'
 import { formatActivityTime } from '../domains/domainFormat'
 
@@ -114,6 +115,7 @@ export function useSearchWorkspaceFeature({
       displayName,
       lifecycleLabel,
       primaryVerified: primaryProps.primaryVerification.verified,
+      owner: !activityLoading && settingsProps.managedName.owner !== fallbackOwner ? settingsProps.managedName.owner : null,
       records: resultStatus === 'registered' ? parentResolverRecords : [],
       reserved: Boolean(savedReservation) && !registrationProps.wizard.registrationComplete,
       status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,

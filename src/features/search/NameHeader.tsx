@@ -1,4 +1,5 @@
 import { Sparkles } from 'lucide-react'
+import { abbreviate } from '../../utils/format'
 import { NameAvatar } from '../../components/brand/NameAvatar'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
@@ -20,6 +21,7 @@ export function NameHeader({
   displayName,
   lifecycleLabel,
   primaryVerified,
+  owner,
   records,
   reserved,
   status,
@@ -27,6 +29,7 @@ export function NameHeader({
   displayName: string
   lifecycleLabel: string | null
   primaryVerified: boolean
+  owner?: string | null
   records: ResolverRecord[]
   reserved: boolean
   status: NameStatus
@@ -48,6 +51,7 @@ export function NameHeader({
         <h1 className="name-hero-title">
           {label}<span>{tld}</span>
         </h1>
+        {registered && owner ? <p className="name-hero-owner">Owner <code title={owner}>{abbreviate(owner)}</code></p> : null}
         <div className="name-hero-badges">
           {reserved ? (
             <span className="status-badge dusk">Registration saved</span>
