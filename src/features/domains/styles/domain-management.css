@@ -12,101 +12,55 @@
 
 .record-draft-row input {
   min-width: 0;
-  min-height: 42px;
-  padding: 0 11px;
-  color: var(--ink);
-  border: 1px solid rgba(126, 100, 200, 0.45);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(9, 8, 18, 0.92), rgba(4, 4, 10, 0.94));
-  font: inherit;
-  font-size: 13px;
-  outline: none;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease;
-}
-
-.record-draft-row input:hover,
-.record-draft-row input:focus {
-  border-color: rgba(197, 181, 255, 0.82);
-  background: rgba(9, 8, 18, 0.96);
-  box-shadow: 0 0 0 2px rgba(167, 139, 255, 0.12);
-}
-
-.record-draft-row input:disabled {
-  color: rgba(164, 174, 193, 0.58);
-  border-color: rgba(167, 139, 255, 0.07);
-  background: rgba(5, 5, 12, 0.45);
-  cursor: not-allowed;
-}
-
-.record-draft-row input::placeholder {
-  color: rgba(184, 178, 200, 0.52);
 }
 
 .resolver-diff span {
   min-width: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .resolver-diff {
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .resolver-diff code {
-  color: #d8d1e8;
+  color: var(--muted);
 }
 
 .confirm-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 10px;
-  margin-top: 16px;
-}
-
-.danger-action {
-  min-width: 190px;
-  min-height: 44px;
-  padding: 0 14px;
-  color: #ffd8d8;
-  border-color: rgba(255, 110, 110, 0.28);
-  background: rgba(85, 24, 30, 0.22);
-}
-
-.danger-action:not(:disabled):hover {
-  border-color: rgba(255, 144, 144, 0.48);
-  background: rgba(111, 35, 42, 0.28);
+  margin-top: var(--space-4);
 }
 
 .renewal-box {
   display: grid;
   gap: 14px;
-  margin-top: 20px;
-  padding-top: 20px;
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--line);
 }
 
 .renewal-box h3 {
   margin: 0;
   color: var(--ink);
-  font-size: 17px;
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 
 .renewal-box p {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .renewal-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
 }
 
@@ -114,21 +68,21 @@
   display: grid;
   gap: 5px;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   color: var(--muted);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(5, 5, 12, 0.48);
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--text-xs);
 }
 
 .renewal-summary strong {
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .tx-status.management {
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 @media (max-width: 1060px) {
@@ -136,9 +90,5 @@
 .confirm-row,
 .renewal-summary {
     grid-template-columns: 1fr;
-  }
-
-  .danger-action {
-    width: 100%;
   }
 }

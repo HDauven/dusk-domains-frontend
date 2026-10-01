@@ -1,8 +1,11 @@
+import { Panel } from '../../components/ui/Panel'
+import { Button } from '../../components/ui/Button'
 import { ArrowUpRight } from 'lucide-react'
-import { CopyValue } from '../../components/ui/CopyValue'
+import { AddressChip } from '../../components/ui/AddressChip'
+import { NameChip } from '../../components/ui/NameChip'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { abbreviate } from '../../utils/format'
 import {
-  getRecordDefinition,
   type ActivityEntry,
   type ResolverRecord,
   type SubnameState,
@@ -10,10 +13,11 @@ import {
 import { activityDetail, activityTitle } from '../activity/activityCopy'
 import { activityWhen } from '../activity/activityTime'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
+import { isIdentifierRecord, recordLabel } from './recordPresentation'
 
 // Records a sender needs, in the order a wallet would look for them.
 const payableKeys = ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address', 'dusk_contract', 'dusk_asset']
-const hiddenKeys = new Set([...payableKeys, 'avatar'])
+const hiddenKeys = new Set(payableKeys)
 
 function safeLink(value: string) {
   return /^https:\/\//i.test(value) ? value : null
@@ -52,11 +56,10 @@ export function DomainDetailsView({
     .map((key) => parentResolverRecords.find((record) => record.key === key))
     .filter((record): record is ResolverRecord => Boolean(record))
   const other = parentResolverRecords.filter((record) => !hiddenKeys.has(record.key))
-  const labelOf = (record: ResolverRecord) => getRecordDefinition(record.key)?.label ?? record.key
 
   return (
     <div className="profile-grid">
-      <section className="profile-card" aria-labelledby="send-heading">
+      <Panel className="profile-card" aria-labelledby="send-heading">
         <div className="profile-card-head">
           <h2 id="send-heading">Send to {displayName}</h2>
         </div>
@@ -64,70 +67,71 @@ export function DomainDetailsView({
           <ul className="address-list">
             {payable.map((record) => (
               <li key={record.key}>
-                <span>{labelOf(record)}</span>
-                <code>{record.value}</code>
-                <CopyValue value={record.value} label={labelOf(record)} />
+                <span>{recordLabel(record.key)}</span>
+                <AddressChip value={record.value} label={recordLabel(record.key)} />
               </li>
             ))}
           </ul>
         ) : (
           <p className="profile-empty">
-            No addresses yet. Its owner can add them under <button type="button" onClick={onManageRecords}>Records</button>.
+            No addresses yet. Its owner can add them under <Button type="button" onClick={onManageRecords}>Records</Button>.
           </p>
         )}
         {paysPreviousOwner ? (
           <p className="primary-line warning">
             <strong>This name pays another wallet.</strong> Payments go to {abbreviate(paysPreviousOwner)}, not the wallet you're using.{' '}
-            <button className="text-button" type="button" onClick={onManageRecords}>Update it under Records</button>
+            <Button variant="quiet" type="button" onClick={onManageRecords}>Update it under Records</Button>
           </p>
         ) : null}
         <p className={`primary-line ${primaryVerification.tone}`}>
           <strong>{primaryVerification.title}.</strong> {primaryVerification.description}
         </p>
-      </section>
+      </Panel>
 
       <div className="profile-side">
         {other.length ? (
-          <section className="profile-card" aria-labelledby="links-heading">
+          <Panel className="profile-card" aria-labelledby="links-heading">
             <h2 id="links-heading">Links and records</h2>
             <ul className="link-list">
               {other.map((record) => {
-                const href = safeLink(record.value)
+                const href = record.key.startsWith('text.') ? null : safeLink(record.value)
                 return (
                   <li key={record.key}>
-                    <span>{labelOf(record)}</span>
+                    <span>{recordLabel(record.key)}</span>
                     {href ? (
                       <a href={href} target="_blank" rel="noreferrer nofollow">
                         {record.value.replace(/^https:\/\//i, '').replace(/\/$/, '')} <ArrowUpRight size={14} />
                       </a>
-                    ) : (
+                    ) : isIdentifierRecord(record.key) ? (
                       <code>{record.value}</code>
+                    ) : (
+                      <p>{record.value}</p>
                     )}
                   </li>
                 )
               })}
             </ul>
-          </section>
+          </Panel>
         ) : null}
 
-        <section className="profile-card" aria-labelledby="subnames-heading">
+        <Panel className="profile-card" aria-labelledby="subnames-heading">
           <div className="profile-card-head">
             <h2 id="subnames-heading">Subnames</h2>
-            <button className="text-button" type="button" onClick={onSubdomains}>Manage</button>
+            <Button variant="quiet" type="button" onClick={onSubdomains}>Manage</Button>
           </div>
           {subnames.length ? (
             <ul className="chip-list">
-              {subnames.slice(0, 8).map((subname) => <li key={subname.node}>{subname.name}</li>)}
+              {subnames.slice(0, 8).map((subname) => <li key={subname.node}><NameChip name={subname.name} /></li>)}
             </ul>
           ) : (
-            <p className="profile-empty">None yet.</p>
+            <EmptyState>No subnames. Add one under Subnames.</EmptyState>
           )}
-        </section>
+        </Panel>
 
-        <section className="profile-card" aria-labelledby="recent-heading">
+        <Panel className="profile-card" aria-labelledby="recent-heading">
           <div className="profile-card-head">
             <h2 id="recent-heading">Recent</h2>
-            <button className="text-button" type="button" onClick={onActivity}>All activity</button>
+            <Button variant="quiet" type="button" onClick={onActivity}>All activity</Button>
           </div>
           {activityEntries.length ? (
             <ul className="recent-list">
@@ -139,9 +143,9 @@ export function DomainDetailsView({
               ))}
             </ul>
           ) : (
-            <p className="profile-empty">No changes recorded yet.</p>
+            <EmptyState>No activity recorded.</EmptyState>
           )}
-        </section>
+        </Panel>
       </div>
     </div>
   )

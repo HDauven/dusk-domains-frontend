@@ -1,3 +1,5 @@
+import { Button } from '../../components/ui/Button'
+import { Panel } from '../../components/ui/Panel'
 import { Eye, Gavel, HandCoins, Tag, Trophy, WalletCards } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
@@ -20,16 +22,16 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
 
   if (!props.selectedAddress) {
     return (
-      <div className="marketplace-my-view" role="tabpanel">
+      <div className="marketplace-my-view">
         <PanelMessage icon={<WalletCards size={18} />} tone="subtle">
-          <button className="text-button" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</button> to see bids, listings, offers and marketplace funds.
+          <Button variant="quiet" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</Button> to see bids, listings, offers and marketplace funds.
         </PanelMessage>
       </div>
     )
   }
 
   return (
-    <div className="marketplace-my-view" role="tabpanel">
+    <div className="marketplace-my-view">
       <div className="marketplace-position-summary" aria-label="Your marketplace summary">
         <div><Trophy aria-hidden="true" size={18} /><strong>{leading.length + won.length}</strong><span>Winning</span></div>
         <div><Gavel aria-hidden="true" size={18} /><strong>{sellingAuctions.length + sellingFixed.length}</strong><span>Selling</span></div>
@@ -38,14 +40,14 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
       </div>
 
       {props.refund?.amountLux ? (
-        <section className="marketplace-balance-card" aria-labelledby="marketplace-balance-heading">
+        <Panel className="marketplace-balance-card" aria-labelledby="marketplace-balance-heading">
           <div>
             <span>Withdrawable marketplace balance</span>
             <strong id="marketplace-balance-heading">{formatLuxNumberAsDusk(props.refund.amountLux)}</strong>
             <p>Funds returned from an outbid or closed order are safe in the marketplace contract until withdrawn.</p>
           </div>
-          <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={props.onClaimRefund}>Withdraw to wallet</button>
-        </section>
+          <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={props.onClaimRefund}>Withdraw to wallet</Button>
+        </Panel>
       ) : null}
 
       {!hasActivity ? <PanelMessage icon={<WalletCards size={18} />} tone="subtle">No marketplace positions yet.</PanelMessage> : null}
@@ -128,13 +130,13 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
 function PositionSection({ children, count, description, heading, icon }: { children: ReactNode; count: number; description: string; heading: string; icon: ReactNode }) {
   const id = `marketplace-position-${heading.toLowerCase().replace(/\s+/gu, '-')}`
   return (
-    <section className="marketplace-position-section" aria-labelledby={id}>
+    <Panel className="marketplace-position-section" aria-labelledby={id}>
       <div className="marketplace-section-heading">
         <h2 id={id}>{icon} {heading} <span>· {count}</span></h2>
         <p>{description}</p>
       </div>
       <div className="marketplace-position-list">{children}</div>
-    </section>
+    </Panel>
   )
 }
 
@@ -143,7 +145,7 @@ function PositionRow({ action, label, meta, onOpen, value }: { action: string; l
     <article className="marketplace-position-row">
       <div><strong>{label}</strong><span>{meta}</span></div>
       <strong>{value}</strong>
-      <button className="commit-button" type="button" onClick={onOpen}>{action}</button>
+      <Button type="button" onClick={onOpen}>{action}</Button>
     </article>
   )
 }

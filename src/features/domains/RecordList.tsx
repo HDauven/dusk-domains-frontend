@@ -1,10 +1,13 @@
+import { Badge } from '../../components/ui/Badge'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { Button } from '../../components/ui/Button'
 import { Info, X } from 'lucide-react'
 import {
-  getRecordDefinition,
   type ResolverRecord,
 } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
 import { recordVisibilityLabel } from './domainFormat'
+import { isIdentifierRecord, recordLabel } from './recordPresentation'
 
 export function RecordList({
   canRemoveRecords,
@@ -21,23 +24,20 @@ export function RecordList({
 }) {
   if (resolverRecords.length === 0) {
     return (
-      <div className="activity-empty">
-        <Info size={18} />
-        <span>No records found for {targetName}.</span>
-      </div>
+      <EmptyState icon={<Info size={18} />}>No records for {targetName}. Add a record above.</EmptyState>
     )
   }
 
   return (
     <div className="record-list">
       {resolverRecords.map((record) => {
-        const label = getRecordDefinition(record.key)?.label ?? record.key
+        const label = recordLabel(record.key)
         return (
           <div className="record-row" key={record.key}>
             <strong>{label}</strong>
-            <span>{recordVisibilityLabel(record.visibility)}</span>
-            <code>{abbreviate(record.value)}</code>
-            <button
+            <Badge>{recordVisibilityLabel(record.visibility)}</Badge>
+            {isIdentifierRecord(record.key) ? <code>{abbreviate(record.value)}</code> : <span className="record-value">{record.value}</span>}
+            <Button variant="destructive"
               aria-label={`Remove ${label}`}
               className="record-remove-button"
               disabled={!canRemoveRecords || recordBusy}
@@ -46,7 +46,7 @@ export function RecordList({
               onClick={() => void onClearRecord(record)}
             >
               <X size={15} />
-            </button>
+            </Button>
           </div>
         )
       })}

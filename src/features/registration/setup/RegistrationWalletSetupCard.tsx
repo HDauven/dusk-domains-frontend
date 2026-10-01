@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button'
 import { useState } from 'react'
 import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react'
 import { abbreviate } from '../../../utils/format'
@@ -59,37 +60,37 @@ export function RegistrationWalletSetupCard({
           </div>
           {walletSetupState === 'missing' ? (
             <div className="register-wallet-actions">
-              <a className="primary-button compact" href={installUrl} target="_blank" rel="noreferrer">
+              <a className="button button-primary compact" href={installUrl} target="_blank" rel="noreferrer">
                 Install Dusk Wallet
                 <ExternalLink size={16} />
               </a>
-              <button
-                className="text-button"
+              <Button variant="quiet"
+
                 disabled={walletDiscoveryRefreshing}
                 type="button"
                 onClick={() => void handleMissingWalletRetry()}
               >
                 {walletDiscoveryRefreshing ? 'Checking...' : 'I installed it'}
-              </button>
+              </Button>
               {showMissingWalletRetryFailure ? (
                 <div className="register-wallet-help" role="status">
                   <span>Wallet still not detected. Reload this page after installing Dusk Wallet.</span>
-                  <button className="text-button" type="button" onClick={handlePageReload}>
+                  <Button variant="quiet" type="button" onClick={handlePageReload}>
                     Reload page
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </div>
           ) : (
             <div className="register-wallet-actions">
-              <button
-                className="primary-button compact"
+              <Button variant="primary"
+                className="compact"
                 disabled={walletSetupState === 'detecting'}
                 type="button"
                 onClick={() => void onOpenWalletConnection()}
               >
                 {walletActionLabel(walletSetupState)}
-              </button>
+              </Button>
             </div>
           )}
         </div>

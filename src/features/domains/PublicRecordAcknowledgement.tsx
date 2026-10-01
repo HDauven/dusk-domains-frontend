@@ -1,3 +1,4 @@
+import { Input } from '../../components/ui/Input'
 export function PublicRecordAcknowledgement({
   checked,
   onChange,
@@ -7,7 +8,7 @@ export function PublicRecordAcknowledgement({
 }) {
   return (
     <label className="record-warning">
-      <input
+      <Input
         checked={checked}
         type="checkbox"
         onChange={(event) => onChange(event.target.checked)}

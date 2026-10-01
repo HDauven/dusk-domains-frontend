@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button'
 import { TermPicker } from '../../../components/ui/TermPicker'
 import { formatDusk } from '../../../utils/format'
 import { formatLifecycleDay, lifecycleHeightReached, renewalDeadline, renewalWindowCopy } from '../domainFormat'
@@ -48,14 +49,14 @@ export function RenewalPanel({
           <div className="renewal-summary">
             <span>New expiry <strong>{formatLifecycleDay(renewalPreviewExpiresAt, currentBlockHeight, nowSeconds)}</strong></span>
             <span>Price <strong>{formatDusk(renewalFee)} DUSK</strong></span>
-            <button
-              className="primary-button compact"
-              disabled={!canRenewName}
+            <Button variant="primary"
+              className="compact"
+              disabled={!canRenewName} loading={renewalBusy}
               type="button"
               onClick={() => void onRenewName()}
             >
               Renew
-            </button>
+            </Button>
           </div>
         </>
       )}

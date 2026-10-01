@@ -1,3 +1,4 @@
+import { Badge } from './Badge'
 import type { ReactNode } from 'react'
 
 export function PanelHeader({
@@ -15,7 +16,6 @@ export function PanelHeader({
   subtitle?: ReactNode
   title: ReactNode
 }) {
-  const badgeClasses = ['management-badge', badgeClassName].filter(Boolean).join(' ')
   const hasActions = Boolean(badge || actions)
 
   return (
@@ -27,7 +27,7 @@ export function PanelHeader({
 
       {hasActions ? (
         <div className="management-header-actions">
-          {badge ? <span className={badgeClasses}>{badge}</span> : null}
+          {badge ? <Badge tone={badgeClassName === 'verified' ? 'success' : badgeClassName === 'warning' ? 'warning' : 'neutral'}>{badge}</Badge> : null}
           {actions}
         </div>
       ) : null}

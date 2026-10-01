@@ -1,3 +1,4 @@
+import { Badge } from '../components/ui/Badge'
 import type { DuskWalletState } from '../names/internal'
 import { NamesMark } from '../components/brand/NamesMark'
 import { DuskConnectControl } from '../components/wallet/DuskConnectControl'
@@ -42,9 +43,9 @@ export function TopBar({
           <NamesMark />
           <span className="brand-name">Dusk Domains</span>
         </a>
-        <span className={`network-badge ${network.tone}`} title={`Connected to Dusk ${network.label.toLowerCase()}`}>
+        <Badge className={`network-badge ${network.tone}`} title={`Connected to Dusk ${network.label.toLowerCase()}`}>
           {network.label}
-        </span>
+        </Badge>
       </div>
 
       <PrimaryNavigation

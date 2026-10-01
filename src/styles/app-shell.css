@@ -1,6 +1,4 @@
 .page {
-  --domain-flow-width: 1060px;
-  --domain-page-gutter: clamp(20px, 6vw, 120px);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -36,6 +34,7 @@ stars under it stay inert. */
   position: relative;
   z-index: 2;
   flex: 1;
+  padding-bottom: 200px;
 }
 
 .policy-notes p {
@@ -46,12 +45,6 @@ stars under it stay inert. */
 .search-status {
   width: min(var(--domain-flow-width), calc(100% - 2 * var(--domain-page-gutter)));
   margin: 18px auto 0;
-  color: var(--ink-2);
+  color: var(--muted);
   text-align: center;
-}
-
-@media (max-width: 720px) {
-  .page {
-    --domain-page-gutter: 16px;
-  }
 }

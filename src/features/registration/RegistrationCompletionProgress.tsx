@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { AlertTriangle, ArrowRight, Check, Clock } from 'lucide-react'
 import { abbreviate } from '../../utils/format'
 import type { RegistrationCompletionState, RegistrationCompletionStepStatus } from './registrationCompletionState'
@@ -48,10 +49,10 @@ export function RegistrationCompletionProgress({
       </ol>
 
       {progress.status === 'executed' ? (
-        <button className="primary-button compact" type="button" onClick={onSetAddress}>
+        <Button variant="primary" className="compact" type="button" onClick={onSetAddress}>
           Open domain
           <ArrowRight size={18} />
-        </button>
+        </Button>
       ) : null}
     </div>
   )

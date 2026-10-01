@@ -1,3 +1,4 @@
+import { Panel } from '../../components/ui/Panel'
 import { RegistrationStepPanel } from './flow/RegistrationStepPanel'
 import type { RegistrationFlowPanelProps } from './flow/types'
 import { RegistrationFlowStatus } from './RegistrationFlowStatus'
@@ -19,7 +20,7 @@ export function RegistrationFlowPanel({
   const title = wizard.registrationComplete ? `${wizard.displayName} is yours` : definition.title
 
   return (
-    <section className="claim-card register-card" aria-labelledby="register-heading">
+    <Panel className="claim-card register-card" aria-labelledby="register-heading">
       <div className="claim-main register-main">
         <RegistrationStepper activeStep={wizard.registrationStep} complete={wizard.registrationComplete} />
 
@@ -68,7 +69,7 @@ export function RegistrationFlowPanel({
         registrationTargetAddress={step.registrationTargetAddress}
         selectedAddress={step.selectedAddress}
       />
-    </section>
+    </Panel>
   )
 }
 

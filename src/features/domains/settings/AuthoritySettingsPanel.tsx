@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button'
 import { Info } from 'lucide-react'
 import { TextField } from '../../../components/ui/FormControls'
 import { abbreviate } from '../../../utils/format'
@@ -52,14 +53,14 @@ export function AuthoritySettingsPanel({
           value={confirmationInput}
           onChange={(event) => onConfirmationInputChange(event.target.value)}
         />
-        <button
-          className="commit-button danger-action"
+        <Button variant="destructive"
+          className="danger-action"
           disabled={!canManageName}
           type="button"
           onClick={() => void onOwnershipUpdate()}
         >
           Update authorities
-        </button>
+        </Button>
       </div>
 
       <ManagementFeedback error={managementError} txState={managementTxState} />

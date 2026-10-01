@@ -1,3 +1,4 @@
+import { Button } from './Button'
 import { RefreshCw } from 'lucide-react'
 
 export function RefreshButton({
@@ -10,9 +11,9 @@ export function RefreshButton({
   onRefresh: () => void
 }) {
   return (
-    <button className="commit-button refresh-button" disabled={disabled || loading} type="button" onClick={() => void onRefresh()}>
-      <RefreshCw size={15} className={loading ? 'spin' : undefined} aria-hidden="true" />
+    <Button className="refresh-button" disabled={disabled} loading={loading} type="button" onClick={() => void onRefresh()}>
+      <RefreshCw size={15}  aria-hidden="true" />
       {loading ? 'Refreshing' : 'Refresh'}
-    </button>
+    </Button>
   )
 }

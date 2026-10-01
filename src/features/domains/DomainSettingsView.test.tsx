@@ -49,7 +49,7 @@ it('offers renewal through grace and explains the deadline and old-expiry basis'
     expect(expired).toContain('DUSK')
     expect(expired).toContain(`Renew by ${formatLifecycleDay(300_000, currentBlockHeight, nowSeconds)} to keep it.`)
     expect(expired).toContain('Renewal extends from the previous expiry.')
-    expect(expired).toMatch(/<button class="primary-button compact" type="button">Renew<\/button>/)
+    expect(expired).toMatch(/<button(?![^>]*disabled)[^>]*>Renew<\/button>/)
   }
   for (const currentBlockHeight of [300_000, 300_001]) {
     const released = settings({ currentBlockHeight })

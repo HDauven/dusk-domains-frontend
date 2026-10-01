@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import { TransactionStatusNotice } from '../../../components/status/TransactionStatusNotice'
 import { txStatusCopy } from '../../../components/status/txStatus'
@@ -77,8 +78,8 @@ export function TreasuryClaimCard({
         />
       ) : null}
       {!selectedAddress ? (
-        <button
-          className="primary-button compact"
+        <Button variant="primary"
+          className="compact"
           disabled={walletSetupState === 'detecting'}
           title={walletActionTitle(walletSetupState)}
           type="button"
@@ -86,7 +87,7 @@ export function TreasuryClaimCard({
         >
           {walletActionLabel(walletSetupState)}
           <ArrowRight size={18} />
-        </button>
+        </Button>
       ) : null}
       {showTreasuryClaimControls ? (
         <div className="treasury-claim-control">
@@ -100,23 +101,23 @@ export function TreasuryClaimCard({
             onChange={(event) => onTreasuryClaimAmountChange(event.target.value)}
           />
           <div className="treasury-claim-actions">
-            <button
-              className="commit-button save-record"
+            <Button
+              className="save-record"
               disabled={!canClaimTreasuryPartial || !liveWritesAvailable}
               type="button"
               onClick={() => void onClaimTreasury('partial')}
             >
               Claim amount
-            </button>
-            <button
-              className="primary-button compact"
+            </Button>
+            <Button variant="primary"
+              className="compact"
               disabled={!canClaimTreasury || !liveWritesAvailable}
               type="button"
               onClick={() => void onClaimTreasury('all')}
             >
               {treasuryBusy ? txStatusCopy(treasuryTxState?.status, treasuryTxState?.message) : 'Claim all'}
               <ArrowRight size={18} />
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}

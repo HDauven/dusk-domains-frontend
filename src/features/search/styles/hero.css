@@ -3,40 +3,28 @@
   z-index: 1;
   display: grid;
   justify-items: center;
-  padding: clamp(48px, 9vh, 110px) 20px 40px;
+  padding: clamp(var(--space-12), 9vh, 110px) var(--space-5) var(--space-10);
   text-align: center;
 }
 
 .hero.checked {
-  padding: 8px 20px 4px;
+  padding: var(--space-2) var(--space-5) var(--space-1);
 }
 
 .hero-copy h1 {
   margin: 0;
   color: var(--ink);
-  font: 400 clamp(64px, 8.4vw, 118px)/0.92 var(--font-display);
+  font: 400 var(--text-hero)/var(--leading-tight) var(--font-display);
   letter-spacing: -0.02em;
 }
 
-.hero-copy h1 span,
-.hero-copy h1 em {
-  display: block;
-}
-
-.hero-copy h1 em {
-  padding-right: 0.06em;
-  font-style: italic;
-  background: var(--grad-dusk-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+.hero-copy h1 em { font-style: italic; }
 
 .hero-copy p {
   max-width: 46ch;
   margin: 22px auto 34px;
-  color: var(--ink-2);
-  font-size: 17px;
+  color: var(--muted);
+  font-size: var(--text-lg);
 }
 
 .hero.checked .hero-copy,
@@ -60,20 +48,19 @@
 .hero-search-field {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px 8px 8px 22px;
-  border: 1px solid rgba(246, 241, 255, 0.16);
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) var(--space-2) 22px;
+  border: 1px solid var(--control-line);
   border-radius: 22px;
-  background: rgba(12, 10, 32, 0.72);
-  backdrop-filter: blur(18px);
+  background: var(--surface);
   box-shadow: var(--shadow-lg);
   text-align: left;
-  transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+  transition: border-color var(--motion-feedback) var(--ease), box-shadow var(--motion-feedback) var(--ease);
 }
 
 .hero-search-field:focus-within {
-  border-color: rgba(255, 214, 176, 0.45);
-  box-shadow: var(--shadow-lg), 0 0 0 4px rgba(255, 111, 145, 0.12);
+  border-color: var(--peach);
+  box-shadow: var(--shadow-lg);
 }
 
 .hero-search-icon {
@@ -88,24 +75,24 @@
   margin-left: 10px;
 }
 
-.hero-search-input input,
+.hero-search-input .input:not([type="checkbox"]):not([type="radio"]),
 .hero-search-tld {
   width: 100%;
   padding: 10px 0;
   border: 0;
-  outline: 0;
-  background: transparent;
+  background: var(--surface);
   color: var(--ink);
-  font: 400 34px/1.1 var(--font-display);
+  font: 400 var(--text-2xl)/1.1 var(--font-display);
   letter-spacing: -0.01em;
 }
 
 .hero-search-input input::placeholder {
-  color: rgba(201, 191, 224, 0.4);
+  color: var(--muted);
   font-style: italic;
 }
 
 .hero-search-tld {
+  background: transparent;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -120,53 +107,30 @@
   font-weight: 400;
 }
 
-.hero-search-clear {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.hero-search-clear:hover {
-  color: var(--ink);
-  background: rgba(246, 241, 255, 0.08);
-}
-
-.hero-search-submit.primary-button {
+.hero-search-submit.button-primary {
   min-width: 132px;
   min-height: 56px;
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
-.hero-search-submit.primary-button:disabled {
-  opacity: 0.5;
-  filter: saturate(0.6);
-  cursor: default;
-  transform: none;
-}
 
-.hero.checked .hero-search-input input,
+.hero.checked .hero-search-input .input:not([type="checkbox"]):not([type="radio"]),
 .hero.checked .hero-search-tld {
-  font-size: 26px;
+  font-size: var(--text-2xl);
 }
 
-.hero.checked .hero-search-submit.primary-button {
+.hero.checked .hero-search-submit.button-primary {
   min-height: 48px;
 }
 
 .hero-showcase {
-  margin-top: clamp(40px, 7vh, 72px);
+  margin-top: clamp(var(--space-10), 7vh, 72px);
 }
 
 .hero-showcase p {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   color: var(--muted);
-  font: 500 11px var(--font-mono);
+  font: 500 var(--text-xs) var(--font-ui);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -182,48 +146,28 @@
   list-style: none;
 }
 
-.hero-showcase button {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 6px 14px 6px 6px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(12, 10, 32, 0.6);
-  color: var(--ink);
-  cursor: pointer;
-  font: 500 13px var(--font-ui);
-  backdrop-filter: blur(8px);
-  transition: border-color 160ms var(--ease), transform 160ms var(--ease);
-}
-
-.hero-showcase button:hover {
-  border-color: rgba(255, 214, 176, 0.4);
-  transform: translateY(-1px);
-}
-
 @media (max-width: 640px) {
   .hero {
     padding-top: 34px;
   }
 
   .hero-copy p {
-    margin: 16px auto 26px;
+    margin: var(--space-4) auto 26px;
     font-size: 15.5px;
   }
 
   .hero-search-field {
     flex-wrap: wrap;
-    padding: 8px 8px 8px 16px;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
   }
 
-  .hero-search-input input,
+  .hero-search-input .input:not([type="checkbox"]):not([type="radio"]),
   .hero-search-tld {
-    font-size: 28px;
+    font-size: var(--text-2xl);
   }
 
-  .hero-search-submit.primary-button {
+  .hero-search-submit.button-primary {
     width: 100%;
-    margin-top: 4px;
+    margin-top: var(--space-1);
   }
 }

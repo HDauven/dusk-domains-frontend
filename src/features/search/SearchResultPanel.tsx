@@ -1,3 +1,4 @@
+import { Tabs, TabPanel } from '../../components/ui/Tabs'
 import type { ComponentProps } from 'react'
 import { ActivityHistoryView } from '../activity/ActivityHistoryView'
 import { DomainDetailsView } from '../domains/DomainDetailsView'
@@ -52,34 +53,28 @@ export function SearchResultPanel({
   const registered = headerProps.status === 'registered'
   const tabbed = registered && nodeHex && resultView !== 'overview' && resultView !== 'register'
 
-  return (
-    <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
-      <NameHeader {...headerProps} />
-
-      {tabbed ? (
-        <nav className="tabs" aria-label="Name sections">
-          {nameTabs.map(({ view, label }) => (
-            <button
-              key={view}
-              className={resultView === view ? 'active' : ''}
-              aria-current={resultView === view ? 'page' : undefined}
-              type="button"
-              onClick={() => onResultViewChange(view)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-      ) : null}
-
-      {resultView === 'overview' ? <SearchResultOverview {...overviewProps} /> : null}
+  const content = (
+    <>
       {resultView === 'details' ? <DomainDetailsView {...detailsProps} /> : null}
-      {resultView === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
       {nodeHex && resultView === 'manage' ? <DomainSettingsView {...settingsProps} /> : null}
       {nodeHex && resultView === 'subnames' ? <SubdomainsView {...subdomainsProps} /> : null}
       {nodeHex && resultView === 'records' ? <RecordsView {...recordsProps} /> : null}
       {nodeHex && resultView === 'primary' ? <PrimaryDomainView {...primaryProps} /> : null}
       {resultView === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}
+      {resultView === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
+    </>
+  )
+
+  return (
+    <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
+      <NameHeader {...headerProps} />
+
+      {tabbed ? (
+        <Tabs id="name-sections" label="Name sections" items={nameTabs.map(({ view, label }) => ({ id: view, label }))} value={resultView} onChange={onResultViewChange} />
+      ) : null}
+
+      {resultView === 'overview' ? <SearchResultOverview {...overviewProps} /> : null}
+      {tabbed ? <TabPanel id="name-sections" value={resultView}>{content}</TabPanel> : content}
     </section>
   )
 }

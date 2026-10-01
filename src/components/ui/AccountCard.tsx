@@ -1,3 +1,4 @@
+import { Panel } from './Panel'
 import type { ReactNode } from 'react'
 
 export function AccountCard({
@@ -16,14 +17,14 @@ export function AccountCard({
   const classes = ['account-card', className].filter(Boolean).join(' ')
 
   return (
-    <article className={classes}>
+    <Panel as="article" className={classes}>
       <div className="account-card-heading">
         <span>{title}</span>
         <strong>{heading}</strong>
       </div>
       {intro ? <p className="account-card-intro">{intro}</p> : null}
       {children}
-    </article>
+    </Panel>
   )
 }
 

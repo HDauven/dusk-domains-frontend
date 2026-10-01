@@ -1,3 +1,6 @@
+import { Tabs, TabPanel } from '../../components/ui/Tabs'
+import { Button } from '../../components/ui/Button'
+import { Panel } from '../../components/ui/Panel'
 import { RefreshCw, Store } from 'lucide-react'
 import { isDuskDomainTxBusy } from '../../names/internal'
 import { AccountPanel } from '../../components/ui/AccountPanel'
@@ -34,31 +37,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         headingId="marketplace-heading"
       />
 
-      <div aria-label="Marketplace views" className="tabs marketplace-tabs" role="tablist" onKeyDown={(event) => {
-        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
-        const buttons = [...event.currentTarget.querySelectorAll('button')]
-        const current = buttons.indexOf(document.activeElement as HTMLButtonElement)
-        if (current < 0) return
-        const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
-          : (current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length
-        event.preventDefault()
-        buttons[next].focus()
-        buttons[next].click()
-      }}>
-        {tabs.map((item) => (
-          <button
-            aria-selected={tab === item.id}
-            className={tab === item.id ? 'active' : ''}
-            key={item.id}
-            role="tab"
-            tabIndex={tab === item.id ? 0 : -1}
-            type="button"
-            onClick={() => onTabChange(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" />
 
       <PanelFeedbackStack confirmation={confirmation} error={error} />
 
@@ -70,15 +49,15 @@ export function MarketplaceView(props: MarketplaceViewProps) {
       ) : null}
 
       {refund?.amountLux && tab !== 'activity' ? (
-        <div className="marketplace-refund-bar">
+        <Panel as="div" className="marketplace-refund-bar">
           <div>
             <strong>You have funds to withdraw</strong>
             <span>From an outbid or a closed order. They wait in the market contract until you take them.</span>
           </div>
-          <button className="commit-button" disabled={!actionsAvailable} type="button" onClick={() => onTabChange('activity')}>
+          <Button disabled={!actionsAvailable} type="button" onClick={() => onTabChange('activity')}>
             Withdraw
-          </button>
-        </div>
+          </Button>
+        </Panel>
       ) : null}
 
       {txState ? <TransactionStatusNotice state={txState} /> : null}
@@ -87,14 +66,16 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <PanelMessage icon={<RefreshCw size={18} />}>Loading marketplace</PanelMessage>
       ) : null}
 
-      {marketplaceEnabled && tab === 'browse' && selectedAuction ? <MarketplaceAuctionDetail auction={selectedAuction} props={props} /> : null}
-      {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse {...props} /> : null}
-      {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity props={props} /> : null}
-      {marketplaceEnabled && tab === 'sell' ? <MarketplaceSell {...props} /> : null}
-      {marketplaceEnabled && tab === 'offers' ? <MarketplaceOffers {...props} /> : null}
-      {marketplaceEnabled && props.hasMore && !selectedAuction && tab !== 'sell' ? (
-        <button className="text-button" disabled={loading} type="button" onClick={props.onLoadMore}>Load more marketplace results</button>
-      ) : null}
+      <TabPanel id="marketplace-views" value={tab}>
+        {marketplaceEnabled && tab === 'browse' && selectedAuction ? <MarketplaceAuctionDetail auction={selectedAuction} props={props} /> : null}
+        {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse {...props} /> : null}
+        {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity props={props} /> : null}
+        {marketplaceEnabled && tab === 'sell' ? <MarketplaceSell {...props} /> : null}
+        {marketplaceEnabled && tab === 'offers' ? <MarketplaceOffers {...props} /> : null}
+        {marketplaceEnabled && props.hasMore && !selectedAuction && tab !== 'sell' ? (
+          <Button variant="quiet" disabled={loading} type="button" onClick={props.onLoadMore}>Load more marketplace results</Button>
+        ) : null}
+      </TabPanel>
       <MarketplaceBidReview props={props} />
     </AccountPanel>
   )

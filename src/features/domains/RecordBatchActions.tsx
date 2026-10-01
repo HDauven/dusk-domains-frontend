@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 export function RecordBatchActions({
   canSaveRecords,
   onSaveRecords,
@@ -13,14 +14,14 @@ export function RecordBatchActions({
         <strong>{recordDraftMutationCount}</strong>
         <span>{recordDraftMutationCount === 1 ? 'pending change' : 'pending changes'}</span>
       </div>
-      <button
-        className="commit-button save-record"
+      <Button
+        className="save-record"
         disabled={!canSaveRecords}
         type="button"
         onClick={() => void onSaveRecords()}
       >
         Save records
-      </button>
+      </Button>
     </div>
   )
 }

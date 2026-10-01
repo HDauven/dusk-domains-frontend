@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
 import { txStatusCopy } from '../../components/status/txStatus'
 import { REGISTRATION_MIN_REVEAL_WAIT_BLOCKS, type DuskDomainTxState } from '../../names/internal'
@@ -49,17 +50,18 @@ export function RegistrationReviewStep({
         <span>{actionCopy}</span>
       </div>
       {walletReady ? (
-        <button
-          className={committed ? 'commit-button' : 'primary-button compact'}
+        <Button variant={committed ? 'secondary' : 'primary'}
+          className="compact"
+          loading={commitBusy}
           disabled={!canPrepareCommit || txBusy}
           type="button"
           onClick={() => void onPrepareCommit()}
         >
           {commitBusy ? txStatusCopy(commitTxState?.status, commitTxState?.message) : commitStale ? 'Start again' : committed ? 'Saved' : 'Reserve'}
-        </button>
+        </Button>
       ) : (
         <RegistrationWalletActionButton
-          className="primary-button compact"
+          className="button-primary compact"
           installUrl={installUrl}
           onOpenWalletConnection={onOpenWalletConnection}
           walletSetupState={walletSetupState}

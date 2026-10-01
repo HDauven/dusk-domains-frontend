@@ -1,3 +1,7 @@
+import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { Panel } from '../../components/ui/Panel'
+import { Input } from '../../components/ui/Input'
 import { ArrowLeft, Clock3, Gavel, ShieldCheck, Star, UserRound } from 'lucide-react'
 import { activityLabel, type ActivityEntry, type IndexedMarketplaceAuction } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
@@ -28,10 +32,10 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
   const marketplaceActivity = props.auctionActivity.filter((entry) => entry.eventType.startsWith('domain_'))
 
   return (
-    <div className="marketplace-auction-detail" role="tabpanel">
-      <button className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
+    <div className="marketplace-auction-detail">
+      <Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
         <ArrowLeft aria-hidden="true" size={15} /> All listings
-      </button>
+      </Button>
 
       <div className="marketplace-auction-hero">
         <div>
@@ -41,8 +45,8 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             : 'The highest confirmed bid wins when the protected countdown ends.'}</p>
         </div>
         <div className="marketplace-auction-hero-actions">
-          <span className={`status-badge ${auctionStatusTone(status)}`}>{auctionStatusLabel(status)}</span>
-          <button
+          <Badge tone={auctionStatusTone(status)}>{auctionStatusLabel(status)}</Badge>
+          <Button variant="quiet"
             aria-label={`${watched ? 'Stop watching' : 'Watch'} ${auction.name}`}
             aria-pressed={watched}
             className={`marketplace-watch-button labeled${watched ? ' active' : ''}`}
@@ -50,13 +54,13 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             onClick={() => props.onToggleWatch(auction.node)}
           >
             <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={16} /> {watched ? 'Watching' : 'Watch'}
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="marketplace-auction-layout">
         <div className="marketplace-auction-main">
-          <section className="marketplace-auction-facts" aria-labelledby="auction-details-heading">
+          <Panel className="marketplace-auction-facts" aria-labelledby="auction-details-heading">
             <div className="marketplace-section-heading">
               <h3 id="auction-details-heading" className="eyebrow">Details</h3>
             </div>
@@ -68,9 +72,9 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
               <div><dt><ShieldCheck aria-hidden="true" size={14} /> Custody</dt><dd>{auction.escrowed ? 'Domain secured in escrow' : 'Escrow verification failed'}</dd></div>
               <div><dt>{auction.startBlockHeight === null ? 'Start window' : 'Closing rule'}</dt><dd>{auction.startBlockHeight === null ? auctionStartWindowLabel(auction, props.currentBlockHeight) : 'Late bids restore 10 minutes'}</dd></div>
             </dl>
-          </section>
+          </Panel>
 
-          <section className="marketplace-auction-activity" aria-labelledby="auction-activity-heading">
+          <Panel className="marketplace-auction-activity" aria-labelledby="auction-activity-heading">
             <div className="marketplace-section-heading">
               <h3 id="auction-activity-heading" className="eyebrow">Bids · {marketplaceActivity.length}</h3>
             </div>
@@ -85,11 +89,11 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             ) : (
               <p className="marketplace-activity-empty">No bids yet. The first bid starts the auction.</p>
             )}
-            {props.auctionActivityHasMore ? <button className="text-button" disabled={props.auctionActivityLoading} type="button" onClick={props.onLoadMoreAuctionActivity}>Load more auction activity</button> : null}
-          </section>
+            {props.auctionActivityHasMore ? <Button variant="quiet" disabled={props.auctionActivityLoading} type="button" onClick={props.onLoadMoreAuctionActivity}>Load more auction activity</Button> : null}
+          </Panel>
         </div>
 
-        <aside className="marketplace-bid-panel" aria-label={`Bid on ${auction.name}`}>
+        <Panel as="aside" className="marketplace-bid-panel" aria-label={`Bid on ${auction.name}`}>
           {leading ? <p className="marketplace-bidder-banner leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
           {ownAuction ? <p className="marketplace-bidder-banner selling">You’re selling this domain</p> : null}
           <div className="marketplace-bid-price">
@@ -104,7 +108,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
           </div>
 
           <AuctionAction auction={auction} minimum={minimum} ownAuction={ownAuction} props={props} status={status} />
-        </aside>
+        </Panel>
       </div>
     </div>
   )
@@ -127,7 +131,7 @@ function AuctionAction({
     return (
       <div className="marketplace-auction-action-stack">
         <p>The auction is over. Finalization transfers the domain and pays the seller.</p>
-        <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onSettleAuction(auction)}>Finalize auction</button>
+        <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onSettleAuction(auction)}>Finalize auction</Button>
       </div>
     )
   }
@@ -135,7 +139,7 @@ function AuctionAction({
     return (
       <div className="marketplace-auction-action-stack">
         <p>No bid started this auction before its deadline.</p>
-        <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireAuction(auction)}>Close auction</button>
+        <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireAuction(auction)}>Close auction</Button>
       </div>
     )
   }
@@ -143,21 +147,21 @@ function AuctionAction({
     return auction.highestBid === null ? (
       <div className="marketplace-auction-action-stack">
         <p>You can cancel before the first bid. After bidding starts, the auction is binding.</p>
-        <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelAuction(auction)}>Cancel auction</button>
+        <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelAuction(auction)}>Cancel auction</Button>
       </div>
     ) : (
       <div className="marketplace-auction-action-stack"><p>Your domain remains in escrow until the auction is finalized.</p></div>
     )
   }
   if (!props.selectedAddress) {
-    return <button className="primary-button compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet to bid</button>
+    return <Button variant="primary" className="compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet to bid</Button>
   }
   return (
     <div className="marketplace-auction-action-stack">
       <label className="marketplace-bid-field">
         <span>Your bid</span>
         <div className="marketplace-input-suffix">
-          <input
+          <Input
             aria-describedby={`bid-help-${auction.node}`}
             aria-label={`Bid on ${auction.name}`}
             disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed}
@@ -171,9 +175,9 @@ function AuctionAction({
       </label>
       <div className="marketplace-minimum-row" id={`bid-help-${auction.node}`}>
         <span>Minimum {minimum} DUSK</span>
-        <button type="button" onClick={() => props.onBidDraftChange(auction.node, minimum)}>Use minimum</button>
+        <Button type="button" onClick={() => props.onBidDraftChange(auction.node, minimum)}>Use minimum</Button>
       </div>
-      <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.onReviewBid(auction)}>Review bid</button>
+      <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.onReviewBid(auction)}>Review bid</Button>
       <p className="marketplace-custody-note">Your full bid is locked in the marketplace contract. If you’re outbid, it becomes withdrawable marketplace balance.</p>
     </div>
   )

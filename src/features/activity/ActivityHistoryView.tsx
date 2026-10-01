@@ -1,3 +1,6 @@
+import { EmptyState } from '../../components/ui/EmptyState'
+import { Panel } from '../../components/ui/Panel'
+import { Button } from '../../components/ui/Button'
 import { Clock } from 'lucide-react'
 import type { ActivityEntry, RecentChangeWarning } from '../../names/internal'
 import { activityActor, activityDetail, activityTitle } from './activityCopy'
@@ -26,7 +29,7 @@ export function ActivityHistoryView({
   viewerAuthority: string
 }) {
   return (
-    <section className="activity-panel" aria-labelledby="activity-heading">
+    <Panel className="activity-panel" aria-labelledby="activity-heading">
       <div className="management-header">
         <div>
           <h2 id="activity-heading">Activity</h2>
@@ -37,15 +40,9 @@ export function ActivityHistoryView({
       <RecentWarningStack warnings={recentWarnings} />
 
       {loading ? (
-        <div className="activity-empty">
-          <Clock size={18} />
-          <span>Loading activity</span>
-        </div>
+        <EmptyState loading icon={<Clock size={18} />}>Loading activity</EmptyState>
       ) : activityEntries.length === 0 ? (
-        <div className="activity-empty">
-          <Clock size={18} />
-          <span>No activity for this name yet.</span>
-        </div>
+        <EmptyState icon={<Clock size={18} />}>No activity recorded for this name.</EmptyState>
       ) : (
         <ol className="timeline">
           {activityEntries.map((entry) => (
@@ -64,7 +61,7 @@ export function ActivityHistoryView({
           ))}
         </ol>
       )}
-      {hasMore ? <button className="text-button" disabled={loading} type="button" onClick={onLoadMore}>Load more activity</button> : null}
-    </section>
+      {hasMore ? <Button variant="quiet" disabled={loading} type="button" onClick={onLoadMore}>Load more activity</Button> : null}
+    </Panel>
   )
 }

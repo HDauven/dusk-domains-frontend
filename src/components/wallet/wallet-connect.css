@@ -1,28 +1,9 @@
 .wallet-connect {
   justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 42px;
   max-width: 220px;
-  padding: 0 18px;
   overflow: hidden;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: rgba(246, 241, 255, 0.06);
-  color: var(--ink);
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-  backdrop-filter: blur(8px);
-  transition:
-    background 160ms var(--ease),
-    border-color 160ms var(--ease),
-    transform 160ms var(--ease);
 }
 
 .wallet-connect.connected {
@@ -35,21 +16,11 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 8px var(--ok);
+  background: var(--mint);
+  box-shadow: 0 0 8px var(--mint);
 }
 
 .wallet-connect.wrong-network {
-  border-color: rgba(255, 207, 122, 0.45);
-  color: var(--warn);
-}
-
-.wallet-connect:not(:disabled):hover {
-  border-color: rgba(246, 241, 255, 0.32);
-  background: rgba(246, 241, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.wallet-connect:not(:disabled):active {
-  transform: translateY(0);
+  border-color: var(--control-line);
+  color: var(--muted);
 }

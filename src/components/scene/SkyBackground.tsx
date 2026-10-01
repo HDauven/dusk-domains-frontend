@@ -27,7 +27,7 @@ export function SkyBackground({ names = [], onOpenName }: { names?: SkyName[], o
     <div className="sky" aria-hidden="true">
       <svg className="sky-dust" viewBox="0 0 100 62" preserveAspectRatio="none" focusable="false">
         {dust.map((star, index) => (
-          <circle key={index} cx={star.x} cy={star.y} r={star.r / 10} fill="#fff" opacity={star.o} />
+          <circle key={index} cx={star.x} cy={star.y} r={star.r / 10} fill="var(--ink)" opacity={star.o} />
         ))}
       </svg>
       <div className="sky-names">

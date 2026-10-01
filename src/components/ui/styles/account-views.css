@@ -1,7 +1,7 @@
 .rewards-account-card.claimable {
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
-  column-gap: 24px;
+  column-gap: var(--space-6);
 }
 
 .rewards-account-card.claimable .account-card-heading,
@@ -12,7 +12,7 @@
 }
 
 .rewards-account-card.claimable .claim-review,
-.rewards-account-card.claimable > .commit-button {
+.rewards-account-card.claimable > .button-secondary {
   grid-column: 2;
 }
 
@@ -24,7 +24,7 @@
 .treasury-claim-control {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .treasury-claim-actions {
@@ -44,7 +44,7 @@
 .fee-config-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .fee-config-actions {

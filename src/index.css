@@ -1,44 +1,11 @@
+@import './styles/tokens.css';
+
 :root {
   color-scheme: dark;
-
-  /* Horizon: night overhead, the last of the sunset on the planet's rim. */
-  --night: #06061a;
-  --night-2: #0c0a20;
-  --ink: #f6f1ff;
-  --ink-2: #c9bfe0;
-  --muted: #9a91b8;
-  --violet: #8f6bff;
-  --violet-soft: #b9a4ff;
-  --violet-deep: #5b3fd8;
-  --rose: #ff6f91;
-  --ember: #ffb36b;
-  --dawn: #ffd6b0;
-  --ok: #8df0c0;
-  --warn: #ffcf7a;
-  --danger: #ff7a85;
-
-  --surface: rgba(12, 10, 32, 0.72);
-  --surface-soft: rgba(12, 10, 32, 0.5);
-  --surface-strong: rgba(14, 12, 36, 0.9);
-  --line: rgba(246, 241, 255, 0.11);
-  --line-strong: rgba(246, 241, 255, 0.2);
-  --grad-dusk: linear-gradient(100deg, var(--dawn) 0%, var(--rose) 55%, #d57bff 100%);
-  --grad-dusk-text: linear-gradient(100deg, var(--dawn) 0%, var(--rose) 45%, var(--violet) 90%);
-
-  --radius-sm: 10px;
-  --radius: 16px;
-  --radius-lg: 24px;
-  --shadow-lg: 0 40px 100px rgba(0, 0, 0, 0.45);
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-
-  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-  --font-ui: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
-
   font-family: var(--font-ui);
   color: var(--ink);
   background: var(--night);
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 400;
   line-height: 1.5;
   font-synthesis: none;
@@ -76,21 +43,19 @@ textarea {
   font-family: inherit;
 }
 
-button:focus-visible,
-input:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--violet-soft);
+:focus-visible {
+  outline: 2px solid var(--peach);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: rgba(255, 111, 145, 0.35);
+  background: var(--selection);
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
   }
 }

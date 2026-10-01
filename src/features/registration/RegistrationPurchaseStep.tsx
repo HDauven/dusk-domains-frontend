@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
 import { REGISTRATION_MIN_REVEAL_WAIT_BLOCKS, type DuskDomainTxState } from '../../names/internal'
@@ -86,28 +87,28 @@ export function RegistrationPurchaseStep({
             <span>{actionCopy}</span>
           </div>
           {walletReady && reservationStranded ? (
-            <button
-              className="primary-button compact"
-              disabled={!canRestartReservation}
+            <Button variant="primary"
+              className="compact"
+              disabled={!canRestartReservation} loading={txBusy}
               type="button"
               onClick={() => void onRestartReservation()}
             >
               Reserve again
               <ArrowRight size={17} />
-            </button>
+            </Button>
           ) : walletReady ? (
-            <button
-              className="primary-button compact"
-              disabled={!canRevealRegistration}
+            <Button variant="primary"
+              className="compact"
+              disabled={!canRevealRegistration} loading={txBusy}
               type="button"
               onClick={() => void onRegisterName()}
             >
               {completeRegistrationButtonCopy(registrationCompletion, txBusy, txState, commitWindow.status)}
               <ArrowRight size={17} />
-            </button>
+            </Button>
           ) : (
             <RegistrationWalletActionButton
-              className="primary-button compact"
+              className="button-primary compact"
               installUrl={installUrl}
               onOpenWalletConnection={onOpenWalletConnection}
               walletSetupState={walletSetupState}

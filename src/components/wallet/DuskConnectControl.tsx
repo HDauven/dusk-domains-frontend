@@ -1,3 +1,4 @@
+import { Button } from '../ui/Button'
 import type { DuskWalletState } from '../../names/internal'
 import { walletActionLabel, walletActionTitle, type WalletConnectionStatus } from '../../features/wallet/walletStatus'
 import { abbreviate } from '../../utils/format'
@@ -28,13 +29,13 @@ export function DuskConnectControl({
         : 'wallet-connect'
 
   return (
-    <button
+    <Button
       className={className}
       title={status === 'wrong-network' ? walletActionTitle(status) : selectedAccount || walletActionTitle(status)}
       type="button"
       onClick={onOpen}
     >
       {label}
-    </button>
+    </Button>
   )
 }
