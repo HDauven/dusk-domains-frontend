@@ -11,12 +11,14 @@ import type { ManagedNameState } from '../../app/appHelpers'
 export type ResolverRecordSets = Record<string, ResolverRecord[]>
 
 export type UseIndexedNameHydrationProps = {
+  beginActivityRead: (node: string) => () => boolean
   currentBlockHeight: number | null
   displayName: string
   indexerClient: DuskDomainsIndexerClient | null
   nowSeconds: number
   recordSourceContractId: string
   selectedAuthority: string
+  setActivityCursor: (page: { node: string; cursor: string | null } | null) => void
   setActivityEntries: Dispatch<SetStateAction<ActivityEntry[]>>
   setActivityLoading: Dispatch<SetStateAction<boolean>>
   setApiSearchResult: Dispatch<SetStateAction<NameResult | null>>

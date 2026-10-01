@@ -9,7 +9,7 @@ export async function fetchWalletScopedNames({
   selectedAddress,
   selectedAuthority,
 }: {
-  indexerClient: Pick<DuskDomainsIndexerClient, 'getNames'>
+  indexerClient: Pick<DuskDomainsIndexerClient, 'getAllNames'>
   selectedAddress: string
   selectedAuthority: string
 }): Promise<IndexedNameSummary[]> {
@@ -29,14 +29,11 @@ export async function fetchWalletScopedNames({
     ))
   )
   const ownerResults = await Promise.all(authorityCandidates.map(async (owner) => (
-    indexerClient.getNames({ owner })
+    indexerClient.getAllNames({ owner })
   )))
   // Owner queries may include historical controllers; verify current membership too.
   const ownedNames = dedupeNames(ownerResults.flat()).filter(matchesWallet)
-  if (ownedNames.length > 0) return ownedNames
-
-  const allNames = await indexerClient.getNames()
-  return dedupeNames(allNames.filter(matchesWallet))
+  return ownedNames
 }
 
 function ownerCandidatesFromWallet({

@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { appendPage } from './marketplacePages'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   marketplaceCancelAuctionRuntimeCall,
   marketplaceExpireAuctionRuntimeCall,
@@ -28,6 +29,8 @@ export function useAuctions({
   marketScope,
   onBidPlaced,
   selectedAuthority,
+  selectedAuctionNode,
+  setSelectedAuctionNode,
   setConfirmation,
   setError,
   writes,
@@ -40,15 +43,18 @@ export function useAuctions({
   marketScope: string
   onBidPlaced: (node: string) => void
   selectedAuthority: string
+  selectedAuctionNode: string
+  setSelectedAuctionNode: (node: string) => void
   setConfirmation: (message: string) => void
   setError: (message: string) => void
   writes: MarketplaceWrites
 }) {
   const [bidDrafts, setBidDrafts] = useState<Record<string, string>>({})
-  // The open auction belongs to the market, not the account: a wallet restoring its session after a
-  // reload must not close the auction someone just opened. The bid review is the account's.
-  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, '')
   const [auctionActivity, setAuctionActivity] = useState<ActivityEntry[]>([])
+  const [activityCursor, setActivityCursor] = useState<string | null>(null)
+  const activityRequest = useRef(0)
+  const activityPending = useRef(false)
+  useEffect(() => () => { activityRequest.current += 1; activityPending.current = false }, [indexerClient, marketScope])
   const [auctionActivityLoading, setAuctionActivityLoading] = useState(false)
   const [bidReview, setBidReview] = useScopedState<MarketplaceViewProps['bidReview']>(accountScope, null)
 
@@ -62,20 +68,26 @@ export function useAuctions({
     ])))
   }
 
-  const loadAuctionActivity = useCallback(async (node: string) => {
-    if (!indexerClient || !node) {
-      setAuctionActivity([])
-      return
-    }
+  const loadAuctionActivity = useCallback(async (node: string, cursor?: string) => {
+    if (!indexerClient || !node || (cursor && activityPending.current)) return
+    const request = ++activityRequest.current
+    activityPending.current = true
     setAuctionActivityLoading(true)
+    if (!cursor) setActivityCursor(null)
     try {
-      setAuctionActivity(await indexerClient.getActivity(node))
-    } catch {
-      setAuctionActivity([])
+      const page = await indexerClient.getActivityPage(node, { cursor })
+      if (request !== activityRequest.current) return
+      setAuctionActivity((current) => cursor ? appendPage(current, page.activity, (entry) => entry.id) : page.activity)
+      setActivityCursor(page.nextCursor)
+    } catch (error) {
+      if (request === activityRequest.current) setError(userFacingErrorMessage(error))
     } finally {
-      setAuctionActivityLoading(false)
+      if (request === activityRequest.current) {
+        setAuctionActivityLoading(false)
+        activityPending.current = false
+      }
     }
-  }, [indexerClient])
+  }, [indexerClient, setError])
 
   // The contract's current minimum, or null after reporting why it could not be read.
   const canonicalMinimum = useCallback(async (auction: IndexedMarketplaceAuction) => {
@@ -156,6 +168,10 @@ export function useAuctions({
   }, [loadAuctionActivity, setSelectedAuctionNode])
 
   const closeAuction = useCallback(() => {
+    activityRequest.current += 1
+    activityPending.current = false
+    setActivityCursor(null)
+    setAuctionActivityLoading(false)
     setAuctionActivity([])
     setBidReview(null)
     setSelectedAuctionNode('')
@@ -164,6 +180,8 @@ export function useAuctions({
   return {
     auctionActivity,
     auctionActivityLoading,
+    hasMoreActivity: Boolean(activityCursor),
+    loadMoreActivity: () => activityCursor && void loadAuctionActivity(selectedAuctionNode, activityCursor),
     bidDrafts,
     bidReview,
     closeAuction,

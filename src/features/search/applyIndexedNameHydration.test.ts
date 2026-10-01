@@ -6,7 +6,7 @@ import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'
 
 function hydrate(managedName: ManagedNameState, stateValue: object, subnameValue: object | null) {
   let managed = managedName
-  const setters = Object.fromEntries(['setActivityEntries', 'setDraftManager', 'setDraftOwner', 'setIndexerError',
+  const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setDraftManager', 'setDraftOwner', 'setIndexerError',
     'setPrimaryEndpointValue', 'setPrimaryName', 'setResolverRecordSets', 'setSubnameManager', 'setSubnames']
     .map((name) => [name, vi.fn()]))
   const setManagedName = (update: ManagedNameState | ((current: ManagedNameState) => ManagedNameState)) => {
@@ -37,10 +37,12 @@ it('shows only the dates the index reports and takes a subname’s expiry policy
 it('reads a name’s own subname entry only for a subname', async () => {
   const client = {
     resolveForward: vi.fn(async () => ({ records: [] })), getNameState: vi.fn(async () => null),
-    getActivity: vi.fn(async () => []), getSubnames: vi.fn(async () => []),
+    getActivityPage: vi.fn(async () => ({ activity: [], nextCursor: 'next' })), getAllSubnames: vi.fn(async () => []),
     getSubname: vi.fn(async () => ({ expiryPolicy: 'inherits_parent' })),
   }
   const root = await readIndexedName(client as never, { canonical: 'alphavnuc.dusk' } as never)
+  expect(root?.activityCursor).toBe('next')
+  expect(client.getAllSubnames).toHaveBeenCalledExactlyOnceWith(root?.node)
   expect(client.getSubname).not.toHaveBeenCalled()
   expect(root?.ownSubnameRead).toEqual({ value: null, error: null })
   const subname = await readIndexedName(client as never, { canonical: 'pay.alphavnuc.dusk' } as never)
@@ -83,4 +85,41 @@ it('hydrates the named owner and manager for an issued reserved root', () => {
     issuedAsReserved: true, expiresAt: null, expiresAtBlockHeight: 20_000,
     graceEndsAt: null, graceEndsAtBlockHeight: 30_000,
   }, null)).toMatchObject({ owner: 'foundation', manager: 'wallet-team', expiresAt: 20_000 })
+})
+
+it('bounds child resolution concurrency and surfaces failed child reads', async () => {
+  let active = 0
+  let peak = 0
+  const client = {
+    resolveForward: vi.fn(async (name: string) => {
+      if (name === 'parent.dusk') return { records: [] }
+      peak = Math.max(peak, ++active)
+      await new Promise(resolve => setTimeout(resolve, 1))
+      active--
+      if (name === 'child5.parent.dusk') throw new Error('Failed to fetch')
+      return { records: [{ key: 'website', value: name }] }
+    }),
+    getNameState: async () => null,
+    getActivityPage: async () => ({ activity: [], nextCursor: null }),
+    getAllSubnames: async () => Array.from({ length: 60 }, (_, index) => ({ name: `child${index}.parent.dusk`, node: `child${index}` })),
+  }
+  const reads = await readIndexedName(client as never, { canonical: 'parent.dusk' } as never)
+  expect(peak).toBe(4)
+  expect(Object.keys(reads!.subnameRecordSets)).toHaveLength(59)
+  expect(reads?.subnameRecordSets.child59).toEqual([{ key: 'website', value: 'child59.parent.dusk' }])
+  expect(reads?.readErrors).toEqual([expect.stringMatching(/not reachable/)])
+})
+
+it('includes child resolution failures in the hydration errors', async () => {
+  const client = {
+    resolveForward: async (name: string) => {
+      if (name !== 'parent.dusk') throw new Error('Failed to fetch')
+      return { records: [] }
+    },
+    getNameState: async () => null,
+    getActivityPage: async () => ({ activity: [], nextCursor: null }),
+    getAllSubnames: async () => [{ name: 'child.parent.dusk', node: 'child' }],
+  }
+  const reads = await readIndexedName(client as never, { canonical: 'parent.dusk' } as never)
+  expect(reads?.readErrors).toEqual([expect.stringMatching(/not reachable/)])
 })

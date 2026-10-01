@@ -6,6 +6,7 @@ import type { UseSearchControllerProps } from '../searchControllerTypes'
 
 export async function checkAvailability(props: UseSearchControllerProps) {
   const {
+    beginNameRead,
     chainId,
     hydrateNameFromIndexer,
     indexerClient,
@@ -33,10 +34,13 @@ export async function checkAvailability(props: UseSearchControllerProps) {
   setIndexerError('')
   setIndexerConfirmation('')
 
+  const isCurrent = beginNameRead()
   try {
     const nextResult = await indexerClient.searchName(query)
+    if (!isCurrent()) return
     setApiSearchResult(nextResult)
-    await hydrateNameFromIndexer(indexerClient, nextResult)
+    await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
+    if (!isCurrent()) return
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({
         canonicalName: nextResult.canonical,
@@ -49,8 +53,8 @@ export async function checkAvailability(props: UseSearchControllerProps) {
       setResultView('details')
     }
   } catch (error) {
-    setIndexerError(userFacingErrorMessage(error))
+    if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
   } finally {
-    setActivityLoading(false)
+    if (isCurrent()) setActivityLoading(false)
   }
 }

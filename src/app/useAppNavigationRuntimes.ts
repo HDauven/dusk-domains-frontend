@@ -16,6 +16,7 @@ export function useAppNavigationRuntimes({
   const { activityFeed, domainRecordState, namePreview, registrationRuntime } = workspace
 
   const searchRuntime = useSearchRuntime({
+    beginActivityRead: activityFeed.beginActivityRead,
     chainId: appRuntime.runtimeConfig.chainId,
     currentBlockHeight: searchState.currentBlockHeight,
     displayName: namePreview.displayName,
@@ -29,6 +30,7 @@ export function useAppNavigationRuntimes({
     recordSourceContractId: appRuntime.recordSourceContractId,
     selectedAuthority: walletRuntime.selectedAuthority,
     setActivityEntries: activityFeed.setActivityEntries,
+    setActivityCursor: activityFeed.setActivityCursor,
     setActivityLoading: activityFeed.setActivityLoading,
     setApiSearchResult: searchState.setApiSearchResult,
     setChecked: searchState.setChecked,

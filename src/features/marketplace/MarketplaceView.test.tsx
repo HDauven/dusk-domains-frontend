@@ -14,6 +14,13 @@ const buyer = `0x${'33'.repeat(32)}`
 const outsider = `0x${'44'.repeat(32)}`
 
 describe('MarketplaceView actions', () => {
+  it('offers more marketplace results and auction activity only when cursors remain', () => {
+    expect(render({ hasMore: true })).toContain('Load more marketplace results')
+    expect(render({ hasMore: false })).not.toContain('Load more marketplace results')
+    const selected = auction()
+    expect(render({ auctions: [selected], selectedAuctionNode: selected.node, auctionActivityHasMore: true })).toContain('Load more auction activity')
+  })
+
   it('asks a disconnected visitor to connect before buying', () => {
     const html = render({
       fixedSales: [fixedSale()],

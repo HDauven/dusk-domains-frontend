@@ -7,7 +7,7 @@ import { useIndexerWriteFallback } from './useIndexerWriteFallback'
 
 export type UseSearchRuntimeArgs =
   & UseIndexedNameHydrationProps
-  & Omit<UseSearchControllerProps, 'hydrateNameFromIndexer'>
+  & Omit<UseSearchControllerProps, 'beginNameRead' | 'hydrateNameFromIndexer'>
   & {
     liveDuskDomainsApp: DuskConnectAppLike | null
   }
@@ -17,6 +17,7 @@ export function useSearchRuntime({
   ...props
 }: UseSearchRuntimeArgs) {
   const {
+    beginNameRead,
     hydrateNameFromIndexer,
     refreshCurrentNameFromIndexer,
   } = useIndexedNameHydration(props)
@@ -31,6 +32,7 @@ export function useSearchRuntime({
 
   const searchController = useSearchController({
     ...props,
+    beginNameRead,
     hydrateNameFromIndexer,
   })
 

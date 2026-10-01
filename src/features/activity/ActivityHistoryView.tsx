@@ -6,6 +6,8 @@ import { RecentWarningStack } from './RecentWarnings'
 
 export function ActivityHistoryView({
   activityEntries,
+  hasMore,
+  onLoadMore,
   currentBlockHeight,
   displayName,
   formatActivityTime,
@@ -13,6 +15,8 @@ export function ActivityHistoryView({
   recentWarnings,
   viewerAuthority,
 }: {
+  hasMore?: boolean
+  onLoadMore?: () => void
   activityEntries: ActivityEntry[]
   currentBlockHeight: number | null
   displayName: string
@@ -60,6 +64,7 @@ export function ActivityHistoryView({
           ))}
         </ol>
       )}
+      {hasMore ? <button className="text-button" disabled={loading} type="button" onClick={onLoadMore}>Load more activity</button> : null}
     </section>
   )
 }

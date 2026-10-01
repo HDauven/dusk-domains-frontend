@@ -56,6 +56,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const accountScope = `${marketScope}:${selectedAuthority}`
   const [tab, setTab] = useState<MarketplaceTab>('browse')
   const [selectedNode, setSelectedNode] = useScopedState(accountScope, '')
+  // Auction selection belongs to the market, so wallet restoration keeps the detail open.
+  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, '')
 
   // Feedback belongs to the tab it came from.
   const feedbackScope = `${accountScope}:${mainView}:${tab}`
@@ -80,7 +82,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
         && !auctions.some((auction) => auction.node === name.node))?.node ?? ''
     })
   }
-  const data = useMarketplaceData({ accountScope, indexerClient, mainView, onLoaded, selectedAddress, selectedAuthority, setError })
+  const data = useMarketplaceData({ accountScope, indexerClient, mainView, onLoaded, selectedAddress, selectedAuctionNode, selectedAuthority, setError })
   const { auctions, fixedSales, loadMarketplace, ownedNames, refund } = data
 
   const writes = useMarketplaceWrites({
@@ -106,7 +108,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
   })
   const auctionState = useAuctions({
-    accountScope, auctions, indexerClient, loadMarketplace, marketplaceOnChainClient, marketScope, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
+    accountScope, auctions, indexerClient, loadMarketplace, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
   })
   const offerState = useOffers({
     duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,
@@ -162,6 +164,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     auctions,
     auctionActivity: auctionState.auctionActivity,
     auctionActivityLoading: auctionState.auctionActivityLoading,
+    auctionActivityHasMore: auctionState.hasMoreActivity,
+    onLoadMoreAuctionActivity: auctionState.loadMoreActivity,
     bidDrafts: auctionState.bidDrafts,
     bidReview: auctionState.bidReview,
     confirmation,
@@ -171,6 +175,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     fixedPriceDusk: sell.fixedPriceDusk,
     fixedSales,
     loading: data.loading,
+    hasMore: data.hasMore,
+    onLoadMore: () => void data.loadMore(),
     marketplaceEnabled,
     offerAmountDusk: offerState.offerAmountDusk,
     offerDurationDays: offerState.offerDurationDays,

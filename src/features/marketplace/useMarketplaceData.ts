@@ -1,3 +1,4 @@
+import { appendPage, readMarketplacePage, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   userFacingErrorMessage,
@@ -25,6 +26,7 @@ export function useMarketplaceData({
   mainView,
   onLoaded,
   selectedAddress,
+  selectedAuctionNode = '',
   selectedAuthority,
   setError,
 }: {
@@ -33,6 +35,7 @@ export function useMarketplaceData({
   mainView: string
   onLoaded: (snapshot: MarketplaceSnapshot) => void
   selectedAddress: string
+  selectedAuctionNode?: string
   selectedAuthority: string
   setError: (message: string) => void
 }) {
@@ -43,32 +46,41 @@ export function useMarketplaceData({
   const [ownedNames, setOwnedNames] = useScopedState<IndexedNameSummary[]>(accountScope, [])
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
+  const [cursors, setCursors] = useState<MarketplaceCursors>({ fixedSales: null, auctions: null, offers: null })
+  const loadingMore = useRef(false)
   const requestId = useRef(0)
   const onLoadedRef = useRef(onLoaded)
-  useEffect(() => { onLoadedRef.current = onLoaded })
+  const setErrorRef = useRef(setError)
+  const selectedAuctionRef = useRef(selectedAuctionNode)
+  useEffect(() => {
+    onLoadedRef.current = onLoaded
+    setErrorRef.current = setError
+    selectedAuctionRef.current = selectedAuctionNode
+  })
 
   const loadMarketplace = useCallback(async () => {
     const nextRequestId = requestId.current + 1
     requestId.current = nextRequestId
     const shouldApply = () => requestId.current === nextRequestId
 
-    setError('')
+    loadingMore.current = false
+    setCursors({ fixedSales: null, auctions: null, offers: null })
+    const reportError = setErrorRef.current
+    reportError('')
     if (!indexerClient) {
       setFixedSales([])
       setAuctions([])
       setOffers([])
       setOwnedNames([])
       setRefund(null)
-      setError('Marketplace data is unavailable right now.')
+      reportError('Marketplace data is unavailable right now.')
       return
     }
 
     setLoading(true)
     try {
-      const [nextFixedSales, nextAuctions, nextOffers, nextOwnedNames, health, nextRefund] = await Promise.all([
-        indexerClient.getMarketplaceFixedSales(),
-        indexerClient.getMarketplaceAuctions(),
-        indexerClient.getMarketplaceOffers(),
+      const [page, nextOwnedNames, health, nextRefund] = await Promise.all([
+        readMarketplacePage(indexerClient),
         selectedAddress
           ? fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority })
           : Promise.resolve([]),
@@ -77,24 +89,58 @@ export function useMarketplaceData({
       ])
       if (!shouldApply()) return
 
-      setFixedSales(nextFixedSales)
-      setAuctions(nextAuctions)
-      setOffers(nextOffers)
+      const selectedNode = selectedAuctionRef.current
+      if (selectedNode && !page.auctions.some((auction) => auction.node === selectedNode)) {
+        const selected = await indexerClient.getMarketplaceAuction(selectedNode)
+        if (!shouldApply()) return
+        if (selected) page.auctions = [...page.auctions, selected]
+      }
+      setFixedSales(page.fixedSales)
+      setAuctions(page.auctions)
+      setOffers(page.offers)
+      setCursors(page.cursors)
       setOwnedNames(nextOwnedNames)
       setCurrentBlockHeight(health.currentBlockHeight)
       setRefund(nextRefund?.amountLux ? nextRefund : null)
-      onLoadedRef.current({ auctions: nextAuctions, fixedSales: nextFixedSales, ownedNames: nextOwnedNames })
+      onLoadedRef.current({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
     } catch (loadError) {
-      if (shouldApply()) setError(userFacingErrorMessage(loadError))
+      if (shouldApply()) reportError(userFacingErrorMessage(loadError))
     } finally {
       if (shouldApply()) setLoading(false)
     }
-  }, [indexerClient, selectedAddress, selectedAuthority, setError, setOwnedNames, setRefund])
+  }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund])
+
+  const hasMore = Object.values(cursors).some(Boolean)
+  const loadMore = useCallback(async () => {
+    if (!indexerClient || loading || loadingMore.current || !Object.values(cursors).some(Boolean)) return
+    const currentRequest = requestId.current
+    loadingMore.current = true
+    setLoading(true)
+    const reportError = setErrorRef.current
+    reportError('')
+    try {
+      const page = await readMarketplacePage(indexerClient, cursors)
+      if (currentRequest !== requestId.current) return
+      setFixedSales((current) => appendPage(current, page.fixedSales, (item) => item.node))
+      setAuctions((current) => appendPage(current, page.auctions, (item) => item.node))
+      setOffers((current) => appendPage(current, page.offers, (item) => `${item.node}:${item.buyerAuthority}`))
+      setCursors(page.cursors)
+    } catch (error) {
+      if (currentRequest === requestId.current) reportError(userFacingErrorMessage(error))
+    } finally {
+      if (currentRequest === requestId.current) {
+        loadingMore.current = false
+        setLoading(false)
+      }
+    }
+  }, [cursors, indexerClient, loading])
+
+  useEffect(() => () => { requestId.current += 1 }, [accountScope, indexerClient])
 
   useEffect(() => {
     if (mainView !== 'marketplace') return
     globalThis.queueMicrotask(() => void loadMarketplace())
   }, [loadMarketplace, mainView])
 
-  return { auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
+  return { hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
 }

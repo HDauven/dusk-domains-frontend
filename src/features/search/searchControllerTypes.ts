@@ -20,13 +20,15 @@ export type ResolverRecordSets = Record<string, ResolverRecord[]>
 export type UseSearchControllerProps = {
   chainId: string
   getCurrentBlockHeight: CurrentBlockHeightReader
-  hydrateNameFromIndexer: (client: DuskDomainsIndexerClient, result: NameResult) => Promise<void>
+  beginNameRead: () => () => boolean
+  hydrateNameFromIndexer: (client: DuskDomainsIndexerClient, result: NameResult, isCurrent?: () => boolean) => Promise<void>
   indexerClient: DuskDomainsIndexerClient | null
   loadPendingReservations: () => PendingNameReservation[]
   openSearchView: () => void
   query: string
   recordSourceContractId: string
   selectedAuthority: string
+  setActivityCursor: (page: { node: string; cursor: string | null } | null) => void
   setActivityEntries: Dispatch<SetStateAction<ActivityEntry[]>>
   setActivityLoading: Dispatch<SetStateAction<boolean>>
   setApiSearchResult: Dispatch<SetStateAction<NameResult | null>>

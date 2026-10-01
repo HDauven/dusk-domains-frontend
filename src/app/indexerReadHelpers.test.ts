@@ -5,6 +5,7 @@ import { checkAvailability } from '../features/search/actions/checkAvailability'
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
 it('rejects stale, malformed and unreachable health before reading projections, and recovers', async () => {
+  vi.useFakeTimers()
   let health: unknown = {
     ok: false, generatedAt: new Date().toISOString(), source: 'sqlite', mode: 'sqlite',
     currentBlockHeight: 100, finalizedBlockHeight: 100, lagBlocks: 0, routes: [], names: 0,
@@ -21,6 +22,7 @@ it('rejects stale, malformed and unreachable health before reading projections, 
   health = { ...(health as object), ok: true }
   await expect(client.getNames()).resolves.toEqual([])
   expect(fetcher.mock.calls.at(-1)?.[0]).toBe('http://localhost:8793/api/names')
+  vi.setSystemTime(Date.now() + 5_001)
   health = { ok: true }
   await expect(client.getNames()).rejects.toThrow('invalid health')
   fetcher.mockRejectedValueOnce(new TypeError('Failed to fetch'))
@@ -53,10 +55,32 @@ it('clears the previous availability before a retry that fails', async () => {
   const setApiSearchResult = vi.fn()
   const setIndexerError = vi.fn()
   await checkAvailability({
-    query: 'owned.dusk', indexerClient: { searchName: async () => { throw new Error('Failed to fetch') } },
+    query: 'owned.dusk', beginNameRead: () => () => true,
+    indexerClient: { searchName: async () => { throw new Error('Failed to fetch') } },
     setApiSearchResult, setIndexerError, setChecked: vi.fn(), setResultView: vi.fn(),
     setRegistrationStep: vi.fn(), setActivityLoading: vi.fn(), setIndexerConfirmation: vi.fn(),
   } as never)
   expect(setApiSearchResult.mock.calls).toEqual([[null]])
   expect(setIndexerError.mock.calls.at(-1)?.[0]).toMatch(/not reachable/)
+})
+
+it('reuses recent health for concurrent reads but refreshes explicit and expired checks', async () => {
+  vi.useFakeTimers()
+  let ok = true
+  const fetcher = vi.fn(async (input) => Response.json(String(input).includes('/health') ? {
+    ok, generatedAt: '', source: 'test', mode: 'snapshot', currentBlockHeight: 100, routes: [], names: 0,
+  } : []))
+  vi.stubGlobal('fetch', fetcher)
+  const client = createHealthyIndexerClient('/api')
+  await Promise.all(Array.from({ length: 60 }, () => client.getNames()))
+  expect(fetcher.mock.calls.filter(([url]) => String(url).includes('/health'))).toHaveLength(1)
+  await client.getNames()
+  expect(fetcher).toHaveBeenCalledTimes(62)
+  vi.setSystemTime(Date.now() + 5_001)
+  await client.getNames()
+  expect(fetcher).toHaveBeenCalledTimes(64)
+  ok = false
+  expect((await client.getHealth({ limit: 1 })).ok).toBe(false)
+  await expect(client.getNames()).rejects.toThrow('still syncing')
+  expect(fetcher.mock.calls.at(-1)?.[0]).toBe('/api/health')
 })

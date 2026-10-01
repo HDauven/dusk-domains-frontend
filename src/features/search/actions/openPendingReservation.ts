@@ -15,6 +15,7 @@ export async function openPendingReservation(
   reservation: PendingNameReservation,
 ) {
   const {
+    beginNameRead,
     chainId,
     hydrateNameFromIndexer,
     getCurrentBlockHeight,
@@ -55,14 +56,17 @@ export async function openPendingReservation(
   setIndexerError('')
   setIndexerConfirmation('')
 
+  const isCurrent = beginNameRead()
   try {
     const [nextResult, health, indexedCommit] = await Promise.all([
       indexerClient.searchName(reservation.name),
       indexerClient.getHealth(),
       indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
     ])
+    if (!isCurrent()) return
     setApiSearchResult(nextResult)
-    await hydrateNameFromIndexer(indexerClient, nextResult)
+    await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
+    if (!isCurrent()) return
 
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({
@@ -80,6 +84,7 @@ export async function openPendingReservation(
     }
 
     const nextBlockHeight = currentBlockHeightFromHealth(health) ?? await getCurrentBlockHeight()
+    if (!isCurrent()) return
     const committedBlockHeight = indexedCommit?.committedBlockHeight ?? reservation.committedBlockHeight
     const committedTxId = indexedCommit?.committedTxId ?? reservation.committedTxId
 
@@ -103,8 +108,8 @@ export async function openPendingReservation(
       loadPendingReservations()
     }
   } catch (error) {
-    setIndexerError(userFacingErrorMessage(error))
+    if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
   } finally {
-    setActivityLoading(false)
+    if (isCurrent()) setActivityLoading(false)
   }
 }

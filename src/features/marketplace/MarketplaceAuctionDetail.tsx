@@ -85,6 +85,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             ) : (
               <p className="marketplace-activity-empty">No bids yet. The first bid starts the auction.</p>
             )}
+            {props.auctionActivityHasMore ? <button className="text-button" disabled={props.auctionActivityLoading} type="button" onClick={props.onLoadMoreAuctionActivity}>Load more auction activity</button> : null}
           </section>
         </div>
 

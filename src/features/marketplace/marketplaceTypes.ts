@@ -23,6 +23,8 @@ export type MarketplaceViewProps = {
   auctions: IndexedMarketplaceAuction[]
   auctionActivity: ActivityEntry[]
   auctionActivityLoading: boolean
+  auctionActivityHasMore?: boolean
+  onLoadMoreAuctionActivity?: () => void
   bidDrafts: Record<string, string>
   bidReview: MarketplaceBidReview | null
   confirmation: string
@@ -31,6 +33,8 @@ export type MarketplaceViewProps = {
   error: string
   fixedPriceDusk: string
   fixedSales: IndexedMarketplaceFixedSale[]
+  hasMore?: boolean
+  onLoadMore?: () => void
   loading: boolean
   marketplaceEnabled: boolean
   offerAmountDusk: string

@@ -10,17 +10,33 @@ import {
 
 export function createHealthyIndexerClient(baseUrl: string) {
   const healthUrl = `${baseUrl.trim().replace(/\/+$/u, '')}/health`
+  let healthyUntil = 0
+  let pendingHealth: ReturnType<DuskDomainsIndexerClient['getHealth']> | null = null
   const client = createDuskDomainsIndexerClient({
     baseUrl,
     fetch: async (input, init) => {
       // A reachable API can still be serving an incomplete or stale projection.
-      if (input !== healthUrl && !(await client.getHealth()).ok) {
+      if (String(input).split('?')[0] !== healthUrl && Date.now() >= healthyUntil && !(await getHealth()).ok) {
         throw new Error('Domain data is still syncing. Refresh and try again shortly.')
       }
       return fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10_000) })
     },
   })
-  return client
+  const getHealth: DuskDomainsIndexerClient['getHealth'] = (params) => {
+    // Explicit reads stay fresh for confirmation polling; concurrent checks share one request.
+    if (params && Object.keys(params).length) {
+      healthyUntil = 0
+      return client.getHealth(params)
+    }
+    if (pendingHealth) return pendingHealth
+    healthyUntil = 0
+    pendingHealth = client.getHealth(params).then((health) => {
+      if (health.ok) healthyUntil = Date.now() + 5_000
+      return health
+    }).finally(() => { pendingHealth = null })
+    return pendingHealth
+  }
+  return { ...client, getHealth }
 }
 
 export async function waitForIndexerBlock(client: DuskDomainsIndexerClient | null, height: number | null) {
