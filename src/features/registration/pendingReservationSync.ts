@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { currentBlockHeightFromHealth } from '../../app/appHelpers'
+import { currentBlockHeightFromHealth } from '../../app/indexerReadHelpers'
 import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import {
   currentUnixSeconds,

@@ -1,3 +1,4 @@
+import { useMarketAddresses } from './useMarketAddresses'
 import { useState } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
@@ -52,6 +53,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   } = args
   const marketScope = `${runtimeConfig.chainId}:${runtimeConfig.contracts.marketplace?.contractId}`
   const accountScope = `${marketScope}:${selectedAuthority}`
+  const [sellName, setSellName] = useState('')
   const [tab, setTab] = useState<MarketplaceTab>('browse')
   // Auction selection belongs to the market, so wallet restoration keeps the detail open.
   const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, '')
@@ -82,7 +84,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     loadMarketplace,
   })
 
-  const { sellableNames, selectedName, selectedNode, setSelectedNode } = useSellInventory({ accountScope, ownedNames, auctions, fixedSales, selectedAuthority })
+  const { sellableNames, selectedName, selectedNode, setSelectedNode } = useSellInventory({ accountScope, ownedNames, auctions, fixedSales, selectedAuthority, requestedName: sellName })
   const claimRefund = useMarketplaceRefund(refund, writes)
 
   const sell = useSellForm({
@@ -97,7 +99,10 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
 
   const fixedSaleState = useFixedSales({ marketplaceOnChainClient, selectedAddress, selectedAuthority, setError, writes })
 
+  const ownerAddresses = useMarketAddresses(indexerClient, [...auctions, ...fixedSales, ...data.offers].map(order => order.name), mainView === 'marketplace')
+
   const marketplaceProps: MarketplaceViewProps = {
+    ownerAddresses,
     review: writes.review,
     onCancelReview: writes.cancelReview,
     onConfirmReview: writes.confirmReview,
@@ -163,11 +168,10 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     onPlaceBid: auctionState.placeBid,
     onPlaceOffer: offerState.placeOffer,
     onPrivateBuyerChange: sell.setPrivateBuyer,
-    onRefresh: loadMarketplace,
     onReviewBid: (auction) => void auctionState.reviewBid(auction),
     onReserveDuskChange: sell.setReserveDusk,
     onSaleModeChange: sell.setSaleMode,
-    onSelectedNodeChange: setSelectedNode,
+    onSelectedNodeChange: node => { setSellName(sellableNames.find(name => name.node === node)?.canonicalName ?? ''); setSelectedNode(node) },
     onSettleAuction: auctionState.settleAuction,
     onTabChange: (nextTab) => {
       setTab(nextTab)
@@ -177,7 +181,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     onCloseAuction: auctionState.closeAuction,
   }
 
-  return { loadMarketplace, marketplaceProps }
+  return { loadMarketplace, marketplaceProps, sellName: tab === 'sell' ? sellName : '', openSell: (name: string) => { setSellName(name); setSelectedNode(''); setSelectedAuctionNode(''); setTab('sell') } }
 }
 
 export type MarketplaceFeature = ReturnType<typeof useMarketplaceFeature>

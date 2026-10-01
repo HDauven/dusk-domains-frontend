@@ -26,6 +26,7 @@ export async function updateDomainAuthorities({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseDomainSettingsActionsProps, change: { kind: 'transfer' | 'manager'; recipient: ResolvedRecipient }) {
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   setManagementError('')
   if (!guardDomainActionPrerequisite({
     canContinue: canManageName,
@@ -36,10 +37,13 @@ export async function updateDomainAuthorities({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('update ownership', setManagementError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('updating ownership', setManagementError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('updating ownership', message => { if (workspace()) setManagementError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const checked = await resolveRecipient(change.recipient.input, indexerClient)
+    if (!workspace()) return
     if (checked.address !== change.recipient.address || !sameAuthority(checked.authority, change.recipient.authority)) {
       setManagementError('The recipient changed. Check the address again before confirming.')
       return
@@ -61,9 +65,11 @@ export async function updateDomainAuthorities({
     })
     const finalState = await submitNameWrite(displayName, call, {
       ownershipChange: change.kind,
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setManagementTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status !== 'executed') {
       setManagementError(finalState.message ? userFacingMessageFromText(finalState.message) : 'The change was not completed.')
@@ -75,7 +81,8 @@ export async function updateDomainAuthorities({
     const applyLocally = await shouldApplyPreviewWriteFallback(change.kind === 'transfer' ? 'transfer' : 'manager change', async (client) => {
       const state = await client.getNameState(nodeHex)
       return state?.owner === nextOwner && state.manager === nextManager
-    })
+    }, workspace)
+    if (!workspace()) return
     if (applyLocally === null) return false
     if (!applyLocally) return true
 
@@ -92,6 +99,7 @@ export async function updateDomainAuthorities({
     })
     return true
   } catch (error) {
+    if (!workspace()) return
     setManagementError(userFacingErrorMessage(error))
   }
 }

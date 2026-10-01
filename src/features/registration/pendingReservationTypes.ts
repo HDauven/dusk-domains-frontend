@@ -16,6 +16,7 @@ export type StrandedCommitment = {
 }
 
 export type UsePendingReservationsArgs = {
+  explicitlyDisconnected?: boolean
   chainId: string
   currentCommitment: string
   getCurrentBlockHeight: CurrentBlockHeightReader

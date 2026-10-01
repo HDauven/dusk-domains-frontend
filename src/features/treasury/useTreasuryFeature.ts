@@ -1,3 +1,4 @@
+import type { RefreshOptions } from '../../app/singleFlight'
 import { useCallback } from 'react'
 import type { UseTreasuryFeatureArgs } from './treasuryFeatureTypes'
 import type { TreasuryViewProps } from './treasuryViewTypes'
@@ -44,10 +45,10 @@ export function useTreasuryFeature({
     loadTreasury,
     setTreasuryError,
   } = useTreasuryAccount(indexerClient)
-  const loadTreasuryView = useCallback(async () => {
+  const loadTreasuryView = useCallback(async (options?: RefreshOptions) => {
     const [treasuryLoaded, feeConfigLoaded] = await Promise.all([
-      loadTreasury(),
-      loadFeeConfig(),
+      loadTreasury(options),
+      loadFeeConfig(options),
     ])
     return treasuryLoaded && feeConfigLoaded
   }, [loadFeeConfig, loadTreasury])
@@ -120,7 +121,6 @@ export function useTreasuryFeature({
     onClaimTreasury: (mode) => void handleClaimTreasury(mode),
     onFeeConfigFieldChange: handleFeeConfigFieldChange,
     onOpenWalletConnection,
-    onRefresh: () => void loadTreasuryView(),
     onTreasuryClaimAmountChange: handleTreasuryClaimAmountChange,
     onUpdateFeeConfig: () => void handleUpdateFeeConfig(),
     selectedAddress,

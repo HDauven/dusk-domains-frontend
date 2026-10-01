@@ -36,13 +36,14 @@ function args() {
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
-it.each([true, false])('preserves the primary name choice %s when a saved claim is reopened', async (registerSetsPrimary) => {
+it.each([true, false])('preserves the primary name choice %s when an uncertain claim is reopened', async (registerSetsPrimary) => {
   const props = args()
   await prepareRegistrationCommit({ ...props, registerSetsPrimary,
-    submitNameWrite: async (_name: unknown, _call: unknown, options: { onUpdate: (state: unknown) => void }) => {
+    submitNameWrite: Object.assign(async (_name: unknown, _call: unknown, options: { beforeSign: () => void; onUpdate: (state: unknown) => void }) => {
+      options.beforeSign()
       options.onUpdate({ status: 'awaiting_approval' })
-      return { status: 'rejected' }
-    },
+      return { status: 'failed' }
+    }, { captureWorkspace: () => () => true }),
   } as never)
   const saved = listPendingNameReservations()[0]
   const setRegisterSetsPrimary = vi.fn()
@@ -57,10 +58,12 @@ it('saves before wallet approval and preserves the secret while a confirmed heig
   const height = Promise.withResolvers<number>()
   let secretBeforeApproval: string | undefined
   const submitNameWrite = vi.fn(async (_name, _call, options) => {
+    options.beforeSign()
     options.onUpdate({ status: 'awaiting_approval' })
     secretBeforeApproval = listPendingNameReservations()[0]?.secret
     return { status: 'executed', txId: 'confirmed-tx' } as DuskDomainTxState
   })
+  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
   const getCurrentBlockHeight = vi.fn(() => height.promise)
   const pending = prepareRegistrationCommit({ ...props, submitNameWrite, getCurrentBlockHeight } as never)
   await vi.waitFor(() => expect(getCurrentBlockHeight).toHaveBeenCalledOnce())
@@ -77,14 +80,16 @@ it('saves before wallet approval and preserves the secret while a confirmed heig
 it('fails before broadcast if storage fails or a previous uncertain reservation exists', async () => {
   const props = args()
   const broadcast = vi.fn()
-  const submitNameWrite = async (_name: unknown, _call: unknown, options: { onUpdate: (state: unknown) => void }) => {
+  const submitNameWrite = async (_name: unknown, _call: unknown, options: { beforeSign: () => void; onUpdate: (state: unknown) => void }) => {
+    options.beforeSign()
     options.onUpdate({ status: 'awaiting_approval' })
     broadcast()
-    return { status: 'rejected' }
+    return { status: 'failed' }
   }
+  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   const saved = listPendingNameReservations()[0]
-  expect(saved?.secret).toBeTruthy() // Rejection is not proof that a disconnected transport never broadcast.
+  expect(saved?.secret).toBeTruthy() // A disconnected transport is not proof that nothing broadcast.
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   expect(broadcast).toHaveBeenCalledOnce()
   expect(listPendingNameReservations()[0]).toEqual(saved)
@@ -101,12 +106,14 @@ it('fails before broadcast if storage fails or a previous uncertain reservation 
   expect(props.setWalletError.mock.calls.at(-1)?.[0]).toContain('browser storage')
 })
 
-it('does not call a rejected saved request signed or submitted after reopening Purchase and Review', async () => {
+it('does not call an uncertain saved request signed or submitted after reopening Purchase and Review', async () => {
   const props = args()
   const submitNameWrite = vi.fn(async (_name, _call, options) => {
+    options.beforeSign()
     options.onUpdate({ status: 'awaiting_approval' })
-    return { status: 'rejected' }
+    return { status: 'failed' }
   })
+  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   const saved = listPendingNameReservations()[0]
   expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: null })
@@ -152,11 +159,12 @@ it('starts recovery aging after execution, not a long wallet approval', async ()
   }
   const getCurrentBlockHeight = async () => null
   await prepareRegistrationCommit({ ...props, getCurrentBlockHeight, setPreparedCommit,
-    submitNameWrite: async (_name: unknown, _call: unknown, options: { onUpdate: (state: unknown) => void }) => {
+    submitNameWrite: Object.assign(async (_name: unknown, _call: unknown, options: { beforeSign: () => void; onUpdate: (state: unknown) => void }) => {
+      options.beforeSign()
       options.onUpdate({ status: 'awaiting_approval' })
       vi.setSystemTime(startedAt + 90_000)
       return { status: 'executed', txId: 'confirmed-after-long-approval' }
-    } } as never)
+    }, { captureWorkspace: () => () => true }) } as never)
   const saved = listPendingNameReservations()[0]
   expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: 'confirmed-after-long-approval' })
   const getCommitment = vi.fn(async () => null)
@@ -184,7 +192,7 @@ function readyReservation(getPendingCommitment: () => Promise<unknown>) {
     registrationTargetAddressErrors: [], commitWindow: { status: 'ready', waitBlocks: 0, staleInBlocks: 100 },
     preparedCommit: { commitment: saved.commitment, secret: saved.secret, committedBlockHeight: 100, committedTxId: 'old-commit' },
     duskDomainsOnChainClient: { getPendingCommitment: vi.fn(getPendingCommitment) }, setStrandedCommitment: vi.fn(),
-    submitNameWrite: vi.fn(async () => ({ status: 'rejected' })), result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
+    submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'failed' })), { captureWorkspace: () => () => true }), result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
     lifecycleBaseBlockHeight: 500, registerSetsPrimary: false, appliedReferral: null,
     registrationTargetAddress: '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r' } }
 }
@@ -208,9 +216,11 @@ it('reserves again instead of revealing where a registry added since the commit 
   expect(html).not.toContain('Register name')
 
   const submitNameWrite = vi.fn(async (_name, _call, options) => {
+    options.beforeSign()
     options.onUpdate({ status: 'awaiting_approval' })
     return { status: 'executed', txId: 'new-commit' } as DuskDomainTxState
   })
+  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
   await restartStrandedReservation({ ...props, ...capabilities, submitNameWrite } as never)
   expect(submitNameWrite).toHaveBeenCalledOnce()
   expect(submitNameWrite.mock.calls[0][1]).toMatchObject({ functionName: 'commit_runtime' })
@@ -268,7 +278,7 @@ it('keeps the saved reservation after an executed reveal until the name shows as
   const noop = () => {}
   const reveal = (shouldApplyPreviewWriteFallback: unknown) => {
     const { props } = readyReservation(pending)
-    return { ...props, shouldApplyPreviewWriteFallback, submitNameWrite: vi.fn(async () => ({ status: 'executed', txId: 'reveal' })),
+    return { ...props, shouldApplyPreviewWriteFallback, submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'executed', txId: 'reveal' })), { captureWorkspace: () => () => true }),
       setManagedName: noop, setResolverRecordSets: noop, setPrimaryName: noop, setPrimaryEndpointValue: noop,
       setDraftOwner: noop, setDraftManager: noop, appendActivity: noop }
   }

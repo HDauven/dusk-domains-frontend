@@ -1,4 +1,4 @@
-import type { ManagedNameState } from '../appHelpers'
+import type { ManagedNameState } from '../managedNameState'
 
 export function canManageActiveName(
   name: Pick<ManagedNameState, 'owner' | 'manager' | 'expiresAt'> | undefined,

@@ -1,27 +1,21 @@
 import { AccountViewLayout } from '../../components/ui/AccountViewLayout'
 import { ActiveReferralCard } from './ActiveReferralCard'
-import { ReferralHeader } from './ReferralHeader'
+import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { ReferralLinkCard } from './ReferralLinkCard'
 import { ReferralRewardsCard } from './ReferralRewardsCard'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
 export function ReferralsView({
-  activeReferral,
-  appliedReferral,
   onClaimReferralRewards,
   onClearReferral,
   onCopyReferralLink,
   onOpenWalletConnection,
-  onRefresh,
-  onReferralInputChange,
   referralAccountState,
-  referralAttributionLabel,
   referralClaimRecipient,
   referralClaimable,
   referralCopied,
   referralError,
   referralLink,
-  referralLoading,
   referralRewardClaimReady,
   referralRewardGuidance,
   referralRewardSummaryValue,
@@ -31,7 +25,6 @@ export function ReferralsView({
   referralConfirmation,
   referralTxState,
   selectedAddress,
-  showReferralSummary,
   walletSetupState,
 }: ReferralsViewProps) {
   return (
@@ -39,17 +32,7 @@ export function ReferralsView({
       className="referrals-panel"
       confirmation={referralConfirmation}
       error={referralError}
-      header={(
-        <ReferralHeader
-          onRefresh={onRefresh}
-          referralAttributionLabel={referralAttributionLabel}
-          referralLoading={referralLoading}
-          referralRewardSummaryValue={referralRewardSummaryValue}
-          selectedAddress={selectedAddress}
-          showReferralSummary={showReferralSummary}
-          walletSetupState={walletSetupState}
-        />
-      )}
+      header={<AccountViewHeader heading="Referrals" headingId="referrals-heading" description="Share your link to earn part of the registration fee, at no extra cost to the buyer." />}
       labelledBy="referrals-heading"
       panelId="referrals"
     >
@@ -62,13 +45,7 @@ export function ReferralsView({
         walletSetupState={walletSetupState}
       />
 
-      <ActiveReferralCard
-        activeReferral={activeReferral}
-        appliedReferral={appliedReferral}
-        onClearReferral={onClearReferral}
-        onReferralInputChange={onReferralInputChange}
-        referralState={referralState}
-      />
+      <ActiveReferralCard referral={referralState} onClear={onClearReferral} />
 
       {selectedAddress ? (
         <ReferralRewardsCard

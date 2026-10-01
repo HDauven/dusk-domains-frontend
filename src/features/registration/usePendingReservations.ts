@@ -6,6 +6,7 @@ import type { UsePendingReservationsArgs } from './pendingReservationTypes'
 export type { PreparedRegistrationCommit } from './pendingReservationTypes'
 
 export function usePendingReservations({
+  explicitlyDisconnected,
   chainId,
   currentCommitment,
   getCurrentBlockHeight,
@@ -20,6 +21,7 @@ export function usePendingReservations({
     loadPendingReservations,
     pendingReservations,
   } = usePendingReservationList({
+    explicitlyDisconnected,
     chainId,
     selectedAuthority,
   })

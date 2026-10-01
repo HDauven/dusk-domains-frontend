@@ -10,11 +10,15 @@ import {
 } from '../../registration/registrationCopy'
 
 export function PendingReservationsList({
+  walletAction,
+  onConnectWallet,
   currentBlockHeight,
   onForgetPendingReservation,
   onOpenPendingReservation,
   pendingReservations,
 }: {
+  walletAction?: string
+  onConnectWallet?: () => void
   currentBlockHeight: number | null
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onOpenPendingReservation: (reservation: PendingNameReservation) => void
@@ -25,6 +29,7 @@ export function PendingReservationsList({
       <h2 id="pending-heading" className="eyebrow">
         Unfinished {pluralize(pendingReservations.length, 'claim')}
       </h2>
+      {walletAction ? <p>{walletAction === 'Unlock wallet' ? 'Unlock your wallet to finish.' : 'Connect the wallet that started these claims to finish.'} Saved in this browser.</p> : null}
       {pendingReservations.map((reservation) => {
         const reservationWindow = registrationCommitWindow(reservation.committedBlockHeight, currentBlockHeight)
         return (
@@ -41,9 +46,9 @@ export function PendingReservationsList({
               <Button variant={reservationWindow.status === 'ready' ? 'primary' : 'secondary'}
                 className="compact"
                 type="button"
-                onClick={() => void onOpenPendingReservation(reservation)}
+                onClick={() => walletAction ? onConnectWallet?.() : onOpenPendingReservation(reservation)}
               >
-                {pendingReservationActionCopy(reservationWindow.status)} <ArrowRight size={16} />
+                {walletAction ?? pendingReservationActionCopy(reservationWindow.status)} <ArrowRight size={16} />
               </Button>
               <Button variant="quiet"
                 className="icon-button"

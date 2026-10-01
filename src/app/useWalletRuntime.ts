@@ -1,5 +1,6 @@
 import type { useAppRuntime } from './useAppRuntime'
-import { useCallback } from 'react'
+import type { PendingConfirmation } from './confirmationRead'
+import { useCallback, useState } from 'react'
 import { useDuskDomainWriter } from './useDuskDomainWriter'
 import { useLiveWritePreflight } from './useLiveWritePreflight'
 import { useDuskWalletSession } from '../features/wallet/useDuskWalletSession'
@@ -10,13 +11,15 @@ type AppRuntime = ReturnType<typeof useAppRuntime>
 
 type UseWalletRuntimeArgs = Pick<
   AppRuntime,
-  'pause' | 'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
+  'indexerClient' | 'writeAccess' | 'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
 >
-  & Pick<Parameters<typeof useDuskDomainWriter>[0], 'confirmOwnershipWrite'>
+  & Pick<Parameters<typeof useDuskDomainWriter>[0], 'confirmOwnershipWrite' | 'getWorkspaceToken'>
 
 export function useWalletRuntime({
+  getWorkspaceToken,
+  indexerClient,
   confirmOwnershipWrite,
-  pause,
+  writeAccess,
   connectKit,
   connectOptions,
   liveDuskDomainsApp,
@@ -34,6 +37,7 @@ export function useWalletRuntime({
     walletDiscoveryReady,
     walletDiscoveryRefreshing,
     walletError,
+    walletBusy,
     walletState,
   } = useDuskWalletSession(connectKit, connectOptions, expectedWalletChainId, expectedWalletNodeUrl)
 
@@ -53,9 +57,16 @@ export function useWalletRuntime({
     selectedTypedPrincipalResult,
   } = selectedAuthorityState
 
+  const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null)
   const submitNameWrite = useDuskDomainWriter({
+    wallet,
+    chainId: runtimeConfig.chainId,
+    getWorkspaceToken,
+    onPendingConfirmation: setPendingConfirmation,
+    nodeUrl: runtimeConfig.nodeUrl,
+    indexerClient,
     confirmOwnershipWrite,
-    pause,
+    writeAccess,
     contracts: runtimeConfig.contracts,
     liveDuskDomainsApp,
   })
@@ -88,6 +99,7 @@ export function useWalletRuntime({
   })
 
   return {
+    pendingConfirmation,
     ensureContractAuthorityForLiveWrite,
     ensurePublicBalanceForLiveWrite,
     handleOpenWalletConnection,
@@ -105,6 +117,7 @@ export function useWalletRuntime({
     submitNameWrite,
     walletDiscoveryRefreshing,
     walletError,
+    walletBusy,
     walletSession,
     walletSetupState,
     walletState,

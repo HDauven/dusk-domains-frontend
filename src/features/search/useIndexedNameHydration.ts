@@ -1,6 +1,8 @@
-import { useCallback, useMemo } from 'react'
+import { createSingleFlight, type RefreshOptions } from '../../app/singleFlight'
+import { useSingleFlight } from '../../app/useSingleFlight'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { safeNamehashHex } from '../domains/domainFormat'
-import { currentBlockHeightFromHealth } from '../../app/appHelpers'
+import { currentBlockHeightFromHealth } from '../../app/indexerReadHelpers'
 import type {
   DuskDomainsIndexerClient,
   NameResult,
@@ -10,6 +12,12 @@ import { applyIndexedNameHydration } from './applyIndexedNameHydration'
 import { readIndexedName } from './indexedNameReads'
 import { createNameReadGuard } from './nameReadGuard'
 import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
+
+async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult) {
+  const health = await client.getHealth()
+  if (!health.ok) throw new Error('Name data is still syncing. It will update automatically.')
+  return { currentBlockHeight: currentBlockHeightFromHealth(health), reads: await readIndexedName(client, searchResult) }
+}
 
 export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
   const {
@@ -21,39 +29,46 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     setIndexerError,
   } = props
 
+  const refreshScope = useMemo(() => ({ displayName, indexerClient }), [displayName, indexerClient])
   const beginNameRead = useMemo(() => createNameReadGuard(), [])
+
+  const currentName = useRef(displayName)
+  useLayoutEffect(() => { currentName.current = displayName }, [displayName])
+
+  const queryFlight = useMemo(() => createSingleFlight<NameResult>(), [])
+  const hydrationFlight = useMemo(() => createSingleFlight<Awaited<ReturnType<typeof readNameSnapshot>>>(), [])
+  const searchNameFromIndexer = useCallback((client: DuskDomainsIndexerClient, name: string, options?: RefreshOptions) =>
+    queryFlight(() => client.searchName(name), [client, name], options?.fresh), [queryFlight])
 
   const hydrateNameFromIndexer = useCallback(async (
     client: DuskDomainsIndexerClient,
     searchResult: NameResult,
     isCurrent: () => boolean = () => true,
+    options?: RefreshOptions,
   ) => {
     const isCurrentActivity = props.beginActivityRead(safeNamehashHex(searchResult.canonical))
     const isCurrentOwnership = props.beginOwnershipRead(safeNamehashHex(searchResult.canonical))
     const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership()
-    const health = await client.getHealth()
-    if (!shouldApply()) return
-    if (!health.ok) throw new Error('Name data is still syncing. Refresh and try again shortly.')
-    const currentBlockHeight = currentBlockHeightFromHealth(health)
-    const reads = await readIndexedName(client, searchResult)
+    const { currentBlockHeight, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult), [client, searchResult.canonical], options?.fresh)
     if (!shouldApply()) return
     props.setCurrentBlockHeight(currentBlockHeight)
     if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight }, reads)
-  }, [props])
+  }, [hydrationFlight, props])
 
-  const refreshCurrentNameFromIndexer = useCallback(async () => {
+  const readData = useCallback(async (options?: RefreshOptions) => {
     if (!indexerClient) return false
 
     setActivityLoading(true)
     setIndexerError('')
     setIndexerConfirmation('')
 
-    const isCurrent = beginNameRead()
+    const isLatestRead = beginNameRead()
+    const isCurrent = () => isLatestRead() && currentName.current === displayName
     try {
-      const nextResult = await indexerClient.searchName(displayName)
+      const nextResult = await searchNameFromIndexer(indexerClient, displayName, options)
       if (!isCurrent()) return false
       setApiSearchResult(nextResult)
-      await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
+      await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent, options)
       return isCurrent()
     } catch (error) {
       if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
@@ -63,6 +78,7 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     }
   }, [
     beginNameRead,
+    searchNameFromIndexer,
     displayName,
     hydrateNameFromIndexer,
     indexerClient,
@@ -72,7 +88,10 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     setIndexerError,
   ])
 
+  const refreshCurrentNameFromIndexer = useSingleFlight(readData, refreshScope)
+
   return {
+    searchNameFromIndexer,
     beginNameRead,
     hydrateNameFromIndexer,
     refreshCurrentNameFromIndexer,

@@ -20,6 +20,8 @@ import type { ReservationWindow } from './overviewTypes'
 // The result for a name nobody holds: a claim card with the term, the price and one action.
 // A saved reservation or a name that cannot be claimed replaces it with the right next step.
 export function SearchResultOverview({
+  readOnly = false,
+  registrationUnavailable = readOnly,
   canRegister,
   displayName,
   duration,
@@ -37,6 +39,8 @@ export function SearchResultOverview({
   savedReservation,
   savedReservationWindow,
 }: {
+  readOnly?: boolean
+  registrationUnavailable?: boolean
   canRegister: boolean
   displayName: string
   duration: number
@@ -97,18 +101,18 @@ export function SearchResultOverview({
   return (
     <Panel className="claim-card" aria-labelledby="overview-heading">
       <div className="claim-main">
-        <NameCard name={displayName}><Badge status="available">Available</Badge></NameCard>
+        <NameCard name={displayName}><Badge status="available">{readOnly ? 'Example name' : 'Available'}</Badge></NameCard>
         <h2 id="overview-heading">Registration term</h2>
         <TermPicker label="Registration term" max={maxDurationYears} min={minDurationYears} value={duration} onChange={onDurationChange} />
-        <p>Your wallet will own the name. Network fees are shown before signing.</p>
+        <p>{readOnly ? 'Preview only. Availability has not been checked on the network.' : 'Your wallet will own the name. Network fees are shown before signing.'}</p>
       </div>
       <div className="claim-stub">
         <div className="claim-price">
           <strong>{feeConfigLoading ? '…' : formatDusk(registrationFee)} <small>DUSK</small></strong>
           <span>for {duration} {pluralize(duration, 'year')} · until {expiryDate}</span>
         </div>
-        <Button variant="primary" type="button" disabled={feeConfigLoading} onClick={onContinueRegistration}>
-          Claim {displayName}
+        <Button variant="primary" type="button" disabled={feeConfigLoading || registrationUnavailable} onClick={onContinueRegistration}>
+          {registrationUnavailable ? 'Registration unavailable' : `Claim ${displayName}`}
         </Button>
       </div>
     </Panel>

@@ -22,7 +22,7 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
   openSearchView()
   resetSearchState(props, name)
   setChecked(true)
-  setResultView('details')
+  setResultView(indexerClient ? 'details' : 'overview')
 
   if (!indexerClient) return
 
@@ -32,7 +32,7 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
 
   const isCurrent = beginNameRead()
   try {
-    const nextResult = await indexerClient.searchName(name)
+    const nextResult = await (props.searchNameFromIndexer?.(indexerClient, name) ?? indexerClient.searchName(name))
     if (!isCurrent()) return
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({ canonicalName: nextResult.canonical, chainId: props.chainId, loadPendingReservations: props.loadPendingReservations })

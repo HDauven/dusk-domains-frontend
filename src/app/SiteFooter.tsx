@@ -20,6 +20,7 @@ export function SiteFooter({
     <footer className="site-footer">
       <p>Dusk Domains</p>
       <nav aria-label="Footer">
+        <a href={routePath({ view: 'referrals' })} onClick={(event) => followLink(event, () => onMainViewChange('referrals'))}>Referrals</a>
         <a href={routePath({ view: 'treasury' })} onClick={(event) => followLink(event, () => onMainViewChange('treasury'))}>Treasury</a>
         {external.map(([label, href]) => (
           <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>

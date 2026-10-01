@@ -35,7 +35,7 @@ export function DuskConnectControl({
       type="button"
       onClick={onOpen}
     >
-      {label}
+      <span className="wallet-label">{label}</span>
     </Button>
   )
 }

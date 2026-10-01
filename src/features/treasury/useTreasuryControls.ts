@@ -20,12 +20,20 @@ export function useTreasuryControls({
   setTreasuryConfirmation,
   setTreasuryError,
 }: UseTreasuryControlsArgs) {
-  const [feeConfigForm, setFeeConfigForm] = useState<FeeConfigFormState>(() => feeConfigFormFromConfig(feeConfig))
+  const [pricingDraft, setPricingDraft] = useState(() => {
+    const form = feeConfigFormFromConfig(feeConfig)
+    return { form, baseline: form }
+  })
   const [treasuryClaimAmount, setTreasuryClaimAmount] = useState('')
 
   useEffect(() => {
     globalThis.queueMicrotask(() => {
-      setFeeConfigForm(feeConfigFormFromConfig(feeConfig))
+      const baseline = feeConfigFormFromConfig(feeConfig)
+      setPricingDraft(current => {
+        const dirty = (Object.keys(current.form) as Array<keyof FeeConfigFormState>)
+          .some(field => current.form[field] !== current.baseline[field])
+        return { baseline, form: dirty ? current.form : baseline }
+      })
     })
   }, [feeConfig])
 
@@ -36,13 +44,13 @@ export function useTreasuryControls({
   }
 
   function handleFeeConfigFieldChange(field: keyof FeeConfigFormState, value: string) {
-    setFeeConfigForm((current) => ({ ...current, [field]: value }))
+    setPricingDraft(current => ({ ...current, form: { ...current.form, [field]: value } }))
     setFeeConfigUpdateError('')
     setFeeConfigConfirmation('')
   }
 
   return {
-    feeConfigForm,
+    feeConfigForm: pricingDraft.form,
     handleFeeConfigFieldChange,
     handleTreasuryClaimAmountChange,
     resetTreasuryClaimAmount: () => setTreasuryClaimAmount(''),

@@ -14,7 +14,7 @@ import {
 type UseReferralActionsProps = {
   indexerClient: DuskDomainsIndexerClient | null
   liveDuskDomainsApp: unknown
-  loadReferralAccount: () => Promise<boolean>
+  loadReferralAccount: (options?: { fresh?: boolean }) => Promise<boolean>
   referralAccountState: IndexedReferralState
   referralBusy: boolean
   referralClaimable: boolean
@@ -90,7 +90,7 @@ export function useReferralActions({
         const nextReferralState = await indexerClient.getReferralState(selectedAuthority)
         return nextReferralState.claimableLux < beforeClaimableLux
       },
-      refresh: loadReferralAccount,
+      refresh: () => loadReferralAccount({ fresh: true }),
     })
 
     if (confirmation.confirmed && confirmation.refreshed) {

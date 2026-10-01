@@ -1,10 +1,10 @@
+import { walletActionLabel, type WalletConnectionStatus } from '../wallet/walletStatus'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { AddressChip } from '../../components/ui/AddressChip'
 import { Button } from '../../components/ui/Button'
 import { AlertTriangle, ArrowRight } from 'lucide-react'
 import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { PanelMessage } from '../../components/ui/PanelMessage'
-import { RefreshButton } from '../../components/ui/RefreshButton'
 import type { IndexedNameSummary, PendingNameReservation } from '../../names/internal'
 import { pluralize } from '../../utils/format'
 import { NameCard } from './my-domains/NameCard'
@@ -16,6 +16,7 @@ export type MyNamePrimarySummary = {
 }
 
 export type MyDomainsViewProps = {
+  walletStatus?: WalletConnectionStatus
   currentBlockHeight: number | null
   loading: boolean
   myNames: IndexedNameSummary[]
@@ -24,7 +25,6 @@ export type MyDomainsViewProps = {
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onOpenIndexedName: (name: string) => void
   onOpenPendingReservation: (reservation: PendingNameReservation) => void
-  onRefresh: () => void
   onSearchHome: () => void
   pendingReservations: PendingNameReservation[]
   primarySummaries: Record<string, MyNamePrimarySummary>
@@ -33,6 +33,7 @@ export type MyDomainsViewProps = {
 
 // Everything the connected wallet holds: claims still in progress first, then its names.
 export function MyDomainsView({
+  walletStatus,
   currentBlockHeight,
   loading,
   myNames,
@@ -41,7 +42,6 @@ export function MyDomainsView({
   onForgetPendingReservation,
   onOpenIndexedName,
   onOpenPendingReservation,
-  onRefresh,
   onSearchHome,
   pendingReservations,
   primarySummaries,
@@ -54,10 +54,9 @@ export function MyDomainsView({
   return (
     <section className="my-names-panel" id="my-names" aria-labelledby="my-names-heading">
       <AccountViewHeader
-        actions={selectedAddress ? <RefreshButton loading={loading} onRefresh={onRefresh} /> : null}
         description={(
           <>
-            {selectedAddress ? <>Held by <AddressChip value={selectedAddress} /></> : 'Connect a wallet to see the names it holds.'}
+            {selectedAddress ? <>Held by <AddressChip value={selectedAddress} /></> : null}
             {myNames.length ? <> · {myNames.length} {pluralize(myNames.length, 'name')}{primaryCount ? ` · ${primaryCount} primary` : ''}</> : null}
           </>
         )}
@@ -69,6 +68,8 @@ export function MyDomainsView({
 
       {pendingReservations.length ? (
         <PendingReservationsList
+          walletAction={!selectedAddress ? walletActionLabel(walletStatus ?? 'disconnected') : undefined}
+          onConnectWallet={onConnectWallet}
           currentBlockHeight={currentBlockHeight}
           onForgetPendingReservation={onForgetPendingReservation}
           onOpenPendingReservation={onOpenPendingReservation}
@@ -98,12 +99,12 @@ export function MyDomainsView({
           {[0, 1, 2].map((index) => <div className="name-portrait skeleton" key={index} />)}
         </div>
       ) : empty && !myNamesError ? (
-        <EmptyState className="my-names-empty" title={selectedAddress ? 'No names yet' : 'Connect your wallet'}>
-          <p>{selectedAddress ? 'This wallet has no names. Search for a name to register.' : 'Connect a wallet to see its names.'}</p>
+        <EmptyState className="my-names-empty" title={selectedAddress ? 'No names yet' : walletStatus === 'locked' ? 'Wallet locked' : 'Connect your wallet'}>
+          <p>{selectedAddress ? 'This wallet has no names. Search for a name to register.' : walletStatus === 'locked' ? 'Unlock your wallet to see its names.' : 'Connect a wallet to see its names.'}</p>
           <div className="my-names-empty-actions">
             {selectedAddress ? null : (
               <Button variant="primary" className="compact" type="button" onClick={onConnectWallet}>
-                Connect wallet
+                {walletActionLabel(walletStatus ?? 'disconnected')}
               </Button>
             )}
             <Button variant={selectedAddress ? 'primary' : 'secondary'} type="button" onClick={onSearchHome}>

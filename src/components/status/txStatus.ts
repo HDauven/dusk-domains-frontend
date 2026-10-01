@@ -9,6 +9,7 @@ export function txStatusCopy(status: DuskDomainTxState['status'] | undefined, me
   if (status === 'preparing') return 'Preparing request'
   if (status === 'awaiting_approval') return 'Awaiting approval'
   if (status === 'submitted') return 'Transaction submitted'
+  if (status === 'executing' && message === 'Still confirming…') return message
   if (status === 'executing') return 'Confirming transaction'
   if (status === 'executed') return 'Transaction confirmed'
   if (status === 'failed' && isReadOnlyWalletMessage(message)) return 'Wallet is read-only'
@@ -29,8 +30,8 @@ export function userFacingTxMessage(state: DuskDomainTxState) {
     return 'Your reservation is still settling. Try again after a few more blocks.'
   }
   if (state.status === 'rejected') return 'The wallet request was rejected.'
-  if (state.status === 'timeout') return 'This is taking longer than expected. Refresh My Domains before trying again.'
-  return userFacingMessageFromText(message, 'The wallet could not complete this request. Refresh and try again.')
+  if (state.status === 'timeout') return 'This is taking longer than expected. Check confirmation before trying again.'
+  return userFacingMessageFromText(message, 'The wallet could not complete this request. Try again.')
 }
 
 export function txStatusDataAttrs(state: DuskDomainTxState) {

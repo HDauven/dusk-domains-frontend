@@ -17,7 +17,7 @@ export function createHealthyIndexerClient(baseUrl: string) {
     fetch: async (input, init) => {
       // A reachable API can still be serving an incomplete or stale projection.
       if (String(input).split('?')[0] !== healthUrl && Date.now() >= healthyUntil && !(await getHealth()).ok) {
-        throw new Error('Domain data is still syncing. Refresh and try again shortly.')
+        throw new Error('Domain data is still syncing. It will update automatically.')
       }
       return fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10_000) })
     },

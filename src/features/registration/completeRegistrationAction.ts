@@ -29,6 +29,7 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
     ensurePublicBalanceForLiveWrite,
   } = props
 
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   const preflight = completeRegistrationPreflight(props)
   if (!preflight.ok) {
     if (preflight.step === 'review') setRegistrationStep('review')
@@ -41,7 +42,9 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
   setRegistrationCompletion(null)
   if (!ensureContractAuthorityForLiveWrite('register this name', setWalletError)) return
   // The purchase step then offers to reserve again instead of a reveal that would fail.
-  if (await revealCommitmentMissing(props)) {
+  const missing = await revealCommitmentMissing(props)
+  if (!workspace()) return
+  if (missing) {
     setStrandedCommitment({ controller: selectedAuthority, commitment: preparedCommit.commitment })
     return
   }
@@ -51,10 +54,11 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
   })
   if (!(await ensurePublicBalanceForLiveWrite(
     'registering this name',
-    setWalletError,
+    message => { if (workspace()) setWalletError(message) },
     1,
     BigInt(request.feeLux),
   ))) return
+  if (!workspace()) return
   setRegistrationCompletion(createRegistrationCompletionState({
     registrationFee: request.feeLux / 1e9,
     expiryDate: formatLifecycleDay(request.lifecycle.expiresAt, props.lifecycleBaseBlockHeight, Math.floor(Date.now() / 1000)),
@@ -62,19 +66,23 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
 
   try {
     const finalState = await submitNameWrite(displayName, request.call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: (state) => updateRegistrationCompletion(props, 'complete_registration', state),
     })
+    if (!workspace()) return
 
     if (finalState.status === 'executed') {
       await applyCompleteRegistrationSuccess(props, {
         finalState,
         request,
+        workspace,
       })
     } else {
       await handleCompleteRegistrationEarlyReveal(props, finalState)
     }
   } catch (error) {
+    if (!workspace()) return
     const message = userFacingErrorMessage(error)
     setWalletError(message)
     setRegistrationCompletion((current) => markRegistrationCompletionFailed(current, message))

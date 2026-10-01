@@ -68,7 +68,7 @@ export async function updateFeeConfig({
   }
 
   if (!indexerClient) {
-    setFeeConfigConfirmation('Pricing update submitted. Refresh when indexing is available.')
+    setFeeConfigConfirmation('Pricing update submitted. Data will update when available.')
     return
   }
 
@@ -81,7 +81,7 @@ export async function updateFeeConfig({
       const nextFeeConfig = await indexerClient.getFeeConfig()
       return feeConfigValuesMatch(nextFeeConfig, parsed.config)
     },
-    refresh: loadFeeConfig,
+    refresh: () => loadFeeConfig({ fresh: true }),
   })
 
   if (confirmation.confirmed && confirmation.refreshed) {

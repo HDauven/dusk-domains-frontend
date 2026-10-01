@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   type DuskConnectOptions,
   userFacingErrorMessage,
@@ -18,7 +18,9 @@ export function useDuskWalletSession(
   expectedNodeUrl = '',
 ) {
   const wallet = connectKit.wallet
-  const [walletState, setWalletState] = useState<DuskWalletState>(() => wallet.state)
+  const [walletState, setWalletState] = useState<DuskWalletState & { explicitlyDisconnected?: boolean }>(() => wallet.state)
+  const busy = useRef(false)
+  const [walletBusy, setWalletBusy] = useState(false)
   const [walletError, setWalletError] = useState('')
   const [walletDiscoveryReady, setWalletDiscoveryReady] = useState(false)
   const [walletDiscoveryRefreshing, setWalletDiscoveryRefreshing] = useState(false)
@@ -69,7 +71,11 @@ export function useDuskWalletSession(
   })
 
   const handleOpenWalletConnection = useCallback(async () => {
+    if (busy.current) return
+    busy.current = true
+    setWalletBusy(true)
     setWalletError('')
+    connectKit.open()
     let openModal = true
     try {
       const result = await performWalletConnectionAction({
@@ -82,10 +88,12 @@ export function useDuskWalletSession(
       })
       openModal = result.openModal
     } catch (error) {
-      openModal = false
+      openModal = true
       setWalletError(userFacingErrorMessage(error))
     } finally {
-      if (openModal) connectKit.open()
+      busy.current = false
+      setWalletBusy(false)
+      if (!openModal) connectKit.close?.()
     }
   }, [connectKit, connectOptions, expectedChainId, expectedNodeUrl, refreshWalletConnectionState, refreshWalletSessionState, wallet])
 
@@ -104,6 +112,7 @@ export function useDuskWalletSession(
   }, [refreshWalletConnectionState, wallet])
 
   return {
+    walletBusy,
     handleOpenWalletConnection,
     handleRefreshWalletProviders,
     refreshWalletConnectionState,

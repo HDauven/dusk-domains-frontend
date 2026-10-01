@@ -4,7 +4,7 @@ import type { AppMainView } from './AppTypes'
 type UseAppNavigationArgs = {
   loadMyNames: () => Promise<unknown>
   loadReferralAccount: () => Promise<unknown>
-  loadTreasuryView: () => Promise<boolean>
+  loadTreasuryView: (options?: { fresh?: boolean }) => Promise<boolean>
   resetReferralCopied: () => void
   setMainView: Dispatch<SetStateAction<AppMainView>>
 }

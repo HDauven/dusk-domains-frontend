@@ -17,6 +17,8 @@ stars under it stay inert. */
 
 .page > .topbar,
 .page > .runtime-notice,
+.page > .network-status,
+.page > .wallet-dialog,
 .page > .site-footer,
 .page-main > * {
   pointer-events: auto;

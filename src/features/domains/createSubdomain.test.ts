@@ -4,7 +4,7 @@ import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'
 
 it('creates a subname managed by the connected account when Manager is empty', async () => {
   const authority = `0x${'11'.repeat(32)}`
-  const submitNameWrite = vi.fn(async () => ({ status: 'rejected' }))
+  const submitNameWrite = Object.assign(vi.fn(async () => ({ status: 'rejected' })), { captureWorkspace: () => () => true })
   const setSubnameError = vi.fn()
   const props = {
     canCreateSubname: true, displayName: 'alpha.dusk', selectedAddress: 'address', selectedAuthority: authority,

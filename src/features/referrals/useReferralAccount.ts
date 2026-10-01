@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useSingleFlight } from '../../app/useSingleFlight'
+import { createNameReadGuard } from '../search/nameReadGuard'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { DuskDomainsIndexerClient, IndexedReferralState } from '../../names/internal'
 import { emptyReferralUiState } from './referralState'
 
@@ -15,7 +17,12 @@ export function useReferralAccount({
   const [referralLoading, setReferralLoading] = useState(false)
   const [referralError, setReferralError] = useState('')
 
-  const loadReferralAccount = useCallback(async () => {
+  const beginRead = useMemo(() => createNameReadGuard(), [])
+  useEffect(() => () => { beginRead() }, [beginRead, indexerClient, selectedReferralKey])
+
+  const readData = useCallback(async () => {
+    const isCurrent = beginRead()
+    setReferralLoading(false)
     if (!selectedReferralKey) {
       setReferralAccountState(emptyReferralUiState())
       setReferralError('')
@@ -33,17 +40,21 @@ export function useReferralAccount({
 
     try {
       const nextReferralState = await indexerClient.getReferralState(selectedReferralKey)
+      if (!isCurrent()) return false
       setReferralAccountState(nextReferralState)
       return true
     } catch (error) {
+      if (!isCurrent()) return false
       void error
       setReferralAccountState(emptyReferralUiState(selectedReferralKey))
       setReferralError('Referral rewards are unavailable right now.')
       return false
     } finally {
-      setReferralLoading(false)
+      if (isCurrent()) setReferralLoading(false)
     }
-  }, [indexerClient, selectedReferralKey])
+  }, [beginRead, indexerClient, selectedReferralKey])
+
+  const loadReferralAccount = useSingleFlight(readData, readData)
 
   return {
     referralAccountState,

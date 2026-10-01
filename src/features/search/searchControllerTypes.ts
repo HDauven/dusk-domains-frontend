@@ -21,6 +21,7 @@ export type ResolverRecordSets = Record<string, ResolverRecord[]>
 export type UseSearchControllerProps = {
   chainId: string
   getCurrentBlockHeight: CurrentBlockHeightReader
+  searchNameFromIndexer?: (client: DuskDomainsIndexerClient, name: string) => Promise<NameResult>
   beginNameRead: () => () => boolean
   hydrateNameFromIndexer: (client: DuskDomainsIndexerClient, result: NameResult, isCurrent?: () => boolean) => Promise<void>
   indexerClient: DuskDomainsIndexerClient | null

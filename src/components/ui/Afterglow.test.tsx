@@ -61,14 +61,14 @@ describe('Afterglow names and copy', () => {
     expect(home).toContain('Find your .dusk name')
     expect(home).toContain('One readable name for your Dusk address.')
     expect(home).not.toContain('Claim it once')
-    expect(text(renderToStaticMarkup(<SiteFooter links={{ support: '', abuse: '', security: '', status: '' }} onMainViewChange={vi.fn()} />))).toBe('Dusk DomainsTreasury')
+    expect(text(renderToStaticMarkup(<SiteFooter links={{ support: '', abuse: '', security: '', status: '' }} onMainViewChange={vi.fn()} />))).toBe('Dusk DomainsReferralsTreasury')
   })
 
   it('says what is missing and what to do in My names', () => {
     const props: MyDomainsViewProps = {
       currentBlockHeight: null, loading: false, myNames: [], myNamesError: '', selectedAddress: '',
       pendingReservations: [], primarySummaries: {}, onConnectWallet: vi.fn(), onForgetPendingReservation: vi.fn(),
-      onOpenIndexedName: vi.fn(), onOpenPendingReservation: vi.fn(), onRefresh: vi.fn(), onSearchHome: vi.fn(),
+      onOpenIndexedName: vi.fn(), onOpenPendingReservation: vi.fn(), onSearchHome: vi.fn(),
     }
     expect(text(renderToStaticMarkup(<MyDomainsView {...props} />))).toContain('Connect a wallet to see its names.')
     const connected = text(renderToStaticMarkup(<MyDomainsView {...props} selectedAddress="wallet" />))

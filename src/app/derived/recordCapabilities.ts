@@ -1,5 +1,5 @@
 import { isSubname, lifecycleHeightReached, renewalDeadline } from '../../features/domains/domainFormat'
-import type { ManagedNameState } from '../appHelpers'
+import type { ManagedNameState } from '../managedNameState'
 import type { RecordTargetOption } from '../../features/domains/recordTypes'
 
 export function deriveRecordCapabilities({

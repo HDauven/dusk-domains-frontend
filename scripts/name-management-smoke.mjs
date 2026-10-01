@@ -28,7 +28,20 @@ export async function checkNameManagement(page) {
       onResultViewChange: value => { window.selectedNameSection = value },
     }))
   })
-  await page.setViewportSize({ width: 390, height: 900 })
+  for (const width of [390, 360]) {
+    await page.setViewportSize({ width, height: 900 })
+    const picker = page.locator('.name-section-select')
+    await picker.waitFor()
+    assert.equal(await picker.locator('label:visible').count(), 1, 'One visible Section label')
+    assert.equal(await page.getByRole('tablist', { name: 'Name sections' }).isVisible(), false)
+    assert.ok(await picker.evaluate(element => {
+      const background = getComputedStyle(element).backgroundColor
+      return background !== 'transparent' && background !== 'rgba(0, 0, 0, 0)'
+    }), 'The picker surface keeps sky decorations out from behind its label')
+    const label = await picker.locator('label').boundingBox()
+    const select = await picker.locator('select').boundingBox()
+    assert.ok(label.y + label.height < select.y, 'Section label sits above its picker')
+  }
   await page.getByLabel('Section', { exact: true }).selectOption('manage', { timeout: 3000 })
   assert.equal(await page.evaluate(() => window.selectedNameSection), 'manage')
   await page.setViewportSize({ width: 1440, height: 900 })

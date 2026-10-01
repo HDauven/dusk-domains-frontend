@@ -6,6 +6,7 @@ import { usePendingReservations, type PreparedRegistrationCommit } from '../feat
 import { useRegistrationFlowState } from '../features/registration/useRegistrationFlowState'
 
 export type UseRegistrationRuntimeArgs = {
+  explicitlyDisconnected?: boolean
   chainId: string
   getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
@@ -19,6 +20,7 @@ export type UseRegistrationRuntimeArgs = {
 }
 
 export function useRegistrationRuntime({
+  explicitlyDisconnected,
   chainId,
   getCurrentBlockHeight,
   indexerClient,
@@ -35,6 +37,7 @@ export function useRegistrationRuntime({
   })
 
   const pendingState = usePendingReservations({
+    explicitlyDisconnected,
     chainId,
     currentCommitment: preparedCommit?.commitment ?? '',
     getCurrentBlockHeight,

@@ -5,7 +5,6 @@ const items: Array<{ view: AppMainView, label: string }> = [
   { view: 'search', label: 'Search' },
   { view: 'marketplace', label: 'Market' },
   { view: 'my-names', label: 'My names' },
-  { view: 'referrals', label: 'Referrals' },
 ]
 
 export function PrimaryNavigation({

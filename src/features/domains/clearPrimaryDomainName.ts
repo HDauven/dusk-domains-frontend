@@ -21,6 +21,7 @@ export async function clearPrimaryDomainName({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UsePrimaryDomainActionsProps) {
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   setPrimaryError('')
   if (!guardDomainActionPrerequisite({
     canContinue: canClearPrimary,
@@ -31,7 +32,9 @@ export async function clearPrimaryDomainName({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('clear the primary name', setPrimaryError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('clearing the primary name', setPrimaryError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('clearing the primary name', message => { if (workspace()) setPrimaryError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const call = coreClearPrimaryNameRuntimeCall({
@@ -39,9 +42,11 @@ export async function clearPrimaryDomainName({
       endpointValue: primaryEndpoint,
     })
     const finalState = await submitNameWrite(displayName, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setPrimaryTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status === 'executed') {
       if (!(await shouldApplyPreviewWriteFallback('cleared primary name', async (client) => {
@@ -50,7 +55,8 @@ export async function clearPrimaryDomainName({
           value: primaryEndpoint,
         })
         return indexed === null
-      }))) return
+      }, workspace))) return
+      if (!workspace()) return
 
       setPrimaryName(null)
       appendActivity({
@@ -61,6 +67,7 @@ export async function clearPrimaryDomainName({
       })
     }
   } catch (error) {
+    if (!workspace()) return
     setPrimaryError(userFacingErrorMessage(error))
   }
 }

@@ -45,7 +45,6 @@ export function useReferralViewModel({
   const referralBusy = isDuskDomainTxBusy(referralTxState)
   const referralRewardClaimReady = Boolean(referralRewardClaimsAvailable && selectedIsMoonlightAccount)
   const referralClaimRecipient = selectedAddress || selectedAuthority
-  const referralAttributionLabel = appliedReferral ? 'Applied' : activeReferral ? 'Saved' : 'None'
   const referralRewardLabel = referralRewardStatusLabel({
     loading: referralLoading,
     selectedAddress,
@@ -72,12 +71,10 @@ export function useReferralViewModel({
   const referralRewardSummaryValue = referralRewardsSupported && !referralLoading
     ? formatLuxNumberAsDusk(referralAccountState.claimableLux)
     : referralRewardLabel
-  const showReferralSummary = Boolean(selectedAddress || activeReferral || referralRewardsSupported)
 
   return {
     activeReferral,
     appliedReferral,
-    referralAttributionLabel,
     referralBusy,
     referralClaimRecipient,
     referralClaimable,
@@ -86,6 +83,5 @@ export function useReferralViewModel({
     referralRewardSummaryValue,
     referralRewardsSupported,
     selectedReferralKey,
-    showReferralSummary,
   }
 }

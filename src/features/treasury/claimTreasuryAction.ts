@@ -85,7 +85,7 @@ export async function claimTreasury(
       const nextTreasury = await indexerClient.getTreasury()
       return nextTreasury.availableLux < beforeAvailableLux || nextTreasury.lastEventType === 'treasury_claimed'
     },
-    refresh: loadTreasury,
+    refresh: () => loadTreasury({ fresh: true }),
   })
 
   if (confirmation.confirmed && confirmation.refreshed) {

@@ -1,9 +1,11 @@
+import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { ComponentProps } from 'react'
 import type { DuskDomainsIndexerClient, PendingNameReservation } from '../../names/internal'
 import { MyDomainsView } from './MyDomainsView'
 import { useMyDomains } from './useMyDomains'
 
 export function useMyDomainsFeature({
+  walletStatus,
   currentBlockHeight,
   indexerClient,
   mainView,
@@ -18,6 +20,7 @@ export function useMyDomainsFeature({
   selectedAddress,
   selectedAuthority,
 }: {
+  walletStatus?: WalletConnectionStatus
   currentBlockHeight: number | null
   indexerClient: DuskDomainsIndexerClient | null
   mainView: string
@@ -48,6 +51,7 @@ export function useMyDomainsFeature({
   })
 
   const myDomainsProps: ComponentProps<typeof MyDomainsView> = {
+    walletStatus,
     currentBlockHeight,
     loading: myNamesLoading,
     myNames,
@@ -56,7 +60,6 @@ export function useMyDomainsFeature({
     onForgetPendingReservation,
     onOpenIndexedName,
     onOpenPendingReservation,
-    onRefresh: () => void loadMyNames(),
     onSearchHome,
     pendingReservations,
     primarySummaries: myNamePrimarySummaries,

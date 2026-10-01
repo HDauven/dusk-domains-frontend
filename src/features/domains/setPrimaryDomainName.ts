@@ -23,6 +23,7 @@ export async function setPrimaryDomainName({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UsePrimaryDomainActionsProps) {
+  const workspace = submitNameWrite.captureWorkspace(displayName)
   setPrimaryError('')
   if (!guardDomainActionPrerequisite({
     canContinue: canSetPrimary,
@@ -33,7 +34,9 @@ export async function setPrimaryDomainName({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('set the primary name', setPrimaryError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('setting the primary name', setPrimaryError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('setting the primary name', message => { if (workspace()) setPrimaryError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const call = coreSetPrimaryNameRuntimeCall({
@@ -43,9 +46,11 @@ export async function setPrimaryDomainName({
       name: displayName,
     })
     const finalState = await submitNameWrite(displayName, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setPrimaryTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status === 'executed') {
       if (!(await shouldApplyPreviewWriteFallback('primary name', async (client) => {
@@ -54,7 +59,8 @@ export async function setPrimaryDomainName({
           value: primaryEndpoint,
         })
         return indexed === displayName
-      }))) return
+      }, workspace))) return
+      if (!workspace()) return
 
       setPrimaryName(displayName)
       setPrimaryEndpointValue(primaryEndpoint)
@@ -66,6 +72,7 @@ export async function setPrimaryDomainName({
       })
     }
   } catch (error) {
+    if (!workspace()) return
     setPrimaryError(userFacingErrorMessage(error))
   }
 }

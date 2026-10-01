@@ -59,15 +59,13 @@ describe('wallet connection action', () => {
     expect(switchChain).not.toHaveBeenCalledWith({ chainId: 'dusk:0' })
   })
 
-  it('falls back to the modal when a wrong-network wallet cannot switch directly', async () => {
-    const result = await performWalletConnectionAction({
+  it('explains a wrong network when the wallet cannot switch directly', async () => {
+    await expect(performWalletConnectionAction({
       expectedChainId: 'dusk:2',
       refreshWalletConnectionState: vi.fn().mockResolvedValue('wrong-network'),
       refreshWalletSessionState: vi.fn(),
       wallet: walletLike(),
-    })
-
-    expect(result).toEqual({ openModal: true })
+    })).rejects.toThrow('Switch your wallet to this app’s network')
   })
 
   it('continues to unlock an authorized locked wallet directly', async () => {
@@ -112,3 +110,15 @@ function walletLike(overrides = {}) {
     ...overrides,
   }
 }
+
+it('connects a discovered wallet directly without leaving the modal open', async () => {
+  const connect = vi.fn().mockResolvedValue([])
+  expect(await performWalletConnectionAction({ wallet: walletLike({ connect }), expectedChainId: 'dusk:0', refreshWalletConnectionState: async () => 'disconnected', refreshWalletSessionState: async () => 'connected' })).toEqual({ openModal: false })
+  expect(connect).toHaveBeenCalledOnce()
+})
+it('explains a missing wallet and preserves a rejected connection', async () => {
+  const args = { wallet: walletLike(), expectedChainId: 'dusk:0', refreshWalletConnectionState: async () => 'missing', refreshWalletSessionState: vi.fn() }
+  await expect(performWalletConnectionAction(args)).rejects.toThrow('No wallet found')
+  const rejected = new Error('User rejected the request')
+  await expect(performWalletConnectionAction({ ...args, wallet: walletLike({ connect: async () => { throw rejected } }), refreshWalletConnectionState: async () => 'disconnected' })).rejects.toBe(rejected)
+})

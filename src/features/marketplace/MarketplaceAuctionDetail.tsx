@@ -5,8 +5,7 @@ import { Panel } from '../../components/ui/Panel'
 import { Input } from '../../components/ui/Input'
 import { ArrowLeft, Clock3, Gavel, ShieldCheck, Star, UserRound } from 'lucide-react'
 import { type ActivityEntry, type IndexedMarketplaceAuction } from '../../names/internal'
-import { abbreviate } from '../../utils/format'
-import { activityActor } from '../activity/activityCopy'
+import { OwnerLabel } from '../identity/OwnerLabel'
 import { activityWhen } from '../activity/activityTime'
 import { formatActivityTime } from '../domains/domainFormat'
 import { MarketplaceAmount } from './MarketplaceAmount'
@@ -14,6 +13,7 @@ import { formatLuxAsDusk, minimumBidDusk, minimumBidLux } from './auctionMath'
 import { AuctionCountdown } from './AuctionCountdown'
 import { ListingName } from './ListingName'
 import {
+  MARKETPLACE_SYNC_MESSAGE,
   auctionDurationLabel,
   auctionStartWindowLabel,
   auctionStatus,
@@ -36,7 +36,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
     <div className="marketplace-auction-detail">
       <div className="marketplace-navigation"><Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
         <ArrowLeft aria-hidden="true" size={15} /> All listings
-      </Button><MarketplaceFreshness updatedAt={props.updatedAt} /></div>
+      </Button><MarketplaceFreshness updatedAt={props.error === MARKETPLACE_SYNC_MESSAGE ? null : props.updatedAt} /></div>
 
       <div className="marketplace-auction-hero">
         <div>
@@ -66,7 +66,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
               <h3 id="auction-details-heading" className="eyebrow">Details</h3>
             </div>
             <dl>
-              <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><code>{ownAuction ? 'You' : abbreviate(auction.sellerAuthority)}</code></dd></div>
+              <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} /></dd></div>
               <div><dt><Clock3 aria-hidden="true" size={14} /> Duration</dt><dd>{auctionDurationLabel(auction.durationBlocks)}</dd></div>
               <div><dt>Bids</dt><dd>{auction.bidCount}</dd></div>
               <div><dt>Marketplace fee</dt><dd>{marketplaceFeeLabel(auction.feeBps)} from seller proceeds</dd></div>
@@ -84,7 +84,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             ) : marketplaceActivity.length ? (
               <ol>
                 {marketplaceActivity.map((entry) => (
-                  <AuctionActivityRow currentBlockHeight={props.currentBlockHeight} entry={entry} key={entry.id} viewerAuthority={props.selectedAuthority} />
+                  <AuctionActivityRow currentBlockHeight={props.currentBlockHeight} entry={entry} key={entry.id} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} />
                 ))}
               </ol>
             ) : (
@@ -100,6 +100,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
           <div className="marketplace-bid-price">
             <span>{auction.highestBid ? 'Current bid' : 'Minimum bid'}</span>
             <strong><MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} roundUp={!auction.highestBid} /></strong>
+            {auction.highestBid ? <div className="marketplace-owner">Highest bidder <OwnerLabel authority={auction.highestBid.bidderAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} /></div> : null}
             <small>{auction.bidCount} confirmed {auction.bidCount === 1 ? 'bid' : 'bids'}</small>
           </div>
           <div className="marketplace-bid-timer">
@@ -188,14 +189,14 @@ function AuctionAction({
 
 }
 
-function AuctionActivityRow({ currentBlockHeight, entry, viewerAuthority }: { currentBlockHeight: number | null; entry: ActivityEntry; viewerAuthority: string }) {
+function AuctionActivityRow({ currentBlockHeight, entry, viewerAuthority, addresses }: { currentBlockHeight: number | null; entry: ActivityEntry; viewerAuthority: string; addresses?: string[] }) {
   const amount = marketplaceActivityAmount(entry)
   return (
     <li>
       <span className="marketplace-activity-icon"><Gavel aria-hidden="true" size={14} /></span>
       <div>
         <strong>Bid placed</strong>
-        <span>{activityActor(entry.actor, viewerAuthority) || 'Marketplace'}</span>
+        <OwnerLabel authority={entry.actor} viewerAuthority={viewerAuthority} addresses={addresses} />
       </div>
       <div className="marketplace-activity-value">
         {amount ? <strong>{amount}</strong> : null}

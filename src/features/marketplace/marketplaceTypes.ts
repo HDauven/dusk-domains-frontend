@@ -25,6 +25,7 @@ export type MarketplaceReviewDetails = {
 }
 
 export type MarketplaceViewProps = {
+  ownerAddresses?: string[]
   review?: MarketplaceReviewDetails | null
   onCancelReview?: () => void
   onConfirmReview?: () => void
@@ -87,7 +88,6 @@ export type MarketplaceViewProps = {
   onPlaceBid: (auction: IndexedMarketplaceAuction) => void
   onPlaceOffer: () => void
   onPrivateBuyerChange: (value: string) => void
-  onRefresh: () => void
   onReviewBid: (auction: IndexedMarketplaceAuction) => void
   onReserveDuskChange: (value: string) => void
   onSaleModeChange: (mode: MarketplaceSaleMode) => void
@@ -99,6 +99,7 @@ export type MarketplaceViewProps = {
 }
 
 export type MarketplaceBrowseProps = Pick<MarketplaceViewProps,
+  | 'ownerAddresses'
   | 'actionsAvailable'
   | 'auctions'
   | 'currentBlockHeight'
@@ -117,6 +118,8 @@ export type MarketplaceBrowseProps = Pick<MarketplaceViewProps,
 >
 
 export type MarketplaceAuctionDetailProps = Pick<MarketplaceViewProps,
+  | 'error'
+  | 'ownerAddresses'
   | 'updatedAt'
   | 'actionsAvailable'
   | 'auctionActivity'
@@ -140,6 +143,7 @@ export type MarketplaceAuctionDetailProps = Pick<MarketplaceViewProps,
 >
 
 export type MarketplaceOffersProps = Pick<MarketplaceViewProps,
+  | 'ownerAddresses'
   | 'actionsAvailable'
   | 'currentBlockHeight'
   | 'offerAmountDusk'

@@ -126,30 +126,37 @@
   gap: 18px;
 }
 
+.topbar .menu-toggle { display: none; }
+.wallet-dialog { max-width: min(440px, calc(100vw - 32px)); }
+.wallet-dialog p { color: var(--muted); }
+.wallet-dialog [role="alert"] { color: var(--error); }
+.wallet-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+
 @media (max-width: 900px) {
   .topbar {
-    grid-template-columns: 1fr auto;
-    gap: 14px;
-    padding: var(--space-4) var(--space-4) var(--space-3);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 12px 16px;
   }
-
-  .nav-links {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-content: space-between;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .nav-links a {
-    flex: 1;
-    justify-content: center;
-    padding: var(--space-2) 10px;
-  }
+  .brand-name { display: none; }
+  .topbar-brand { gap: 8px; }
+  .topbar .menu-toggle { display: inline-flex; padding: 10px; }
+  .topbar-navigation { display: none; position: absolute; top: 100%; left: 16px; right: 16px; }
+  .menu-open .topbar-navigation { display: block; }
+  .nav-links { border-radius: var(--radius-md); box-shadow: var(--shadow-sm); justify-content: space-around; }
+  .nav-links a { padding: 12px 10px; }
+  .topbar .wallet-connect { min-width: 0; max-width: min(155px, 100%); }
 }
 
-@media (max-width: 480px) {
-  .brand-name {
-    display: none;
-  }
+.network-status {
+  position: relative;
+  z-index: 2;
+  margin: 0 clamp(16px, 3vw, 40px) 12px;
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
+.network-status p { margin: 0; }
+.network-notice { padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.network-status details { margin-top: 8px; overflow-wrap: anywhere; }
+.network-status summary { cursor: pointer; }
+.network-status details p { margin-top: 8px; }

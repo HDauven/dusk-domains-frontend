@@ -8,7 +8,7 @@ import type {
   ResolverRecord,
   SubnameState,
 } from '../../names/internal'
-import type { ManagedNameState } from '../appHelpers'
+import type { ManagedNameState } from '../managedNameState'
 
 export type UseAppDerivedStateArgs = {
   registrationsPaused?: boolean

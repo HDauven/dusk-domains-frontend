@@ -1,6 +1,4 @@
-import {
-  createManagedNameState,
-} from '../../app/appHelpers'
+import { createManagedNameState } from '../../app/managedNameState'
 import { lifecycleHeightFromIndexed, renewalGraceEnd, unixSecondsFromIso } from '../domains/domainFormat'
 import { userFacingMessageFromText } from '../../names/internal'
 import type { IndexedNameReadBundle } from './indexedNameReads'
@@ -91,6 +89,6 @@ export function applyIndexedNameHydration(
   }
 
   if (readErrors.length > 0) {
-    setIndexerError(userFacingMessageFromText(readErrors[0], 'Some name data is still syncing. Refresh and try again.'))
+    setIndexerError(userFacingMessageFromText(readErrors[0], 'Some name data is still syncing. Trying again automatically.'))
   }
 }

@@ -9,9 +9,6 @@ import type { FeeConfigFormState } from '../feeConfig'
 export type FeeConfigField = keyof FeeConfigFormState
 
 export type TreasuryHeaderProps = {
-  feeConfigLoading: boolean
-  onRefresh: () => void
-  treasuryLoading: boolean
   treasuryState: IndexedTreasuryState
 }
 

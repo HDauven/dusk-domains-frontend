@@ -12,7 +12,7 @@ import type { MarketplaceSellProps } from './marketplaceTypes'
 const durations = [1, 3, 7, 14, 30]
 
 export function MarketplaceSell(props: MarketplaceSellProps) {
-  const selectedName = props.sellableNames.find((name) => name.node === props.selectedNode) ?? props.sellableNames[0]
+  const selectedName = props.sellableNames.find((name) => name.node === props.selectedNode)
 
   const amount = validLuxAmount(props.saleMode === 'auction' ? props.reserveDusk : props.fixedPriceDusk)
 
@@ -40,7 +40,8 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
           <div className="marketplace-form">
             <label className="marketplace-field-wide">
               <span>Name</span>
-              <Select value={props.selectedNode || selectedName?.node || ''} onChange={(event) => props.onSelectedNodeChange(event.target.value)}>
+              <Select value={props.selectedNode || ''} onChange={(event) => props.onSelectedNodeChange(event.target.value)}>
+                {!selectedName ? <option value="">Choose a name</option> : null}
                 {props.sellableNames.map((name) => <option key={name.node} value={name.node}>{name.canonicalName}</option>)}
               </Select>
             </label>
@@ -80,7 +81,7 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
 
           <p className="field-note">Only names with no subnames can be listed. Subnames themselves can’t be sold.</p>
 
-          <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || props.feeBps == null} type="button" onClick={() => props.onCreateListing()}>
+          <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || props.feeBps == null || !selectedName} type="button" onClick={() => props.onCreateListing()}>
             {props.saleMode === 'auction' ? 'Start auction' : 'List for sale'}
           </Button>
         </Panel>

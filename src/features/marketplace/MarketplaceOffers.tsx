@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { abbreviate } from '../../utils/format'
+import { OwnerLabel } from '../identity/OwnerLabel'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Input'
@@ -84,7 +84,7 @@ function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: Indexe
   const expired = isExpired(offer.expiresAtBlockHeight, props.currentBlockHeight)
   return (
     <article className="marketplace-order-row marketplace-offer-row">
-      <div className="marketplace-order-name"><strong>{offer.name}</strong><span>{incoming ? 'Received · ' : ''}Buyer {ownOffer ? 'You' : abbreviate(offer.buyerAuthority)}</span></div>
+      <div className="marketplace-order-name"><strong>{offer.name}</strong><div>{incoming ? 'Received · ' : ''}Buyer <OwnerLabel authority={offer.buyerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} /></div></div>
       <div><span>Offer</span><strong><MarketplaceAmount lux={offer.amountLux} /></strong></div>
       <div><span>{expired ? 'Status' : 'Expires'}</span><strong>{expiryTimeLabel(offer.expiresAtBlockHeight, props.currentBlockHeight)}</strong></div>
       <div className="marketplace-order-action">

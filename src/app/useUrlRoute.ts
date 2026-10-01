@@ -4,7 +4,9 @@ import { parseRoute, routePath, type AppRoute } from './routes'
 
 // Keeps the address bar and the app in step: every view and every searched name has a URL,
 // the back button works, and a refresh or a shared link opens the same place.
-export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searchedName, selectedAuctionNode, onOpenAuction }: {
+export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searchedName, selectedAuctionNode, onOpenAuction, sellName, onOpenSell }: {
+  sellName?: string
+  onOpenSell?: (name: string) => void
   selectedAuctionNode?: string
   onOpenAuction?: (node: string) => void
   checked: boolean
@@ -16,9 +18,9 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
   // The route taken from the address bar that the app is still catching up to. It is fresh until
   // the app has rendered once after applying it, since that render still shows the old state.
   const pending = useRef<{ route: AppRoute, fresh: boolean } | null>(null)
-  const open = useRef({ onOpenName, onOpenView, onOpenAuction })
+  const open = useRef({ onOpenName, onOpenView, onOpenAuction, onOpenSell })
   useEffect(() => {
-    open.current = { onOpenName, onOpenView, onOpenAuction }
+    open.current = { onOpenName, onOpenView, onOpenAuction, onOpenSell }
   })
 
   useEffect(() => {
@@ -28,7 +30,8 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
       if (route.name) open.current.onOpenName(route.name)
       else {
         open.current.onOpenView(route.view)
-        open.current.onOpenAuction?.(route.auctionNode ?? '')
+        if (route.sellName) open.current.onOpenSell?.(route.sellName)
+        else open.current.onOpenAuction?.(route.auctionNode ?? '')
       }
     }
     apply()
@@ -38,6 +41,7 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
 
   const current: AppRoute = mainView === 'search' && checked && searchedName
     ? { view: 'search', name: searchedName }
+    : mainView === 'marketplace' && sellName ? { view: mainView, sellName }
     : mainView === 'marketplace' && selectedAuctionNode ? { view: mainView, auctionNode: selectedAuctionNode } : { view: mainView }
   const path = routePath(current)
 

@@ -119,7 +119,7 @@ export function RegistrationPurchaseStep({
       )}
 
       {registrationCompletion ? (
-        <RegistrationCompletionProgress progress={registrationCompletion} onSetAddress={onSetAddress} />
+        <RegistrationCompletionProgress txState={txState} progress={registrationCompletion} onSetAddress={onSetAddress} />
       ) : txState ? (
         <TransactionStatusNotice state={txState} />
       ) : null}

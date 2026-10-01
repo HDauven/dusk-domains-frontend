@@ -1,3 +1,4 @@
+import { useAutoRefresh } from './useAutoRefresh'
 import type { DuskDomainsRuntimeConfig } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 import type { NetworkBadge } from './TopBar'
@@ -49,14 +50,13 @@ export function useDuskDomainsAppModel() {
     handleSearchHome,
     searchName,
   } = searchRuntime
+  useAutoRefresh(searchRuntime.refreshCurrentNameFromIndexer, mainView === 'search' && searchState.checked && ['overview', 'details', 'activity', 'subnames'].includes(searchState.resultView))
   const skyNames = useSkyNames(appRuntime.indexerClient)
   const openName = (name: string) => void searchName(name)
   const openView = (view: AppMainView) => {
     if (view === 'search') handleSearchHome()
     else void handleMainViewChange(view)
   }
-
-
 
   const {
     mainContentProps,
@@ -68,13 +68,15 @@ export function useDuskDomainsAppModel() {
   })
   const {
     marketplaceProps,
+    sellName,
+    openSell,
   } = useMarketplaceFeature({
     tradingPaused: appRuntime.pause.tradingPaused,
     ensurePublicBalanceForLiveWrite,
     duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
     indexerClient: appRuntime.indexerClient,
     marketplaceOnChainClient: appRuntime.marketplaceOnChainClient,
-    liveWritesAvailable: Boolean(appRuntime.liveDuskDomainsApp),
+    liveWritesAvailable: !appRuntime.writeAccess.readOnly,
     mainView,
     onOpenWalletConnection: () => void handleOpenWalletConnection(),
     runtimeConfig: appRuntime.runtimeConfig,
@@ -84,6 +86,8 @@ export function useDuskDomainsAppModel() {
   })
 
   useUrlRoute({
+    sellName,
+    onOpenSell: openSell,
     selectedAuctionNode: marketplaceProps.selectedAuctionNode,
     onOpenAuction: marketplaceProps.onOpenAuction,
     checked: searchState.checked,
@@ -99,11 +103,25 @@ export function useDuskDomainsAppModel() {
       marketplaceProps,
       searchProps: {
         ...mainContentProps.searchProps,
+        overviewProps: { ...mainContentProps.searchProps.overviewProps, readOnly: appRuntime.writeAccess.readOnly, registrationUnavailable: !appRuntime.writeAccess.canRegister },
         featuredNames: showcase(skyNames),
         onOpenName: openName,
       },
     },
     shellProps: {
+      pendingConfirmation: walletRuntime.pendingConfirmation,
+      networkStatus: { config: appRuntime.runtimeConfig, client: appRuntime.indexerClient, readOnly: appRuntime.writeAccess.readOnly },
+      walletDialog: {
+        open: appRuntime.walletOpen,
+        busy: walletRuntime.walletBusy,
+        error: walletRuntime.walletError,
+        status: walletSetupState,
+        address: selectedAddress,
+        onClose: appRuntime.connectKit.close,
+        onConnect: () => void handleOpenWalletConnection(),
+        onDisconnect: () => { void appRuntime.wallet.disconnect().then(appRuntime.connectKit.close).catch(error => walletRuntime.setWalletError(error instanceof Error ? error.message : 'Could not disconnect. Try again.')) },
+        onReferrals: () => { appRuntime.connectKit.close(); openView('referrals') },
+      },
       pause: appRuntime.pause,
       launchLinks: appRuntime.runtimeConfig.launchLinks,
       mainView,

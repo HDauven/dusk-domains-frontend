@@ -28,17 +28,28 @@ export async function performWalletConnectionAction({
 
   if (status === 'wrong-network' && (expectedNodeUrl || expectedChainId) && wallet.switchChain) {
     await wallet.switchChain(expectedNodeUrl ? { nodeUrl: expectedNodeUrl } : { chainId: expectedChainId })
-    await waitForExpectedWalletNetwork(refreshWalletSessionState)
+    if (await waitForExpectedWalletNetwork(refreshWalletSessionState) === 'wrong-network') throw new Error('Your wallet is still on another network. Switch networks and try again.')
     return { openModal: false }
   }
 
-  if (status === 'locked' && wallet.connect) {
+  if (status === 'wrong-network') throw new Error('Switch your wallet to this app’s network, then try again.')
+  if (status === 'connected') return { openModal: true }
+  if (status === 'missing' || !wallet.connect) throw new Error('No wallet found. Install or enable Dusk Wallet, then try again.')
+  try {
     await wallet.connect(connectOptions)
-    await refreshWalletSessionState()
-    return { openModal: false }
+  } catch (error) {
+    // Approval events can finish connecting before the original response arrives.
+    if (walletStatusFromUnknown(await refreshWalletSessionState()) !== 'connected') throw error
   }
-
-  return { openModal: true }
+  const connected = walletStatusFromUnknown(await refreshWalletSessionState())
+  if (connected === 'wrong-network') {
+    if (!wallet.switchChain) throw new Error('Switch your wallet to this app’s network, then try again.')
+    await wallet.switchChain(expectedNodeUrl ? { nodeUrl: expectedNodeUrl } : { chainId: expectedChainId })
+    if (await waitForExpectedWalletNetwork(refreshWalletSessionState) === 'wrong-network') {
+      throw new Error('Your wallet is still on another network. Switch networks and try again.')
+    }
+  }
+  return { openModal: false }
 }
 
 async function waitForExpectedWalletNetwork(refreshWalletSessionState: RefreshWalletStatus) {

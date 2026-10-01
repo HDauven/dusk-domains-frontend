@@ -38,7 +38,7 @@ export async function checkAvailability(props: UseSearchControllerProps) {
 
   const isCurrent = beginNameRead()
   try {
-    const nextResult = await indexerClient.searchName(query)
+    const nextResult = await (props.searchNameFromIndexer?.(indexerClient, query) ?? indexerClient.searchName(query))
     if (!isCurrent()) return
     setApiSearchResult(nextResult)
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)

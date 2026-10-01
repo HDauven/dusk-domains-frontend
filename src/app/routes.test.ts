@@ -26,3 +26,9 @@ it('round-trips a direct auction link', () => {
   expect(parseRoute(`/market/auction/${route.auctionNode}/`)).toEqual(route)
   expect(routePath(route)).toBe(`/market/auction/${route.auctionNode}`)
 })
+
+it('round-trips a name selected for sale', () => {
+  const route = { view: 'marketplace' as const, sellName: 'aurora.dusk' }
+  expect(routePath(route)).toBe('/market/sell/aurora.dusk')
+  expect(parseRoute(routePath(route))).toEqual(route)
+})

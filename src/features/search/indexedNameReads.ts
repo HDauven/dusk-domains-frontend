@@ -1,8 +1,4 @@
-import {
-  indexedSubnameToState,
-  indexerRead,
-  type IndexerReadResult,
-} from '../../app/appHelpers'
+import { indexedSubnameToState, indexerRead, type IndexerReadResult } from '../../app/indexerReadHelpers'
 import type {
   ActivityEntry,
   DuskDomainsIndexerClient,

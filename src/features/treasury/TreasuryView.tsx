@@ -1,11 +1,12 @@
 import { AccountViewLayout } from '../../components/ui/AccountViewLayout'
-import {
-  TreasuryAccountingCard,
-  TreasuryClaimCard,
-  TreasuryClaimHistoryCard,
-  TreasuryHeader,
-  TreasuryPricingCard,
-} from './TreasuryCards'
+import { AccountCard, AccountDetailList, AccountDetailItem } from '../../components/ui/AccountCard'
+import { registrationPrice } from '../../names/internal'
+import { formatDusk } from '../../utils/format'
+import { TreasuryAccountingCard } from './cards/TreasuryAccountingCard'
+import { TreasuryClaimCard } from './cards/TreasuryClaimCard'
+import { TreasuryClaimHistoryCard } from './cards/TreasuryClaimHistoryCard'
+import { TreasuryHeader } from './cards/TreasuryHeader'
+import { TreasuryPricingCard } from './cards/TreasuryPricingCard'
 import type { TreasuryViewProps } from './treasuryViewTypes'
 
 export function TreasuryView({
@@ -26,7 +27,6 @@ export function TreasuryView({
   onClaimTreasury,
   onFeeConfigFieldChange,
   onOpenWalletConnection,
-  onRefresh,
   onTreasuryClaimAmountChange,
   onUpdateFeeConfig,
   selectedAddress,
@@ -40,7 +40,6 @@ export function TreasuryView({
   treasuryConfirmation,
   treasuryConnectedWalletLabel,
   treasuryError,
-  treasuryLoading,
   treasuryRecipientMatchesOperator,
   treasuryReviewAmountLux,
   treasuryReviewLabel,
@@ -57,16 +56,13 @@ export function TreasuryView({
       error={treasuryError}
       header={(
         <TreasuryHeader
-          feeConfigLoading={feeConfigLoading}
-          onRefresh={onRefresh}
-          treasuryLoading={treasuryLoading}
           treasuryState={treasuryState}
         />
       )}
       labelledBy="treasury-heading"
       panelId="treasury"
     >
-      <TreasuryClaimCard
+      {connectedAsTreasuryOperator ? <TreasuryClaimCard
         canClaimTreasury={canClaimTreasury}
         canClaimTreasuryPartial={canClaimTreasuryPartial}
         connectedAsTreasuryOperator={connectedAsTreasuryOperator}
@@ -90,11 +86,11 @@ export function TreasuryView({
         treasuryTxState={treasuryTxState}
         treasuryWalletStatus={treasuryWalletStatus}
         walletSetupState={walletSetupState}
-      />
+      /> : null}
 
       <TreasuryAccountingCard treasuryState={treasuryState} />
 
-      <TreasuryPricingCard
+      {connectedAsTreasuryOperator ? <TreasuryPricingCard
         canUpdateFeeConfig={canUpdateFeeConfig}
         connectedAsTreasuryOperator={connectedAsTreasuryOperator}
         feeConfig={feeConfig}
@@ -111,7 +107,11 @@ export function TreasuryView({
         onUpdateFeeConfig={onUpdateFeeConfig}
         selectedAddress={selectedAddress}
         walletSetupState={walletSetupState}
-      />
+      /> : <AccountCard title="Pricing" heading="Yearly prices">
+        {feeConfigError ? <p>{feeConfigError}</p> : <AccountDetailList>
+          {['abc', 'abcd', 'abcde'].map((label, i) => <AccountDetailItem key={label} label={['3 characters', '4 characters', '5+ characters'][i]} value={`${formatDusk(registrationPrice(label, 1, feeConfig))} DUSK`} />)}
+        </AccountDetailList>}
+      </AccountCard>}
 
       <TreasuryClaimHistoryCard treasuryState={treasuryState} />
     </AccountViewLayout>

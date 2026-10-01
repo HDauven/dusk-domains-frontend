@@ -27,6 +27,7 @@ export async function saveDomainRecords({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: UseDomainRecordActionsProps) {
+  const workspace = submitNameWrite.captureWorkspace(activeRecordTarget?.name ?? '')
   setRecordError('')
   if (!canSaveRecords) {
     if (recordDraftErrors.length > 0) {
@@ -46,7 +47,9 @@ export async function saveDomainRecords({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('save these records', setRecordError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('saving these records', setRecordError))) return
+  if (!(await ensurePublicBalanceForLiveWrite('saving these records', message => { if (workspace()) setRecordError(message) }))) return
+
+  if (!workspace()) return
 
   try {
     const target = activeRecordTarget
@@ -58,9 +61,11 @@ export async function saveDomainRecords({
       mutations,
     })
     const finalState = await submitNameWrite(target.name, call, {
+      workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setRecordTxState,
     })
+    if (!workspace()) return
 
     if (finalState.status !== 'executed') return
 
@@ -75,7 +80,8 @@ export async function saveDomainRecords({
           existing.key === mutation.key && existing.value === mutation.value
         ))
       })
-    })
+    }, workspace)
+    if (!workspace()) return
     if (applyLocally === null) return false
     setRecordError('')
     setRecordDrafts({})
@@ -101,6 +107,7 @@ export async function saveDomainRecords({
     })
     return true
   } catch (error) {
+    if (!workspace()) return
     setRecordError(userFacingErrorMessage(error))
   }
 }
