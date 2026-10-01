@@ -1,7 +1,8 @@
+import { ownerLabel, sameAuthority } from '../identity/ownerLabel'
+import { recordLabel as readableRecordLabel } from '../domains/recordPresentation'
 import {
   activityDescription,
   activityLabel,
-  getRecordDefinition,
   type ActivityEntry,
   type ResolverRecordKey,
 } from '../../names/internal'
@@ -11,20 +12,15 @@ import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 // Activity rows carry raw values: owner authorities, record keys, "moonlight_address:<address>",
 // ISO dates and amounts in lux. These helpers read them the way a person would.
 
-function authorityKey(value: string | null | undefined) {
-  return String(value ?? '').trim().toLowerCase().replace(/^0x/u, '')
-}
+export const isViewer = sameAuthority
 
-export function isViewer(authority: string | null | undefined, viewerAuthority: string | null | undefined) {
-  return Boolean(authorityKey(authority)) && authorityKey(authority) === authorityKey(viewerAuthority)
-}
-
-function who(authority: string, viewerAuthority?: string | null) {
-  return isViewer(authority, viewerAuthority) ? 'you' : abbreviate(authority)
+function who(authority: string, viewerAuthority?: string | null, addresses?: readonly string[]) {
+  const identity = ownerLabel(authority, { viewerAuthority, addresses })
+  return identity.kind === 'you' ? 'you' : identity.label
 }
 
 export function recordLabel(key: string) {
-  return getRecordDefinition(key as ResolverRecordKey)?.label ?? key
+  return readableRecordLabel(key as ResolverRecordKey)
 }
 
 // "moonlight_address:<address>" names the address a primary name is shown for.
@@ -36,25 +32,32 @@ function primaryTarget(target: string) {
 export function activityTitle(entry: ActivityEntry) {
   if (entry.eventType === 'primary_name') return 'Primary name set'
   if (entry.eventType === 'subname_created') return 'Subname created'
+  if (entry.eventType === 'subname_pruned') return 'Expired subname removed'
   if (entry.eventType === 'domain_fixed_sale_filled') return 'Sold'
   return activityLabel(entry.eventType)
 }
 
-export function activityDetail(entry: ActivityEntry, viewerAuthority?: string | null) {
+export function activityDetail(entry: ActivityEntry, viewerAuthority?: string | null, addresses?: readonly string[]) {
   const target = entry.target ?? ''
-  if (entry.eventType === 'registration' || entry.eventType === 'transfer') return target ? `Owner: ${who(target, viewerAuthority)}` : ''
+  if (entry.eventType === 'registration' || entry.eventType === 'transfer') return target ? `Owner: ${who(target, viewerAuthority, addresses)}` : ''
   if (entry.eventType === 'renewal') return /^\d{4}-\d{2}-\d{2}/u.test(target) ? `Now runs until ${target.slice(0, 10)}` : ''
   if (entry.eventType === 'record_update') return target ? recordLabel(target) : ''
-  if (entry.eventType === 'primary_name') return primaryTarget(target)
+  if (entry.eventType === 'primary_name') return ''
   if (entry.eventType === 'subname_created') return entry.name
   if (/^\d+$/u.test(target) && Number.isSafeInteger(Number(target))) return formatLuxNumberAsDusk(Number(target))
   return activityDescription(entry)
 }
 
-export function activityActor(actor: string | null | undefined, viewerAuthority?: string | null) {
+export function activityEventDetail(entry: ActivityEntry, viewerAuthority?: string | null, addresses?: readonly string[]) {
+  if (entry.eventType !== 'primary_name') return activityDetail(entry, viewerAuthority, addresses)
+  const address = entry.target?.replace(/^moonlight_address:/, '')
+  return address && address !== 'cleared' ? `Dusk address: ${address}` : ''
+}
+
+export function activityActor(actor: string | null | undefined, viewerAuthority?: string | null, addresses?: readonly string[]) {
   if (!actor) return ''
   if (actor === 'marketplace') return 'Marketplace'
-  return isViewer(actor, viewerAuthority) ? 'You' : abbreviate(actor)
+  return ownerLabel(actor, { viewerAuthority, addresses }).label
 }
 
 // Recent-change warnings name a record key or "moonlight_address:<address>".

@@ -93,6 +93,7 @@ export function useSearchWorkspaceFeature({
   const searchProps: SearchWorkspaceProps = {
     priceTiers,
     activityProps: {
+      ownerAddresses: parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value),
       hasMore: hasMoreActivity,
       onLoadMore: onLoadMoreActivity,
       activityEntries,

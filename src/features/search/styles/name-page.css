@@ -495,3 +495,11 @@
 }
 
 .name-page-heading { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+
+.timeline-meta { max-width: 45%; }
+.timeline-meta details { text-align: right; overflow-wrap: anywhere; font-size: var(--text-sm); color: var(--muted); }
+.timeline-meta details ul { padding: 0; list-style: none; }
+.timeline-meta details li { display: block; padding: 8px 0; border: 0; }
+.timeline-meta details li::before { display: none; }
+.timeline-meta details code { overflow-wrap: anywhere; }
+.timeline-copy > span { font-family: var(--font-ui); }

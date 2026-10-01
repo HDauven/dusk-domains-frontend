@@ -1,3 +1,4 @@
+import { activityActions } from '../activity/activityActions'
 import type { ReactNode } from 'react'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
@@ -138,9 +139,9 @@ export function DomainDetailsView({
           </div>
           {activityEntries.length ? (
             <ul className="recent-list">
-              {activityEntries.slice(0, 4).map((entry) => (
+              {activityActions(activityEntries).slice(0, 4).map(({ entry }) => (
                 <li key={entry.id}>
-                  <span>{activityTitle(entry)} <em>{activityDetail(entry, viewerAuthority)}</em></span>
+                  <span>{activityTitle(entry)} <em>{activityDetail(entry, viewerAuthority, parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value))}</em></span>
                   <time>{activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}</time>
                 </li>
               ))}
