@@ -54,6 +54,7 @@ name management available. Contracts enforce pause permissions independently.
 
 ## Documentation
 
+- [Design direction](docs/design.md): Afterglow type, colour, motion and copy rules
 - [Feature organization](src/features/README.md) and [SDK boundary](src/names/README.md)
 - [SDK APIs and integration examples](https://github.com/HDauven/dusk-domains-sdk/blob/main/README.md)
 - [Contract semantics and permissions](https://github.com/HDauven/dusk-domains-protocol/blob/main/README.md)
