@@ -49,6 +49,7 @@ export async function checkIndexerSessionBudget(page) {
           owner: 'owner', manager: 'owner', resolver: 'resolver', expiresAt: '', parentExpiresAt: '', expiryPolicy: 'inherits_parent',
           status: 'active', createdAt: '', lastEventType: 'subname_created', txId: null, blockHeight: 100,
         })) : [], nextCursor: null }; break
+        case 'marketplace/config': body = { initialized: true, router: null, treasuryContract: null, marketplaceAuthority: null, operator: null, feeBps: 250, updatedAtBlockHeight: null, txId: null, blockHeight: null }; break
         case 'marketplace/refund': body = null; break
         case 'marketplace/fixed-sales':
         case 'marketplace/auctions':
@@ -111,7 +112,7 @@ export async function checkIndexerSessionBudget(page) {
     }
     stages.pagedTwice = await page.evaluate(() => window.sessionCalls.length)
     assert.equal(await page.evaluate(() => window.sessionError || ''), '')
-    assert.deepEqual(stages, { home: 3, search: 9, name: 36, marketplace: 43, pagedTwice: 49 })
+    assert.deepEqual(stages, { home: 3, search: 9, name: 36, marketplace: 44, pagedTwice: 50 })
     const beforeSixty = stages.pagedTwice
     assert.equal(await page.evaluate(() => window.readSixtyChildren()), 60)
     assert.equal(await page.evaluate(() => window.sessionCalls.length) - beforeSixty, 67)

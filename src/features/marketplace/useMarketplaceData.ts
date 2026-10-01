@@ -39,6 +39,7 @@ export function useMarketplaceData({
   selectedAuthority: string
   setError: (message: string) => void
 }) {
+  const [feeBps, setFeeBps] = useScopedState<number | null>(accountScope, null)
   const [fixedSales, setFixedSales] = useState<IndexedMarketplaceFixedSale[]>([])
   const [auctions, setAuctions] = useState<IndexedMarketplaceAuction[]>([])
   const [offers, setOffers] = useState<IndexedMarketplaceOffer[]>([])
@@ -80,13 +81,14 @@ export function useMarketplaceData({
 
     setLoading(true)
     try {
-      const [page, nextOwnedNames, health, nextRefund] = await Promise.all([
+      const [page, nextOwnedNames, health, nextRefund, config] = await Promise.all([
         readMarketplacePage(indexerClient),
         selectedAddress
           ? fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority })
           : Promise.resolve([]),
         indexerClient.getHealth(),
         selectedAuthority ? indexerClient.getMarketplaceRefund(selectedAuthority) : Promise.resolve(null),
+        indexerClient.getMarketplaceConfig?.() ?? Promise.resolve(null),
       ])
       if (!shouldApply()) return
 
@@ -96,6 +98,7 @@ export function useMarketplaceData({
         if (!shouldApply()) return
         if (selected) page.auctions = [...page.auctions, selected]
       }
+      setFeeBps(config?.feeBps ?? null)
       setFixedSales(page.fixedSales)
       setAuctions(page.auctions)
       setOffers(page.offers)
@@ -110,7 +113,7 @@ export function useMarketplaceData({
     } finally {
       if (shouldApply()) setLoading(false)
     }
-  }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund])
+  }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund, setFeeBps])
 
   const hasMore = Object.values(cursors).some(Boolean)
   const loadMore = useCallback(async () => {
@@ -153,5 +156,5 @@ export function useMarketplaceData({
     }
   }, [loadMarketplace, mainView])
 
-  return { updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
+  return { feeBps, updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
 }

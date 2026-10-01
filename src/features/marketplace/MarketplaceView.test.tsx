@@ -460,3 +460,22 @@ it('shows the exact bid visibly and abbreviates the receiving wallet with copy',
   expect(html).toContain('aria-label="Copy If you win, name moves to"')
 })
 
+it('shows the seller fee and net proceeds for fixed prices and auction minimums', () => {
+  for (const saleMode of ['fixed', 'auction'] as const) {
+    const html = render({ tab: 'sell', saleMode, sellableNames: [ownedName()], fixedPriceDusk: '25', reserveDusk: '25' })
+    expect(html).toContain('24.375 DUSK')
+    expect(html).toContain('0.625 DUSK')
+    expect(html).toContain('Marketplace fee (2.50%) to treasury')
+  }
+  expect(render({ tab: 'sell', sellableNames: [ownedName()] })).toContain('Private buyer (optional)')
+})
+
+it('does not repeat the optional private buyer explanation', () => {
+  const html = render({ tab: 'sell', sellableNames: [ownedName()] })
+  expect(html).toContain('Private buyer (optional)')
+  expect(html).not.toContain('Leave the private buyer empty')
+  expect(html).toContain('title="24.375 DUSK">24.375 DUSK')
+  expect(html).toContain('title="0.625 DUSK">0.625 DUSK')
+})
+
+

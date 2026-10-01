@@ -1,3 +1,4 @@
+import { marketplaceAmountRow } from './marketplaceAmounts'
 import { useCallback, useState } from 'react'
 import { contractPrincipalInput } from '../../app/appHelpers'
 import {
@@ -7,6 +8,7 @@ import {
   type DuskDomainsOnChainClient,
   type IndexedNameSummary,
 } from '../../names/internal'
+import { proceedsRows } from './marketplaceFees'
 import { durationBlocks, MIN_MARKETPLACE_AMOUNT_LUX, validLuxAmount } from './auctionMath'
 import { canonicalOwnedName } from './canonicalMarketplaceState'
 import type { MarketplaceSaleMode } from './marketplaceTypes'
@@ -14,6 +16,7 @@ import type { MarketplaceWrites } from './useMarketplaceWrites'
 
 // The Sell tab: a fixed-price listing or an auction for one of the wallet's names.
 export function useSellForm({
+  feeBps,
   duskDomainsOnChainClient,
   marketplaceContractId,
   onOpenWalletConnection,
@@ -23,6 +26,7 @@ export function useSellForm({
   setError,
   writes,
 }: {
+  feeBps: number | null
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
   marketplaceContractId: string
   onOpenWalletConnection: () => void
@@ -38,9 +42,10 @@ export function useSellForm({
   const [reserveDusk, setReserveDusk] = useState('25')
   const [durationDays, setDurationDays] = useState('7')
 
-  const createListing = useCallback(async () => {
+  const createListing = useCallback(async function createListing(reviewed = false) {
+    if (feeBps === null) { setError('The marketplace fee is still loading. Try again shortly.'); return }
     if (!selectedName) {
-      setError('Choose a domain to sell.')
+      setError('Choose a name to sell.')
       return
     }
     if (!marketplaceContractId) {
@@ -49,7 +54,7 @@ export function useSellForm({
     }
     if (!selectedAddress) {
       onOpenWalletConnection()
-      setError('Connect your wallet to sell a domain.')
+      setError('Connect your wallet to sell a name.')
       return
     }
 
@@ -75,6 +80,20 @@ export function useSellForm({
         await canonicalOwnedName(duskDomainsOnChainClient, selectedName, selectedAuthority)
       } catch (readError) {
         setError(userFacingErrorMessage(readError))
+        return
+      }
+      if (!reviewed) {
+        writes.requestReview({
+          title: `Auction ${selectedName.canonicalName}`,
+          rows: [
+            { label: 'Name moves to', value: 'Marketplace escrow' },
+            marketplaceAmountRow('Minimum bid', reserveLux),
+            ...proceedsRows(reserveLux, feeBps),
+            { label: 'Your payout address', value: selectedAddress, address: true },
+            { label: 'Duration after first bid', value: `${days} ${days === 1 ? 'day' : 'days'}` },
+          ],
+          note: 'Proceeds are shown at the minimum bid and the current fee. You can cancel before the first bid. Once bidding starts, the name stays in escrow until finalization. Bids in the last 10 minutes extend it.',
+        }, () => createListing(true))
         return
       }
       await writes.submit(
@@ -119,8 +138,23 @@ export function useSellForm({
       setError(userFacingErrorMessage(readError))
       return
     }
+    if (!reviewed) {
+      writes.requestReview({
+        title: `List ${selectedName.canonicalName}`,
+        rows: [
+          { label: 'Name moves to', value: 'Marketplace escrow' },
+          marketplaceAmountRow('Price', priceLux),
+          ...proceedsRows(priceLux, feeBps),
+          { label: 'Your payout address', value: selectedAddress, address: true },
+          { label: 'Private buyer', value: privateBuyer.trim() || 'Anyone', address: Boolean(privateBuyer.trim()) },
+          { label: 'Listing duration', value: `${days} ${days === 1 ? 'day' : 'days'}` },
+        ],
+        note: 'Proceeds use the current marketplace fee. The name stays in escrow until it sells or you cancel. If it expires, close the listing to return the name to your wallet.',
+      }, () => createListing(true))
+      return
+    }
     await writes.submit(
-      'listing this domain',
+      'listing this name',
       selectedName.canonicalName,
       coreEscrowFixedSaleRuntimeCall({
         node: selectedName.node,
@@ -132,9 +166,10 @@ export function useSellForm({
         sellerRecipient: selectedAddress,
       }),
       0n,
-      'Domain listed for sale.',
+      'Name listed for sale.',
     )
   }, [
+    feeBps,
     duskDomainsOnChainClient,
     durationDays,
     fixedPriceDusk,

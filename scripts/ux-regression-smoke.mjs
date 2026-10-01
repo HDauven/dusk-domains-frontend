@@ -1,3 +1,6 @@
+import { checkAuctionRoute } from './url-route-smoke.mjs'
+import { checkListingFeeReview } from './marketplace-fee-smoke.mjs'
+import { checkMarketplaceReviews, checkMarketplaceBrowse } from './marketplace-ux-smoke.mjs'
 import { checkUiSystem } from './ui-system-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
@@ -171,7 +174,7 @@ try {
   assert.equal(await page.evaluate(() => window.heightBoundWrites), 1)
   assert.equal(await page.locator('#height-bound-bid').getAttribute('data-status'), 'executed')
   assert.equal(await page.locator('#height-bound-bid').getAttribute('data-watched'), 'true')
-  assert.match(await page.locator('#height-bound-bid').textContent(), /Transaction confirmed, but marketplace data is still syncing/)
+  assert.match(await page.locator('#height-bound-bid').textContent(), /Marketplace data is still syncing/)
   assert.doesNotMatch(await page.locator('#height-bound-bid').textContent(), /Syncing marketplace data|Transaction failed/)
   await page.evaluate(async () => {
     await import('/src/index.css')
@@ -209,9 +212,9 @@ try {
       window.redrawReview = () => setHeight(value => value + 1)
       return React.createElement(React.Fragment, null,
         React.createElement('button', { id: 'review-trigger', onClick: () => setReview({ auction,
-          amountDusk: '5', minimumBidLux: 5000000000n }) }, 'Review bid'),
+          amountDusk: '5', amountLux: 5000000000n, minimumBidLux: 5000000000n }) }, 'Review bid'),
         React.createElement(MarketplaceBidReview, { props: { bidReview, currentBlockHeight: height,
-          actionsAvailable: true, onCancelBidReview: () => setReview(null), onPlaceBid: () => {} } }))
+          selectedAddress: 'x'.repeat(100), actionsAvailable: true, onCancelBidReview: () => setReview(null), onPlaceBid: () => {} } }))
     }
     root.render(React.createElement(Review))
   })
@@ -377,6 +380,10 @@ try {
   const staleSubmit = await page.evaluate(() => window.firstSubmit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' })
     .then(() => 'submitted', (error) => error.message))
   assert.match(staleSubmit, /Marketplace trading is paused/)
+  await checkAuctionRoute(page)
+  await checkListingFeeReview(page)
+  await checkMarketplaceReviews(page)
+  await checkMarketplaceBrowse(page)
   await checkUiSystem(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])

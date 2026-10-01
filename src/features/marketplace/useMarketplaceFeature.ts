@@ -86,7 +86,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const writes = useMarketplaceWrites({
     ...args,
     actionsAvailable,
-    feedbackScope,
+    feedbackScope: tab === 'sell' ? `${feedbackScope}:${data.feeBps}` : feedbackScope,
     feedback: { setConfirmation, setError, setTxState },
     loadMarketplace,
   })
@@ -104,7 +104,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   ), [sellableNames, selectedNode])
 
   const sell = useSellForm({
-    duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
+    feeBps: data.feeBps, duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
   })
   const auctionState = useAuctions({
     accountScope, auctions, indexerClient, loadMarketplace, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
@@ -144,6 +144,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     updatedAt: data.updatedAt,
     durationDays: sell.durationDays,
     error,
+    feeBps: data.feeBps,
     fixedPriceDusk: sell.fixedPriceDusk,
     fixedSales,
     loading: data.loading,
