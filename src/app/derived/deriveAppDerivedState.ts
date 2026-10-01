@@ -10,6 +10,7 @@ import { deriveRegistrationCapabilities } from './registrationCapabilities'
 import type { UseAppDerivedStateArgs } from './types'
 
 export function deriveAppDerivedState({
+  registrationsPaused,
   activeRecordTarget,
   canRegister,
   commitTxState,
@@ -90,6 +91,7 @@ export function deriveAppDerivedState({
     commitStale,
     reservationStranded,
   } = deriveRegistrationCapabilities({
+    registrationsPaused,
     canRegister,
     commitBusy,
     committed,

@@ -70,7 +70,7 @@ export function MarketplaceSell(props: MarketplaceViewProps) {
 
           <p className="field-note">Only names with no subnames can be listed. Subnames themselves can’t be sold.</p>
 
-          <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={props.onCreateListing}>
+          <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={props.onCreateListing}>
             {props.saleMode === 'auction' ? 'Start auction' : 'List for sale'}
           </button>
         </section>

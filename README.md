@@ -153,7 +153,7 @@ MIT
 
 Search trusts the indexer's registered status for issued reserved names and shows the owner and normal profile. Unissued and released protected labels remain reserved. There is no operator issuance UI.
 
-The SDK's official profiles carry `saleLocked: true` policy metadata. This frontend does not enforce that flag; issued names use the ordinary owner and marketplace controls. The contracts do not lock sales. The SDK archive pin is unchanged.
+The SDK's official profiles carry `saleLocked: true` policy metadata. This frontend does not enforce that flag; issued names use the ordinary owner and marketplace controls. The contracts do not lock sales.
 
 ## Paginated indexer reads
 
@@ -181,7 +181,11 @@ one health-cache interval; slower sessions may need additional health checks.
 The production default is 200 requests per client budget per 60 seconds. Searching
 and hydrating a name with 60 children takes 67 requests, with all children read.
 
-The SDK archive pin is unchanged. To test this change before a separately
-approved SDK pin update, run `npm ci`, then copy the SDK worktree's `src` directory
-and `package.json` into `node_modules/@duskdomains/sdk/` before the frontend checks.
-The new pagination methods require that updated SDK at build time.
+## Operator pauses
+
+Operator pause status is read from healthy indexer `/health` responses every ten
+seconds. A banner explains registrations or marketplace trading paused by the
+operator. Only registration commitments/completions and new trading actions are
+disabled; claims, refunds, order cleanup, ended-auction settlement and normal name
+management remain available. Contracts enforce the pause while indexed status
+catches up.

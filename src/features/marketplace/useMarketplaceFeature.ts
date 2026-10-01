@@ -26,6 +26,7 @@ import { useSellForm } from './useSellForm'
 import { useWatchlist } from './watchlist'
 
 type UseMarketplaceFeatureArgs = {
+  tradingPaused: boolean
   ensurePublicBalanceForLiveWrite: LiveWritePreflight['ensurePublicBalanceForLiveWrite']
   indexerClient: DuskDomainsIndexerClient | null
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
@@ -160,6 +161,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   }, [marketplaceOnChainClient, refund, setError, writes])
 
   const marketplaceProps: MarketplaceViewProps = {
+    tradingPaused: args.tradingPaused,
     actionsAvailable,
     auctions,
     auctionActivity: auctionState.auctionActivity,

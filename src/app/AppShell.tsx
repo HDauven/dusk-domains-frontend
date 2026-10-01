@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { OperatorPauseBanner } from './OperatorPauseBanner'
+import { unpaused, type OperatorPause } from './operatorPause'
 import type { DuskDomainsRuntimeConfig, DuskWalletState } from '../names/internal'
 import { SkyBackground, type SkyName } from '../components/scene/SkyBackground'
 import type { WalletConnectionStatus } from '../features/wallet/walletStatus'
@@ -8,6 +10,7 @@ import { SiteFooter } from './SiteFooter'
 import { TopBar, type NetworkBadge } from './TopBar'
 
 export function AppShell({
+  pause = unpaused,
   children,
   launchLinks,
   mainView,
@@ -23,6 +26,7 @@ export function AppShell({
   walletState,
   walletStatus,
 }: {
+  pause?: OperatorPause
   children: ReactNode
   launchLinks: DuskDomainsRuntimeConfig['launchLinks']
   mainView: AppMainView
@@ -58,6 +62,7 @@ export function AppShell({
       ) : null}
 
       <main className="page-main">
+        <OperatorPauseBanner pause={pause} />
         {children}
       </main>
 

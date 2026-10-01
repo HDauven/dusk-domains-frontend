@@ -331,3 +331,29 @@ function ownedName(): IndexedNameSummary {
     activityCount: 0,
   }
 }
+
+it('disables only new trades while paused and keeps custody release and refunds enabled', () => {
+  const paused = { tradingPaused: true }
+  const button = (html: string, label: string) => {
+    const match = html.match(new RegExp(`<button[^>]*>${label}</button>`))
+    expect(match, label).not.toBeNull()
+    return match![0]
+  }
+  expect(button(render({ ...paused, fixedSales: [fixedSale()] }), 'Buy for 25 DUSK')).toContain('disabled')
+  expect(button(render({ ...paused, fixedSales: [fixedSale()], selectedAuthority: seller }), 'Cancel listing')).not.toContain('disabled')
+  expect(button(render({ ...paused, fixedSales: [fixedSale({ expiresAtBlockHeight: 1000 })] }), 'Close listing')).not.toContain('disabled')
+  for (const saleMode of ['fixed', 'auction'] as const) {
+    expect(button(render({ ...paused, tab: 'sell', sellableNames: [ownedName()], selectedAuthority: seller, saleMode }), saleMode === 'fixed' ? 'List for sale' : 'Start auction')).toContain('disabled')
+  }
+  expect(button(render({ ...paused, tab: 'offers', offers: [offer()], sellableNames: [ownedName()], selectedAuthority: seller }), 'Accept')).toContain('disabled')
+  expect(button(render({ ...paused, tab: 'offers', offers: [offer()] }), 'Cancel')).not.toContain('disabled')
+  expect(button(render({ ...paused, tab: 'offers', offers: [offer({ expiresAtBlockHeight: 1000 })] }), 'Close')).not.toContain('disabled')
+  expect(button(render({ ...paused, tab: 'offers' }), 'Place offer')).toContain('disabled')
+  const dormant = auction()
+  expect(button(render({ ...paused, auctions: [dormant], selectedAuctionNode: dormant.node }), 'Review bid')).toContain('disabled')
+  expect(button(render({ ...paused, auctions: [dormant], selectedAuctionNode: dormant.node, selectedAuthority: seller }), 'Cancel auction')).not.toContain('disabled')
+  const ended = auction({ startBlockHeight: 800, endBlockHeight: 1000, highestBid: { bidderAuthority: buyer, amountLux: 40_000_000_000, placedAtBlockHeight: 800 }, bidCount: 1 })
+  expect(button(render({ ...paused, auctions: [ended], selectedAuctionNode: ended.node }), 'Finalize auction')).not.toContain('disabled')
+  expect(button(render({ ...paused, tab: 'activity', refund: { authority: buyer, recipient: null, amountLux: 20_000_000_000, txId: 'refund', blockHeight: 1000, lastEventType: 'domain_offer_closed' } }), 'Withdraw to wallet')).not.toContain('disabled')
+  expect(button(render({ ...paused, bidReview: { amountDusk: '40', amountLux: 40_000_000_000n, minimumBidLux: 40_000_000_000n, auction: dormant } }), 'Confirm in wallet')).toContain('disabled')
+})

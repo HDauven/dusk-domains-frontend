@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useOperatorPause } from './useOperatorPause'
 import { createDuskConnectKit } from '@dusk/connect/ui'
 import { duskDomainsConnectOptions } from './appConstants'
 import { createDuskNodeBlockHeightReader } from './duskNodeHeight'
@@ -18,6 +19,7 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
   const indexerClient = useMemo(() => (
     runtimeConfig.indexerUrl ? createHealthyIndexerClient(runtimeConfig.indexerUrl) : null
   ), [runtimeConfig.indexerUrl])
+  const pause = useOperatorPause(indexerClient, `${runtimeConfig.chainId}:${runtimeConfig.contracts.router.contractId}`)
   const getCurrentBlockHeight = useMemo(() => (
     createDuskNodeBlockHeightReader(runtimeConfig.nodeUrl)
   ), [runtimeConfig.nodeUrl])
@@ -51,6 +53,7 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
     })
   }, [getCurrentBlockHeight, onChainReadTransport])
   return {
+    pause,
     connectKit,
     connectOptions: duskDomainsConnectOptions,
     duskDomainsOnChainClient,

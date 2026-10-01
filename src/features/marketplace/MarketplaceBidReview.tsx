@@ -64,7 +64,7 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps })
 
         <div className="marketplace-review-actions">
           <button className="commit-button" type="button" onClick={props.onCancelBidReview}>Go back</button>
-          <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onPlaceBid(auction)}>Confirm in wallet</button>
+          <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onPlaceBid(auction)}>Confirm in wallet</button>
         </div>
       </section>
     </dialog>

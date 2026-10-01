@@ -75,6 +75,7 @@ export function useDuskDomainsAppModel() {
   const {
     marketplaceProps,
   } = useMarketplaceFeature({
+    tradingPaused: appRuntime.pause.tradingPaused,
     ensurePublicBalanceForLiveWrite,
     duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
     indexerClient: appRuntime.indexerClient,
@@ -99,6 +100,7 @@ export function useDuskDomainsAppModel() {
       },
     },
     shellProps: {
+      pause: appRuntime.pause,
       launchLinks: appRuntime.runtimeConfig.launchLinks,
       mainView,
       network: networkBadge(appRuntime.runtimeConfig),

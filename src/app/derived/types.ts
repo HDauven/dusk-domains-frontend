@@ -11,6 +11,7 @@ import type {
 import type { ManagedNameState } from '../appHelpers'
 
 export type UseAppDerivedStateArgs = {
+  registrationsPaused?: boolean
   activeRecordTarget: RecordTargetOption | undefined
   canRegister: boolean
   commitTxState: DuskDomainTxState | null
