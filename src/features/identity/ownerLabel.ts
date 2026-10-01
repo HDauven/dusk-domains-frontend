@@ -32,7 +32,7 @@ export function ownerLabel(authority: string, { viewerAuthority, addresses = [] 
 }
 
 /** Address candidates already present in the loaded name records or primary-name activity. */
-export function ownerAddressCandidates(records: readonly { key: string; value: string }[], activity: readonly { eventType: string; target?: string }[] = []) {
+export function ownerAddressCandidates(records: readonly { key: string; value: string }[], activity: readonly { eventType: string; target?: string | null }[] = []) {
   return [...new Set([
     ...records.filter(record => record.key === 'moonlight_address').map(record => record.value),
     ...activity.filter(entry => entry.eventType === 'primary_name' && entry.target?.startsWith('moonlight_address:')).map(entry => entry.target!.slice('moonlight_address:'.length)),

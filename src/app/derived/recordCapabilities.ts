@@ -1,5 +1,5 @@
 import { isSubname, lifecycleHeightReached, renewalDeadline } from '../../features/domains/domainFormat'
-import type { ManagedNameState } from '../managedNameState'
+import { canRenewOutsideEscrow, type ManagedNameState } from '../managedNameState'
 import type { RecordTargetOption } from '../../features/domains/recordTypes'
 
 export function deriveRecordCapabilities({
@@ -27,7 +27,7 @@ export function deriveRecordCapabilities({
   activeRecordTarget: RecordTargetOption | undefined
   currentBlockHeight: number | null
   displayName: string
-  managedName: Pick<ManagedNameState, 'owner' | 'manager' | 'expiresAt' | 'graceEndsAt'>
+  managedName: Pick<ManagedNameState, 'owner' | 'manager' | 'ownerIsContract' | 'inMarketplaceEscrow' | 'expiresAt' | 'graceEndsAt'>
   nodeHex: string
   nowSeconds: number
   primaryBusy: boolean
@@ -49,14 +49,15 @@ export function deriveRecordCapabilities({
   return {
     canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryName && primaryVerified && !primaryBusy),
     canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && !subnameBusy),
-    // Owners and managers can renew root names until grace ends.
+    // Marketplace escrow must close before any payer can renew.
     canRenewName: Boolean(
       walletAuthorized
       && selectedAddress
       && nodeHex
       && !isSubname(displayName)
+      && canRenewOutsideEscrow(managedName)
       && selectedAuthority
-      && [managedName.owner, managedName.manager].some(value => value.toLowerCase() === selectedAuthority.toLowerCase())
+      && (managedName.ownerIsContract || [managedName.owner, managedName.manager].some(value => value.toLowerCase() === selectedAuthority.toLowerCase()))
       && managedName.expiresAt > 0
       && !lifecycleHeightReached(renewalDeadline(managedName), currentBlockHeight, nowSeconds)
       && !renewalBusy,

@@ -96,7 +96,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
 
         <Panel as="aside" className="marketplace-bid-panel" aria-label={`Bid on ${auction.name}`}>
           {leading ? <p className="marketplace-bidder-banner leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
-          {ownAuction ? <p className="marketplace-bidder-banner selling">You’re selling this name</p> : null}
+          {ownAuction ? <><p className="marketplace-bidder-banner selling">You’re selling this name</p><p>Renewal is available after the listing closes.</p></> : null}
           <div className="marketplace-bid-price">
             <span>{auction.highestBid ? 'Current bid' : 'Minimum bid'}</span>
             <strong><MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} roundUp={!auction.highestBid} /></strong>

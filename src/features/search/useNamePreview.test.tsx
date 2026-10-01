@@ -14,3 +14,13 @@ it('previews a grace renewal from the old expiry', () => {
   }
   expect(renderToStaticMarkup(<Preview />)).toBe(`<output>${20_000 + REGISTRATION_YEAR_BLOCKS}</output>`)
 })
+
+it.each(['docs.alice.dusk', 'docs.wallet.dusk'])('keeps %s out of public root registration', query => {
+  function Preview() {
+    const { canRegister } = useNamePreview({ apiSearchResult: null, query, currentBlockHeight: 100,
+      duration: 1, feeConfig: DEFAULT_FEE_CONFIG, managedNameExpiresAt: 200,
+      nowSeconds: 1_790_000_000, renewalYears: 1 })
+    return <output>{String(canRegister)}</output>
+  }
+  expect(renderToStaticMarkup(<Preview />)).toBe('<output>false</output>')
+})

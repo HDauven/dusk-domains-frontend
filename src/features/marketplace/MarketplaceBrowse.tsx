@@ -99,7 +99,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
       <ListingName name={auction.name} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} compact /></div>
       {leading ? <p className="marketplace-personal-status leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
-      {ownAuction ? <p className="marketplace-personal-status selling">Your auction</p> : null}
+      {ownAuction ? <><p className="marketplace-personal-status selling">Your auction</p><p>Renewal is available after the listing closes.</p></> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>{auction.highestBid ? 'Current bid' : 'Reserve'}</dt><dd><MarketplaceAmount lux={amount} /></dd></div>
         <div>
@@ -135,7 +135,7 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps
       </div>
       <ListingName name={sale.name} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={sale.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} compact /></div>
-      {ownSale ? <p className="marketplace-personal-status selling">Your listing</p> : null}
+      {ownSale ? <><p className="marketplace-personal-status selling">Your listing</p><p>Renewal is available after the listing closes.</p></> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>Price</dt><dd><MarketplaceAmount lux={sale.priceLux} /></dd></div>
         <div><dt><Clock3 aria-hidden="true" size={13} /> {expired ? 'Ended' : 'Expires'}</dt><dd>{expiryTimeLabel(sale.expiresAtBlockHeight, props.currentBlockHeight)}</dd></div>

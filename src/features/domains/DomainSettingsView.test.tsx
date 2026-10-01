@@ -90,3 +90,17 @@ it.each([0, 1_802_592_000])('uses the estimate margin for renewal controls and c
 it('links List for sale to the current name in the Sell tab', () => {
   expect(settings({})).toContain('href="/market/sell/alphavnuc.dusk"')
 })
+
+it('hides renewal controls for marketplace escrow even when settings are already open', () => {
+  const html = settings({ managedName: { ...managedName, ownerIsContract: true, inMarketplaceEscrow: true } })
+  expect(html).not.toContain('Renewal controls')
+  expect(html).not.toContain('>Renew</')
+  expect(html).toContain('Renewal is available after the listing closes.')
+})
+
+it('hides renewal controls in open settings until contract custody is known', () => {
+  const html = settings({ managedName: { ...managedName, ownerIsContract: true, inMarketplaceEscrow: null } })
+  expect(html).not.toContain('Renewal controls')
+  expect(html).not.toContain('>Renew</')
+  expect(html).toContain('Renewal is unavailable until marketplace custody can be checked.')
+})

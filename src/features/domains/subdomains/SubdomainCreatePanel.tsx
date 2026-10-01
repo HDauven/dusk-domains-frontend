@@ -26,7 +26,7 @@ export function SubdomainCreatePanel({
     <>
       <div>
         <h3>Create subname</h3>
-        <p>Create a name such as pay.{displayName}.</p>
+        <p>Create a name such as docs.{displayName}. Reserved words are allowed in subnames.</p>
       </div>
 
       <div className="subname-quick-create">

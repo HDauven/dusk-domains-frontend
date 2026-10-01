@@ -9,6 +9,7 @@ import {
 } from '../../names/internal'
 import {
   formatLifecycleDay,
+  isSubname,
   safeNamehashHex,
 } from '../domains/domainFormat'
 
@@ -35,7 +36,7 @@ export function useNamePreview({
 }: UseNamePreviewArgs) {
   const localSearchResult = useMemo(() => analyzeName(query, feeConfig), [feeConfig, query])
   const result = apiSearchResult ?? localSearchResult
-  const canRegister = result.status === 'available'
+  const canRegister = result.status === 'available' && !isSubname(result.canonical)
   const displayName = result.canonical || 'name.dusk'
   const nodeHex = useMemo(() => safeNamehashHex(displayName), [displayName])
   const registrationFee = canRegister ? registrationPrice(result.label, duration, feeConfig) : 0

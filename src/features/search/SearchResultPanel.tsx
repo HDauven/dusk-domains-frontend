@@ -1,7 +1,9 @@
 import { Tabs, TabPanel } from '../../components/ui/Tabs'
+import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { ComponentProps } from 'react'
 import { ActivityHistoryView } from '../activity/ActivityHistoryView'
 import { DomainDetailsView } from '../domains/DomainDetailsView'
+import { isSubname } from '../domains/domainFormat'
 import { DomainSettingsView } from '../domains/DomainSettingsView'
 import { PrimaryNameControl } from '../domains/PrimaryNameControl'
 import { RecordsView } from '../domains/RecordsView'
@@ -32,13 +34,14 @@ export type SearchResultPanelProps = {
 export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
   const managedName = nodeHex && settingsProps?.managedName.node === nodeHex ? settingsProps.managedName : null
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
-  const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length))
+  const canPayRenewal = Boolean(managedName?.ownerIsContract && canRenewOutsideEscrow(managedName) && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
+  const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length), canPayRenewal)
   const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
   const content = <>
     {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
-    {nodeHex && view === 'manage' && canEdit ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
+    {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
     {nodeHex && view === 'subnames' ? <SubdomainsView {...subdomainsProps} ownerAddresses={headerProps.ownerAddresses} canEdit={canEdit} onRecordTargetSelect={subname => onOpenName?.(subname.name)} /> : null}
     {nodeHex && view === 'records' && canEdit ? <RecordsView {...recordsProps} /> : null}
     {view === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}

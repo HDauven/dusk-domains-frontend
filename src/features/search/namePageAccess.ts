@@ -5,12 +5,12 @@ export function namePageAccess(owner: string, manager: string, viewer: string) {
   return { isOwner, canEdit: isOwner || sameAuthority(manager, viewer) }
 }
 
-export function nameSections(canEdit: boolean, hasSubnames: boolean) {
+export function nameSections(canEdit: boolean, hasSubnames: boolean, canPayRenewal = false) {
   return [
     { id: 'details' as const, label: 'Profile' },
     ...(canEdit ? [{ id: 'records' as const, label: 'Records' }] : []),
     ...(canEdit || hasSubnames ? [{ id: 'subnames' as const, label: 'Subnames' }] : []),
-    ...(canEdit ? [{ id: 'manage' as const, label: 'Settings' }] : []),
+    ...(canEdit || canPayRenewal ? [{ id: 'manage' as const, label: canEdit ? 'Settings' : 'Renew' }] : []),
     { id: 'activity' as const, label: 'Activity' },
   ]
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useContractOwner } from './useContractOwner'
 import type {
   DuskDomainTxState,
   SubnameExpiryPolicy,
@@ -6,10 +7,10 @@ import type {
   DuskDomainsIndexerClient,
   DuskDomainsOnChainClient,
 } from '../names/internal'
-import { createManagedNameState } from './managedNameState'
+import { createManagedNameState, isMarketplaceEscrow } from './managedNameState'
 import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
 
-export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null) {
+export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null, nodeUrl = '', marketplaceContractId: string | null = null) {
   const [renewalYears, setRenewalYears] = useState(1)
   const [managementTxState, setManagementTxState] = useState<DuskDomainTxState | null>(null)
   const [renewalTxState, setRenewalTxState] = useState<DuskDomainTxState | null>(null)
@@ -30,6 +31,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
   const [subnameExpiryDate, setSubnameExpiryDate] = useState('')
   const [subnames, setSubnames] = useState<SubnameState[]>([])
   const [managedName, setManagedName] = useState(() => createManagedNameState(recordSourceContractId))
+  const ownerIsContract = useContractOwner(nodeUrl, managedName.owner)
   const [pendingOwnership, setPendingOwnership] = useState<PendingOwnership[]>([])
   const ownership = useMemo(() => createOwnershipConfirmation({ indexerClient, onChainClient, setManagedName, setPending: setPendingOwnership }), [indexerClient, onChainClient])
   const activeSubnames = useMemo(() => (
@@ -43,7 +45,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     retryOwnershipConfirmation: ownership.retry,
     activeSubnames,
     confirmationInput,
-    managedName,
+    managedName: { ...managedName, ownerIsContract, inMarketplaceEscrow: isMarketplaceEscrow(managedName, marketplaceContractId) },
     managementError,
     managementTxState,
     primaryEndpointValue,
