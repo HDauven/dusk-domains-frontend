@@ -110,6 +110,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--surface-strong);
   color: var(--muted);
   font-size: 13px;
 }
@@ -129,6 +132,9 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 4px 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface-strong);
 }
 
 .marketplace-section-heading h2,
@@ -855,6 +861,9 @@
 
 .marketplace-watch-note {
   margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface-strong);
   color: var(--muted);
   font-size: 12.5px;
 }

@@ -81,7 +81,6 @@
 
 .sky-planet {
   position: absolute;
-  transition: transform 600ms var(--ease), opacity 600ms var(--ease);
   left: 50%;
   bottom: -2180px;
   width: 3600px;
@@ -99,10 +98,4 @@
   .sky-planet {
     bottom: -2240px;
   }
-}
-
-/* Off the home page the sun has set further: the rim sinks and dims so panels read cleanly. */
-.page:not(.at-home) .sky-planet {
-  transform: translateX(-50%) translateY(220px);
-  opacity: 0.55;
 }
