@@ -7,7 +7,6 @@ import type {
   PendingNameReservation,
   ResolverRecord,
   SubnameExpiryPolicy,
-  SubnameRevocationPolicy,
   SubnameState,
 } from '../../names/internal'
 import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
@@ -68,7 +67,6 @@ export type UseSearchControllerProps = {
   setSubnameLabel: Dispatch<SetStateAction<string>>
   setSubnameManager: Dispatch<SetStateAction<string>>
   setSubnameResolver: Dispatch<SetStateAction<string>>
-  setSubnameRevocationPolicy: Dispatch<SetStateAction<SubnameRevocationPolicy>>
   setSubnameTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>
   setTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>

@@ -6,7 +6,6 @@ import type {
   ResolverRecord,
   ResolverRecordKey,
   SubnameExpiryPolicy,
-  SubnameRevocationPolicy,
   SubnameState,
 } from '../../names/internal'
 import type { SearchResultPanelProps } from '../search/SearchResultPanel'
@@ -72,7 +71,6 @@ export type UseDomainManagementFeatureProps =
     setSubnameLabel: SetState<string>
     setSubnameManager: SetState<string>
     setSubnameResolver: SetState<string>
-    setSubnameRevocationPolicy: SetState<SubnameRevocationPolicy>
     subnameError: string
     subnames: SubnameState[]
     subnameTxState: DuskDomainTxState | null

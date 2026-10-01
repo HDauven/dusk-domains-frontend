@@ -4,6 +4,8 @@ export function emptyTreasuryUiState(): IndexedTreasuryState {
   return {
     initialized: false,
     operator: null,
+    pendingOperator: null,
+    pendingOperatorRecipient: null,
     operatorAuthority: null,
     operatorRecipient: null,
     allowedFeeSources: [],

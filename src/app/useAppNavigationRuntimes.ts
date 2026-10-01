@@ -71,7 +71,6 @@ export function useAppNavigationRuntimes({
     setSubnameLabel: domainState.setSubnameLabel,
     setSubnameManager: domainState.setSubnameManager,
     setSubnameResolver: domainState.setSubnameResolver,
-    setSubnameRevocationPolicy: domainState.setSubnameRevocationPolicy,
     setSubnameTxState: domainState.setSubnameTxState,
     setSubnames: domainState.setSubnames,
     setTxState: registrationState.setTxState,

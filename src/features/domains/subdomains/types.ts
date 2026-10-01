@@ -1,7 +1,6 @@
 import type {
   DuskDomainTxState,
   SubnameExpiryPolicy,
-  SubnameRevocationPolicy,
   SubnameState,
 } from '../../../names/internal'
 
@@ -20,14 +19,12 @@ export type SubdomainsViewProps = {
   onSubnameLabelChange: (value: string) => void
   onSubnameManagerChange: (value: string) => void
   onSubnameResolverChange: (value: string) => void
-  onSubnameRevocationPolicyChange: (policy: SubnameRevocationPolicy) => void
   selectedAuthority: string
   subnameExpiryDate: string
   subnameExpiryPolicy: SubnameExpiryPolicy
   subnameLabel: string
   subnameManager: string
   subnameResolver: string
-  subnameRevocationPolicy: SubnameRevocationPolicy
   subnames: SubnameState[]
   txState: DuskDomainTxState | null
 }
@@ -43,14 +40,12 @@ export type SubdomainCreatePanelProps = Pick<
   | 'onSubnameLabelChange'
   | 'onSubnameManagerChange'
   | 'onSubnameResolverChange'
-  | 'onSubnameRevocationPolicyChange'
   | 'selectedAuthority'
   | 'subnameExpiryDate'
   | 'subnameExpiryPolicy'
   | 'subnameLabel'
   | 'subnameManager'
   | 'subnameResolver'
-  | 'subnameRevocationPolicy'
 > & {
   parentExpiryDay: string
   subdomainPreview: string

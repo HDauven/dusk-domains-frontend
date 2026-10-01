@@ -115,7 +115,6 @@
   .subname-quick-create,
 .subname-editor,
 .subname-policy-grid,
-.delegate-row,
 .subname-row {
     grid-template-columns: 1fr;
   }

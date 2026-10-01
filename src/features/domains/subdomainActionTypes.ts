@@ -6,7 +6,6 @@ import type {
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
   SubnameExpiryPolicy,
-  SubnameRevocationPolicy,
   SubnameState,
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
@@ -48,5 +47,4 @@ export type UseSubdomainActionsProps = {
   subnameLabel: string
   subnameManager: string
   subnameResolver: string
-  subnameRevocationPolicy: SubnameRevocationPolicy
 } & LiveWritePreflight

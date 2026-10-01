@@ -1,8 +1,6 @@
 import {
   subnameExpiryDescription,
-  subnameRevocationDescription,
   type SubnameExpiryPolicy,
-  type SubnameRevocationPolicy,
 } from '../../../names/internal'
 import { SelectField, TextField } from '../../../components/ui/FormControls'
 import type { SubdomainCreatePanelProps } from './types'
@@ -17,7 +15,6 @@ export function SubdomainCreatePanel({
   onSubnameLabelChange,
   onSubnameManagerChange,
   onSubnameResolverChange,
-  onSubnameRevocationPolicyChange,
   parentExpiryDay,
   selectedAuthority,
   subdomainPreview,
@@ -26,7 +23,6 @@ export function SubdomainCreatePanel({
   subnameLabel,
   subnameManager,
   subnameResolver,
-  subnameRevocationPolicy,
 }: SubdomainCreatePanelProps) {
   return (
     <>
@@ -99,16 +95,6 @@ export function SubdomainCreatePanel({
             onChange={(event) => onSubnameExpiryDateChange(event.target.value)}
           />
 
-          <SelectField
-            id="subname-revocation-policy"
-            hint={subnameRevocationDescription(subnameRevocationPolicy)}
-            label="Revocation"
-            value={subnameRevocationPolicy}
-            onChange={(event) => onSubnameRevocationPolicyChange(event.target.value as SubnameRevocationPolicy)}
-          >
-            <option value="parent_revocable">Parent can revoke</option>
-            <option value="locked">Locked after creation</option>
-          </SelectField>
         </div>
       </details>
     </>

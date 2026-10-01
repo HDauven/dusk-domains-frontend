@@ -42,7 +42,6 @@ export function resetSearchState({
   setSubnameLabel,
   setSubnameManager,
   setSubnameResolver,
-  setSubnameRevocationPolicy,
   setSubnameTxState,
   setSubnames,
   setTxState,
@@ -87,6 +86,5 @@ export function resetSearchState({
   setSubnameResolver(recordSourceContractId)
   setSubnameExpiryPolicy('inherits_parent')
   setSubnameExpiryDate('')
-  setSubnameRevocationPolicy('parent_revocable')
   setRenewalYears(1)
 }
