@@ -121,7 +121,6 @@ export function useTreasuryFeature({
     onClaimTreasury: (mode) => void handleClaimTreasury(mode),
     onFeeConfigFieldChange: handleFeeConfigFieldChange,
     onOpenWalletConnection,
-    onRefresh: () => void loadTreasuryView(),
     onTreasuryClaimAmountChange: handleTreasuryClaimAmountChange,
     onUpdateFeeConfig: () => void handleUpdateFeeConfig(),
     selectedAddress,

@@ -20,7 +20,6 @@ export function useFeeConfig(indexerClient: DuskDomainsIndexerClient | null) {
     const isCurrent = beginRead()
     setFeeConfigLoading(false)
     if (!indexerClient) {
-      setFeeConfig(DEFAULT_FEE_CONFIG)
       setFeeConfigError('')
       return false
     }
@@ -36,8 +35,7 @@ export function useFeeConfig(indexerClient: DuskDomainsIndexerClient | null) {
     } catch (error) {
       if (!isCurrent()) return false
       void error
-      setFeeConfig(DEFAULT_FEE_CONFIG)
-      setFeeConfigError('Live pricing is unavailable. Showing default pricing.')
+      setFeeConfigError('Live pricing is unavailable. Trying again automatically.')
       return false
     } finally {
       if (isCurrent()) setFeeConfigLoading(false)

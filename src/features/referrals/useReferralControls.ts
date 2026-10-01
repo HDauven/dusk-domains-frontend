@@ -36,11 +36,6 @@ export function useReferralControls({
     return () => { current = false }
   }, [input])
 
-  const handleReferralInputChange = useCallback((value: string) => {
-    setReferralCopied(false)
-    setInput(value.trim())
-  }, [])
-
   const clearReferral = useCallback(() => {
     setReferralCopied(false)
     setInput('')
@@ -87,7 +82,6 @@ export function useReferralControls({
   return {
     clearReferral,
     copyReferralLink,
-    handleReferralInputChange,
     referralCopied,
     referralLink,
     referralState,

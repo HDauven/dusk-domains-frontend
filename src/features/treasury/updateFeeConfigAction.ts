@@ -68,7 +68,7 @@ export async function updateFeeConfig({
   }
 
   if (!indexerClient) {
-    setFeeConfigConfirmation('Pricing update submitted. Refresh when indexing is available.')
+    setFeeConfigConfirmation('Pricing update submitted. Data will update when available.')
     return
   }
 

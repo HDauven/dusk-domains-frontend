@@ -5,7 +5,7 @@ import type {
 } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { FeeConfigFormState } from './feeConfig'
-import type { FeeConfigField } from './TreasuryCards'
+import type { FeeConfigField } from './cards/types'
 
 export type TreasuryViewProps = {
   canClaimTreasury: boolean
@@ -25,7 +25,6 @@ export type TreasuryViewProps = {
   onClaimTreasury: (mode: 'all' | 'partial') => void
   onFeeConfigFieldChange: (field: FeeConfigField, value: string) => void
   onOpenWalletConnection: () => void
-  onRefresh: () => void
   onTreasuryClaimAmountChange: (value: string) => void
   onUpdateFeeConfig: () => void
   selectedAddress: string

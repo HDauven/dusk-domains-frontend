@@ -12,7 +12,6 @@ function readUiSource() {
     'src/features/domains/RecordsView.tsx',
     'src/features/domains/SubdomainsView.tsx',
     'src/features/referrals/ActiveReferralCard.tsx',
-    'src/features/referrals/ReferralHeader.tsx',
     'src/features/referrals/ReferralLinkCard.tsx',
     'src/features/referrals/ReferralRewardsCard.tsx',
     'src/features/referrals/ReferralsView.tsx',
@@ -69,9 +68,8 @@ describe('App user-facing copy', () => {
     const source = readUiSource()
 
     expect(source).toContain('no extra cost')
-    expect(source).toContain('No extra fee for the buyer.')
     expect(source).toContain('Referred by')
-    expect(source).toContain('Applies to your next registration.')
+    expect(source).not.toContain('Their wallet address')
     expect(source).not.toContain('Included when you register.')
   })
 

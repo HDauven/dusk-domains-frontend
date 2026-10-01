@@ -1,3 +1,4 @@
+import { checkPricingDraft } from './treasury-draft-smoke.mjs'
 import { checkRefreshOrdering, checkLockedClaims } from './shell-refresh-smoke.mjs'
 import { checkAppShell } from './shell-smoke.mjs'
 import { checkAuctionRoute } from './url-route-smoke.mjs'
@@ -310,12 +311,17 @@ try {
       window.referralControls = controls
       return React.createElement('output', { id: 'referral-probe' }, JSON.stringify(controls.referralState))
     }
-    root.render(React.createElement(Referrals))
+    let linkVisit = 0
+    window.openReferralLink = input => {
+      history.replaceState(null, '', `/?ref=${encodeURIComponent(input)}`)
+      root.render(React.createElement(Referrals, {key: ++linkVisit}))
+    }
+    window.openReferralLink('')
   })
   await page.locator('#referral-probe').waitFor()
   assert.equal(blsRequested, false, 'Empty attribution must not load BLS')
   const moonlight = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
-  await page.evaluate(input => window.referralControls.handleReferralInputChange(input), moonlight)
+  await page.evaluate(input => window.openReferralLink(input), moonlight)
   await page.waitForFunction(input => window.referralControls.referralState.input === input, moonlight)
   assert.equal(await page.evaluate(() => window.referralControls.referralState.valid), false)
   assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
@@ -331,13 +337,13 @@ try {
   await page.waitForTimeout(30)
   assert.equal(await page.evaluate(() => window.referralControls.referralState.input), '', 'Late validation restored a cleared referral')
   assert.equal(await page.evaluate(() => localStorage.getItem('dusk-domains.active-referral')), null)
-  await page.evaluate(input => window.referralControls.handleReferralInputChange(input), `  ${moonlight}  `)
+  await page.evaluate(input => window.openReferralLink(input), `  ${moonlight}  `)
   await page.waitForFunction(() => window.referralControls.referralState.valid)
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('dusk-domains.active-referral')).input), moonlight)
   for (const lastByte of [0, 2]) {
     await page.evaluate(async lastByte => {
       const { encodeBase58 } = await import('/src/names/internal.ts')
-      window.referralControls.handleReferralInputChange(encodeBase58([0x80, ...Array(94).fill(0), lastByte]))
+      window.openReferralLink(encodeBase58([0x80, ...Array(94).fill(0), lastByte]))
     }, lastByte)
     await page.waitForFunction(() => window.referralControls.referralState.reason === 'Referral ignored: this address cannot claim rewards.')
     assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
@@ -399,6 +405,7 @@ try {
   await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)
   await checkNameFit(page)
+  await checkPricingDraft(page)
   await checkLockedClaims(page)
   await checkRefreshOrdering(page)
   await checkAppShell(page)
