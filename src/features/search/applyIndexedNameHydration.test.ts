@@ -76,3 +76,11 @@ it('uses block expiry to derive missing grace heights instead of trusting an ind
     } as never).canRenewName).toBe(currentBlockHeight < 259_400)
   }
 })
+
+it('hydrates the named owner and manager for an issued reserved root', () => {
+  expect(hydrate(createManagedNameState('resolver'), {
+    canonicalName: 'wallet.dusk', owner: 'foundation', manager: 'wallet-team',
+    issuedAsReserved: true, expiresAt: null, expiresAtBlockHeight: 20_000,
+    graceEndsAt: null, graceEndsAtBlockHeight: 30_000,
+  }, null)).toMatchObject({ owner: 'foundation', manager: 'wallet-team', expiresAt: 20_000 })
+})

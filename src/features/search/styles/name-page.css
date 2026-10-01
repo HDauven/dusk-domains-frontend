@@ -63,6 +63,12 @@
   font-style: italic;
 }
 
+.name-hero-owner {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .name-hero-badges {
   display: flex;
   flex-wrap: wrap;
