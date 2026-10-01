@@ -58,10 +58,10 @@ export function pendingReservationActionCopy(status: CommitWindowStatus) {
   return 'Open'
 }
 
-export function pendingReservationNextStepCopy(status: CommitWindowStatus, waitBlocks: number) {
+export function pendingReservationNextStepCopy(status: CommitWindowStatus) {
   if (status === 'missing') return 'Check your wallet before retrying. If you canceled approval, forget this saved request to start again.'
-  if (status === 'waiting') return `Registration unlocks in about ${formatWait(waitBlocks)}.`
-  if (status === 'stale') return 'This reservation expired. Forget the saved request in My names before reserving again.'
+  if (status === 'waiting') return 'Open this reservation to continue when it is ready.'
+  if (status === 'stale') return 'This reservation expired. Reserve again to continue.'
   return 'Ready to register.'
 }
 
@@ -77,10 +77,9 @@ export function savedReservationOverviewCopy(
 
 export function commitWindowCopy(
   status: CommitWindowStatus,
-  waitBlocks: number,
   staleInBlocks: number,
 ) {
-  if (status === 'missing' || status === 'stale') return pendingReservationNextStepCopy(status, waitBlocks)
+  if (status === 'missing' || status === 'stale') return pendingReservationNextStepCopy(status)
 
   if (status === 'waiting') return `Reservation confirmed. It stays valid for about ${formatWait(staleInBlocks)}.`
 

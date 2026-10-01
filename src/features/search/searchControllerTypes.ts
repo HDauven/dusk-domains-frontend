@@ -54,7 +54,6 @@ export type UseSearchControllerProps = {
   setRecordError: Dispatch<SetStateAction<string>>
   setRecordTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
-  setRegistrationAddressInput: Dispatch<SetStateAction<string>>
   setRegistrationCompletion: Dispatch<SetStateAction<RegistrationCompletionState | null>>
   setRegistrationStep: Dispatch<SetStateAction<RegistrationStepId>>
   setRenewalError: Dispatch<SetStateAction<string>>
@@ -67,7 +66,6 @@ export type UseSearchControllerProps = {
   setSubnameExpiryPolicy: Dispatch<SetStateAction<SubnameExpiryPolicy>>
   setSubnameLabel: Dispatch<SetStateAction<string>>
   setSubnameManager: Dispatch<SetStateAction<string>>
-  setSubnameResolver: Dispatch<SetStateAction<string>>
   setSubnameTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>
   setTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>

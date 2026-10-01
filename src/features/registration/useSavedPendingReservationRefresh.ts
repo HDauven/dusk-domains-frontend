@@ -56,7 +56,7 @@ export function useSavedPendingReservationRefresh({
       try {
         await refreshPendingReservationsFromIndexer()
       } catch {
-        // My Domains keeps the saved reservation visible; the next refresh can update readiness.
+        // My names keeps the saved reservation visible; the next refresh can update readiness.
       }
     }
 

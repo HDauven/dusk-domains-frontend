@@ -6,8 +6,8 @@ import { createRegistrationCompletionState, markRegistrationCompletionExecuted }
 const noop = () => {}
 const props = {
   navigation: { onBackToOverview: noop }, resultIssues: [], status: { walletError: '', showReservationRecovery: false },
-  wizard: { registrationComplete: false, registrationStep: 'setup', displayName: 'alpha.dusk' },
-  step: { displayName: 'alpha.dusk', registrationStep: 'setup', walletSetupState: 'connected', registrationCompletion: null,
+  wizard: { registrationComplete: false, registrationStep: 'review', displayName: 'alpha.dusk' },
+  step: { displayName: 'alpha.dusk', registrationStep: 'review', walletSetupState: 'connected', registrationCompletion: null,
     selectedAddress: 'address', registrationFee: 10, duration: 1, registrationTargetAddress: 'address', canPrepareCommit: true,
     onSetAddress: noop, onRegisterSetsPrimaryChange: noop, registerSetsPrimary: true,
     commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 } },
@@ -23,7 +23,7 @@ it('offers Reserve immediately after wallet connection, with primary name in the
 })
 it('replaces the flow with one claim moment and two next actions', () => {
   const html = renderToStaticMarkup(<RegistrationFlowPanel {...props} wizard={{...props.wizard, registrationComplete:true}} step={{...props.step, registrationCompletion:markRegistrationCompletionExecuted(createRegistrationCompletionState())}} />)
-  expect(html).toContain('alpha.dusk is yours')
+  expect(html.replace(/<[^>]*>/g, '')).toContain('alpha.dusk is yours')
   expect(html).toContain('>Open</button>')
   expect(html).toContain('>Add records</button>')
   expect(html).toContain('Download card')

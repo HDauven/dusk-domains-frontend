@@ -61,7 +61,7 @@ export function RecordDraftEditor({
                 <Button
                   className="record-wallet-button"
                   disabled={!walletAddressAvailable}
-                  title={walletAddressAvailable ? 'Use connected Dusk public address' : 'Connect wallet first'}
+                  title={walletAddressAvailable ? 'Use connected Dusk address' : 'Connect wallet first'}
                   type="button"
                   onClick={onUseWalletPublicAddress}
                 >

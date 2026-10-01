@@ -8,7 +8,6 @@ import type {
 } from '../names/internal'
 import {
   createManagedNameState,
-  fallbackManager,
 } from './appHelpers'
 import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
 
@@ -28,8 +27,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
   const [primaryEndpointValue, setPrimaryEndpointValue] = useState('')
   const [primaryName, setPrimaryName] = useState<string | null>(null)
   const [subnameLabel, setSubnameLabel] = useState('settlement')
-  const [subnameManager, setSubnameManager] = useState(fallbackManager)
-  const [subnameResolver, setSubnameResolver] = useState(recordSourceContractId)
+  const [subnameManager, setSubnameManager] = useState('')
   const [subnameExpiryPolicy, setSubnameExpiryPolicy] = useState<SubnameExpiryPolicy>('inherits_parent')
   const [subnameExpiryDate, setSubnameExpiryDate] = useState('')
   const [subnames, setSubnames] = useState<SubnameState[]>([])
@@ -77,7 +75,6 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     setSubnameExpiryPolicy,
     setSubnameLabel,
     setSubnameManager,
-    setSubnameResolver,
     setSubnames,
     setSubnameTxState,
     subnameError,
@@ -85,7 +82,6 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     subnameExpiryPolicy,
     subnameLabel,
     subnameManager,
-    subnameResolver,
     subnames,
     subnameTxState,
   }

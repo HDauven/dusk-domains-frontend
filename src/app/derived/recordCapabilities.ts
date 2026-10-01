@@ -22,7 +22,6 @@ export function deriveRecordCapabilities({
   selectedAuthority,
   subnameBusy,
   subnameLabel,
-  subnameManager,
   walletAuthorized,
 }: {
   activeRecordTarget: RecordTargetOption | undefined
@@ -49,7 +48,7 @@ export function deriveRecordCapabilities({
 }) {
   return {
     canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryName && primaryVerified && !primaryBusy),
-    canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && subnameManager.trim() && !subnameBusy),
+    canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && !subnameBusy),
     // Owners and managers can renew root names until grace ends.
     canRenewName: Boolean(
       walletAuthorized

@@ -23,21 +23,20 @@ export function useSearchController(props: UseSearchControllerProps) {
       props.openSearchView()
       resetSearchState(props, '')
     },
-    openIndexedName: (name: string) => openIndexedName(props, name),
-    openPendingReservation: (reservation: Parameters<typeof openPendingReservation>[1]) => (
-      openPendingReservation(props, reservation)
-    ),
+    openIndexedName: (name: string) => { cancel(); return openIndexedName(props, name) },
+    openPendingReservation: (reservation: Parameters<typeof openPendingReservation>[1]) => {
+      cancel()
+      return openPendingReservation(props, reservation)
+    },
     resetSearch: (nextValue: string) => {
       cancel()
       resetSearchState(props, nextValue)
       cancelSearch.current = scheduleSearch(nextValue, query => { void checkAvailability({ ...props, query }) })
     },
-    // Opens a name the way a typed search would, for example from a /name/ URL.
+    // Direct links and saved names open the public profile. Typed searches show availability.
     searchName: (name: string) => {
       cancel()
-      props.openSearchView()
-      resetSearchState(props, name)
-      return openIndexedName({ ...props, query: name }, name)
+      return openIndexedName(props, name)
     },
   }
 }

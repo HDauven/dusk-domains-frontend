@@ -60,9 +60,9 @@ export function SearchResultOverview({
     return (
       <Panel className="claim-card resume" aria-labelledby="overview-heading">
         <div className="claim-main">
-          <span className="eyebrow"><Clock size={13} /> Reserved</span>
+          <span className="eyebrow"><Clock size={13} /> {status === 'missing' ? 'Request saved' : 'Reserved'}</span>
           <h2 id="overview-heading">{pendingReservationStatusCopy(status, waitBlocks)}</h2>
-          <p>{pendingReservationNextStepCopy(status, waitBlocks)}</p>
+          <p>{pendingReservationNextStepCopy(status)}</p>
         </div>
         <div className="claim-stub">
           <Button variant="primary" type="button" onClick={() => void onOpenPendingReservation(savedReservation)}>

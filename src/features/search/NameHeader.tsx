@@ -4,7 +4,7 @@ import { OwnerLabel } from '../identity/OwnerLabel'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
 
-export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority }: {
+export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
   displayName: string
   lifecycleLabel: string | null
   primaryVerified: boolean
@@ -12,6 +12,7 @@ export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner
   records: ResolverRecord[]
   reserved: boolean
   status: NameStatus
+  ownerAddresses?: string[]
   viewerAuthority?: string
 }) {
   const registered = status === 'registered'
@@ -21,7 +22,7 @@ export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner
     {registered ? <h1 className="name-page-heading">{displayName}</h1> : null}
     {registered ? <NameCard name={displayName} avatar={avatar} description={description} /> : <h1 className="name-hero-title">{displayName}</h1>}
     <div className="name-hero-copy">
-      {registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={records.filter(record => record.key === 'moonlight_address').map(record => record.value)} /></div> : null}
+      {registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={[...ownerAddresses, ...records.filter(record => record.key === 'moonlight_address').map(record => record.value)]} /></div> : null}
       <div className="name-hero-badges">
         {reserved ? <Badge status="reserved">Reserved</Badge> : !registered ? <Badge>{statusCopy(status)}</Badge> : null}
         {registered && primaryVerified ? <Badge tone="success">Primary name</Badge> : null}

@@ -90,7 +90,7 @@ describe('App user-facing copy', () => {
 
     expect(source).toContain('Registration complete')
     expect(source).toContain('is yours')
-    expect(source).toContain('Open domain')
+    expect(source).toContain('Open name')
     expect(source).not.toContain('Review setup')
   })
 })

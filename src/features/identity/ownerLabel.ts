@@ -3,7 +3,9 @@ import { abbreviate } from '../../utils/format'
 
 function authorityKey(value: string) {
   const trimmed = value.trim()
-  return /^(?:0x)?[a-f0-9]{64}$/i.test(trimmed) ? trimmed.toLowerCase().replace(/^0x/, '') : trimmed
+  if (/^(?:0x)?[a-f0-9]{64}$/i.test(trimmed)) return trimmed.toLowerCase().replace(/^0x/, '')
+  const parsed = contractPrincipalFromWalletAccount(trimmed)
+  return parsed.ok && parsed.source === 'moonlight_account' ? parsed.principal.replace(/^0x/, '') : trimmed
 }
 
 export function sameAuthority(a: string | null | undefined, b: string | null | undefined) {
@@ -27,4 +29,12 @@ export function ownerLabel(authority: string, { viewerAuthority, addresses = [] 
     }
   }
   return { kind: 'id' as const, label: `Owner ID ${abbreviate(authority)}`, value: authority }
+}
+
+/** Address candidates already present in the loaded name records or primary-name activity. */
+export function ownerAddressCandidates(records: readonly { key: string; value: string }[], activity: readonly { eventType: string; target?: string }[] = []) {
+  return [...new Set([
+    ...records.filter(record => record.key === 'moonlight_address').map(record => record.value),
+    ...activity.filter(entry => entry.eventType === 'primary_name' && entry.target?.startsWith('moonlight_address:')).map(entry => entry.target!.slice('moonlight_address:'.length)),
+  ])]
 }

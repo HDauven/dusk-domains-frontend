@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { NameCard } from '../../components/ui/NameCard'
+import { NameSignature } from '../../components/ui/NameChip'
 import { downloadNameCard } from './shareNameCard'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 
@@ -12,7 +13,7 @@ export function ClaimSuccess({ name, onOpen, onAddRecords, progress }: {
 }) {
   const [error, setError] = useState('')
   return <section className="claim-success" aria-labelledby="claim-success-heading">
-    <h1 id="claim-success-heading">{name} is yours</h1>
+    <h1 id="claim-success-heading"><NameSignature name={name} /> is yours</h1>
     <NameCard name={name} />
     <div className="claim-success-actions">
       <Button variant="primary" onClick={onOpen}>Open</Button>

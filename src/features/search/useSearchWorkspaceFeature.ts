@@ -1,3 +1,4 @@
+import { ownerAddressCandidates } from '../identity/ownerLabel'
 import type { ComponentProps } from 'react'
 import type { SearchWorkspace } from './SearchWorkspace'
 import { formatActivityTime } from '../domains/domainFormat'
@@ -90,10 +91,11 @@ export function useSearchWorkspaceFeature({
   subnames,
   viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
+  const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
   const searchProps: SearchWorkspaceProps = {
     priceTiers,
     activityProps: {
-      ownerAddresses: parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value),
+      ownerAddresses,
       hasMore: hasMoreActivity,
       onLoadMore: onLoadMoreActivity,
       activityEntries,
@@ -119,15 +121,15 @@ export function useSearchWorkspaceFeature({
       subnames,
       viewerAuthority,
     },
-    // A registration that just completed is registered even before the indexer says so.
     headerProps: {
+      ownerAddresses,
       viewerAuthority,
       displayName,
       lifecycleLabel,
       primaryVerified: primaryProps.primaryVerification.verified,
       owner: nodeHex && settingsProps.managedName.node === nodeHex ? settingsProps.managedName.owner : null,
       records: resultStatus === 'registered' ? parentResolverRecords : [],
-      reserved: Boolean(savedReservation) && !registrationProps.wizard.registrationComplete,
+      reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
       status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
     },
     loading: activityLoading,

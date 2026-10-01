@@ -1,7 +1,6 @@
 import type { AppViewModelInputs } from './appViewTypes'
 import type { UseDomainManagementFeatureProps } from '../features/domains/domainManagementFeatureTypes'
 import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from './appConstants'
-import { fallbackManager } from './appHelpers'
 
 export function buildDomainManagementFeatureProps(inputs: AppViewModelInputs): UseDomainManagementFeatureProps {
   const { activityFeed, appRuntime, economicsRuntime, namePreview, searchRuntime, searchState, walletRuntime } = inputs
@@ -17,7 +16,6 @@ export function buildDomainManagementFeatureProps(inputs: AppViewModelInputs): U
     ...walletRuntime,
     clampDurationYears,
     editableRecordKeys,
-    fallbackManager,
     maxDurationYears,
     minDurationYears,
     renewalPreviewExpiresAt: namePreview.renewalPreviewLifecycle.expiresAt,

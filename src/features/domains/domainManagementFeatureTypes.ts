@@ -38,7 +38,6 @@ export type UseDomainManagementFeatureProps =
     clampDurationYears: (years: number) => number
     confirmationInput: string
     editableRecordKeys: readonly ResolverRecordKey[]
-    fallbackManager: string
     feeConfigError: string
     feeConfigLoading: boolean
     managementError: string
@@ -66,7 +65,6 @@ export type UseDomainManagementFeatureProps =
     setSubnameExpiryPolicy: SetState<SubnameExpiryPolicy>
     setSubnameLabel: SetState<string>
     setSubnameManager: SetState<string>
-    setSubnameResolver: SetState<string>
     subnameError: string
     subnames: SubnameState[]
     subnameTxState: DuskDomainTxState | null

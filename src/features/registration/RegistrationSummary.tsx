@@ -9,12 +9,12 @@ export function RegistrationSummary({
   activeReferral,
   appliedReferral,
   committed,
-  displayName,
   duration,
   expiryDate,
   feeConfigError,
   onChangeTerm,
   onRegisterSetsPrimaryChange,
+  primaryChoiceLocked = false,
   registerSetsPrimary,
   registrationComplete,
   registrationFee,
@@ -24,12 +24,12 @@ export function RegistrationSummary({
   activeReferral: ReferralState | null
   appliedReferral: ReferralState | null
   committed: boolean
-  displayName: string
   duration: number
   expiryDate: string
   feeConfigError: string
   onRegisterSetsPrimaryChange?: (checked: boolean) => void
   onChangeTerm: () => void
+  primaryChoiceLocked?: boolean
   registerSetsPrimary: boolean
   registrationComplete: boolean
   registrationFee: number
@@ -43,10 +43,6 @@ export function RegistrationSummary({
     <aside className="claim-stub register-summary" aria-label="Your claim">
       <span className="eyebrow">Your claim</span>
       <dl className="register-facts">
-        <div>
-          <dt>Name</dt>
-          <dd>{displayName}</dd>
-        </div>
         <div>
           <dt>Term</dt>
           <dd>
@@ -75,7 +71,7 @@ export function RegistrationSummary({
         {selectedAddress ? (
           <div className="register-primary">
             <dt id={primaryLabelId}>Primary name</dt>
-            <dd>{!registrationComplete && onRegisterSetsPrimaryChange ? <Switch aria-labelledby={primaryLabelId} checked={registerSetsPrimary} onCheckedChange={onRegisterSetsPrimaryChange} /> : registerSetsPrimary ? 'On' : 'Off'}</dd>
+            <dd>{!registrationComplete && onRegisterSetsPrimaryChange ? <Switch disabled={primaryChoiceLocked} aria-labelledby={primaryLabelId} checked={registerSetsPrimary} onCheckedChange={onRegisterSetsPrimaryChange} /> : registerSetsPrimary ? 'On' : 'Off'}</dd>
           </div>
         ) : null}
         {activeReferral ? (

@@ -1,6 +1,8 @@
 import { checkAuctionRoute } from './url-route-smoke.mjs'
 import { checkListingFeeReview } from './marketplace-fee-smoke.mjs'
 import { checkMarketplaceReviews, checkMarketplaceBrowse, checkMarketplaceInventory } from './marketplace-ux-smoke.mjs'
+import { checkNameManagement } from './name-management-smoke.mjs'
+import { checkPrimaryNameSwitches } from './primary-name-smoke.mjs'
 import { checkUiSystem } from './ui-system-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
@@ -77,6 +79,7 @@ try {
       controller: 'controller', ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1,
       committedBlockHeight: null, committedTxId: 'tx', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
     const indexerClient = { getHealth: async () => ({ currentBlockHeight: 200 }),
+      searchName: async () => ({ status: 'available' }),
       getCommitment: async () => ({ controller: 'controller', committedBlockHeight: 100, committedTxId: 'tx' }) }
     const getCurrentBlockHeight = async () => 200
     function SavedReservation() {
@@ -84,9 +87,8 @@ try {
       const [, setNowSeconds] = React.useState(0)
       const [preparedCommit, setPreparedCommit] = React.useState(null)
       const { pendingReservations } = useRegistrationRuntime({ mainView: 'search', chainId: 'dusk:0',
-        selectedAuthority: 'controller', selectedAddress: '', registrationAddressInput: '', registrationStep: 'setup',
-        walletSetupState: 'disconnected', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
-        setCurrentBlockHeight, setNowSeconds, canRegister: true, committed: false, registerSetsPrimary: false })
+        selectedAuthority: 'controller', selectedAddress: '', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
+        setCurrentBlockHeight, setNowSeconds })
       return React.createElement('output', { id: 'saved-reservation' }, `${height}:${pendingReservations[0]?.committedBlockHeight}`)
     }
     root.render(React.createElement(SavedReservation))
@@ -385,6 +387,8 @@ try {
   await checkMarketplaceReviews(page)
   await checkMarketplaceBrowse(page)
   await checkMarketplaceInventory(page)
+  await checkNameManagement(page)
+  await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])

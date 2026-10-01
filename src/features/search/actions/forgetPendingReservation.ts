@@ -1,3 +1,4 @@
+import { clearReservationPrimaryChoice } from '../../registration/reservationPrimaryChoice'
 import {
   removePendingNameReservation,
   type PendingNameReservation,
@@ -16,5 +17,6 @@ export function forgetPendingReservation(
     controller: reservation.controller,
     commitment: reservation.commitment,
   })
+  clearReservationPrimaryChoice(reservation)
   loadPendingReservations()
 }

@@ -20,9 +20,9 @@ it('treats prepaid lifecycle heights below a billion as blocks while retaining U
 })
 
 describe('domain policy copy', () => {
-  it('explains that 1-2 character domains cannot be registered', () => {
+  it('explains that 1–2 character names cannot be registered', () => {
     const text = 'Labels shorter than 3 characters are reserved.'
-    const expected = 'Dusk Domains start at 3 characters. 1-2 character domains are reserved.'
+    const expected = 'Dusk Domains start at 3 characters. 1–2 character names are reserved.'
 
     expect(policyIssueCopy(text)).toBe(expected)
     expect(overviewCopyForIssues('invalid', [{ tone: 'danger', text }])).toBe(expected)

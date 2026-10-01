@@ -27,7 +27,6 @@ export type IndexedNameReadBundle = {
   readErrors: string[]
   stateRead: IndexerReadResult<IndexedLifecycleName | null>
   subnameRead: IndexerReadResult<IndexedSubname[]>
-  subnameRecordSets: Record<string, ResolverRecord[]>
 }
 
 export async function readIndexedName(
@@ -48,16 +47,12 @@ export async function readIndexedName(
   ])
   const primaryName = await readPrimaryNameForForwardRecord(client, forwardRead.value?.records)
   const hydratedSubnames = subnameRead.value?.map(indexedSubnameToState) ?? null
-  const subnameRecords = hydratedSubnames
-    ? await readSubnameRecordSets(client, hydratedSubnames)
-    : { records: {}, errors: [] }
   const readErrors = [
     forwardRead.error,
     stateRead.error,
     activityRead.error,
     subnameRead.error,
     ownSubnameRead.error,
-    ...subnameRecords.errors,
   ].filter((message): message is string => Boolean(message))
 
   return {
@@ -71,7 +66,6 @@ export async function readIndexedName(
     readErrors,
     stateRead,
     subnameRead,
-    subnameRecordSets: subnameRecords.records,
   }
 }
 
@@ -87,22 +81,4 @@ async function readPrimaryNameForForwardRecord(
     value: moonlight.value,
   }))
   return primaryRead.value
-}
-
-async function readSubnameRecordSets(
-  client: DuskDomainsIndexerClient,
-  hydratedSubnames: SubnameState[],
-) {
-  const records: Record<string, ResolverRecord[]> = {}
-  const errors: string[] = []
-  let next = 0
-  await Promise.all(Array.from({ length: Math.min(4, hydratedSubnames.length) }, async () => {
-    while (next < hydratedSubnames.length) {
-      const subname = hydratedSubnames[next++]
-      const read = await indexerRead(client.resolveForward(subname.name))
-      if (read.value) records[subname.node] = read.value.records
-      if (read.error) errors.push(read.error)
-    }
-  }))
-  return { records, errors }
 }

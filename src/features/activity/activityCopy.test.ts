@@ -35,7 +35,7 @@ describe('activity copy', () => {
     expect(activityActor(me.toUpperCase().replace('0X', '0x'), me)).toBe('You')
     expect(activityActor('marketplace', me)).toBe('Marketplace')
     expect(activityActor(other, me)).toMatch(/^Owner ID 0xabababab/)
-    expect(activityTitle(entry('primary_name', ''))).toBe('Primary name set')
+    expect(activityTitle(entry('primary_name', ''))).toBe('Primary name changed')
   })
 
   it('labels recent-change warnings', () => {

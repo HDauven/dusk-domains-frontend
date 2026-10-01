@@ -107,9 +107,9 @@ export function useAppSearchProps({
     onOpenPendingReservations: () => void handleMainViewChange('my-names'),
     onQueryChange: resetSearch,
     onResultViewChange: setResultView,
-    // The claim card already chose the term, so registration opens at the wallet step.
+    // The claim card already chose the term, so registration opens at Reserve.
     onStartRegistration: () => {
-      setRegistrationStep('setup')
+      setRegistrationStep('review')
       setResultView('register')
     },
     parentResolverRecords,

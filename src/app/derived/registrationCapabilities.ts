@@ -58,7 +58,7 @@ export function deriveRegistrationCapabilities({
     ),
     // As canPrepareCommit, but to replace a stranded commitment rather than make a first one.
     canRestartReservation: Boolean(
-      !registrationsPaused && walletAuthorized && selectedAddress && nodeHex && canRegister && reservationStranded && !commitBusy && !txBusy,
+      !registrationsPaused && walletAuthorized && selectedAddress && nodeHex && canRegister && (reservationStranded || commitStale) && !commitBusy && !txBusy,
     ),
     commitStale,
     reservationStranded,

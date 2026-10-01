@@ -178,7 +178,7 @@ export function blockHeightFromDateInput(value: string, currentBlockHeight: numb
 }
 
 export function recordPlaceholder(key: ResolverRecordKey) {
-  if (key === 'moonlight_address') return 'dusk1...'
+  if (key === 'moonlight_address') return 'Dusk address'
   if (key === 'phoenix_payment_endpoint') return 'dusk1shielded...'
   if (key === 'evm_address') return '0x...'
   if (key === 'dusk_contract') return `0x${'0'.repeat(64)}`
@@ -197,16 +197,16 @@ export function statusCopy(status: NameStatus) {
 
 
 export function overviewCopyForIssues(status: NameStatus, issues: NameResult['issues']) {
-  if (status === 'available') return 'This domain can be registered.'
-  if (status === 'registered') return 'Review records, primary status, subdomains, and activity.'
+  if (status === 'available') return 'This name can be registered.'
+  if (status === 'registered') return 'View its profile, subnames and activity.'
   if (status === 'reserved') return 'This label is protected and cannot be registered through the public flow.'
   const blockingIssue = issues.find((issue) => issue.tone === 'danger') ?? issues[0]
-  return blockingIssue ? policyIssueCopy(blockingIssue.text) : 'Check the domain and try again.'
+  return blockingIssue ? policyIssueCopy(blockingIssue.text) : 'Check the name and try again.'
 }
 
 export function policyIssueCopy(text: string) {
   if (text === 'Labels shorter than 3 characters are reserved.') {
-    return 'Dusk Domains start at 3 characters. 1-2 character domains are reserved.'
+    return 'Dusk Domains start at 3 characters. 1–2 character names are reserved.'
   }
   return text
 }

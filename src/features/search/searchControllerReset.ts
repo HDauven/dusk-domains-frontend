@@ -1,10 +1,8 @@
-import { fallbackManager } from '../../app/appHelpers'
 import { createManagedNameState } from '../../app/managedNameState'
 import type { UseSearchControllerProps } from './searchControllerTypes'
 
 export function resetSearchState({
   recordSourceContractId,
-  selectedAuthority,
   setManagedName,
   setActivityEntries,
   setActivityCursor,
@@ -28,7 +26,6 @@ export function resetSearchState({
   setRecordError,
   setRecordTxState,
   setRegisterSetsPrimary,
-  setRegistrationAddressInput,
   setRegistrationCompletion,
   setRegistrationStep,
   setRenewalError,
@@ -41,7 +38,6 @@ export function resetSearchState({
   setSubnameExpiryPolicy,
   setSubnameLabel,
   setSubnameManager,
-  setSubnameResolver,
   setSubnameTxState,
   setSubnames,
   setTxState,
@@ -52,8 +48,7 @@ export function resetSearchState({
   setPreparedCommit(null)
   setChecked(false)
   setRegisterSetsPrimary(true)
-  setRegistrationAddressInput('')
-  setRegistrationStep('setup')
+  setRegistrationStep('review')
   setResultView('overview')
   setTxState(null)
   setCommitTxState(null)
@@ -81,8 +76,7 @@ export function resetSearchState({
   setPrimaryName(null)
   setSubnames([])
   setSubnameLabel('settlement')
-  setSubnameManager(selectedAuthority || fallbackManager)
-  setSubnameResolver(recordSourceContractId)
+  setSubnameManager('')
   setSubnameExpiryPolicy('inherits_parent')
   setSubnameExpiryDate('')
   setRenewalYears(1)

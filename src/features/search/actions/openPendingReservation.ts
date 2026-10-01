@@ -8,6 +8,7 @@ import {
 import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
 import { indexedOwnCommitment } from '../../registration/pendingReservationSync'
 import { resetSearchState } from '../searchControllerReset'
+import { readReservationPrimaryChoice } from '../../registration/reservationPrimaryChoice'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
 export async function openPendingReservation(
@@ -38,6 +39,7 @@ export async function openPendingReservation(
 
   openSearchView()
   resetSearchState(props, reservation.name)
+  props.setRegisterSetsPrimary(readReservationPrimaryChoice(reservation))
   setDuration(clampDurationYears(reservation.durationYears))
   setChecked(true)
   setResultView('register')
@@ -77,7 +79,7 @@ export async function openPendingReservation(
       setCommitted(false)
       setPreparedCommit(null)
       setRegistrationCompletion(null)
-      setRegistrationStep('setup')
+      setRegistrationStep('review')
       setResultView('details')
       setIndexerConfirmation('Registration is complete.')
       return

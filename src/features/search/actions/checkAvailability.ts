@@ -29,7 +29,7 @@ export async function checkAvailability(props: UseSearchControllerProps) {
   setChecked(true)
   setApiSearchResult(null)
   setResultView('overview')
-  setRegistrationStep('setup')
+  setRegistrationStep('review')
   if (!indexerClient) return
 
   setActivityLoading(true)
@@ -52,7 +52,6 @@ export async function checkAvailability(props: UseSearchControllerProps) {
       setCommitted(false)
       setPreparedCommit(null)
       setRegistrationCompletion(null)
-
     }
   } catch (error) {
     if (isCurrent()) setIndexerError(userFacingErrorMessage(error))

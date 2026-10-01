@@ -43,5 +43,5 @@ export type UseSubdomainActionsProps = {
   subnameExpiryPolicy: SubnameExpiryPolicy
   subnameLabel: string
   subnameManager: string
-  subnameResolver: string
+  recordSourceContractId: string
 } & LiveWritePreflight

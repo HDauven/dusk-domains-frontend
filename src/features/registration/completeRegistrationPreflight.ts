@@ -3,7 +3,7 @@ import type { UseRegistrationActionsProps } from './registrationActionTypes'
 
 type CompleteRegistrationPreflightResult =
   | { ok: true }
-  | { message?: string, ok: false, step?: 'setup' }
+  | { message?: string, ok: false, step?: 'review' }
 
 export function completeRegistrationPreflight({
   canRegister,
@@ -21,7 +21,7 @@ export function completeRegistrationPreflight({
   if (!registrationTargetReady) {
     return {
       ok: false,
-      step: 'setup',
+      step: 'review',
       message: registrationTargetAddressErrors[0] ?? 'Enter a valid Dusk address before completing registration.',
     }
   }

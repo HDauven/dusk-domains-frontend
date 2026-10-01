@@ -1,5 +1,7 @@
+import { clearReservationPrimaryChoice } from './reservationPrimaryChoice'
 import {
   markRegistrationCompletionExecuted,
+  markRegistrationCompletionFailed,
 } from './registrationCompletionState'
 import {
   removePendingNameReservation,
@@ -37,8 +39,6 @@ export async function applyCompleteRegistrationSuccess(
 ) {
   if (!preparedCommit) return
 
-  setRegistrationCompletion((current) => markRegistrationCompletionExecuted(current))
-
   // The router picks the resolver that stores a new name's records, so take it from the index.
   let indexedResolver: string | null = null
   let registered = false
@@ -53,12 +53,18 @@ export async function applyCompleteRegistrationSuccess(
   })
   // A wallet can report a reverted reveal as executed. Keep the saved reservation, so the
   // registration can be retried, until the index shows the name registered to this account.
+  if (!applyLocally && !registered) {
+    setRegistrationCompletion(current => markRegistrationCompletionFailed(current, 'Your transaction was submitted, but registration is not confirmed yet. Your reservation is saved in My names. Check it before retrying.'))
+    return
+  }
+  setRegistrationCompletion(current => markRegistrationCompletionExecuted(current))
   if (applyLocally || registered) {
     removePendingNameReservation({
       chainId: runtimeConfig.chainId,
       controller: selectedAuthority,
       commitment: preparedCommit.commitment,
     })
+    clearReservationPrimaryChoice({ chainId: runtimeConfig.chainId, commitment: preparedCommit.commitment })
     loadPendingReservations()
   }
   if (!applyLocally) return

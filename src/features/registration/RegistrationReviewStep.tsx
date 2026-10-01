@@ -39,7 +39,7 @@ export function RegistrationReviewStep({
 }) {
   const walletReady = walletSetupState === 'connected'
   const actionTitle = walletReady
-    ? committed ? 'Reserved' : 'Sign the reservation'
+    ? committed ? commitTxState?.status === 'executed' ? 'Reserved' : 'Request saved' : 'Sign the reservation'
     : walletSetupActionTitle(walletSetupState)
   const actionCopy = walletReady
     ? committed
@@ -47,7 +47,7 @@ export function RegistrationReviewStep({
       : `You can register about ${formatWait(REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)} after it confirms.`
     : walletSetupActionCopy(walletSetupState)
 
-  if (!walletReady) return <RegistrationWalletSetupCard installUrl={installUrl} onOpenWalletConnection={onOpenWalletConnection} onRefreshWalletProviders={onRefreshWalletProviders} selectedAddress="" walletDiscoveryRefreshing={walletDiscoveryRefreshing} walletSetupState={walletSetupState} />
+  if (!walletReady) return <RegistrationWalletSetupCard installUrl={installUrl} onOpenWalletConnection={onOpenWalletConnection} onRefreshWalletProviders={onRefreshWalletProviders} walletDiscoveryRefreshing={walletDiscoveryRefreshing} walletSetupState={walletSetupState} />
 
   return (
     <div className="register-action">

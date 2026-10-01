@@ -87,7 +87,7 @@ export async function checkIndexerSessionBudget(page) {
       await client.getHealth()
       const reads = await readIndexedName(client, result)
       if (reads.readErrors.length) throw new Error(reads.readErrors.join(', '))
-      return Object.keys(reads.subnameRecordSets).length
+      return reads.hydratedSubnames.length
     }
     window.readSixtyChildren = async () => { childCount = 60; return window.readSessionName(parent) }
     window.restoreSessionFetch = () => { window.fetch = realFetch }
@@ -112,11 +112,11 @@ export async function checkIndexerSessionBudget(page) {
     }
     stages.pagedTwice = await page.evaluate(() => window.sessionCalls.length)
     assert.equal(await page.evaluate(() => window.sessionError || ''), '')
-    assert.deepEqual(stages, { home: 3, search: 9, name: 36, marketplace: 44, pagedTwice: 50 })
+    assert.deepEqual(stages, { home: 3, search: 9, name: 16, marketplace: 24, pagedTwice: 30 })
     const beforeSixty = stages.pagedTwice
     assert.equal(await page.evaluate(() => window.readSixtyChildren()), 60)
-    assert.equal(await page.evaluate(() => window.sessionCalls.length) - beforeSixty, 67)
-    console.log(`Indexer session requests: ${JSON.stringify(stages)}; 60-child search and hydration: 67`)
+    assert.equal(await page.evaluate(() => window.sessionCalls.length) - beforeSixty, 7)
+    console.log(`Indexer session requests: ${JSON.stringify(stages)}; 60-child search and hydration: 7`)
   } finally {
     await page.evaluate(() => window.restoreSessionFetch())
   }

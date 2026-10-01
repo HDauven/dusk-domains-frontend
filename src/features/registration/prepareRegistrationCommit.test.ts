@@ -29,11 +29,28 @@ function args() {
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
     getCurrentBlockHeight: async () => 500, setCommitTxState: noop, setWalletError: vi.fn(),
     setRegistrationCompletion: noop, setPreparedCommit: noop, setCurrentBlockHeight: noop,
+    setRegisterSetsPrimary: noop,
     setNowSeconds: noop, setCommitted: noop, setRegistrationStep: noop, setTxState: noop,
     setIndexerError: noop, setIndexerConfirmation: noop,
   }
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
+
+it.each([true, false])('preserves the primary name choice %s when a saved claim is reopened', async (registerSetsPrimary) => {
+  const props = args()
+  await prepareRegistrationCommit({ ...props, registerSetsPrimary,
+    submitNameWrite: async (_name: unknown, _call: unknown, options: { onUpdate: (state: unknown) => void }) => {
+      options.onUpdate({ status: 'awaiting_approval' })
+      return { status: 'rejected' }
+    },
+  } as never)
+  const saved = listPendingNameReservations()[0]
+  const setRegisterSetsPrimary = vi.fn()
+  await openPendingReservation({ ...props, chainId: 'dusk:0', setRegisterSetsPrimary,
+    openSearchView: vi.fn(), setDuration: vi.fn(), setChecked: vi.fn(), setResultView: vi.fn(),
+  } as never, saved)
+  expect(setRegisterSetsPrimary).toHaveBeenLastCalledWith(registerSetsPrimary)
+})
 
 it('saves before wallet approval and preserves the secret while a confirmed height read stalls', async () => {
   const props = args()
@@ -117,7 +134,7 @@ it('does not call a rejected saved request signed or submitted after reopening P
   const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, view as never))
     + renderToStaticMarkup(createElement(RegistrationReviewStep, view as never))
   expect(html).toContain('Unconfirmed')
-  expect(html).toContain('Reserved')
+  expect(html).toContain('Request saved')
   expect(html).toContain('Check your wallet before retrying')
   expect(html).not.toMatch(/Reservation signed|Reservation submitted|>Reserved</)
   expect(html).not.toContain('Start by reserving the name')

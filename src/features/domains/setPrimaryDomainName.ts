@@ -28,12 +28,12 @@ export async function setPrimaryDomainName({
     canContinue: canSetPrimary,
     setError: setPrimaryError,
       walletSetupState,
-    blockedCopy: 'Connect the manager wallet and enter a valid Dusk Public Address before setting a primary domain.',
+    blockedCopy: 'Connect the manager wallet and enter a valid Dusk address before setting a primary name.',
   })) {
     return
   }
-  if (!ensureContractAuthorityForLiveWrite('set the primary domain', setPrimaryError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('setting the primary domain', setPrimaryError))) return
+  if (!ensureContractAuthorityForLiveWrite('set the primary name', setPrimaryError)) return
+  if (!(await ensurePublicBalanceForLiveWrite('setting the primary name', setPrimaryError))) return
 
   try {
     const call = coreSetPrimaryNameRuntimeCall({
@@ -48,7 +48,7 @@ export async function setPrimaryDomainName({
     })
 
     if (finalState.status === 'executed') {
-      if (!(await shouldApplyPreviewWriteFallback('primary domain', async (client) => {
+      if (!(await shouldApplyPreviewWriteFallback('primary name', async (client) => {
         const indexed = await client.getPrimaryName({
           type: 'moonlight_address',
           value: primaryEndpoint,

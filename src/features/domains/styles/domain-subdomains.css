@@ -59,7 +59,7 @@
 
 .subname-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 82px minmax(150px, 0.9fr) minmax(130px, 0.75fr) minmax(110px, 0.7fr);
+  grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-3);
   align-items: center;
   min-height: 54px;
@@ -67,10 +67,9 @@
   text-align: left;
 }
 
-.subname-row:not(:disabled):hover {
-  border-color: var(--control-line);
-  background: var(--surface);
-}
+.subname-row > button { justify-self: start; }
+.subname-row > div { min-width: 0; font-size: var(--text-sm); }
+.subname-row .owner-identity code { white-space: normal; overflow-wrap: anywhere; }
 
 .subname-row > span:not(.name-signature),
 .subname-row code {
@@ -87,7 +86,7 @@
   white-space: nowrap;
 }
 
-.subname-row span:nth-child(2) {
+.subname-row > span:nth-child(2) {
   width: fit-content;
   padding: var(--space-1) 7px;
   color: var(--muted);

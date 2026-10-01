@@ -90,7 +90,7 @@ export function useMyDomains({
       setMyNames([])
       setMyNamePrimarySummaries({})
       setMyNamesLoading(false)
-      setMyNamesError('Domain data is unavailable right now. Refresh and try again.')
+      setMyNamesError('Name data is unavailable right now. Refresh and try again.')
       return
     }
 

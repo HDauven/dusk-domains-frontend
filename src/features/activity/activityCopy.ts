@@ -30,7 +30,7 @@ function primaryTarget(target: string) {
 }
 
 export function activityTitle(entry: ActivityEntry) {
-  if (entry.eventType === 'primary_name') return 'Primary name set'
+  if (entry.eventType === 'primary_name') return 'Primary name changed'
   if (entry.eventType === 'subname_created') return 'Subname created'
   if (entry.eventType === 'subname_pruned') return 'Expired subname removed'
   if (entry.eventType === 'domain_fixed_sale_filled') return 'Sold'

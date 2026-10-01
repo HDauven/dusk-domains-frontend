@@ -64,12 +64,12 @@ export function RegistrationPurchaseStep({
   const actionCopy = walletReady
     ? reservationStranded
       ? strandedReservationCopy()
-      : commitWindowCopy(commitWindow.status, commitWindow.waitBlocks, commitWindow.staleInBlocks)
+      : commitWindowCopy(commitWindow.status, commitWindow.staleInBlocks)
     : walletSetupActionCopy(walletSetupState)
 
   return (
     <div className="register-step">
-      {registrationComplete ? null : (
+      {actionDone ? null : (
         <div className={`register-reservation ${reservationStranded ? 'stale' : commitWindow.status}`}>
           <span>Reservation</span>
           {commitWindow.status === 'waiting' ? <ReservationCountdown key={commitWindow.waitBlocks} blocks={commitWindow.waitBlocks} /> : <strong>{reservation}</strong>}
@@ -84,7 +84,7 @@ export function RegistrationPurchaseStep({
       {actionDone ? null : (
         <div className="register-action">
           <div className="register-action-copy">
-            <strong>{actionTitle}</strong>
+            {!walletReady || reservationStranded || commitWindow.status === 'stale' ? <strong>{actionTitle}</strong> : null}
             <span>{actionCopy}</span>
           </div>
           {walletReady && (reservationStranded || commitWindow.status === 'stale') ? (

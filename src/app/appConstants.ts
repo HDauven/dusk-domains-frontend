@@ -3,7 +3,7 @@ import type { DuskConnectOptions, ResolverRecord, ResolverRecordKey } from '../n
 export const duskWalletInstallUrl = 'https://chromewebstore.google.com/detail/dusk-wallet/gcbboponngpmioapekmkajmffefaacld'
 export const duskDomainsConnectOptions = {
   shieldedReceiveAddress: false,
-  reason: 'Manage public .dusk domains and public domain records.',
+  reason: 'Manage .dusk names and their public records.',
   label: 'Dusk Domains',
 } as const satisfies DuskConnectOptions
 export const minDurationYears = 1

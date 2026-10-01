@@ -1,3 +1,4 @@
+import { NameSignature } from '../../components/ui/NameChip'
 import { Panel } from '../../components/ui/Panel'
 import { RegistrationStepPanel } from './flow/RegistrationStepPanel'
 import type { RegistrationFlowPanelProps } from './flow/types'
@@ -13,17 +14,18 @@ export function RegistrationFlowPanel({ navigation, resultIssues, status, step, 
       <div className="claim-main register-main">
         <header className="register-head">
           <p className="register-stage">{wizard.registrationStep === 'purchase' ? '2 of 2 · Register' : '1 of 2 · Reserve'}</p>
-          <h1 id="register-heading">{wizard.displayName}</h1>
+          <h1 id="register-heading"><NameSignature name={wizard.displayName} /></h1>
         </header>
         <RegistrationStepPanel {...step} />
         <RegistrationPolicyNotes issues={resultIssues} />
-        <RegistrationFlowStatus {...status} />
+        <RegistrationFlowStatus {...status} walletError={step.registrationCompletion ? '' : status.walletError} />
       </div>
       <RegistrationSummary
         activeReferral={step.activeReferral} appliedReferral={step.appliedReferral} committed={step.committed}
-        displayName={step.displayName} duration={step.duration} expiryDate={step.expiryDate}
+        duration={step.duration} expiryDate={step.expiryDate}
         feeConfigError={step.feeConfigError} onChangeTerm={navigation.onBackToOverview}
         onRegisterSetsPrimaryChange={step.onRegisterSetsPrimaryChange}
+        primaryChoiceLocked={step.primaryChoiceLocked}
         registerSetsPrimary={step.registerSetsPrimary} registrationComplete={false}
         registrationFee={step.registrationFee} registrationTargetAddress={step.registrationTargetAddress} selectedAddress={step.selectedAddress}
       />

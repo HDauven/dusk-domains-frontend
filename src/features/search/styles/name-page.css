@@ -21,30 +21,6 @@
   padding: var(--space-2) 0;
 }
 
-.name-hero-orb {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 108px;
-  height: 108px;
-  padding: 6px;
-  border-radius: 50%;
-  background: var(--portrait-gradient);
-}
-
-.name-hero-orb .name-avatar {
-  width: 96px;
-  height: 96px;
-  border: 4px solid var(--night);
-}
-
-.name-hero-orb.unclaimed {
-  padding: 0;
-  background: var(--surface);
-  border: 1.5px dashed var(--control-line);
-  color: var(--muted);
-}
-
 .name-hero-copy {
   min-width: 0;
 }
@@ -62,16 +38,10 @@
   font-style: italic;
 }
 
-.name-hero-description,
 .name-hero-owner {
   margin: 14px 0 0;
   color: var(--muted);
   font-size: var(--text-sm);
-}
-
-.name-hero-description {
-  max-width: 60ch;
-  overflow-wrap: anywhere;
 }
 
 .name-hero-badges {
@@ -442,17 +412,6 @@
 @media (max-width: 860px) {
   .name-hero {
     gap: var(--space-4);
-  }
-
-  .name-hero-orb {
-    width: 76px;
-    height: 76px;
-    padding: var(--space-1);
-  }
-
-  .name-hero-orb .name-avatar {
-    width: 68px !important;
-    height: 68px !important;
   }
 
   .claim-card,
