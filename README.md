@@ -108,6 +108,43 @@ npm run build
 
 Deploy `dist/` to Cloudflare Pages or another static host. Serve data-driver WASM files with `application/wasm` when possible.
 
+## Referral validation bundle cost
+
+Measured with `npm run build` on 2026-10-01 (Node 24.13.0, Vite 8.1.3), using
+the SDK worktree copied into `node_modules/@duskdomains/sdk`. The SDK archive pin
+in `package.json` and `package-lock.json` is unchanged. Noble curves and hashes
+2.4.0 were copied from the SDK's installed dependencies for all three builds.
+The baseline restores frontend `91d4f29` and SDK `2a71a06` sources; the eager
+comparison uses the reviewed `fa2d4e9` / `bb6adea` sources.
+
+| Build | Main JS | Main gzip | Deferred BLS gzip |
+| --- | ---: | ---: | ---: |
+| Before referral validation | 626.18 KB | 170.76 KB | — |
+| Eager full validation | 697.40 KB | 197.47 KB | — |
+| Lazy full input validation, synchronous encoding | 631.56 KB | 172.85 KB | 24.28 KB |
+
+The eager change adds 26.71 KB gzip, above the 15 KB threshold. Full BLS validation
+now loads on the Moonlight referral path. Empty attribution, contracts and Phoenix
+skip the import. The remaining main-chunk increase is 2.09 KB gzip, including
+structural checks, loading and async input state handling; BLS lives in its own chunk.
+CSS stays at 11.98 KB gzip. There is no other BLS implementation in the frontend's
+production dependencies to reuse (`@dusk/connect` has no dependencies;
+`@noble/hashes` only supplies hashing).
+
+Referrals remain inactive while validation is pending. Clearing or changing input
+cancels the old result, including its storage write. A failed module load leaves
+attribution inactive. The browser smoke covers lazy loading, pending and cleared
+input, and rejection of off-curve and out-of-subgroup keys.
+
+`referralStateFromInput` awaits the SDK's full `isClaimableReferrer` validation at
+the referral input. Registration builders and encoding stay synchronous and use
+`hasClaimableReferrerShape`, the cheap contract-equivalent structural check.
+
+For worktree development after `npm ci`, copy the SDK's `src/` and `package.json`
+into `node_modules/@duskdomains/sdk/`, and its `node_modules/@noble/` packages into
+the frontend's `node_modules/@noble/`. Restart Vite with a cleared local dependency
+cache after replacing SDK sources. Do not change the archive pin for this workflow.
+
 ## License
 
 MIT

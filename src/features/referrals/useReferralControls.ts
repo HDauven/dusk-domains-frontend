@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  initialReferralState,
-  referralStateFromInput,
-  writeStoredReferralInput,
+  initialReferralInput,
+  settleReferralInput,
   type ReferralState,
 } from './referralState'
 
@@ -21,22 +20,30 @@ export function useReferralControls({
   selectedAddress,
   setReferralError,
 }: UseReferralControlsArgs) {
-  const [referralState, setReferralState] = useState<ReferralState>(() => initialReferralState())
+  const [input, setInput] = useState(initialReferralInput)
+  const [validatedReferral, setValidatedReferral] = useState<ReferralState>({ input: '', principal: null, valid: false, reason: '' })
+  const referralState = validatedReferral.input === input
+    ? validatedReferral
+    : { input, principal: null, valid: false, reason: '' }
   const [referralCopied, setReferralCopied] = useState(false)
   const referralLink = useMemo(() => referralLinkForAddress(selectedAddress), [selectedAddress])
 
   useEffect(() => {
-    writeStoredReferralInput(referralState.valid ? referralState.input : '')
-  }, [referralState.input, referralState.valid])
+    let current = true
+    void settleReferralInput(input, () => current).then((state) => {
+      if (state) setValidatedReferral(state)
+    })
+    return () => { current = false }
+  }, [input])
 
   const handleReferralInputChange = useCallback((value: string) => {
     setReferralCopied(false)
-    setReferralState(referralStateFromInput(value))
+    setInput(value.trim())
   }, [])
 
   const clearReferral = useCallback(() => {
     setReferralCopied(false)
-    setReferralState(referralStateFromInput(''))
+    setInput('')
   }, [])
 
   const copyReferralLink = useCallback(async () => {
