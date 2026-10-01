@@ -1,3 +1,4 @@
+import { marketplaceAmountRow } from './marketplaceAmounts'
 import { useCallback, useState } from 'react'
 import {
   coreAcceptMarketplaceOfferRuntimeCall,
@@ -13,7 +14,9 @@ import {
   type IndexedMarketplaceOffer,
   type IndexedNameSummary,
 } from '../../names/internal'
-import { durationBlocks, MIN_MARKETPLACE_AMOUNT_LUX, validLuxAmount } from './auctionMath'
+import { proceedsRows } from './marketplaceFees'
+import { abbreviate } from '../../utils/format'
+import { durationBlocks, formatLuxAsDusk, MIN_MARKETPLACE_AMOUNT_LUX, validLuxAmount } from './auctionMath'
 import {
   canonicalOffer,
   canonicalOfferAbsent,
@@ -46,10 +49,10 @@ export function useOffers({
   const [offerAmountDusk, setOfferAmountDusk] = useState('25')
   const [offerDurationDays, setOfferDurationDays] = useState('7')
 
-  const placeOffer = useCallback(async () => {
+  const placeOffer = useCallback(async function placeOffer(reviewed = false) {
     const validation = validateName(offerName)
     if (!validation.ok) {
-      setError(validation.issues.find((issue) => issue.tone === 'danger')?.text ?? 'Enter a valid domain.')
+      setError(validation.issues.find((issue) => issue.tone === 'danger')?.text ?? 'Enter a valid name.')
       return
     }
     const amountLux = validLuxAmount(offerAmountDusk)
@@ -78,6 +81,18 @@ export function useOffers({
       setError(userFacingErrorMessage(readError))
       return
     }
+    if (!reviewed) {
+      writes.requestReview({
+        title: `Offer on ${canonicalName}`,
+        rows: [
+          marketplaceAmountRow('Your wallet → marketplace escrow', amountLux),
+          { label: 'If accepted, name moves to', value: selectedAddress, address: true },
+          { label: 'Valid for', value: `${days} ${days === 1 ? 'day' : 'days'}` },
+        ],
+        note: 'The owner can accept while this offer is open. To get your funds back, cancel the offer (or close it after expiry), then withdraw the refund under Yours.',
+      }, () => placeOffer(true))
+      return
+    }
     await writes.submit(
       'placing this offer',
       canonicalName,
@@ -88,15 +103,15 @@ export function useOffers({
         buyerManager: selectedAuthority || null,
       }),
       amountLux,
-      'Offer placed.',
+      `Offer placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
-  }, [duskDomainsOnChainClient, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAuthority, setError, writes])
+  }, [duskDomainsOnChainClient, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
 
-  const acceptOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
+  const acceptOffer = useCallback(async function acceptOffer(offer: IndexedMarketplaceOffer, reviewed = false) {
     if (!marketplaceOnChainClient || !duskDomainsOnChainClient) return
     const ownedName = ownedNames.find((name) => name.node === offer.node)
     if (!ownedName) {
-      setError('Domain ownership changed. Refresh and try again.')
+      setError('Name ownership changed. Check the owner before trying again.')
       return
     }
     try {
@@ -104,6 +119,19 @@ export function useOffers({
       await canonicalOwnedName(duskDomainsOnChainClient, ownedName, selectedAuthority)
     } catch (readError) {
       setError(userFacingErrorMessage(readError))
+      return
+    }
+    if (!reviewed) {
+      writes.requestReview({
+        title: `Accept offer for ${offer.name}`,
+        rows: [
+          { label: 'Name moves to buyer', value: abbreviate(offer.buyerAuthority) },
+          marketplaceAmountRow('Payment from escrow', BigInt(offer.amountLux)),
+          ...proceedsRows(BigInt(offer.amountLux), offer.feeBps),
+          { label: 'Your payout address', value: selectedAddress, address: true },
+        ],
+        note: 'You give up ownership and management of this name. The buyer’s escrowed funds pay you and the treasury. This sale cannot be canceled.',
+      }, () => acceptOffer(offer, true))
       return
     }
     await writes.submit(
@@ -118,7 +146,7 @@ export function useOffers({
         sellerRecipient: selectedAddress,
       }),
       0n,
-      'Offer accepted.',
+      `Offer accepted. ${formatLuxAsDusk(BigInt(offer.amountLux))} DUSK paid from escrow.`,
     )
   }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes])
 

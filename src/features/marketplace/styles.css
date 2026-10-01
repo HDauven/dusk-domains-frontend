@@ -792,9 +792,6 @@
 .marketplace-offer-filters label { flex: 1 1 140px; min-width: 0; }
 .marketplace-offer-filters input, .marketplace-offer-filters select { width: 100%; }
 
-.marketplace-panel .marketplace-amount,
-.marketplace-bid-review .marketplace-amount { font: inherit; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; color: inherit; }
-
 .marketplace-bid-timer [role="timer"] { font: inherit; text-transform: none; letter-spacing: normal; color: var(--ink); }
 .marketplace-raise-bid summary { cursor: pointer; color: var(--peach); }
 .marketplace-raise-bid[open] summary { margin-bottom: var(--space-4); }
@@ -804,4 +801,27 @@
 .marketplace-tx-details { color: var(--muted); font-size: var(--text-sm); }
 .marketplace-tx-details code { overflow-wrap: anywhere; }
 
+.marketplace-bid-review .claim-review code { max-width: 100%; white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; }
+.marketplace-bid-review .claim-review p { flex-wrap: wrap; }
+
 .marketplace-navigation { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.marketplace-panel .marketplace-amount,
+.marketplace-bid-review .marketplace-amount { font: inherit; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; color: inherit; }
+.marketplace-review-address { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.marketplace-bid-review .marketplace-review-address code { white-space: nowrap; }
+.marketplace-bid-review .claim-review strong { margin-left: auto; }
+@media (max-width: 640px) {
+  .dialog:has(.marketplace-bid-review) { padding: var(--space-4); }
+  .marketplace-bid-review { gap: var(--space-3); }
+  #marketplace-bid-review-heading,
+  .marketplace-review-amount strong { font-size: var(--text-xl); }
+  .marketplace-bid-review .claim-review p { padding: var(--space-2) 0; gap: var(--space-2); }
+  .marketplace-bid-review .marketplace-review-address code { font-size: 12.5px; }
+  .marketplace-review-custody { padding: 10px; gap: var(--space-2); }
+  .marketplace-review-custody p { font-size: 13px; line-height: 1.4; }
+}
+
+.marketplace-bid-review .claim-review p:has(.marketplace-payment-split) { display: grid; grid-template-columns: auto 1fr; }
+.marketplace-bid-review .claim-review strong:has(.marketplace-payment-split) { display: contents; }
+.marketplace-bid-review .claim-review strong:has(.marketplace-payment-split) .marketplace-amount { justify-self: end; }
+.marketplace-payment-split { grid-column: 1 / -1; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.5; }

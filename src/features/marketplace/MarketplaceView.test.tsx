@@ -160,6 +160,12 @@ describe('MarketplaceView actions', () => {
     expect(html).toContain('Confirm in wallet')
   })
 
+  it('lets the buyer cancel an offer after acquiring the name separately, even while trading is paused', () => {
+    const html = render({ tab: 'offers', offers: [offer()], sellableNames: [{ ...ownedName(), owner: buyer }], selectedAuthority: buyer, tradingPaused: true })
+    expect(html).toMatch(/<button(?![^>]*disabled)[^>]*>Cancel<\/button>/)
+    expect(html).not.toContain('>Accept</button>')
+  })
+
   it('shows accept, cancel and expiry actions for the right offer state', () => {
     const incomingHtml = render({
       tab: 'offers',
@@ -203,6 +209,7 @@ function props(overrides: Partial<MarketplaceViewProps>): MarketplaceViewProps {
     durationDays: '7',
     error: '',
     fixedPriceDusk: '25',
+    feeBps: 250,
     fixedSales: [],
     loading: false,
     marketplaceEnabled: true,
@@ -348,7 +355,7 @@ it('disables only new trades while paused and keeps custody release and refunds 
   expect(button(render({ ...paused, tab: 'offers', offers: [offer()], sellableNames: [ownedName()], selectedAuthority: seller }), 'Accept')).toContain('disabled')
   expect(button(render({ ...paused, tab: 'offers', offers: [offer()] }), 'Cancel')).not.toContain('disabled')
   expect(button(render({ ...paused, tab: 'offers', offers: [offer({ expiresAtBlockHeight: 1000 })] }), 'Close')).not.toContain('disabled')
-  expect(button(render({ ...paused, tab: 'offers' }), 'Place offer')).toContain('disabled')
+  expect(button(render({ ...paused, tab: 'offers' }), 'Review offer')).toContain('disabled')
   const dormant = auction()
   expect(button(render({ ...paused, auctions: [dormant], selectedAuctionNode: dormant.node }), 'Review bid')).toContain('disabled')
   expect(button(render({ ...paused, auctions: [dormant], selectedAuctionNode: dormant.node, selectedAuthority: seller }), 'Cancel auction')).not.toContain('disabled')
@@ -433,3 +440,23 @@ it('rounds a first-bid minimum up in both the headline and the draft', () => {
   expect(html).toContain('title="1.000000001 DUSK">1.01 DUSK')
   expect(html).toContain('value="1.01"')
 })
+
+it('renders the transaction review with custody and payout terms before wallet approval', () => {
+  const html = render({ review: { title: 'Buy aurora.dusk', rows: [{ label: 'Your wallet → seller', value: '24.375 DUSK' }, { label: 'Treasury', value: '0.625 DUSK' }], note: 'The name moves to your wallet.' } })
+  expect(html).toContain('Buy aurora.dusk')
+  expect(html).toContain('24.375 DUSK')
+  expect(html).toContain('0.625 DUSK')
+  expect(html).toContain('The name moves to your wallet.')
+  expect(html).toContain('Confirm in wallet')
+})
+
+
+it('shows the exact bid visibly and abbreviates the receiving wallet with copy', () => {
+  const address = 'a'.repeat(100)
+  const html = render({ selectedAddress: address, bidReview: { amountDusk: '38.288446875', amountLux: 38_288_446_875n, minimumBidLux: 38_288_446_875n, auction: auction() } })
+  expect(html.replace(/<[^>]*>/g, '')).toContain('You are bidding38.288446875 DUSK')
+  expect(html).toContain('>aaaaaaaaaa...aaaaaa</code>')
+  expect(html).not.toContain(`>${address}<`)
+  expect(html).toContain('aria-label="Copy If you win, name moves to"')
+})
+

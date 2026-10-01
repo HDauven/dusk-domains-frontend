@@ -1,13 +1,13 @@
 import { Button } from '../../components/ui/Button'
 import { ShieldCheck, X } from 'lucide-react'
 import { Dialog } from '../../components/ui/Dialog'
-import { ClaimReview } from '../../components/ui/ClaimReview'
-import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
+import { MarketplaceReviewSummary } from './MarketplaceReviewSummary'
 import { formatLuxAsDusk } from './auctionMath'
+import { marketplaceAmountRow } from './marketplaceAmounts'
 import { auctionDurationLabel, auctionTimeLabel } from './marketplacePresentation'
-import type { MarketplaceViewProps } from './marketplaceTypes'
+import type { MarketplaceBidReviewProps } from './marketplaceTypes'
 
-export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps }) {
+export function MarketplaceBidReview({ props }: { props: MarketplaceBidReviewProps }) {
   const review = props.bidReview
   if (!review) return null
   const { auction } = review
@@ -25,15 +25,16 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps })
 
         <div className="marketplace-review-amount">
           <span>You are bidding</span>
-          <strong>{review.amountDusk} DUSK</strong>
+          <strong><span className="marketplace-amount">{formatLuxAsDusk(review.amountLux)} DUSK</span></strong>
         </div>
 
-        <ClaimReview
+        <MarketplaceReviewSummary
           ariaLabel="Bid summary"
           rows={[
-            { label: auction.highestBid ? 'Current highest bid' : 'Reserve price', value: formatLuxNumberAsDusk(auction.highestBid?.amountLux ?? auction.reservePriceLux) },
-            { label: 'Minimum allowed', value: `${formatLuxAsDusk(review.minimumBidLux)} DUSK` },
+            marketplaceAmountRow(auction.highestBid ? 'Current highest bid' : 'Reserve price', BigInt(auction.highestBid?.amountLux ?? auction.reservePriceLux)),
+            marketplaceAmountRow('Minimum allowed', review.minimumBidLux),
             { label: auction.startBlockHeight === null ? 'Auction starts' : 'Time remaining', value: auction.startBlockHeight === null ? `After confirmation · ${auctionDurationLabel(auction.durationBlocks)}` : auctionTimeLabel(auction, props.currentBlockHeight) },
+            { label: 'If you win, name moves to', value: props.selectedAddress, address: true },
             { label: 'Network fee', value: 'Shown by your wallet before approval' },
           ]}
         />
@@ -42,7 +43,7 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceViewProps })
           <ShieldCheck aria-hidden="true" size={19} />
           <div>
             <strong>Funds move into marketplace escrow</strong>
-            <p>If you are outbid, this amount becomes withdrawable marketplace balance. Confirmed bids cannot be canceled.</p>
+            <p>Your full bid moves from your wallet into escrow. If you win, finalization transfers the name to you and pays the seller minus the marketplace fee. If you are outbid, withdraw your refund under Yours. Raising your own bid also makes your previous bid refundable. Confirmed bids cannot be canceled.</p>
           </div>
         </div>
 

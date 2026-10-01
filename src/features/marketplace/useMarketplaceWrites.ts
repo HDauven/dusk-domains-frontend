@@ -1,3 +1,5 @@
+import { useScopedState } from '../../utils/useScopedState'
+import type { MarketplaceReviewDetails } from './marketplaceTypes'
 import { useCallback } from 'react'
 import { waitForIndexerBlock } from '../../app/indexerReadHelpers'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
@@ -22,6 +24,7 @@ export type MarketplaceFeedback = {
 // then a wait for the indexer to catch up before the listings reload.
 export function useMarketplaceWrites({
   actionsAvailable,
+  feedbackScope,
   duskDomainsOnChainClient,
   ensurePublicBalanceForLiveWrite,
   feedback,
@@ -33,6 +36,7 @@ export function useMarketplaceWrites({
   selectedAddress,
   submitNameWrite,
 }: {
+  feedbackScope: string
   actionsAvailable: boolean
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
   ensurePublicBalanceForLiveWrite: LiveWritePreflight['ensurePublicBalanceForLiveWrite']
@@ -46,6 +50,18 @@ export function useMarketplaceWrites({
   submitNameWrite: SubmitNameWrite
 }) {
   const { setConfirmation, setError, setTxState } = feedback
+  const [review, setReview] = useScopedState<(MarketplaceReviewDetails & { confirm: () => Promise<unknown> }) | null>(feedbackScope, null)
+  const requestReview = useCallback((details: MarketplaceReviewDetails, confirm: () => Promise<unknown>) => {
+    setError('')
+    setConfirmation('')
+    setTxState(null)
+    setReview({ ...details, confirm })
+  }, [setConfirmation, setError, setReview, setTxState])
+  const confirmReview = async () => {
+    if (!review || !actionsAvailable) return
+    setReview(null)
+    await review.confirm()
+  }
 
   const submit = useCallback(async (
     actionName: string,
@@ -79,7 +95,7 @@ export function useMarketplaceWrites({
         setConfirmation(`${successMessage} Syncing marketplace data…`)
         const height = await duskDomainsOnChainClient?.getCurrentBlockHeight()
         if (await waitForIndexerBlock(indexerClient, height?.ok ? height.value : null)) await loadMarketplace()
-        else setError('Transaction confirmed, but marketplace data is still syncing. Refresh again shortly.')
+        else setError('Transaction confirmed, but marketplace data is still syncing. It will update automatically.')
         setConfirmation(successMessage)
       }
       return finalState
@@ -120,7 +136,7 @@ export function useMarketplaceWrites({
     }
   }, [marketplaceOnChainClient, setError])
 
-  return { guardCanonicalRead, submit }
+  return { guardCanonicalRead, submit, requestReview, review, confirmReview, cancelReview: () => setReview(null) }
 }
 
 export type MarketplaceWrites = ReturnType<typeof useMarketplaceWrites>

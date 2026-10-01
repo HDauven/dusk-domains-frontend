@@ -8,11 +8,11 @@ import { PanelMessage } from '../../components/ui/PanelMessage'
 import type { IndexedMarketplaceOffer } from '../../names/internal'
 import { MarketplaceAmount } from './MarketplaceAmount'
 import { expiryTimeLabel, isExpired, sameAuthority } from './marketplacePresentation'
-import type { MarketplaceViewProps } from './marketplaceTypes'
+import type { MarketplaceOffersProps } from './marketplaceTypes'
 
 const durations = [1, 3, 7, 14, 30]
 
-export function MarketplaceOffers(props: MarketplaceViewProps) {
+export function MarketplaceOffers(props: MarketplaceOffersProps) {
   const ownedNodes = new Set(props.sellableNames.map((name) => name.node))
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('recent')
@@ -30,7 +30,7 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
         <div className="marketplace-section-heading">
           <div>
             <h2 id="make-offer-heading">Make an offer</h2>
-            <p>Your DUSK waits in escrow until the owner accepts, you cancel, or the offer runs out.</p>
+            <p>Your DUSK is held in escrow. After canceling or closing an expired offer, withdraw your refund under Yours.</p>
           </div>
         </div>
         {!props.selectedAddress ? (
@@ -53,7 +53,7 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
                 </Select>
               </label>
             </div>
-            <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</Button>
+            <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onPlaceOffer()}>Review offer</Button>
           </>
         )}
       </Panel>
@@ -79,7 +79,7 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
   )
 }
 
-function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: IndexedMarketplaceOffer; props: MarketplaceViewProps }) {
+function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: IndexedMarketplaceOffer; props: MarketplaceOffersProps }) {
   const ownOffer = sameAuthority(offer.buyerAuthority, props.selectedAuthority)
   const expired = isExpired(offer.expiresAtBlockHeight, props.currentBlockHeight)
   return (
@@ -90,7 +90,7 @@ function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: Indexe
       <div className="marketplace-order-action">
         {expired ? (
           <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireOffer(offer)}>Close</Button>
-        ) : incoming ? (
+        ) : incoming && !ownOffer ? (
           <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onAcceptOffer(offer)}>Accept</Button>
         ) : ownOffer ? (
           <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelOffer(offer)}>Cancel</Button>

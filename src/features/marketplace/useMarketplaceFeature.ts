@@ -3,24 +3,21 @@ import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
   isDuskDomainTxBusy,
-  marketplaceBuyFixedSaleRuntimeCall,
-  marketplaceCancelFixedSaleRuntimeCall,
   marketplaceClaimRefundRuntimeCall,
-  marketplaceExpireFixedSaleRuntimeCall,
   userFacingErrorMessage,
   type DuskDomainsIndexerClient,
   type DuskDomainsMarketplaceOnChainClient,
   type DuskDomainsOnChainClient,
   type DuskDomainsRuntimeConfig,
   type DuskDomainTxState,
-  type IndexedMarketplaceFixedSale,
 } from '../../names/internal'
 import { useScopedState } from '../../utils/useScopedState'
-import { canonicalFixedSale, canonicalRefund } from './canonicalMarketplaceState'
+import { canonicalRefund } from './canonicalMarketplaceState'
 import type { MarketplaceTab, MarketplaceViewProps } from './marketplaceTypes'
 import { useAuctions } from './useAuctions'
 import { useMarketplaceData, type MarketplaceSnapshot } from './useMarketplaceData'
 import { useMarketplaceWrites } from './useMarketplaceWrites'
+import { useFixedSales } from './useFixedSales'
 import { useOffers } from './useOffers'
 import { useSellForm } from './useSellForm'
 import { useWatchlist } from './watchlist'
@@ -89,6 +86,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const writes = useMarketplaceWrites({
     ...args,
     actionsAvailable,
+    feedbackScope,
     feedback: { setConfirmation, setError, setTxState },
     loadMarketplace,
   })
@@ -115,39 +113,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,
   })
 
-  const buyFixedSale = useCallback(async (sale: IndexedMarketplaceFixedSale) => {
-    if (!marketplaceOnChainClient) return
-    let canonical
-    try {
-      canonical = await canonicalFixedSale(marketplaceOnChainClient, sale)
-    } catch (readError) {
-      setError(userFacingErrorMessage(readError))
-      return
-    }
-    await writes.submit(
-      'buying this domain',
-      sale.name,
-      marketplaceBuyFixedSaleRuntimeCall({
-        node: sale.node,
-        priceLux: Number(canonical.priceLux),
-        buyerManager: selectedAuthority || null,
-      }),
-      canonical.priceLux,
-      `${sale.name} purchased.`,
-    )
-  }, [marketplaceOnChainClient, selectedAuthority, setError, writes])
-
-  const fixedSaleAction = useCallback(async (
-    sale: IndexedMarketplaceFixedSale,
-    kind: 'cancel' | 'expire',
-  ) => {
-    if (!await writes.guardCanonicalRead((client) => canonicalFixedSale(client, sale))) return
-    if (kind === 'cancel') {
-      await writes.submit('cancelling this sale', sale.name, marketplaceCancelFixedSaleRuntimeCall({ node: sale.node }), 0n, 'Sale canceled.')
-    } else {
-      await writes.submit('closing this expired sale', sale.name, marketplaceExpireFixedSaleRuntimeCall({ node: sale.node }), 0n, 'Sale closed.')
-    }
-  }, [writes])
+  const fixedSaleState = useFixedSales({ marketplaceOnChainClient, selectedAddress, selectedAuthority, setError, writes })
 
   const claimRefund = useCallback(async () => {
     if (!marketplaceOnChainClient || !refund) return
@@ -161,6 +127,9 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   }, [marketplaceOnChainClient, refund, setError, writes])
 
   const marketplaceProps: MarketplaceViewProps = {
+    review: writes.review,
+    onCancelReview: writes.cancelReview,
+    onConfirmReview: writes.confirmReview,
     tradingPaused: args.tradingPaused,
     actionsAvailable,
     auctions,
@@ -200,15 +169,15 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     onAcceptOffer: offerState.acceptOffer,
     onBidDraftChange: auctionState.setBidDraft,
     onCancelBidReview: () => auctionState.setBidReview(null),
-    onBuyFixedSale: buyFixedSale,
+    onBuyFixedSale: fixedSaleState.buyFixedSale,
     onCancelAuction: auctionState.cancelAuction,
-    onCancelFixedSale: (sale) => fixedSaleAction(sale, 'cancel'),
+    onCancelFixedSale: fixedSaleState.cancelFixedSale,
     onCancelOffer: offerState.cancelOffer,
     onClaimRefund: claimRefund,
     onCreateListing: sell.createListing,
     onDurationDaysChange: sell.setDurationDays,
     onExpireAuction: auctionState.expireAuction,
-    onExpireFixedSale: (sale) => fixedSaleAction(sale, 'expire'),
+    onExpireFixedSale: fixedSaleState.expireFixedSale,
     onExpireOffer: offerState.expireOffer,
     onFixedPriceDuskChange: sell.setFixedPriceDusk,
     onOfferAmountDuskChange: offerState.setOfferAmountDusk,

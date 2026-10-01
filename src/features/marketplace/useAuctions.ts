@@ -149,7 +149,7 @@ export function useAuctions({
         bidderManager: selectedAuthority || null,
       }),
       amountLux,
-      'Bid placed.',
+      `Bid placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
     if (result?.status === 'executed') {
       onBidPlaced(auction.node)

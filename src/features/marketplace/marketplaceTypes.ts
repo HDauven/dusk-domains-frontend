@@ -18,7 +18,16 @@ export type MarketplaceBidReview = {
   minimumBidLux: bigint
 }
 
+export type MarketplaceReviewDetails = {
+  title: string
+  rows: Array<{ label: string; value: string; exactValue?: string; address?: boolean; detail?: string }>
+  note: string
+}
+
 export type MarketplaceViewProps = {
+  review?: MarketplaceReviewDetails | null
+  onCancelReview?: () => void
+  onConfirmReview?: () => void
   tradingPaused?: boolean
   actionsAvailable: boolean
   auctions: IndexedMarketplaceAuction[]
@@ -33,6 +42,7 @@ export type MarketplaceViewProps = {
   currentBlockHeight: number | null
   durationDays: string
   error: string
+  feeBps?: number | null
   fixedPriceDusk: string
   fixedSales: IndexedMarketplaceFixedSale[]
   hasMore?: boolean
@@ -87,3 +97,112 @@ export type MarketplaceViewProps = {
   onToggleWatch: (node: string) => void
   onCloseAuction: () => void
 }
+
+export type MarketplaceBrowseProps = Pick<MarketplaceViewProps,
+  | 'actionsAvailable'
+  | 'auctions'
+  | 'currentBlockHeight'
+  | 'fixedSales'
+  | 'onBuyFixedSale'
+  | 'onCancelFixedSale'
+  | 'onExpireFixedSale'
+  | 'onOpenAuction'
+  | 'onOpenWalletConnection'
+  | 'onTabChange'
+  | 'onToggleWatch'
+  | 'selectedAddress'
+  | 'selectedAuthority'
+  | 'tradingPaused'
+  | 'watchedNodes'
+>
+
+export type MarketplaceAuctionDetailProps = Pick<MarketplaceViewProps,
+  | 'actionsAvailable'
+  | 'auctionActivity'
+  | 'auctionActivityHasMore'
+  | 'auctionActivityLoading'
+  | 'bidDrafts'
+  | 'currentBlockHeight'
+  | 'onBidDraftChange'
+  | 'onCancelAuction'
+  | 'onCloseAuction'
+  | 'onExpireAuction'
+  | 'onLoadMoreAuctionActivity'
+  | 'onOpenWalletConnection'
+  | 'onReviewBid'
+  | 'onSettleAuction'
+  | 'onToggleWatch'
+  | 'selectedAddress'
+  | 'selectedAuthority'
+  | 'tradingPaused'
+  | 'watchedNodes'
+>
+
+export type MarketplaceOffersProps = Pick<MarketplaceViewProps,
+  | 'actionsAvailable'
+  | 'currentBlockHeight'
+  | 'offerAmountDusk'
+  | 'offerDurationDays'
+  | 'offerName'
+  | 'offers'
+  | 'onAcceptOffer'
+  | 'onCancelOffer'
+  | 'onExpireOffer'
+  | 'onOfferAmountDuskChange'
+  | 'onOfferDurationDaysChange'
+  | 'onOfferNameChange'
+  | 'onOpenWalletConnection'
+  | 'onPlaceOffer'
+  | 'selectedAddress'
+  | 'selectedAuthority'
+  | 'sellableNames'
+  | 'tradingPaused'
+>
+
+export type MarketplaceSellProps = Pick<MarketplaceViewProps,
+  | 'actionsAvailable'
+  | 'durationDays'
+  | 'feeBps'
+  | 'fixedPriceDusk'
+  | 'onCreateListing'
+  | 'onDurationDaysChange'
+  | 'onFixedPriceDuskChange'
+  | 'onOpenWalletConnection'
+  | 'onPrivateBuyerChange'
+  | 'onReserveDuskChange'
+  | 'onSaleModeChange'
+  | 'onSelectedNodeChange'
+  | 'privateBuyer'
+  | 'reserveDusk'
+  | 'saleMode'
+  | 'selectedAddress'
+  | 'selectedNode'
+  | 'sellableNames'
+  | 'tradingPaused'
+>
+
+export type MarketplaceActivityProps = Pick<MarketplaceViewProps,
+  | 'actionsAvailable'
+  | 'auctions'
+  | 'currentBlockHeight'
+  | 'fixedSales'
+  | 'offers'
+  | 'onClaimRefund'
+  | 'onOpenAuction'
+  | 'onOpenWalletConnection'
+  | 'onTabChange'
+  | 'refund'
+  | 'selectedAddress'
+  | 'selectedAuthority'
+  | 'watchedNodes'
+>
+
+export type MarketplaceBidReviewProps = Pick<MarketplaceViewProps,
+  | 'actionsAvailable'
+  | 'bidReview'
+  | 'currentBlockHeight'
+  | 'onCancelBidReview'
+  | 'onPlaceBid'
+  | 'selectedAddress'
+  | 'tradingPaused'
+>

@@ -12,6 +12,7 @@ import { TransactionStatusNotice } from '../../components/status/TransactionStat
 import { MarketplaceActivity } from './MarketplaceActivity'
 import { MarketplaceAuctionDetail } from './MarketplaceAuctionDetail'
 import { MarketplaceAmount } from './MarketplaceAmount'
+import { MarketplaceReview } from './MarketplaceReview'
 import { MarketplaceBidReview } from './MarketplaceBidReview'
 import { MarketplaceBrowse } from './MarketplaceBrowse'
 import { MarketplaceOffers } from './MarketplaceOffers'
@@ -80,6 +81,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         ) : null}
       </TabPanel>}
       <MarketplaceBidReview props={props} />
+      <MarketplaceReview review={props.review ?? null} disabled={Boolean(props.tradingPaused) || !actionsAvailable} onClose={() => props.onCancelReview?.()} onConfirm={() => props.onConfirmReview?.()} />
     </AccountPanel>
   )
 }
