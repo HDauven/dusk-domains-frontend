@@ -19,11 +19,8 @@ export async function createSubdomain({
   runtimeConfig,
   selectedAddress,
   selectedAuthority,
-  setCriticalRecordConfirmation,
-  setPublicRecordAcknowledged,
   setRecordDrafts,
   setRecordError,
-  setRecordTargetNode,
   setSubnameError,
   setSubnames,
   setSubnameTxState,
@@ -89,11 +86,8 @@ export async function createSubdomain({
     }))) return
 
     setSubnames((current) => [subname, ...current.filter((existing) => existing.node !== subname.node)])
-    setRecordTargetNode(subname.node)
     setRecordDrafts({})
     setRecordError('')
-    setPublicRecordAcknowledged(false)
-    setCriticalRecordConfirmation('')
     appendActivity({
       eventType: 'subname_created',
       actor: selectedAuthority,

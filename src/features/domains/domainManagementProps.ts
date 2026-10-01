@@ -17,29 +17,19 @@ export function buildDomainManagementProps(
       txState: props.primaryTxState,
     },
     recordsProps: {
-      activeRecordTarget: props.activeRecordTarget,
       canRemoveRecords: props.canRemoveRecords,
       canSaveRecords: props.canSaveRecords,
       criticalRecordChange: props.criticalRecordChange,
-      criticalRecordConfirmation: props.criticalRecordConfirmation,
       displayName: props.displayName,
       editableRecordKeys: props.editableRecordKeys,
       error: props.recordError,
       onClearRecord: (record) => void actions.handleRecordClear(record),
-      onCriticalRecordConfirmationChange: props.setCriticalRecordConfirmation,
       onDraftValueChange: (key, value) => {
         props.setRecordDrafts((current) => ({ ...current, [key]: value }))
         props.setRecordError('')
       },
-      onPublicRecordAcknowledgedChange: props.setPublicRecordAcknowledged,
-      onRecordTargetChange: (node) => {
-        props.setRecordTargetNode(node)
-        props.setRecordError('')
-        props.setRecordDrafts({})
-        props.setPublicRecordAcknowledged(false)
-        props.setCriticalRecordConfirmation('')
-      },
-      onSaveRecords: () => void actions.handleRecordsSave(),
+      onDiscardDrafts: () => { props.setRecordDrafts({}); props.setRecordError(''); props.setRecordTxState(null) },
+      onSaveRecords: () => actions.handleRecordsSave(),
       onUseWalletPublicAddress: () => {
         props.setRecordDrafts((current) => ({ ...current, moonlight_address: props.selectedAddress }))
         props.setRecordError('')
@@ -53,12 +43,9 @@ export function buildDomainManagementProps(
           props.setRecordError(error instanceof Error ? error.message : 'Could not get shielded address from wallet.')
         }
       },
-      publicRecordAcknowledged: props.publicRecordAcknowledged,
       recordBusy: props.recordBusy,
       recordDraftErrors: props.recordDraftErrors,
-      recordDraftMutationCount: props.recordDraftMutations.length,
       recordDraftValues: props.recordDraftValues,
-      recordTargetOptions: props.recordTargetOptions,
       resolverRecords: props.resolverRecords,
       txState: props.recordTxState,
       walletAddressAvailable: Boolean(props.selectedAddress),
@@ -101,13 +88,7 @@ export function buildDomainManagementProps(
       managedNameExpiresAt: props.managedName.expiresAt,
       nowSeconds: props.nowSeconds,
       onCreateSubname: () => void actions.handleCreateSubname(),
-      onRecordTargetSelect: (subname) => {
-        props.setRecordTargetNode(subname.node)
-        props.setRecordDrafts({})
-        props.setRecordError('')
-        props.setPublicRecordAcknowledged(false)
-        props.setCriticalRecordConfirmation('')
-      },
+      onRecordTargetSelect: () => {},
       onSubnameExpiryDateChange: props.setSubnameExpiryDate,
       onSubnameExpiryPolicyChange: props.setSubnameExpiryPolicy,
       onSubnameLabelChange: props.setSubnameLabel,

@@ -31,11 +31,8 @@ export type UseSubdomainActionsProps = {
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
-  setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
-  setPublicRecordAcknowledged: Dispatch<SetStateAction<boolean>>
   setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>
-  setRecordTargetNode: Dispatch<SetStateAction<string>>
   setSubnameError: Dispatch<SetStateAction<string>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>
   setSubnameTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>

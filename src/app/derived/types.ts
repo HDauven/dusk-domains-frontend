@@ -17,8 +17,6 @@ export type UseAppDerivedStateArgs = {
   commitTxState: DuskDomainTxState | null
   committed: boolean
   confirmationInput: string
-  criticalRecordChange: boolean
-  criticalRecordConfirmationMatches: boolean
   currentBlockHeight: number | null
   displayName: string
   managedName: ManagedNameState
@@ -31,7 +29,6 @@ export type UseAppDerivedStateArgs = {
   primaryEndpointValue: string
   primaryName: string | null
   primaryTxState: DuskDomainTxState | null
-  publicRecordAcknowledged: boolean
   recordDraftErrors: readonly string[]
   recordDraftMutations: readonly unknown[]
   recordTxState: DuskDomainTxState | null

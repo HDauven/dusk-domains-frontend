@@ -9,7 +9,6 @@ import type {
   SubnameState,
 } from '../../names/internal'
 import type { SearchResultPanelProps } from '../search/SearchResultPanel'
-import type { RecordTargetOption } from './recordTypes'
 import type { useDomainRecordActions } from './useDomainRecordActions'
 import type { useDomainSettingsActions } from './useDomainSettingsActions'
 import type { usePrimaryDomainActions } from './usePrimaryDomainActions'
@@ -38,7 +37,6 @@ export type UseDomainManagementFeatureProps =
     }) => void
     clampDurationYears: (years: number) => number
     confirmationInput: string
-    criticalRecordConfirmation: string
     editableRecordKeys: readonly ResolverRecordKey[]
     fallbackManager: string
     feeConfigError: string
@@ -52,10 +50,8 @@ export type UseDomainManagementFeatureProps =
     primaryError: string
     primaryTxState: DuskDomainTxState | null
     primaryVerification: PrimaryNameDisplayStatus
-    publicRecordAcknowledged: boolean
     recordDraftValues: Partial<Record<ResolverRecordKey, string>>
     recordError: string
-    recordTargetOptions: RecordTargetOption[]
     recordTxState: DuskDomainTxState | null
     renewalBusy: boolean
     renewalError: string

@@ -37,7 +37,6 @@ export type UseSearchControllerProps = {
   setCommitTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setCommitted: Dispatch<SetStateAction<boolean>>
   setConfirmationInput: Dispatch<SetStateAction<string>>
-  setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
   setCurrentBlockHeight: Dispatch<SetStateAction<number | null>>
   setDuration: Dispatch<SetStateAction<number>>
   setIndexerConfirmation: Dispatch<SetStateAction<string>>
@@ -50,11 +49,9 @@ export type UseSearchControllerProps = {
   setPrimaryError: Dispatch<SetStateAction<string>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
-  setPublicRecordAcknowledged: Dispatch<SetStateAction<boolean>>
   setQuery: Dispatch<SetStateAction<string>>
   setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>
-  setRecordTargetNode: Dispatch<SetStateAction<string>>
   setRecordTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
   setRegistrationAddressInput: Dispatch<SetStateAction<string>>

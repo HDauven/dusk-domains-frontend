@@ -2,10 +2,9 @@ import { expect, it, vi } from 'vitest'
 import { buildDomainManagementProps } from './domainManagementProps'
 import type { UseDomainManagementFeatureProps } from './domainManagementFeatureTypes'
 
-it('preserves record consent resets, wallet errors, primary fallback and renewal bounds', async () => {
+it('discards drafts between inline edits and preserves wallet errors and renewal bounds', async () => {
   const setters = {
-    setRecordDrafts: vi.fn(), setRecordError: vi.fn(), setRecordTargetNode: vi.fn(),
-    setPublicRecordAcknowledged: vi.fn(), setCriticalRecordConfirmation: vi.fn(),
+    setRecordDrafts: vi.fn(), setRecordError: vi.fn(), setRecordTxState: vi.fn(),
     setPrimaryEndpointValue: vi.fn(), setPrimaryError: vi.fn(), setRenewalYears: vi.fn(),
   }
   const requestSelectedShieldedAddress = vi.fn().mockResolvedValue('shielded')
@@ -21,7 +20,6 @@ it('preserves record consent resets, wallet errors, primary fallback and renewal
     handleCreateSubname: vi.fn(),
   }
   const views = buildDomainManagementProps(props, actions)
-  expect(views.recordsProps.recordDraftMutationCount).toBe(2)
   expect(views.subdomainsProps.managedNameExpiresAt).toBe(123)
   views.settingsProps.onRenewalYearsChange(100)
   expect(setters.setRenewalYears).toHaveBeenCalledWith(10)
@@ -39,16 +37,8 @@ it('preserves record consent resets, wallet errors, primary fallback and renewal
   await views.recordsProps.onUseWalletShieldedAddress()
   expect(setters.setRecordError).toHaveBeenLastCalledWith('Wallet locked')
 
-  for (const select of [
-    () => views.recordsProps.onRecordTargetChange('child'),
-    () => views.subdomainsProps.onRecordTargetSelect({ node: 'child' } as Parameters<typeof views.subdomainsProps.onRecordTargetSelect>[0]),
-  ]) {
-    vi.clearAllMocks()
-    select()
-    expect(setters.setRecordTargetNode).toHaveBeenCalledWith('child')
-    expect(setters.setRecordDrafts).toHaveBeenCalledWith({})
-    expect(setters.setRecordError).toHaveBeenCalledWith('')
-    expect(setters.setPublicRecordAcknowledged).toHaveBeenCalledWith(false)
-    expect(setters.setCriticalRecordConfirmation).toHaveBeenCalledWith('')
-  }
+  views.recordsProps.onDiscardDrafts()
+  expect(setters.setRecordDrafts).toHaveBeenCalledWith({})
+  expect(setters.setRecordError).toHaveBeenCalledWith('')
+  expect(setters.setRecordTxState).toHaveBeenCalledWith(null)
 })

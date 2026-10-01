@@ -1,20 +1,6 @@
-import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
+import { ActionFeedback } from '../../components/ui/ActionFeedback'
 import type { DuskDomainTxState } from '../../names/internal'
 
-export function ManagementFeedback({
-  error,
-  txState,
-}: {
-  error?: string
-  txState: DuskDomainTxState | null
-}) {
-  return (
-    <>
-      {txState ? (
-        <TransactionStatusNotice className="management" state={txState} />
-      ) : null}
-
-      {error ? <p className="secure-note danger">{error}</p> : null}
-    </>
-  )
+export function ManagementFeedback({ error, txState }: { error?: string; txState: DuskDomainTxState | null }) {
+  return <ActionFeedback error={error} state={txState} />
 }

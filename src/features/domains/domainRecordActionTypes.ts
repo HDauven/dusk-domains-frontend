@@ -35,9 +35,7 @@ export type UseDomainRecordActionsProps = {
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
-  setCriticalRecordConfirmation: Dispatch<SetStateAction<string>>
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
-  setPublicRecordAcknowledged: Dispatch<SetStateAction<boolean>>
   setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>
   setRecordTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>

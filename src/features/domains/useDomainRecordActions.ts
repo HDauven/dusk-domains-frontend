@@ -5,7 +5,7 @@ import { saveDomainRecords } from './saveDomainRecords'
 
 export function useDomainRecordActions(props: UseDomainRecordActionsProps) {
   async function handleRecordsSave() {
-    await saveDomainRecords(props)
+    return saveDomainRecords(props)
   }
 
   async function handleRecordClear(record: ResolverRecord) {

@@ -4,7 +4,7 @@ import { STATIC_RECORD_DEFINITIONS, type ResolverRecord, type ResolverRecordKey 
 import { NameHeader } from '../search/NameHeader'
 import { DomainDetailsView } from './DomainDetailsView'
 import { RecordDraftEditor } from './RecordDraftEditor'
-import { RecordList } from './RecordList'
+import { RecordsView } from './RecordsView'
 import { recordLabel } from './recordPresentation'
 
 const record = (key: ResolverRecordKey, value: string): ResolverRecord => ({
@@ -55,11 +55,24 @@ describe('record presentation', () => {
   })
 
   it('keeps record labels and prose consistent in the list', () => {
-    const html = renderToStaticMarkup(<RecordList resolverRecords={records} canRemoveRecords recordBusy={false} onClearRecord={vi.fn()} targetName="aurora.dusk" />)
+    const html = renderToStaticMarkup(<RecordsView resolverRecords={records} canRemoveRecords recordBusy={false} onClearRecord={vi.fn()} displayName="aurora.dusk" canSaveRecords={false} criticalRecordChange={false} editableRecordKeys={['website']} error="" onDiscardDrafts={vi.fn()} onDraftValueChange={vi.fn()} onSaveRecords={vi.fn()} onUseWalletPublicAddress={vi.fn()} onUseWalletShieldedAddress={vi.fn()} recordDraftErrors={[]} recordDraftValues={{}} txState={null} walletAddressAvailable />)
     expect(html).toContain('<strong>Description</strong>')
-    expect(html).toContain('<span class="record-value">Building tools for Dusk.</span>')
+    expect(html).toContain('<p>Building tools for Dusk.</p>')
     expect(html).toContain('<code>urn:example:123</code>')
     expect(html).toContain('aria-label="Remove Description"')
+  })
+
+  it.each(['aurora.dusk', 'pay.aurora.dusk'])('shows unsupported records as read only with removal on %s', displayName => {
+    const html = renderToStaticMarkup(<RecordsView resolverRecords={[record('text.email', 'hello@example.test'), record('website', 'https://example.test')]}
+      canRemoveRecords recordBusy={false} onClearRecord={vi.fn()} displayName={displayName} canSaveRecords={false}
+      criticalRecordChange={false} editableRecordKeys={['website']} error="" onDiscardDrafts={vi.fn()}
+      onDraftValueChange={vi.fn()} onSaveRecords={vi.fn()} onUseWalletPublicAddress={vi.fn()}
+      onUseWalletShieldedAddress={vi.fn()} recordDraftErrors={[]} recordDraftValues={{}} txState={null} walletAddressAvailable />)
+    expect(html).toContain('hello@example.test')
+    expect(html).toContain('Read only')
+    expect(html).toContain('aria-label="Remove Email"')
+    expect(html).not.toContain('aria-label="Edit Email"')
+    expect(html).toContain('aria-label="Edit Website"')
   })
 
   it('uses the same labels in the editor and its accessible inputs', () => {

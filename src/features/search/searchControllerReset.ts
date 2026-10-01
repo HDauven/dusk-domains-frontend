@@ -14,7 +14,6 @@ export function resetSearchState({
   setCommitTxState,
   setCommitted,
   setConfirmationInput,
-  setCriticalRecordConfirmation,
   setIndexerConfirmation,
   setIndexerError,
   setManagementError,
@@ -24,11 +23,9 @@ export function resetSearchState({
   setPrimaryError,
   setPrimaryName,
   setPrimaryTxState,
-  setPublicRecordAcknowledged,
   setQuery,
   setRecordDrafts,
   setRecordError,
-  setRecordTargetNode,
   setRecordTxState,
   setRegisterSetsPrimary,
   setRegistrationAddressInput,
@@ -80,9 +77,6 @@ export function resetSearchState({
   setIndexerConfirmation('')
   setResolverRecordSets({})
   setRecordDrafts({})
-  setRecordTargetNode('')
-  setPublicRecordAcknowledged(false)
-  setCriticalRecordConfirmation('')
   setPrimaryEndpointValue('')
   setPrimaryName(null)
   setSubnames([])
