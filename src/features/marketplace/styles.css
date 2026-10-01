@@ -829,3 +829,7 @@
 .marketplace-bid-review .claim-review strong:has(.marketplace-payment-split) { display: contents; }
 .marketplace-bid-review .claim-review strong:has(.marketplace-payment-split) .marketplace-amount { justify-self: end; }
 .marketplace-payment-split { grid-column: 1 / -1; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+
+.marketplace-owner { color: var(--muted); font-size: var(--text-sm); margin: 8px 0; }
+.marketplace-owner .owner-identity { display: inline; }
+.marketplace-owner code { overflow-wrap: anywhere; }

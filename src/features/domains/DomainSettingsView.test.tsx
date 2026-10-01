@@ -86,3 +86,7 @@ it.each([0, 1_802_592_000])('uses the estimate margin for renewal controls and c
     expect(closed).not.toContain('Anyone can register it now.')
   }
 })
+
+it('links List for sale to the current name in the Sell tab', () => {
+  expect(settings({})).toContain('href="/market/sell/alphavnuc.dusk"')
+})

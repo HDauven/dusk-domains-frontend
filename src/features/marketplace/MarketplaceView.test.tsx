@@ -1,5 +1,7 @@
 import { NetworkFreshnessContext } from '../../app/networkFreshness'
 import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
+import { contractPrincipalFromWalletAccount, encodeBase58 } from '../../names/internal'
+import { abbreviate } from '../../utils/format'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type {
@@ -253,7 +255,6 @@ function props(overrides: Partial<MarketplaceViewProps>): MarketplaceViewProps {
     onPlaceBid: noop,
     onPlaceOffer: noop,
     onPrivateBuyerChange: noop,
-    onRefresh: noop,
     onReviewBid: noop,
     onReserveDuskChange: noop,
     onSaleModeChange: noop,
@@ -409,7 +410,7 @@ it('collapses raising a winning bid and labels the seller as You', () => {
   const current = auction({ highestBid: { bidderAuthority: buyer, amountLux: 25000000000, placedAtBlockHeight: 1000 }, bidCount: 1 })
   const html = render({ auctions: [current], selectedAuctionNode: current.node })
   expect(html).toContain('<details class="marketplace-raise-bid"><summary>Raise bid</summary>')
-  expect(render({ auctions: [current], selectedAuctionNode: current.node, selectedAuthority: seller })).toContain('<code>You</code>')
+  expect(render({ auctions: [current], selectedAuctionNode: current.node, selectedAuthority: seller })).toContain('<span>You</span>')
 })
 it('shows a successful transaction once with its reference behind Details', () => {
   const html = render({ confirmation: 'Bid placed.', txState: { status: 'executed', txId: 'reference', context: { title: 'Bid', fields: [] }, call: { contract: 'marketplace', functionName: 'place_bid_runtime' } } as unknown as MarketplaceViewProps['txState'] })
@@ -489,6 +490,31 @@ it('rounds a first-bid minimum up in both the headline and the draft', () => {
   const html = render({ auctions: [current], selectedAuctionNode: current.node })
   expect(html).toContain('title="1.000000001 DUSK">1.01 DUSK')
   expect(html).toContain('value="1.01"')
+})
+
+it('uses shared owner labels for sellers, bidders and offers, including explanatory ID fallbacks', () => {
+  const listing = render({ fixedSales:[fixedSale()], selectedAuthority: outsider })
+  expect(listing).toContain('Owner ID ')
+  expect(listing).toContain('No matching Dusk address is available')
+  expect(render({ fixedSales:[fixedSale()],selectedAuthority:seller })).toContain('Seller <span>You</span>')
+  const current = auction({ highestBid:{bidderAuthority:buyer,amountLux:25_000_000_000,placedAtBlockHeight:1000},bidCount:1 })
+  const detail = render({ auctions:[current],selectedAuctionNode:current.node,selectedAuthority:buyer })
+  expect(detail).toContain('Highest bidder <span>You</span>')
+  expect(render({tab:'offers',offers:[offer()],selectedAuthority:outsider})).toContain('Owner ID ')
+})
+
+it('keeps seller labels compact on both browse cards and copy on the auction page', () => {
+  const address = encodeBase58(Uint8Array.from({ length: 96 }, (_, i) => i + 1))
+  const parsed = contractPrincipalFromWalletAccount(address)
+  if (!parsed.ok) throw new Error('Invalid seller fixture')
+  const current = auction({ sellerAuthority: parsed.principal })
+  const props = { auctions: [current], fixedSales: [fixedSale({ sellerAuthority: parsed.principal })], ownerAddresses: [address] }
+  const cards = render(props)
+  expect(cards.match(/class="marketplace-owner"/g)).toHaveLength(2)
+  expect(cards.match(new RegExp(`>${abbreviate(address)}<`, 'g'))).toHaveLength(2)
+  expect(cards).not.toContain('aria-label="Copy Dusk address"')
+  expect(render({ ...props, selectedAuthority: parsed.principal }).match(/Seller <span>You<\/span>/g)).toHaveLength(2)
+  expect(render({ ...props, selectedAuctionNode: current.node })).toContain('aria-label="Copy Dusk address"')
 })
 
 it('shows one freshness message when market data or the network is catching up', () => {

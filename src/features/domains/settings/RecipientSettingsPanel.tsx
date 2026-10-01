@@ -1,3 +1,4 @@
+import { routePath } from '../../../app/routes'
 import { useRef, useState } from 'react'
 import { isDuskDomainTxBusy } from '../../../names/internal'
 import { Button } from '../../../components/ui/Button'
@@ -45,6 +46,6 @@ export function RecipientSettingsPanel({ canManageName, confirmationInput, displ
       {error ? <p role="alert" className="secure-note danger">{error}</p> : null}
     </form> : null}
     <ManagementFeedback error={managementError} txState={managementTxState} />
-    <a className="button button-secondary" href="/market">List for sale</a>
+    <a className="button button-secondary" href={routePath({ view: 'marketplace', sellName: displayName })}>List for sale</a>
   </div>
 }

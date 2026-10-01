@@ -3,10 +3,7 @@ import { AUCTION_BLOCKS_PER_DAY } from './auctionMath'
 
 export type AuctionStatus = 'waiting' | 'live' | 'ending' | 'ended' | 'expired'
 
-export function sameAuthority(left: string | null | undefined, right: string | null | undefined) {
-  if (!left || !right) return false
-  return authorityKey(left) === authorityKey(right)
-}
+export { sameAuthority } from '../identity/ownerLabel'
 
 export function auctionTimeLabel(auction: IndexedMarketplaceAuction, currentBlockHeight: number | null) {
   if (auction.endBlockHeight === null) return 'Starts with first bid'
@@ -84,9 +81,6 @@ export function blocksTimeLabel(blocks: number, zeroLabel: string) {
   return `${days} ${days === 1 ? 'day' : 'days'}`
 }
 
-function authorityKey(value: string) {
-  return value.trim().toLowerCase().replace(/^0x/, '')
-}
 
 export const MARKETPLACE_SYNC_MESSAGE = 'Marketplace data is still syncing. It will update automatically.'
 

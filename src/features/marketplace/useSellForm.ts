@@ -1,6 +1,6 @@
 import { marketplaceAmountRow } from './marketplaceAmounts'
 import { useCallback, useState } from 'react'
-import { contractPrincipalInput } from '../../app/appHelpers'
+import { contractPrincipalInput } from '../../app/principalInput'
 import {
   coreEscrowAuctionRuntimeCall,
   coreEscrowFixedSaleRuntimeCall,

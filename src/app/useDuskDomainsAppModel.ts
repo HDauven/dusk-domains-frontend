@@ -68,6 +68,8 @@ export function useDuskDomainsAppModel() {
   })
   const {
     marketplaceProps,
+    sellName,
+    openSell,
   } = useMarketplaceFeature({
     tradingPaused: appRuntime.pause.tradingPaused,
     ensurePublicBalanceForLiveWrite,
@@ -84,6 +86,8 @@ export function useDuskDomainsAppModel() {
   })
 
   useUrlRoute({
+    sellName,
+    onOpenSell: openSell,
     selectedAuctionNode: marketplaceProps.selectedAuctionNode,
     onOpenAuction: marketplaceProps.onOpenAuction,
     checked: searchState.checked,
