@@ -2,7 +2,7 @@
 
 This directory is now a compatibility shim.
 
-The Dusk Domains SDK implementation lives in the private package:
+The Dusk Domains SDK implementation lives in its separate package:
 
 ```text
 @duskdomains/sdk
