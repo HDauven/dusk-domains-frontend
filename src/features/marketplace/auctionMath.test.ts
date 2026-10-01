@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IndexedMarketplaceAuction } from '../../names/internal'
 import {
+  compactLuxAsDusk,
   durationBlocks,
   MIN_MARKETPLACE_AMOUNT_LUX,
   minimumBidDusk,
@@ -59,3 +60,14 @@ function fixtureAuction(overrides: Partial<IndexedMarketplaceAuction> = {}): Ind
     ...overrides,
   }
 }
+
+it('keeps displayed amounts short without hiding tiny nonzero values', () => {
+  for (const [lux, expected] of [
+    [36_465_187_500n, '36.47'], [38_288_446_875n, '38.29'],
+    [24_375_000_000n, '24.38'], [625_000_000n, '0.63'],
+    [0n, '0'], [1n, '0.000000001'], [4_900_000n, '0.005'],
+    [5_000_000n, '0.01'], [250_000_000_000_000n, '250000'],
+    [9_007_199_254_740_991n, '9007199.25'],
+  ] as const) expect(compactLuxAsDusk(lux)).toBe(expected)
+})
+

@@ -3,7 +3,7 @@ import { Panel } from '../../components/ui/Panel'
 import { Eye, Gavel, HandCoins, Tag, Trophy, WalletCards } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
-import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
+import { MarketplaceAmount } from './MarketplaceAmount'
 import { auctionStatus, auctionTimeLabel, expiryTimeLabel, sameAuthority } from './marketplacePresentation'
 import type { MarketplaceViewProps } from './marketplaceTypes'
 
@@ -32,25 +32,25 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
 
   return (
     <div className="marketplace-my-view">
-      <div className="marketplace-position-summary" aria-label="Your marketplace summary">
+      {hasActivity ? <div className="marketplace-position-summary" aria-label="Your marketplace summary">
         <div><Trophy aria-hidden="true" size={18} /><strong>{leading.length + won.length}</strong><span>Winning</span></div>
         <div><Gavel aria-hidden="true" size={18} /><strong>{sellingAuctions.length + sellingFixed.length}</strong><span>Selling</span></div>
         <div><HandCoins aria-hidden="true" size={18} /><strong>{sentOffers.length}</strong><span>Offers sent</span></div>
         <div><Eye aria-hidden="true" size={18} /><strong>{watchedOrders.length}</strong><span>Watching</span></div>
-      </div>
+      </div> : null}
 
       {props.refund?.amountLux ? (
         <Panel className="marketplace-balance-card" aria-labelledby="marketplace-balance-heading">
           <div>
             <span>Withdrawable marketplace balance</span>
-            <strong id="marketplace-balance-heading">{formatLuxNumberAsDusk(props.refund.amountLux)}</strong>
+            <strong id="marketplace-balance-heading"><MarketplaceAmount lux={props.refund.amountLux} /></strong>
             <p>Funds returned from an outbid or closed order are safe in the marketplace contract until withdrawn.</p>
           </div>
           <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={props.onClaimRefund}>Withdraw to wallet</Button>
         </Panel>
       ) : null}
 
-      {!hasActivity ? <PanelMessage icon={<WalletCards size={18} />} tone="subtle">No marketplace positions yet.</PanelMessage> : null}
+      {!hasActivity ? <PanelMessage icon={<WalletCards size={18} />} tone="subtle">No bids, listings or offers yet. <Button variant="quiet" onClick={() => props.onTabChange('browse')}>Browse listings</Button></PanelMessage> : null}
 
       {won.length ? (
         <PositionSection count={won.length} description="Won auctions awaiting automatic or manual finalization." heading="Won — finalizing" icon={<Trophy size={17} />}>
@@ -60,7 +60,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
               key={auction.node}
               label={auction.name}
               meta="Auction ended"
-              value={formatLuxNumberAsDusk(auction.highestBid?.amountLux ?? auction.reservePriceLux)}
+              value={<MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} />}
               onOpen={() => props.onOpenAuction(auction.node)}
             />
           ))}
@@ -75,7 +75,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
               key={auction.node}
               label={auction.name}
               meta={auctionTimeLabel(auction, props.currentBlockHeight)}
-              value={formatLuxNumberAsDusk(auction.highestBid?.amountLux ?? auction.reservePriceLux)}
+              value={<MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} />}
               onOpen={() => props.onOpenAuction(auction.node)}
             />
           ))}
@@ -90,7 +90,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
               key={auction.node}
               label={auction.name}
               meta={auctionTimeLabel(auction, props.currentBlockHeight)}
-              value={auction.highestBid ? formatLuxNumberAsDusk(auction.highestBid.amountLux) : `Reserve ${formatLuxNumberAsDusk(auction.reservePriceLux)}`}
+              value={auction.highestBid ? <MarketplaceAmount lux={auction.highestBid.amountLux} /> : <>Reserve <MarketplaceAmount lux={auction.reservePriceLux} /></>}
               onOpen={() => props.onOpenAuction(auction.node)}
             />
           ))}
@@ -100,7 +100,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
               key={sale.node}
               label={sale.name}
               meta={`Expires ${expiryTimeLabel(sale.expiresAtBlockHeight, props.currentBlockHeight)}`}
-              value={formatLuxNumberAsDusk(sale.priceLux)}
+              value={<MarketplaceAmount lux={sale.priceLux} />}
               onOpen={() => props.onTabChange('browse')}
             />
           ))}
@@ -115,7 +115,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceViewProps }) 
               key={`${offer.node}:${offer.buyerAuthority}`}
               label={offer.name}
               meta={`Expires ${expiryTimeLabel(offer.expiresAtBlockHeight, props.currentBlockHeight)}`}
-              value={formatLuxNumberAsDusk(offer.amountLux)}
+              value={<MarketplaceAmount lux={offer.amountLux} />}
               onOpen={() => props.onTabChange('offers')}
             />
           ))}
@@ -140,7 +140,7 @@ function PositionSection({ children, count, description, heading, icon }: { chil
   )
 }
 
-function PositionRow({ action, label, meta, onOpen, value }: { action: string; label: string; meta: string; onOpen: () => void; value: string }) {
+function PositionRow({ action, label, meta, onOpen, value }: { action: string; label: string; meta: string; onOpen: () => void; value: ReactNode }) {
   return (
     <article className="marketplace-position-row">
       <div><strong>{label}</strong><span>{meta}</span></div>

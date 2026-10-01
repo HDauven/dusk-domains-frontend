@@ -122,12 +122,12 @@ describe('MarketplaceView actions', () => {
     expect(activityHtml).toContain('Auction ended')
   })
 
-  it('explains reserve-auction timing and minimum bids before opening the detail view', () => {
+  it('shows reserve and duration before opening a waiting auction', () => {
     const html = render({ auctions: [auction()] })
 
     expect(html).toContain('Waiting for first bid')
-    expect(html).toContain('7 days once the first bid is confirmed')
-    expect(html).toContain('Minimum bid')
+    expect(html).toContain('7 days')
+    expect(html).toContain('Reserve')
     expect(html).toContain('View auction')
   })
 
@@ -356,4 +356,38 @@ it('disables only new trades while paused and keeps custody release and refunds 
   expect(button(render({ ...paused, auctions: [ended], selectedAuctionNode: ended.node }), 'Finalize auction')).not.toContain('disabled')
   expect(button(render({ ...paused, tab: 'activity', refund: { authority: buyer, recipient: null, amountLux: 20_000_000_000, txId: 'refund', blockHeight: 1000, lastEventType: 'domain_offer_closed' } }), 'Withdraw to wallet')).not.toContain('disabled')
   expect(button(render({ ...paused, bidReview: { amountDusk: '40', amountLux: 40_000_000_000n, minimumBidLux: 40_000_000_000n, auction: dormant } }), 'Confirm in wallet')).toContain('disabled')
+})
+
+it('shows one minimum price before the first bid and labels the seller as You', () => {
+  const html = render({ auctions: [auction()], selectedAuthority: seller })
+  expect(html).not.toContain('>Minimum bid</dt>')
+  expect(html).toContain('>Reserve</dt>')
+  expect(html).toContain('Your auction')
+})
+it('sorts fixed listings and auctions together by ending time', () => {
+  const html = render({ auctions: [auction({ name: 'later.dusk', startDeadlineBlockHeight: 4000 })], fixedSales: [fixedSale({ name: 'sooner.dusk' })] })
+  expect(html.indexOf('sooner<span>')).toBeLessThan(html.indexOf('later<span>'))
+})
+it('gives quiet marketplace states a next action without zero stat tiles', () => {
+  expect(render()).toContain('Browse names')
+  const yours = render({ tab: 'activity' })
+  expect(yours).toContain('Browse listings')
+  expect(yours).not.toContain('Your marketplace summary')
+})
+
+it('lets visitors browse offers without giving them buyer or seller actions', () => {
+  const html = render({ tab: 'offers', offers: [offer()], selectedAuthority: outsider })
+  expect(html).toContain('aurora.dusk')
+  expect(html).toContain('Filter offers')
+  expect(html).toContain('Sort offers')
+  expect(html).not.toContain('>Cancel</button>')
+  expect(html).not.toContain('>Accept</button>')
+})
+
+it('keeps browse cards to status, name, amount, time and action', () => {
+  const live = auction({ startBlockHeight: 900, endBlockHeight: 2000, highestBid: { amountLux: 36_465_187_500, bidderAuthority: buyer, placedAtBlockHeight: 900 } })
+  const html = render({ auctions: [live], fixedSales: [fixedSale()] })
+  expect(html).toContain('36.47 DUSK')
+  expect(html).toContain('title="36.4651875 DUSK"')
+  for (const detail of ['Minimum next bid', '>Seller</dt>', 'last 10 minutes', 'Secured in escrow', 'Available to anyone']) expect(html).not.toContain(detail)
 })
