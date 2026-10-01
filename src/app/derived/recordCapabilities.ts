@@ -1,4 +1,5 @@
-import { isSubname, lifecycleHeightReached } from '../../features/domains/domainFormat'
+import { isSubname, lifecycleHeightReached, renewalDeadline } from '../../features/domains/domainFormat'
+import type { ManagedNameState } from '../appHelpers'
 import type { RecordTargetOption } from '../../features/domains/recordTypes'
 
 export function deriveRecordCapabilities({
@@ -7,7 +8,7 @@ export function deriveRecordCapabilities({
   criticalRecordConfirmationMatches,
   currentBlockHeight,
   displayName,
-  managedNameExpiresAt,
+  managedName,
   nodeHex,
   nowSeconds,
   primaryBusy,
@@ -21,6 +22,7 @@ export function deriveRecordCapabilities({
   recordDraftMutations,
   renewalBusy,
   selectedAddress,
+  selectedAuthority,
   subnameBusy,
   subnameLabel,
   subnameManager,
@@ -31,7 +33,7 @@ export function deriveRecordCapabilities({
   criticalRecordConfirmationMatches: boolean
   currentBlockHeight: number | null
   displayName: string
-  managedNameExpiresAt: number
+  managedName: Pick<ManagedNameState, 'owner' | 'manager' | 'expiresAt' | 'graceEndsAt'>
   nodeHex: string
   nowSeconds: number
   primaryBusy: boolean
@@ -45,6 +47,7 @@ export function deriveRecordCapabilities({
   recordDraftMutations: readonly unknown[]
   renewalBusy: boolean
   selectedAddress: string
+  selectedAuthority: string
   subnameBusy: boolean
   subnameLabel: string
   subnameManager: string
@@ -53,13 +56,16 @@ export function deriveRecordCapabilities({
   return {
     canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryName && primaryVerified && !primaryBusy),
     canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && subnameManager.trim() && !subnameBusy),
-    // The contract refuses to renew a subname, or any name at or after its expiry.
+    // Owners and managers can renew root names until grace ends.
     canRenewName: Boolean(
       walletAuthorized
       && selectedAddress
       && nodeHex
       && !isSubname(displayName)
-      && !lifecycleHeightReached(managedNameExpiresAt, currentBlockHeight, nowSeconds)
+      && selectedAuthority
+      && [managedName.owner, managedName.manager].some(value => value.toLowerCase() === selectedAuthority.toLowerCase())
+      && managedName.expiresAt > 0
+      && !lifecycleHeightReached(renewalDeadline(managedName), currentBlockHeight, nowSeconds)
       && !renewalBusy,
     ),
     canSaveRecords: Boolean(
