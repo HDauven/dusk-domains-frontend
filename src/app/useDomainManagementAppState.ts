@@ -6,9 +6,7 @@ import type {
   DuskDomainsIndexerClient,
   DuskDomainsOnChainClient,
 } from '../names/internal'
-import {
-  createManagedNameState,
-} from './appHelpers'
+import { createManagedNameState } from './managedNameState'
 import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
 
 export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null) {

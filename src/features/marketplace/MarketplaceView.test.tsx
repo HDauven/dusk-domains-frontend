@@ -1,3 +1,5 @@
+import { NetworkFreshnessContext } from '../../app/networkFreshness'
+import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type {
@@ -487,4 +489,16 @@ it('rounds a first-bid minimum up in both the headline and the draft', () => {
   const html = render({ auctions: [current], selectedAuctionNode: current.node })
   expect(html).toContain('title="1.000000001 DUSK">1.01 DUSK')
   expect(html).toContain('value="1.01"')
+})
+
+it('shows one freshness message when market data or the network is catching up', () => {
+  const current = auction()
+  for (const selectedAuctionNode of [undefined, current.node]) {
+    const input = props({ auctions: [current], selectedAuctionNode, updatedAt: 1000, error: MARKETPLACE_SYNC_MESSAGE })
+    const html = renderToStaticMarkup(<MarketplaceView {...input} />)
+    expect(html).not.toContain('>Updated ')
+    expect(html).toContain(MARKETPLACE_SYNC_MESSAGE)
+    const warning = renderToStaticMarkup(<NetworkFreshnessContext value="Name data is behind."><MarketplaceView {...input} /></NetworkFreshnessContext>)
+    expect(warning).not.toContain('marketplace-freshness')
+  }
 })

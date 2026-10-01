@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { NetworkFreshnessContext } from '../../app/networkFreshness'
 import { MarketplaceFreshness } from './MarketplaceFreshness'
 import { Tabs, TabPanel } from '../../components/ui/Tabs'
 import { Button } from '../../components/ui/Button'
@@ -29,6 +31,8 @@ const tabs: Array<{ id: MarketplaceTab; label: string }> = [
 
 export function MarketplaceView(props: MarketplaceViewProps) {
   const { actionsAvailable, confirmation, error, loading, marketplaceEnabled, onTabChange, refund, tab, txState } = props
+  const networkNotice = useContext(NetworkFreshnessContext)
+  const syncing = error === MARKETPLACE_SYNC_MESSAGE
   const selectedAuction = props.auctions.find((auction) => auction.node === props.selectedAuctionNode) ?? null
 
   return (
@@ -39,10 +43,10 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         headingId="marketplace-heading"
       /> : null}
 
-      {!props.selectedAuctionNode ? <div className="marketplace-navigation"><Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" /><MarketplaceFreshness updatedAt={props.updatedAt} /></div> : null}
+      {!props.selectedAuctionNode ? <div className="marketplace-navigation"><Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" /><MarketplaceFreshness updatedAt={syncing ? null : props.updatedAt} /></div> : null}
 
-      <PanelFeedbackStack confirmation={confirmation} error={error === MARKETPLACE_SYNC_MESSAGE ? undefined : error} />
-      {error === MARKETPLACE_SYNC_MESSAGE ? <p className="marketplace-freshness" role="status">{error}</p> : null}
+      <PanelFeedbackStack confirmation={confirmation} error={syncing ? undefined : error} />
+      {syncing && !networkNotice ? <p className="marketplace-freshness" role="status">{error}</p> : null}
 
       {!marketplaceEnabled ? (
         <PanelMessage icon={<Store size={18} />}>Marketplace is not enabled for this deployment.</PanelMessage>

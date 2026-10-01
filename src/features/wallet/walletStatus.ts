@@ -20,7 +20,7 @@ export function deriveWalletSessionModel(
   expectedNodeUrl = '',
 ): WalletSessionModel {
   const status = walletConnectionStatus(state, discoveryReady, expectedChainId, expectedNodeUrl)
-  const selectedAccount = state.selectedAddress ?? state.accounts[0] ?? ''
+  const selectedAccount = state.selectedProfile?.account ?? ''
   const selectedAddress = status === 'connected' || status === 'wrong-network' ? selectedAccount : ''
 
   return {
@@ -45,8 +45,9 @@ export function walletConnectionStatus(
 
   const providerDetected = walletProviderDetected(state)
   if (!providerDetected) return 'missing'
+  if (!state.authorized) return 'disconnected'
   if (state.authorized && state.profiles.length === 0) return 'locked'
-  const selectedAccount = state.selectedAddress ?? state.accounts[0] ?? ''
+  const selectedAccount = state.selectedProfile?.account ?? ''
   if (selectedAccount) {
     return walletNetworkMatchesExpected(state, expectedChainId, expectedNodeUrl) ? 'connected' : 'wrong-network'
   }
@@ -72,7 +73,7 @@ export function selectedWalletProviderName(state: DuskWalletState) {
 }
 
 export function walletCanSign(state: DuskWalletState, selectedAddress: string) {
-  return Boolean(state.authorized && selectedAddress && state.profiles.length > 0)
+  return Boolean(state.authorized && selectedAddress && state.selectedProfile?.account === selectedAddress)
 }
 
 export function walletProviderDetected(state: DuskWalletState) {

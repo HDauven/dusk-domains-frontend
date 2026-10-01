@@ -6,7 +6,7 @@ import type {
   ResolverRecord,
   SubnameState,
 } from '../../names/internal'
-import type { ManagedNameState } from '../../app/appHelpers'
+import type { ManagedNameState } from '../../app/managedNameState'
 
 export type ResolverRecordSets = Record<string, ResolverRecord[]>
 

@@ -21,7 +21,7 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
   const domainState = useDomainManagementAppState(recordSourceContractId, indexerClient, appRuntime.duskDomainsOnChainClient)
   const walletRuntime = useWalletRuntime({
     confirmOwnershipWrite: domainState.confirmOwnershipWrite,
-    pause: appRuntime.pause,
+    writeAccess: appRuntime.writeAccess,
     connectKit,
     connectOptions,
     liveDuskDomainsApp,

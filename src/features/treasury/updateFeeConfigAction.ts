@@ -81,7 +81,7 @@ export async function updateFeeConfig({
       const nextFeeConfig = await indexerClient.getFeeConfig()
       return feeConfigValuesMatch(nextFeeConfig, parsed.config)
     },
-    refresh: loadFeeConfig,
+    refresh: () => loadFeeConfig({ fresh: true }),
   })
 
   if (confirmation.confirmed && confirmation.refreshed) {

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { currentBlockHeightFromHealth } from '../../app/appHelpers'
+import { useSingleFlight } from '../../app/useSingleFlight'
+import { useAutoRefresh } from '../../app/useAutoRefresh'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { currentBlockHeightFromHealth } from '../../app/indexerReadHelpers'
 import {
   userFacingErrorMessage,
   type DuskDomainsIndexerClient,
@@ -31,6 +33,8 @@ export function useMyDomains({
   const [myNamesError, setMyNamesError] = useState('')
   const [myNamePrimarySummaries, setMyNamePrimarySummaries] = useState<Record<string, MyNamePrimarySummary>>({})
   const myNamesRequestId = useRef(0)
+
+  useLayoutEffect(() => () => { myNamesRequestId.current++ }, [indexerClient, selectedAddress, selectedAuthority])
 
   const loadMyNamePrimarySummaries = useCallback(async (names: IndexedNameSummary[]) => {
     if (!indexerClient) return {}
@@ -78,7 +82,7 @@ export function useMyDomains({
     setMyNamePrimarySummaries(summaries)
   }, [loadMyNamePrimarySummaries])
 
-  const loadMyNames = useCallback(async () => {
+  const readData = useCallback(async () => {
     const requestId = myNamesRequestId.current + 1
     myNamesRequestId.current = requestId
     const shouldApply = () => myNamesRequestId.current === requestId
@@ -90,7 +94,7 @@ export function useMyDomains({
       setMyNames([])
       setMyNamePrimarySummaries({})
       setMyNamesLoading(false)
-      setMyNamesError('Name data is unavailable right now. Refresh and try again.')
+      setMyNamesError('Name data is unavailable right now. Trying again automatically.')
       return
     }
 
@@ -125,12 +129,16 @@ export function useMyDomains({
     setLoadedMyNames,
   ])
 
+  const loadMyNames = useSingleFlight(readData, readData)
+
   useEffect(() => {
     if (!shouldLoad) return
     globalThis.queueMicrotask(() => {
       void loadMyNames()
     })
   }, [loadMyNames, shouldLoad])
+
+  useAutoRefresh(loadMyNames, shouldLoad)
 
   return {
     loadMyNames,

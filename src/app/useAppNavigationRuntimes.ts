@@ -72,6 +72,7 @@ export function useAppNavigationRuntimes({
     setTxState: registrationState.setTxState,
   })
   const mainViewRuntime = useMainViewRuntime({
+    walletStatus: walletRuntime.walletSetupState,
     currentBlockHeight: searchState.currentBlockHeight,
     indexerClient: appRuntime.indexerClient,
     loadPendingReservations: registrationRuntime.loadPendingReservations,

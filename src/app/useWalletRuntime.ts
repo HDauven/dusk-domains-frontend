@@ -10,13 +10,13 @@ type AppRuntime = ReturnType<typeof useAppRuntime>
 
 type UseWalletRuntimeArgs = Pick<
   AppRuntime,
-  'pause' | 'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
+  'writeAccess' | 'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
 >
   & Pick<Parameters<typeof useDuskDomainWriter>[0], 'confirmOwnershipWrite'>
 
 export function useWalletRuntime({
   confirmOwnershipWrite,
-  pause,
+  writeAccess,
   connectKit,
   connectOptions,
   liveDuskDomainsApp,
@@ -34,6 +34,7 @@ export function useWalletRuntime({
     walletDiscoveryReady,
     walletDiscoveryRefreshing,
     walletError,
+    walletBusy,
     walletState,
   } = useDuskWalletSession(connectKit, connectOptions, expectedWalletChainId, expectedWalletNodeUrl)
 
@@ -55,7 +56,7 @@ export function useWalletRuntime({
 
   const submitNameWrite = useDuskDomainWriter({
     confirmOwnershipWrite,
-    pause,
+    writeAccess,
     contracts: runtimeConfig.contracts,
     liveDuskDomainsApp,
   })
@@ -105,6 +106,7 @@ export function useWalletRuntime({
     submitNameWrite,
     walletDiscoveryRefreshing,
     walletError,
+    walletBusy,
     walletSession,
     walletSetupState,
     walletState,

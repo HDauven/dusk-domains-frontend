@@ -28,6 +28,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     defaultNode: namePreview.nodeHex,
   })
   const registrationRuntime = useRegistrationRuntime({
+    explicitlyDisconnected: walletRuntime.walletState.explicitlyDisconnected,
     chainId: appRuntime.runtimeConfig.chainId,
     getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
     indexerClient: appRuntime.indexerClient,
@@ -47,7 +48,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
   const derivedState = deriveAppDerivedState({
     registrationsPaused: appRuntime.pause.registrationsPaused,
     activeRecordTarget: domainRecordState.activeRecordTarget,
-    canRegister: namePreview.canRegister,
+    canRegister: namePreview.canRegister && appRuntime.writeAccess.canRegister,
     commitTxState: registrationState.commitTxState,
     committed: registrationState.committed,
     confirmationInput: domainState.confirmationInput,

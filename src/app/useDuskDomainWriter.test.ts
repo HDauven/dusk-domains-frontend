@@ -1,3 +1,5 @@
+import { createWriteAccess } from './writeAccess'
+import { unpaused } from './operatorPause'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
@@ -11,7 +13,7 @@ vi.mock('../names/internal', async importOriginal => ({
 it('allows only one wallet write at a time and releases the guard on either outcome', async () => {
   let submit!: ReturnType<typeof useDuskDomainWriter>
   function Probe() {
-    submit = useDuskDomainWriter({ liveDuskDomainsApp: {}, liveWritesEnabled: false } as never)
+    submit = useDuskDomainWriter({ liveDuskDomainsApp: {}, writeAccess: createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, {} as never, unpaused) } as never)
     return null
   }
   renderToStaticMarkup(createElement(Probe))
@@ -32,7 +34,7 @@ it('rejects paused writes before the wallet and still submits exempt writes', as
   vi.mocked(submitDuskDomainWrite).mockClear()
   let submit!: ReturnType<typeof useDuskDomainWriter>
   function Probe() {
-    submit = useDuskDomainWriter({ liveDuskDomainsApp: {}, pause: { registrationsPaused: true, tradingPaused: true } } as never)
+    submit = useDuskDomainWriter({ liveDuskDomainsApp: {}, writeAccess: createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, {} as never, { registrationsPaused: true, tradingPaused: true }) } as never)
     return null
   }
   renderToStaticMarkup(createElement(Probe))
@@ -41,4 +43,13 @@ it('rejects paused writes before the wallet and still submits exempt writes', as
   expect(submitDuskDomainWrite).not.toHaveBeenCalled()
   await submit('name.dusk', { contract: 'marketplace', functionName: 'claim_refund_runtime' } as never)
   expect(submitDuskDomainWrite).toHaveBeenCalledOnce()
+})
+
+it('refuses preview writes before any wallet or simulated transaction', async () => {
+  vi.mocked(submitDuskDomainWrite).mockClear()
+  let submit!: ReturnType<typeof useDuskDomainWriter>
+  function Probe() { submit = useDuskDomainWriter({ writeAccess: createWriteAccess({mode:'preview',liveWritesEnabled:false}, null, unpaused), liveDuskDomainsApp: null, contracts: {} as never }); return null }
+  renderToStaticMarkup(createElement(Probe))
+  await expect(submit('example.dusk', {} as never)).rejects.toThrow('Preview is read only')
+  expect(submitDuskDomainWrite).not.toHaveBeenCalled()
 })

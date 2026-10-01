@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { emptyResolverRecords } from '../../app/appConstants'
-import { isCriticalRecordKey } from '../../app/appHelpers'
+import { isCriticalRecordKey } from '../../app/recordKeyPolicy'
 import { recordDraftValuesFor, recordMutationPlan, type ResolverRecord, type ResolverRecordKey } from '../../names/internal'
 import type { RecordTargetOption } from './recordTypes'
 

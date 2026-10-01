@@ -1,5 +1,5 @@
 import { clampDurationYears } from '../../../app/appConstants'
-import { currentBlockHeightFromHealth } from '../../../app/appHelpers'
+import { currentBlockHeightFromHealth } from '../../../app/indexerReadHelpers'
 import {
   updatePendingNameReservationBlock,
   userFacingErrorMessage,

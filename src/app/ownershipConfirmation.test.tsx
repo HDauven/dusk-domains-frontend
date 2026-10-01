@@ -1,3 +1,5 @@
+import { createWriteAccess } from './writeAccess'
+import { unpaused } from './operatorPause'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
 import { namehashHex, submitDuskDomainWrite, type DuskDomainCallMetadata } from '../names/internal'
@@ -36,7 +38,7 @@ function harness(nextOwner = 'recipient') {
     setManagedName,setPending:changes=>{pending=changes}})
   let submit!: ReturnType<typeof useDuskDomainWriter>
   function Probe() {
-    submit = useDuskDomainWriter({contracts:{} as never,liveDuskDomainsApp:{} as never,confirmOwnershipWrite:ownership.afterWrite})
+    submit = useDuskDomainWriter({contracts:{} as never,writeAccess:createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, {} as never, unpaused),liveDuskDomainsApp:{} as never,confirmOwnershipWrite:ownership.afterWrite})
     return null
   }
   renderToStaticMarkup(<Probe />)

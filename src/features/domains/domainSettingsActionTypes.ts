@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { ManagedNameState } from '../../app/appHelpers'
+import type { ManagedNameState } from '../../app/managedNameState'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'

@@ -19,8 +19,8 @@ export type UseTreasuryActionsProps = {
   feeConfigForm: FeeConfigFormState
   indexerClient: DuskDomainsIndexerClient | null
   liveDuskDomainsApp: unknown
-  loadFeeConfig: () => Promise<boolean>
-  loadTreasury: () => Promise<boolean>
+  loadFeeConfig: (options?: { fresh?: boolean }) => Promise<boolean>
+  loadTreasury: (options?: { fresh?: boolean }) => Promise<boolean>
   resetTreasuryClaimAmount: () => void
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string

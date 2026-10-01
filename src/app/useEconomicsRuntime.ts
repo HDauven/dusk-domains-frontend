@@ -1,3 +1,4 @@
+import { useAutoRefresh } from './useAutoRefresh'
 import { useEffect } from 'react'
 import { useReferralFeature } from '../features/referrals/useReferralFeature'
 import { useFeeConfig } from '../features/treasury/useFeeConfig'
@@ -81,6 +82,9 @@ export function useEconomicsRuntime({
       void loadReferralAccount()
     })
   }, [loadReferralAccount, mainView])
+
+  useAutoRefresh(loadReferralAccount, mainView === 'referrals')
+  useAutoRefresh(loadTreasuryView, mainView === 'treasury')
 
   return {
     activeReferral,

@@ -1,4 +1,4 @@
-import { waitForCommitmentBlock } from '../../app/appHelpers'
+import { waitForCommitmentBlock } from '../../app/commitmentBlocks'
 import {
   coreCommitRuntimeCall,
   createRegistrationSecret,
@@ -116,7 +116,7 @@ export async function prepareRegistrationCommit({
     if (!liveDuskDomainsApp) return
 
     if (!indexerClient) {
-      setIndexerError('Reservation submitted, but confirmation cannot be tracked yet. Refresh again shortly.')
+      setIndexerError('Reservation submitted, but confirmation cannot be tracked yet. Your claim is saved in this browser.')
       return
     }
 

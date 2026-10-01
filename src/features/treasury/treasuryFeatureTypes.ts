@@ -15,7 +15,7 @@ export type UseTreasuryFeatureArgs = {
   feeConfigError: string
   feeConfigLoading: boolean
   liveDuskDomainsApp: unknown
-  loadFeeConfig: () => Promise<boolean>
+  loadFeeConfig: (options?: { fresh?: boolean }) => Promise<boolean>
   onOpenWalletConnection: () => void
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedTypedPrincipalKey: string

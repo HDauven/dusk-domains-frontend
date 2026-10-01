@@ -14,6 +14,7 @@ import { formatLuxAsDusk, minimumBidDusk, minimumBidLux } from './auctionMath'
 import { AuctionCountdown } from './AuctionCountdown'
 import { ListingName } from './ListingName'
 import {
+  MARKETPLACE_SYNC_MESSAGE,
   auctionDurationLabel,
   auctionStartWindowLabel,
   auctionStatus,
@@ -36,7 +37,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
     <div className="marketplace-auction-detail">
       <div className="marketplace-navigation"><Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
         <ArrowLeft aria-hidden="true" size={15} /> All listings
-      </Button><MarketplaceFreshness updatedAt={props.updatedAt} /></div>
+      </Button><MarketplaceFreshness updatedAt={props.error === MARKETPLACE_SYNC_MESSAGE ? null : props.updatedAt} /></div>
 
       <div className="marketplace-auction-hero">
         <div>

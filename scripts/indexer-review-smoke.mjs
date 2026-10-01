@@ -24,7 +24,7 @@ export async function checkInitialHydration(page) {
         setManagedName: noop, setDraftOwner: noop, setDraftManager: noop, setSubnameManager: noop, setSubnames: noop,
         setIndexerError: noop, setIndexerConfirmation: noop, setApiSearchResult: noop })
       window.hydrationFeed = feed
-      window.hydrate = () => hydration.hydrateNameFromIndexer(client, { canonical: name })
+      window.hydrate = options => hydration.hydrateNameFromIndexer(client, { canonical: name }, () => true, options)
       return React.createElement('output', { id: 'hydration-name' }, name)
     }
     window.renderHydration = name => root.render(React.createElement(Hydration, { name }))
@@ -35,24 +35,24 @@ export async function checkInitialHydration(page) {
   await page.waitForFunction(() => Boolean(window.finishHydration))
   await page.evaluate(() => { window.delayHydration = false; window.renderHydration('two.dusk') })
   await page.getByText('two.dusk', { exact: true }).waitFor()
-  await page.evaluate(() => window.hydrate())
-  const current = await page.evaluate(() => window.hydrationFeed.activityEntries)
-  assert.equal(await page.evaluate(() => window.hydrationFeed.hasMoreActivity), true)
+  await page.evaluate(() => { window.nextHydration = window.hydrate() })
   await page.evaluate(async () => {
     window.finishHydration({ activity: [{ id: 'stale', eventType: 'registration', timestamp: '' }], nextCursor: null })
-    await window.oldHydration
+    await Promise.all([window.oldHydration, window.nextHydration])
   })
   await page.waitForTimeout(30)
-  assert.deepEqual(await page.evaluate(() => window.hydrationFeed.activityEntries), current, 'Late initial hydration must not replace the current name activity')
+  const current = await page.evaluate(() => window.hydrationFeed.activityEntries)
+  assert.equal(current.length, 1)
+  assert.notEqual(current[0].id, 'stale', 'Late initial hydration must not replace the current name activity')
   assert.equal(await page.evaluate(() => window.hydrationFeed.hasMoreActivity), true, 'Late hydration must not hide Load more')
 
-  // A refresh of the same name also invalidates its older initial read.
+  // A post-write refresh queues one read and invalidates its older initial hydration.
   await page.evaluate(() => { window.delayHydration = true; window.finishHydration = null; window.oldHydration = window.hydrate() })
   await page.waitForFunction(() => Boolean(window.finishHydration))
-  await page.evaluate(async () => { window.delayHydration = false; await window.hydrate() })
+  await page.evaluate(() => { window.delayHydration = false; window.nextHydration = window.hydrate({ fresh: true }) })
   await page.evaluate(async () => {
     window.finishHydration({ activity: [{ id: 'stale', eventType: 'registration', timestamp: '' }], nextCursor: null })
-    await window.oldHydration
+    await Promise.all([window.oldHydration, window.nextHydration])
   })
   await page.waitForTimeout(30)
   assert.deepEqual(await page.evaluate(() => window.hydrationFeed.activityEntries), current)

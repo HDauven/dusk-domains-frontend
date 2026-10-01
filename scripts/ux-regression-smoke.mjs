@@ -1,3 +1,5 @@
+import { checkRefreshOrdering, checkLockedClaims } from './shell-refresh-smoke.mjs'
+import { checkAppShell } from './shell-smoke.mjs'
 import { checkAuctionRoute } from './url-route-smoke.mjs'
 import { checkListingFeeReview } from './marketplace-fee-smoke.mjs'
 import { checkMarketplaceReviews, checkMarketplaceBrowse, checkMarketplaceInventory } from './marketplace-ux-smoke.mjs'
@@ -19,7 +21,8 @@ for (let attempt = 0; ; attempt++) {
 }
 const browser = await chromium.launch({ headless: true })
 try {
-  const page = await browser.newPage()
+  const context = await browser.newContext()
+  const page = await context.newPage()
   const errors = []
   page.on('pageerror', error => { errors.push(error.message); console.error(error.message) })
   // Keep Vite's React preamble, but do not start the app or contact a chain.
@@ -76,6 +79,7 @@ try {
     const { React, root } = window
     const { useRegistrationRuntime } = await import('/src/app/useRegistrationRuntime.ts')
     const { upsertPendingNameReservation } = await import('/src/names/internal.ts')
+    sessionStorage.setItem('dusk-domains:last-claim-owner:dusk:0', 'controller')
     upsertPendingNameReservation({ name: 'resume.dusk', node: 'node', commitment: 'commit', secret: 'local-test',
       controller: 'controller', ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1,
       committedBlockHeight: null, committedTxId: 'tx', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
@@ -88,7 +92,7 @@ try {
       const [, setNowSeconds] = React.useState(0)
       const [preparedCommit, setPreparedCommit] = React.useState(null)
       const { pendingReservations } = useRegistrationRuntime({ mainView: 'search', chainId: 'dusk:0',
-        selectedAuthority: 'controller', selectedAddress: '', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
+        selectedAuthority: 'controller', selectedAddress: 'controller', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
         setCurrentBlockHeight, setNowSeconds })
       return React.createElement('output', { id: 'saved-reservation' }, `${height}:${pendingReservations[0]?.committedBlockHeight}`)
     }
@@ -189,7 +193,7 @@ try {
           createdAt: new Date().toISOString(), durationYears: 1 }],
         myNames: [{ canonicalName: `${'a'.repeat(63)}.dusk`, node: 'node', records: [], subnameCount: 0, expiresAtBlockHeight: 900, graceEndsAtBlockHeight: 1000 }],
         primarySummaries: {}, onConnectWallet: () => {}, onForgetPendingReservation: () => {}, onOpenIndexedName: () => {},
-        onOpenPendingReservation: () => {}, onRefresh: () => {}, onSearchHome: () => {} })))
+        onOpenPendingReservation: () => {}, onSearchHome: () => {} })))
   })
   const open = page.getByRole('button', { name: 'Open', exact: true })
   await open.first().waitFor()
@@ -368,8 +372,11 @@ try {
   await page.evaluate(async () => {
     const { React, root } = window
     const { useDuskDomainWriter } = await import('/src/app/useDuskDomainWriter.ts')
+    const { createWriteAccess } = await import('/src/app/writeAccess.ts')
     function WriterProbe({ pause }) {
-      const submit = useDuskDomainWriter({ pause, contracts: {}, liveDuskDomainsApp: {} })
+      const app = {}
+      const writeAccess = createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, app, pause)
+      const submit = useDuskDomainWriter({ writeAccess, contracts: {}, liveDuskDomainsApp: app })
       window.firstSubmit ??= submit
       React.useEffect(() => { window.writerPause = pause }, [pause])
       return null
@@ -392,6 +399,9 @@ try {
   await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)
   await checkNameFit(page)
+  await checkLockedClaims(page)
+  await checkRefreshOrdering(page)
+  await checkAppShell(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')

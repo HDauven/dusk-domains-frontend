@@ -1,4 +1,4 @@
-import { contractPrincipalInput } from '../../app/appHelpers'
+import { contractPrincipalInput } from '../../app/principalInput'
 import { blockHeightFromDateInput } from './domainFormat'
 import {
   coreCreateSubnameRuntimeCall,

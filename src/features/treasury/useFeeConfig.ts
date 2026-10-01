@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useSingleFlight } from '../../app/useSingleFlight'
+import { createNameReadGuard } from '../search/nameReadGuard'
+import { feeConfigValuesMatch } from './feeConfig'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_FEE_CONFIG,
   type CoreFeeConfig,
@@ -10,7 +13,12 @@ export function useFeeConfig(indexerClient: DuskDomainsIndexerClient | null) {
   const [feeConfigLoading, setFeeConfigLoading] = useState(false)
   const [feeConfigError, setFeeConfigError] = useState('')
 
-  const loadFeeConfig = useCallback(async () => {
+  const beginRead = useMemo(() => createNameReadGuard(), [])
+  useEffect(() => () => { beginRead() }, [beginRead, indexerClient])
+
+  const readData = useCallback(async () => {
+    const isCurrent = beginRead()
+    setFeeConfigLoading(false)
     if (!indexerClient) {
       setFeeConfig(DEFAULT_FEE_CONFIG)
       setFeeConfigError('')
@@ -22,17 +30,21 @@ export function useFeeConfig(indexerClient: DuskDomainsIndexerClient | null) {
 
     try {
       const nextFeeConfig = await indexerClient.getFeeConfig()
-      setFeeConfig(nextFeeConfig)
+      if (!isCurrent()) return false
+      setFeeConfig(current => current.version === nextFeeConfig.version && feeConfigValuesMatch(current, nextFeeConfig) ? current : nextFeeConfig)
       return true
     } catch (error) {
+      if (!isCurrent()) return false
       void error
       setFeeConfig(DEFAULT_FEE_CONFIG)
       setFeeConfigError('Live pricing is unavailable. Showing default pricing.')
       return false
     } finally {
-      setFeeConfigLoading(false)
+      if (isCurrent()) setFeeConfigLoading(false)
     }
-  }, [indexerClient])
+  }, [beginRead, indexerClient])
+
+  const loadFeeConfig = useSingleFlight(readData, readData)
 
   useEffect(() => {
     globalThis.queueMicrotask(() => {

@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest'
-import { createManagedNameState, type ManagedNameState } from '../../app/appHelpers'
+import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
 import { applyIndexedNameHydration } from './applyIndexedNameHydration'
 import { readIndexedName, type IndexedNameReadBundle } from './indexedNameReads'
 import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'

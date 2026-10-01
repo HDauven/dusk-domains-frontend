@@ -39,7 +39,7 @@ export function SearchWorkspace({
 }: SearchWorkspaceProps) {
   return (
     <>
-      <SearchHero
+      {(!checked || resultView === 'overview') ? <SearchHero
         priceTiers={priceTiers}
         checked={checked}
         featuredNames={featuredNames}
@@ -48,7 +48,7 @@ export function SearchWorkspace({
         onOpenName={onOpenName}
         onQueryChange={onQueryChange}
         query={query}
-      />
+      /> : null}
 
       {checked && !resultReady ? (
         <p className="search-status" role="status">{loading ? 'Checking the name…' : 'Name data is unavailable right now. Try again in a moment.'}</p>

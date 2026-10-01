@@ -2,10 +2,10 @@ import type { WalletConnectionStatus } from './walletStatus'
 
 export function walletActionLabel(status: WalletConnectionStatus) {
   if (status === 'connected') return 'Wallet'
-  if (status === 'detecting') return 'Checking Wallet'
-  if (status === 'locked') return 'Unlock Wallet'
-  if (status === 'wrong-network') return 'Switch Network'
-  return 'Connect Wallet'
+  if (status === 'detecting') return 'Checking wallet'
+  if (status === 'locked') return 'Unlock wallet'
+  if (status === 'wrong-network') return 'Switch network'
+  return 'Connect wallet'
 }
 
 export function walletActionTitle(status: WalletConnectionStatus) {

@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { createWriteAccess } from './writeAccess'
+import { useMemo, useState } from 'react'
 import { useOperatorPause } from './useOperatorPause'
-import { createDuskConnectKit } from '@dusk/connect/ui'
+import { DuskWallet } from '@dusk/connect'
+import { createWalletSession } from '../features/wallet/walletSession'
 import { duskDomainsConnectOptions } from './appConstants'
 import { createDuskNodeBlockHeightReader } from './duskNodeHeight'
 import { createHealthyIndexerClient } from './indexerReadHelpers'
@@ -23,19 +25,22 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
   const getCurrentBlockHeight = useMemo(() => (
     createDuskNodeBlockHeightReader(runtimeConfig.nodeUrl)
   ), [runtimeConfig.nodeUrl])
-  const connectKit = useMemo(() => createDuskConnectKit({
-    modal: {
-      appName: 'Dusk Domains',
-      theme: 'dark',
-      connectOptions: duskDomainsConnectOptions,
-    },
-  }), [])
-  const wallet = connectKit.wallet
+  const [walletOpen, setWalletOpen] = useState(false)
+  const baseWallet = useMemo(() => new DuskWallet({ autoRefresh: false }), [])
+  const wallet = useMemo(() => createWalletSession(baseWallet), [baseWallet])
+  const connectKit = useMemo(() => ({
+    wallet,
+    open: () => setWalletOpen(true),
+    close: () => setWalletOpen(false),
+    subscribe: wallet.subscribe.bind(wallet),
+    destroy: wallet.destroy.bind(wallet),
+  }), [wallet])
   const liveDuskDomainsApp = useMemo(() => (
     canUseLiveDuskDomainsWrites(runtimeConfig)
-      ? createDuskDomainsLiveApp({ runtimeConfig, wallet, autoConnect: false }).names
+      ? createDuskDomainsLiveApp({ runtimeConfig, wallet: baseWallet, autoConnect: false }).names
       : null
-  ), [runtimeConfig, wallet])
+  ), [runtimeConfig, baseWallet])
+  const writeAccess = useMemo(() => createWriteAccess(runtimeConfig, liveDuskDomainsApp, pause), [runtimeConfig, liveDuskDomainsApp, pause])
   const onChainReadTransport = useMemo(() => (
     liveDuskDomainsApp
       ? createDuskDomainsOnChainReadTransport(liveDuskDomainsApp, runtimeConfig.contracts)
@@ -53,7 +58,9 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
     })
   }, [getCurrentBlockHeight, onChainReadTransport])
   return {
+    writeAccess,
     pause,
+    walletOpen,
     connectKit,
     connectOptions: duskDomainsConnectOptions,
     duskDomainsOnChainClient,

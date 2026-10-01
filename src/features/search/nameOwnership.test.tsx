@@ -72,3 +72,10 @@ it.each(['open', 'search'])('clears ownership when %s succeeds but hydration hea
   expect(page(managedName)).not.toContain('>You</')
   expect(client.getNameState).toHaveBeenCalledOnce()
 })
+
+it('opens a preview name as an example result instead of a registered profile', async () => {
+  const setResultView = vi.fn()
+  const actions = new Proxy({ indexerClient:null,setResultView }, {get:(target,key)=>key in target ? target[key as keyof typeof target] : vi.fn()}) as unknown as Parameters<typeof openIndexedName>[0]
+  await openIndexedName(actions,'preview.dusk')
+  expect(setResultView).toHaveBeenLastCalledWith('overview')
+})
