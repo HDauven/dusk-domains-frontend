@@ -175,6 +175,7 @@
 .listing-name h1,
 .listing-name h2,
 .listing-name h3 {
+  flex: 1;
   min-width: 0;
   margin: 0;
   color: var(--ink);
@@ -184,13 +185,15 @@
 
 .listing-name h1,
 .listing-name h2 {
+  --leading-tight: 0.95;
   font-size: clamp(var(--text-3xl), 6vw, 72px);
   line-height: 0.95;
 }
 
-.listing-name h1 span,
-.listing-name h2 span,
-.listing-name h3 span {
+.listing-name h1 .name-signature,
+.listing-name h2 .name-signature { --name-size: clamp(var(--text-3xl), 6vw, 72px); }
+
+.listing-name .name-signature em {
   color: var(--muted);
   font-style: italic;
 }
@@ -280,6 +283,7 @@
 }
 
 .marketplace-auction-hero > div:first-child {
+  flex: 1 1 100%;
   display: grid;
   gap: var(--space-3);
   min-width: 0;

@@ -17,7 +17,7 @@ export function NameCard({ name, avatar, description, children, onOpen, loading,
     <span className="name-portrait-art" aria-hidden="true" />
     <span className="name-portrait-content" id={detailsId}>
       {avatar && /^https:\/\//.test(avatar) ? <img src={avatar} alt="" className="name-avatar" width={48} height={48} referrerPolicy="no-referrer" loading="lazy" onError={(event) => { event.currentTarget.hidden = true }} /> : null}
-      <NameSignature name={name} />
+      <NameSignature name={name} fit />
       {description ? <span className="name-portrait-description">{description}</span> : null}
       {children}
     </span>

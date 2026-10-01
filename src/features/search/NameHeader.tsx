@@ -1,5 +1,6 @@
 import { Badge } from '../../components/ui/Badge'
 import { NameCard } from '../../components/ui/NameCard'
+import { NameSignature } from '../../components/ui/NameChip'
 import { OwnerLabel } from '../identity/OwnerLabel'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
@@ -20,7 +21,7 @@ export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner
   const description = records.find(record => record.key === 'text.description')?.value
   return <header className={`name-hero ${status}`}>
     {registered ? <h1 className="name-page-heading">{displayName}</h1> : null}
-    {registered ? <NameCard name={displayName} avatar={avatar} description={description} /> : <h1 className="name-hero-title">{displayName}</h1>}
+    {registered ? <NameCard name={displayName} avatar={avatar} description={description} /> : <h1 className="name-hero-title" aria-label={displayName}><NameSignature name={displayName} fit /></h1>}
     <div className="name-hero-copy">
       {registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={[...ownerAddresses, ...records.filter(record => record.key === 'moonlight_address').map(record => record.value)]} /></div> : null}
       <div className="name-hero-badges">

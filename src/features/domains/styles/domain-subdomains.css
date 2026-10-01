@@ -67,7 +67,7 @@
   text-align: left;
 }
 
-.subname-row > button { justify-self: start; }
+.subname-row > button { width: 100%; min-width: 0; justify-content: flex-start; }
 .subname-row > div { min-width: 0; font-size: var(--text-sm); }
 .subname-row .owner-identity code { white-space: normal; overflow-wrap: anywhere; }
 
