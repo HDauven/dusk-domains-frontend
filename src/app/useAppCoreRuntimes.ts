@@ -20,6 +20,7 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
   const registrationState = useRegistrationAppState()
   const domainState = useDomainManagementAppState(recordSourceContractId)
   const walletRuntime = useWalletRuntime({
+    pause: appRuntime.pause,
     connectKit,
     connectOptions,
     liveDuskDomainsApp,

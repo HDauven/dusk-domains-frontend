@@ -19,6 +19,7 @@ export type MarketplaceBidReview = {
 }
 
 export type MarketplaceViewProps = {
+  tradingPaused?: boolean
   actionsAvailable: boolean
   auctions: IndexedMarketplaceAuction[]
   auctionActivity: ActivityEntry[]

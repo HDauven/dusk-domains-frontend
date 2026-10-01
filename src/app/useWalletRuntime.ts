@@ -10,10 +10,11 @@ type AppRuntime = ReturnType<typeof useAppRuntime>
 
 type UseWalletRuntimeArgs = Pick<
   AppRuntime,
-  'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
+  'pause' | 'connectKit' | 'connectOptions' | 'liveDuskDomainsApp' | 'runtimeConfig' | 'wallet'
 >
 
 export function useWalletRuntime({
+  pause,
   connectKit,
   connectOptions,
   liveDuskDomainsApp,
@@ -51,6 +52,7 @@ export function useWalletRuntime({
   } = selectedAuthorityState
 
   const submitNameWrite = useDuskDomainWriter({
+    pause,
     contracts: runtimeConfig.contracts,
     liveDuskDomainsApp,
   })

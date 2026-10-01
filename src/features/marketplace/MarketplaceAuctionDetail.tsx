@@ -160,7 +160,7 @@ function AuctionAction({
           <input
             aria-describedby={`bid-help-${auction.node}`}
             aria-label={`Bid on ${auction.name}`}
-            disabled={!props.actionsAvailable || !auction.escrowed}
+            disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed}
             inputMode="decimal"
             type="text"
             value={props.bidDrafts[auction.node] ?? minimum}
@@ -173,7 +173,7 @@ function AuctionAction({
         <span>Minimum {minimum} DUSK</span>
         <button type="button" onClick={() => props.onBidDraftChange(auction.node, minimum)}>Use minimum</button>
       </div>
-      <button className="primary-button compact" disabled={!props.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.onReviewBid(auction)}>Review bid</button>
+      <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.onReviewBid(auction)}>Review bid</button>
       <p className="marketplace-custody-note">Your full bid is locked in the marketplace contract. If you’re outbid, it becomes withdrawable marketplace balance.</p>
     </div>
   )

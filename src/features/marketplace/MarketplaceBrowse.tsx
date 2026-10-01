@@ -187,7 +187,7 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceViewProps; 
         ) : !props.selectedAddress ? (
           <button className="commit-button" type="button" onClick={props.onOpenWalletConnection}>Connect to buy</button>
         ) : (
-          <button className="commit-button" disabled={!props.actionsAvailable || !allowedBuyer || !sale.escrowed} type="button" onClick={() => props.onBuyFixedSale(sale)}>
+          <button className="commit-button" disabled={props.tradingPaused || !props.actionsAvailable || !allowedBuyer || !sale.escrowed} type="button" onClick={() => props.onBuyFixedSale(sale)}>
             {allowedBuyer ? `Buy for ${formatLuxNumberAsDusk(sale.priceLux)}` : 'Private sale'}
           </button>
         )}

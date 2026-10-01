@@ -27,3 +27,18 @@ it('allows only one wallet write at a time and releases the guard on either outc
   await expect(submit('third.dusk', {} as never)).rejects.toThrow('Transport interrupted')
   await expect(submit('fourth.dusk', {} as never)).resolves.toBe(executed)
 })
+
+it('rejects paused writes before the wallet and still submits exempt writes', async () => {
+  vi.mocked(submitDuskDomainWrite).mockClear()
+  let submit!: ReturnType<typeof useDuskDomainWriter>
+  function Probe() {
+    submit = useDuskDomainWriter({ liveDuskDomainsApp: {}, pause: { registrationsPaused: true, tradingPaused: true } } as never)
+    return null
+  }
+  renderToStaticMarkup(createElement(Probe))
+  await expect(submit('name.dusk', { contract: 'core', functionName: 'commit_runtime' } as never)).rejects.toThrow('Registrations are paused')
+  await expect(submit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' } as never)).rejects.toThrow('Marketplace trading is paused')
+  expect(submitDuskDomainWrite).not.toHaveBeenCalled()
+  await submit('name.dusk', { contract: 'marketplace', functionName: 'claim_refund_runtime' } as never)
+  expect(submitDuskDomainWrite).toHaveBeenCalledOnce()
+})

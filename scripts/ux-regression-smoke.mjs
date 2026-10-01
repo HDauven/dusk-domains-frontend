@@ -336,6 +336,47 @@ try {
   await checkInitialHydration(page)
   await checkSelectedAuction(page)
   await checkIndexerSessionBudget(page)
+  await page.clock.install()
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { useOperatorPause } = await import('/src/app/useOperatorPause.ts')
+    const { OperatorPauseBanner } = await import('/src/app/OperatorPauseBanner.tsx')
+    window.pauseHealth = { ok: true, pause: { registrationsPaused: true, tradingPaused: true } }
+    const client = { getHealth: async () => window.pauseHealth }
+    function PauseProbe() {
+      const pause = useOperatorPause(client, 'pause-smoke')
+      return React.createElement('section', { id: 'pause-probe' }, React.createElement(OperatorPauseBanner, { pause }))
+    }
+    root.render(React.createElement(PauseProbe))
+  })
+  await page.getByText('Registrations paused.', { exact: false }).waitFor()
+  await page.getByText('Marketplace trading paused.', { exact: false }).waitFor()
+  await page.evaluate(() => { window.pauseHealth = { ok: false, pause: { registrationsPaused: false, tradingPaused: false } } })
+  await page.clock.runFor(10_000)
+  assert.match(await page.locator('#pause-probe').textContent(), /Registrations paused/)
+  await page.evaluate(() => { window.pauseHealth.ok = true })
+  await page.clock.runFor(10_000)
+  await page.waitForFunction(() => document.querySelector('#pause-probe')?.textContent === '')
+  // A write prepared before a pause is observed must still be refused at submit.
+  await page.evaluate(async () => {
+    const { React, root } = window
+    const { useDuskDomainWriter } = await import('/src/app/useDuskDomainWriter.ts')
+    function WriterProbe({ pause }) {
+      const submit = useDuskDomainWriter({ pause, contracts: {}, liveDuskDomainsApp: {} })
+      window.firstSubmit ??= submit
+      React.useEffect(() => { window.writerPause = pause }, [pause])
+      return null
+    }
+    window.renderWriter = (pause) => root.render(React.createElement(WriterProbe, { pause }))
+    window.renderWriter({ registrationsPaused: false, tradingPaused: false })
+  })
+  await page.waitForFunction(() => window.writerPause?.tradingPaused === false)
+  await page.evaluate(() => window.renderWriter({ registrationsPaused: false, tradingPaused: true }))
+  await page.waitForFunction(() => window.writerPause?.tradingPaused === true)
+  const staleSubmit = await page.evaluate(() => window.firstSubmit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' })
+    .then(() => 'submitted', (error) => error.message))
+  assert.match(staleSubmit, /Marketplace trading is paused/)
+  await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')
 } finally {

@@ -53,6 +53,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     nodeHex: namePreview.nodeHex,
   })
   const derivedState = deriveAppDerivedState({
+    registrationsPaused: appRuntime.pause.registrationsPaused,
     activeRecordTarget: domainRecordState.activeRecordTarget,
     canRegister: namePreview.canRegister,
     commitTxState: registrationState.commitTxState,

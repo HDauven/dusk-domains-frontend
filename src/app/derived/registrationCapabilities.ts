@@ -4,6 +4,7 @@ import type { PreparedRegistrationCommit } from '../../features/registration/use
 import { registrationCommitWindow } from '../../names/internal'
 
 export function deriveRegistrationCapabilities({
+  registrationsPaused = false,
   canRegister,
   commitBusy,
   committed,
@@ -18,6 +19,7 @@ export function deriveRegistrationCapabilities({
   txBusy,
   walletAuthorized,
 }: {
+  registrationsPaused?: boolean
   canRegister: boolean
   commitBusy: boolean
   committed: boolean
@@ -42,9 +44,9 @@ export function deriveRegistrationCapabilities({
   )
 
   return {
-    canPrepareCommit: Boolean(walletAuthorized && selectedAddress && nodeHex && canRegister && (!committed || commitStale) && !commitBusy),
+    canPrepareCommit: Boolean(!registrationsPaused && walletAuthorized && selectedAddress && nodeHex && canRegister && (!committed || commitStale) && !commitBusy),
     canRevealRegistration: Boolean(
-      walletAuthorized
+      !registrationsPaused && walletAuthorized
       && committed
       && preparedCommit
       && canRegister
@@ -56,7 +58,7 @@ export function deriveRegistrationCapabilities({
     ),
     // As canPrepareCommit, but to replace a stranded commitment rather than make a first one.
     canRestartReservation: Boolean(
-      walletAuthorized && selectedAddress && nodeHex && canRegister && reservationStranded && !commitBusy && !txBusy,
+      !registrationsPaused && walletAuthorized && selectedAddress && nodeHex && canRegister && reservationStranded && !commitBusy && !txBusy,
     ),
     commitStale,
     reservationStranded,

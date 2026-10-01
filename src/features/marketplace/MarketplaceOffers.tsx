@@ -41,7 +41,7 @@ export function MarketplaceOffers(props: MarketplaceViewProps) {
                 </select>
               </label>
             </div>
-            <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</button>
+            <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={props.onPlaceOffer}>Place offer</button>
           </>
         )}
       </section>
@@ -74,7 +74,7 @@ function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: Indexe
         {expired ? (
           <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireOffer(offer)}>Close</button>
         ) : incoming ? (
-          <button className="primary-button compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onAcceptOffer(offer)}>Accept</button>
+          <button className="primary-button compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onAcceptOffer(offer)}>Accept</button>
         ) : (
           <button className="commit-button" disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelOffer(offer)}>Cancel</button>
         )}
