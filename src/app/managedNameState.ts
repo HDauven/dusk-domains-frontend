@@ -8,6 +8,7 @@ export const fallbackOwner = 'dusk1owner-preview'
 export const fallbackManager = 'dusk1manager-preview'
 
 export type ManagedNameState = {
+  ancestors?: import('../names/internal').NamespaceAncestor[]
   node: string
   owner: string
   manager: string

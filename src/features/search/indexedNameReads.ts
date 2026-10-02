@@ -2,11 +2,11 @@ import { indexedSubnameToState, indexerRead, type IndexerReadResult } from '../.
 import type {
   ActivityEntry,
   DuskDomainsIndexerClient,
+  DuskDomainsOnChainClient,
   ForwardResolutionResponse,
   IndexedLifecycleName,
   IndexedSubname,
   NameResult,
-  ResolverRecord,
   SubnameState,
 } from '../../names/internal'
 import { isSubname, safeNamehashHex } from '../domains/domainFormat'
@@ -14,12 +14,14 @@ import { isSubname, safeNamehashHex } from '../domains/domainFormat'
 export type IndexedNameReadBundle = {
   activityCursor: string | null
   activityRead: IndexerReadResult<ActivityEntry[]>
+  connectedPrimaryName: string | null
   forwardRead: IndexerReadResult<ForwardResolutionResponse>
   hydratedSubnames: SubnameState[] | null
   node: string
   // This name's own subname entry, which holds its expiry policy; null for a root name.
   ownSubnameRead: IndexerReadResult<IndexedSubname | null>
   primaryName: string | null
+  primaryEndpoint: string
   readErrors: string[]
   stateRead: IndexerReadResult<IndexedLifecycleName | null>
   subnameRead: IndexerReadResult<IndexedSubname[]>
@@ -28,6 +30,8 @@ export type IndexedNameReadBundle = {
 export async function readIndexedName(
   client: DuskDomainsIndexerClient,
   searchResult: NameResult,
+  selectedAddress = '',
+  onChainClient: DuskDomainsOnChainClient | null = null,
 ): Promise<IndexedNameReadBundle | null> {
   const canonicalName = searchResult.canonical
   const node = safeNamehashHex(canonicalName)
@@ -41,40 +45,42 @@ export async function readIndexedName(
     indexerRead(client.getAllSubnames(node)),
     isSubname(canonicalName) ? indexerRead(client.getSubname(node)) : rootName,
   ])
-  const primaryName = await readPrimaryNameForForwardRecord(client, forwardRead.value?.records)
-  const hydratedSubnames = subnameRead.value?.map(indexedSubnameToState) ?? null
+  const forwardAddress = forwardRead.value?.records.find(record => record.key === 'moonlight_address')?.value || ''
+  const primaryReadPromise = forwardAddress ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
+  const [primaryRead, connectedPrimaryRead] = await Promise.all([
+    primaryReadPromise,
+    selectedAddress === forwardAddress ? primaryReadPromise
+      : selectedAddress ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: selectedAddress })) : null,
+  ])
+  const chainPrimaryRead = selectedAddress && !connectedPrimaryRead?.value && onChainClient
+    ? await indexerRead(onChainClient.readPrimaryName({ type: 'moonlight_address', value: selectedAddress }))
+    : null
+  const chainPrimary = chainPrimaryRead?.value
+  const hydratedSubnames = (stateRead.value?.namespace?.subnames ?? subnameRead.value)?.map(indexedSubnameToState) ?? null
   const readErrors = [
     forwardRead.error,
     stateRead.error,
     activityRead.error,
     subnameRead.error,
     ownSubnameRead.error,
+    primaryRead?.error,
+    connectedPrimaryRead?.error,
+    chainPrimaryRead?.error,
+    chainPrimary && !chainPrimary.ok ? chainPrimary.error.message : null,
   ].filter((message): message is string => Boolean(message))
 
   return {
     activityCursor: activityRead.value?.nextCursor ?? null,
     activityRead: activityRead.error ? { value: null, error: activityRead.error } : { value: activityRead.value?.activity ?? [], error: null },
+    connectedPrimaryName: connectedPrimaryRead?.value ?? (chainPrimary?.ok ? chainPrimary.value?.name : null) ?? null,
     forwardRead,
     hydratedSubnames,
     node,
     ownSubnameRead,
-    primaryName,
+    primaryName: primaryRead?.value ?? null,
+    primaryEndpoint: selectedAddress || forwardAddress,
     readErrors,
     stateRead,
     subnameRead,
   }
-}
-
-async function readPrimaryNameForForwardRecord(
-  client: DuskDomainsIndexerClient,
-  records: ResolverRecord[] | undefined,
-) {
-  const moonlight = records?.find((record) => record.key === 'moonlight_address')
-  if (!moonlight) return null
-
-  const primaryRead = await indexerRead(client.getPrimaryName({
-    type: 'moonlight_address',
-    value: moonlight.value,
-  }))
-  return primaryRead.value
 }

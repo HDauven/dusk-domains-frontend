@@ -25,6 +25,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
   const [confirmationInput, setConfirmationInput] = useState('')
   const [primaryEndpointValue, setPrimaryEndpointValue] = useState('')
   const [primaryName, setPrimaryName] = useState<string | null>(null)
+  const [connectedPrimaryName, setConnectedPrimaryName] = useState<string | null>(null)
   const [subnameLabel, setSubnameLabel] = useState('settlement')
   const [subnameManager, setSubnameManager] = useState('')
   const [subnameExpiryPolicy, setSubnameExpiryPolicy] = useState<SubnameExpiryPolicy>('inherits_parent')
@@ -51,6 +52,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     primaryEndpointValue,
     primaryError,
     primaryName,
+    connectedPrimaryName,
     primaryTxState,
     recordError,
     recordTxState,
@@ -64,6 +66,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     setPrimaryEndpointValue,
     setPrimaryError,
     setPrimaryName,
+    setConnectedPrimaryName,
     setPrimaryTxState,
     setRecordError,
     setRecordTxState,

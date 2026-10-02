@@ -161,3 +161,17 @@ it.each([false, true])('uses the shared live ownership confirmation result (%s) 
   expect(shouldApplyPreviewWriteFallback).not.toHaveBeenCalled()
   expect(setManagedName).not.toHaveBeenCalled()
 })
+
+
+it.each([undefined, false, true])('hands over both roles and passes transfer reset %s', async clearRecords => {
+    const recipient = await resolveRecipient(address, null)
+    const submitNameWrite = Object.assign(vi.fn().mockResolvedValue({status:'executed',ownershipConfirmed:true}), { captureWorkspace: () => () => true })
+    const props = {canManageName:true,managedName:{owner,manager:'old-manager'},displayName:'alpha.dusk',nodeHex:'node',
+      runtimeConfig:{contracts:{}},submitNameWrite,setManagementError:vi.fn(),setManagementTxState:vi.fn(),
+      ensureContractAuthorityForLiveWrite:()=>true,ensurePublicBalanceForLiveWrite:async()=>true,
+    } as unknown as Parameters<typeof updateDomainAuthorities>[0]
+    await updateDomainAuthorities(props, {kind:'transfer',recipient,clearRecords})
+    expect(submitNameWrite.mock.calls[0][1].args).toEqual({node:'node',owner:recipient.authority,manager:recipient.authority,clearRecords:clearRecords ?? true})
+    await updateDomainAuthorities(props, {kind:'manager',recipient,clearRecords:true})
+    expect(submitNameWrite.mock.calls[1][1].args).toEqual({node:'node',owner,manager:recipient.authority,clearRecords:false})
+})

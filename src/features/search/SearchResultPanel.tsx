@@ -1,3 +1,7 @@
+import { SubnameAuthorityControls } from '../domains/subdomains/SubnameAuthorityControls'
+import { ManagementFeedback } from '../domains/ManagementFeedback'
+import { canControlThroughAncestor } from '../../app/derived/managementCapabilities'
+import { sameAuthority } from '../identity/ownerLabel'
 import { Tabs, TabPanel } from '../../components/ui/Tabs'
 import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { ComponentProps } from 'react'
@@ -34,13 +38,16 @@ export type SearchResultPanelProps = {
 export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
   const managedName = nodeHex && settingsProps?.managedName.node === nodeHex ? settingsProps.managedName : null
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
+  const ancestorControl = canControlThroughAncestor(managedName, headerProps.viewerAuthority ?? '', settingsProps?.currentBlockHeight ?? null)
+  const parent = managedName?.ancestors?.[0]
+  const namespaceTarget = managedName && parent ? { node: managedName.node, name: headerProps.displayName, parentNode: parent.node } : null
   const canPayRenewal = Boolean(managedName?.ownerIsContract && canRenewOutsideEscrow(managedName) && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
   const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length), canPayRenewal)
   const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
   const content = <>
-    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
+    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit || primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
     {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
     {nodeHex && view === 'subnames' ? <SubdomainsView {...subdomainsProps} ownerAddresses={headerProps.ownerAddresses} canEdit={canEdit} onRecordTargetSelect={subname => onOpenName?.(subname.name)} /> : null}
     {nodeHex && view === 'records' && canEdit ? <RecordsView {...recordsProps} /> : null}
@@ -49,11 +56,22 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
   </>
   return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
     {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} /> : null}
+    {parent && !sameAuthority(parent.owner, managedName?.owner) ? <p className="field-note">The owner of {parent.name} can take this name back, and it expires with {parent.name}.</p> : null}
+    {ancestorControl && namespaceTarget ? <>
+      <SubnameAuthorityControls key={namespaceTarget.node} name={namespaceTarget.name}
+        onReassign={(owner, manager) => subdomainsProps.onReassignSubname?.(namespaceTarget, owner, manager) ?? Promise.resolve()}
+        onTakeBack={() => subdomainsProps.onTakeBackSubname?.(namespaceTarget) ?? Promise.resolve()}
+        onRemove={() => subdomainsProps.onRemoveSubname?.(namespaceTarget) ?? Promise.resolve()} />
+      <ManagementFeedback error={subdomainsProps.error} txState={subdomainsProps.txState} />
+    </> : null}
     {tabbed ? <>
       <div className="name-section-select"><label htmlFor="name-section">Section</label><select id="name-section" value={view} onChange={event => onResultViewChange(event.target.value as SearchResultView)}>{tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}</select></div>
       <Tabs className="name-section-tabs" id="name-sections" label="Name sections" items={tabs} value={view} onChange={onResultViewChange} />
     </> : null}
-    {view === 'overview' ? <SearchResultOverview {...overviewProps} /> : null}
+    {view === 'overview' ? <>
+      <SearchResultOverview {...overviewProps} />
+      {primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : null}
+    </> : null}
     {tabbed ? <TabPanel id="name-sections" value={view}>{content}</TabPanel> : content}
   </section>
 }

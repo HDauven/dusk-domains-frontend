@@ -536,3 +536,18 @@ it('shows one freshness message when market data or the network is catching up',
     expect(warning).not.toContain('marketplace-freshness')
   }
 })
+
+it.each(['fixed', 'auction', 'detail', 'sell'])('shows the namespace summary in %s views', kind => {
+  const namespace = {descendantCount:3,heldByOthersCount:1,subnames:[],ancestors:[]}
+  const selected = auction({namespace})
+  const html = render(kind === 'fixed' ? {fixedSales:[fixedSale({namespace})]} : kind === 'sell'
+    ? {tab:'sell',selectedAddress:'wallet',selectedNode:ownedName().node,sellableNames:[{...ownedName(),namespace}]}
+    : {auctions:[selected],selectedAuctionNode:kind === 'detail' ? selected.node : ''})
+  expect(html).toContain('Includes 3 subnames · 1 held by others')
+})
+
+it('offers one post-purchase action for seller-held subnames', () => {
+  const html = render({takeBackOffers:[{name:'alice.dusk',count:2,takeBack:vi.fn()}]})
+  expect(html).toContain('Take back 2 subnames')
+  expect(html).toContain('Taking them back clears their records and primary names.')
+})

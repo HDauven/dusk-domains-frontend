@@ -11,11 +11,14 @@ export async function setPrimaryDomainName({
   displayName,
   nodeHex,
   primaryEndpoint,
+  moonlightRecord,
   runtimeConfig,
   selectedAuthority,
+  selectedAddress,
   setPrimaryEndpointValue,
   setPrimaryError,
   setPrimaryName,
+  setConnectedPrimaryName,
   setPrimaryTxState,
   shouldApplyPreviewWriteFallback,
   submitNameWrite,
@@ -62,7 +65,8 @@ export async function setPrimaryDomainName({
       }, workspace))) return
       if (!workspace()) return
 
-      setPrimaryName(displayName)
+      if (moonlightRecord?.value === primaryEndpoint) setPrimaryName(displayName)
+      if (selectedAddress === primaryEndpoint) setConnectedPrimaryName(displayName)
       setPrimaryEndpointValue(primaryEndpoint)
       appendActivity({
         eventType: 'primary_name',

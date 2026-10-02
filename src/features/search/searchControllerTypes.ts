@@ -48,6 +48,7 @@ export type UseSearchControllerProps = {
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
   setPrimaryError: Dispatch<SetStateAction<string>>
+  setConnectedPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   setQuery: Dispatch<SetStateAction<string>>

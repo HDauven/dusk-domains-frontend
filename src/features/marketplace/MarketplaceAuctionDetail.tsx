@@ -1,3 +1,4 @@
+import { NamespaceSummary } from './NamespaceSummary'
 import { MarketplaceFreshness } from './MarketplaceFreshness'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -41,6 +42,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
       <div className="marketplace-auction-hero">
         <div>
           <ListingName id="marketplace-heading" heading="h1" name={auction.name} size={64} />
+      <NamespaceSummary namespace={auction.namespace} />
           <p>{auction.startBlockHeight === null
             ? `Starts when someone bids, then runs ${auctionDurationLabel(auction.durationBlocks)}.`
             : 'The highest bid wins when the auction ends.'}</p>

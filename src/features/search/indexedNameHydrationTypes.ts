@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type {
   ActivityEntry,
   DuskDomainsIndexerClient,
+  DuskDomainsOnChainClient,
   NameResult,
   ResolverRecord,
   SubnameState,
@@ -16,9 +17,11 @@ export type UseIndexedNameHydrationProps = {
   currentBlockHeight: number | null
   displayName: string
   indexerClient: DuskDomainsIndexerClient | null
+  onChainClient: DuskDomainsOnChainClient | null
   nowSeconds: number
   recordSourceContractId: string
   selectedAuthority: string
+  selectedAddress: string
   setActivityCursor: (page: { node: string; cursor: string | null } | null) => void
   setActivityEntries: Dispatch<SetStateAction<ActivityEntry[]>>
   setActivityLoading: Dispatch<SetStateAction<boolean>>
@@ -28,6 +31,7 @@ export type UseIndexedNameHydrationProps = {
   setIndexerError: Dispatch<SetStateAction<string>>
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
+  setConnectedPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
   setResolverRecordSets: Dispatch<SetStateAction<ResolverRecordSets>>
   setSubnameManager: Dispatch<SetStateAction<string>>

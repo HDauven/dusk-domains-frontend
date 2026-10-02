@@ -50,8 +50,8 @@ it.each(['open', 'search'])('clears ownership when %s succeeds but hydration hea
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
   }
   const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setIndexerError', 'setPrimaryEndpointValue',
-    'setPrimaryName', 'setResolverRecordSets', 'setSubnames', 'setCurrentBlockHeight'].map(key => [key, vi.fn()]))
-  const props = new Proxy({ ...setters, setManagedName, indexerClient: client, recordSourceContractId: 'resolver',
+    'setConnectedPrimaryName', 'setPrimaryName', 'setResolverRecordSets', 'setSubnames', 'setCurrentBlockHeight'].map(key => [key, vi.fn()]))
+  const props = new Proxy({ ...setters, selectedAddress: '', setManagedName, indexerClient: client, recordSourceContractId: 'resolver',
     beginActivityRead: () => () => true, beginOwnershipRead: () => () => true, loadPendingReservations: () => [],
   }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
   let hydration!: ReturnType<typeof useIndexedNameHydration>

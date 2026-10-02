@@ -25,7 +25,7 @@ export async function updateDomainAuthorities({
   walletSetupState,
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
-}: UseDomainSettingsActionsProps, change: { kind: 'transfer' | 'manager'; recipient: ResolvedRecipient }) {
+}: UseDomainSettingsActionsProps, change: { kind: 'transfer' | 'manager'; recipient: ResolvedRecipient; clearRecords?: boolean }) {
   const workspace = submitNameWrite.captureWorkspace(displayName)
   setManagementError('')
   if (!guardDomainActionPrerequisite({
@@ -62,6 +62,7 @@ export async function updateDomainAuthorities({
       node: nodeHex,
       owner: nextOwner,
       manager: nextManager,
+      clearRecords: change.kind === 'transfer' && (change.clearRecords ?? true),
     })
     const finalState = await submitNameWrite(displayName, call, {
       ownershipChange: change.kind,

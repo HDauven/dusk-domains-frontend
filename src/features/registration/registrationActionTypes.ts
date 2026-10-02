@@ -68,6 +68,7 @@ export type UseRegistrationActionsProps = {
   setNowSeconds: Dispatch<SetStateAction<number>>
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
+  setConnectedPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>
   setRegistrationCompletion: Dispatch<SetStateAction<RegistrationCompletionState | null>>
   setRegistrationStep: Dispatch<SetStateAction<RegistrationStepId>>

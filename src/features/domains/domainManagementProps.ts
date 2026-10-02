@@ -1,3 +1,4 @@
+import { canControlSubname } from './namespaceActions'
 import { resolveRecipient } from '../identity/resolveRecipient'
 import type { DomainManagementFeatureProps, UseDomainManagementFeatureProps } from './domainManagementFeatureTypes'
 import type { useDomainManagementActionHandlers } from './useDomainManagementActionHandlers'
@@ -80,6 +81,10 @@ export function buildDomainManagementProps(
       renewalYears: props.renewalYears,
     },
     subdomainsProps: {
+      canControlSubname: subname => canControlSubname(props, subname),
+      onReassignSubname: actions.handleReassignSubname,
+      onRemoveSubname: actions.handleRemoveSubname,
+      onTakeBackSubname: actions.handleTakeBackSubname,
       canCreateSubname: props.canCreateSubname,
       currentBlockHeight: props.currentBlockHeight,
       displayName: props.displayName,

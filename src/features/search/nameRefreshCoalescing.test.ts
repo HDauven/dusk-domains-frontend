@@ -18,7 +18,7 @@ it('shares name reads between navigation and automatic refresh', async () => {
     loader = useIndexedNameHydration({ indexerClient:client,displayName:'alpha.dusk',beginActivityRead:()=>()=>true,
       beginOwnershipRead:()=>()=>true,setActivityLoading:vi.fn(),setApiSearchResult:vi.fn(),setIndexerError:vi.fn(),
       setIndexerConfirmation:vi.fn(),setCurrentBlockHeight:vi.fn(),setManagedName:vi.fn(),setSubnames:vi.fn(),
-      setResolverRecordSets:vi.fn(),setPrimaryName:vi.fn(),setPrimaryEndpointValue:vi.fn(),setSubnameManager:vi.fn(),
+      setResolverRecordSets:vi.fn(),setPrimaryName:vi.fn(),setConnectedPrimaryName:vi.fn(),setPrimaryEndpointValue:vi.fn(),setSubnameManager:vi.fn(),
       setActivityEntries:vi.fn(),setActivityCursor:vi.fn(),
     } as never)
     return null

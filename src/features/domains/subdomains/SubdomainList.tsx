@@ -1,3 +1,4 @@
+import { SubnameAuthorityControls } from './SubnameAuthorityControls'
 import { NameSignature } from '../../../components/ui/NameChip'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
@@ -10,6 +11,10 @@ import type { SubdomainListProps } from './types'
 
 export function SubdomainList({
   ownerAddresses,
+  canControlSubname,
+  onReassignSubname,
+  onRemoveSubname,
+  onTakeBackSubname,
   selectedAuthority,
   currentBlockHeight,
   nowSeconds,
@@ -31,6 +36,10 @@ export function SubdomainList({
           <Badge>{subname.status}</Badge>
           <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
           <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>
+          {canControlSubname?.(subname) ? <SubnameAuthorityControls name={subname.name}
+            onReassign={(owner, manager) => onReassignSubname?.(subname, owner, manager) ?? Promise.resolve()}
+            onTakeBack={() => onTakeBackSubname?.(subname) ?? Promise.resolve()}
+            onRemove={() => onRemoveSubname?.(subname) ?? Promise.resolve()} /> : null}
         </div>
       ))}
     </div>

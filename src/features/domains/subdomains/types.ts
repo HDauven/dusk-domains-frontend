@@ -1,3 +1,4 @@
+import type { NamespaceTarget } from '../namespaceActions'
 import type {
   DuskDomainTxState,
   SubnameExpiryPolicy,
@@ -7,6 +8,10 @@ import type {
 export type SubdomainsViewProps = {
   ownerAddresses?: string[]
   canEdit?: boolean
+  canControlSubname?: (subname: NamespaceTarget) => boolean
+  onReassignSubname?: (subname: NamespaceTarget, owner: string, manager: string) => Promise<void>
+  onRemoveSubname?: (subname: NamespaceTarget) => Promise<void>
+  onTakeBackSubname?: (subname: NamespaceTarget) => Promise<void>
   canCreateSubname: boolean
   currentBlockHeight: number | null
   displayName: string
@@ -49,6 +54,10 @@ export type SubdomainCreatePanelProps = Pick<
 
 export type SubdomainListProps = Pick<
   SubdomainsViewProps,
+  | 'canControlSubname'
+  | 'onReassignSubname'
+  | 'onRemoveSubname'
+  | 'onTakeBackSubname'
   | 'ownerAddresses'
   | 'selectedAuthority'
   | 'currentBlockHeight'

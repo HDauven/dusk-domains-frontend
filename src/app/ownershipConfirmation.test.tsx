@@ -137,8 +137,8 @@ it('ignores hydration started before a transfer even if it arrives after confirm
     resolveForward:async()=>({records:[]}),getActivityPage:async()=>({activity:[]}),getAllSubnames:async()=>[]}
   let hydration!: ReturnType<typeof useIndexedNameHydration>
   const setters = Object.fromEntries(['setActivityEntries','setActivityCursor','setIndexerError','setPrimaryEndpointValue',
-    'setPrimaryName','setResolverRecordSets','setSubnames','setCurrentBlockHeight'].map(key=>[key,vi.fn()]))
-  const props = new Proxy({...setters,beginActivityRead:()=>()=>true,beginOwnershipRead:h.ownership.beginRead,setManagedName:h.ownership.setManagedName},
+    'setConnectedPrimaryName', 'setPrimaryName','setResolverRecordSets','setSubnames','setCurrentBlockHeight'].map(key=>[key,vi.fn()]))
+  const props = new Proxy({...setters,selectedAddress:'',beginActivityRead:()=>()=>true,beginOwnershipRead:h.ownership.beginRead,setManagedName:h.ownership.setManagedName},
     {get:(target,key)=>key in target ? target[key as keyof typeof target] : vi.fn()})
   function Probe(){hydration=useIndexedNameHydration(props as never);return null}
   renderToStaticMarkup(<Probe />)
@@ -226,7 +226,7 @@ it('restores fresh ownership and lifecycle after a pending name is reopened with
   await write
   h.ownership.setManagedName(createManagedNameState('resolver'))
   const setters = Object.fromEntries(['setActivityEntries','setActivityCursor','setIndexerError','setPrimaryEndpointValue',
-    'setPrimaryName','setResolverRecordSets','setSubnames','setCurrentBlockHeight'].map(key=>[key,vi.fn()]))
+    'setConnectedPrimaryName', 'setPrimaryName','setResolverRecordSets','setSubnames','setCurrentBlockHeight'].map(key=>[key,vi.fn()]))
   let hydration!: ReturnType<typeof useIndexedNameHydration>
   function Probe() {
     hydration=useIndexedNameHydration({...setters,recordSourceContractId:'resolver',

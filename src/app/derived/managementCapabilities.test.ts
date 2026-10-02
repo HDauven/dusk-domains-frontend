@@ -37,7 +37,7 @@ it('limits active name actions to that target’s owner or manager, and blocks r
 it('refreshes unknown height before applying lifecycle state and refuses unhealthy hydration', async () => {
   let hydrate!: ReturnType<typeof useIndexedNameHydration>['hydrateNameFromIndexer']
   const setCurrentBlockHeight = vi.fn()
-  const props = { currentBlockHeight: null, setCurrentBlockHeight, beginActivityRead: () => () => true, beginOwnershipRead: () => () => true }
+  const props = { onChainClient: { readPrimaryName: vi.fn() }, selectedAddress: 'alice-address', currentBlockHeight: null, setCurrentBlockHeight, beginActivityRead: () => () => true, beginOwnershipRead: () => () => true }
   function Probe() {
     hydrate = useIndexedNameHydration(props as never).hydrateNameFromIndexer
     return null
@@ -51,7 +51,7 @@ it('refreshes unknown height before applying lifecycle state and refuses unhealt
   expect(applyIndexedNameHydration).toHaveBeenCalledExactlyOnceWith({ ...props, currentBlockHeight: 100 }, reads)
   getHealth.mockResolvedValue({ ok: false, currentBlockHeight: 200 })
   await expect(hydrate({ getHealth } as never, {} as never)).rejects.toThrow('still syncing')
-  expect(readIndexedName).toHaveBeenCalledOnce()
+  expect(readIndexedName).toHaveBeenCalledExactlyOnceWith({ getHealth }, {}, 'alice-address', props.onChainClient)
   expect(applyIndexedNameHydration).toHaveBeenCalledOnce()
 })
 
@@ -164,4 +164,58 @@ it('blocks escrow renewal for owners, managers and visiting contract payers', ()
     expect(deriveAppDerivedState(ready as never).canRenewName).toBe(false)
     expect(deriveAppDerivedState({ ...ready, managedName: { ...ready.managedName, inMarketplaceEscrow: false } } as never).canRenewName).toBe(true)
   }
+})
+
+
+it('requires the holder before editing records, primary names or creating children', () => {
+  const ancestor = { node: 'root', name: 'alice.dusk', owner: 'ancestor', manager: 'ancestor-manager', expiresAtBlockHeight: 200 }
+  const name = { node: 'child', owner: 'holder', manager: 'holder-manager', expiresAt: 200, graceEndsAt: 300, ancestors: [ancestor] }
+  const ready = { walletSigningReady: true, selectedAddress: 'wallet', selectedAuthority: 'ancestor', nodeHex: 'child',
+    displayName: 'docs.alice.dusk', managedName: name, activeRecordTarget: { node: 'child' },
+    currentBlockHeight: 100, nowSeconds: 0, pendingReservations: [], subnames: [], primaryEndpointValue: '',
+    confirmationInput: 'docs.alice.dusk', subnameLabel: 'pay', subnameManager: 'holder',
+    recordDraftMutations: [{action:'set',key:'website',value:'https://test.example'}], recordDraftErrors: [] }
+  for (const selectedAuthority of ['ancestor', 'ancestor-manager']) {
+    expect(canManageActiveName(name, selectedAuthority, 100)).toBe(false)
+    const state = deriveAppDerivedState({ ...ready, selectedAuthority } as never)
+    expect(state.canCreateSubname).toBe(false)
+    expect(state.canSaveRecords).toBe(false)
+    expect(state.canRemoveRecords).toBe(false)
+    expect(state.canSetPrimary).toBe(false)
+    expect(state.canClearPrimary).toBe(false)
+    const reclaimed = { ...name, owner: selectedAuthority, manager: selectedAuthority }
+    expect(canManageActiveName(reclaimed, selectedAuthority, 100)).toBe(true)
+    const after = deriveAppDerivedState({ ...ready, selectedAuthority, managedName: reclaimed } as never)
+    expect(after.canSaveRecords).toBe(true)
+    expect(after.canRemoveRecords).toBe(true)
+    expect(after.canCreateSubname).toBe(true)
+  }
+})
+
+it('does not authorize another holder’s records through the displayed parent', () => {
+  const ready = { walletSigningReady: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'root',
+    displayName: 'alice.dusk', managedName: { node: 'root', owner: 'owner', manager: 'owner', expiresAt: 200, graceEndsAt: 300 },
+    activeRecordTarget: { node: 'child' }, subnames: [{ node:'child', owner:'holder', manager:'holder', expiresAt:200, status:'active' }],
+    currentBlockHeight:100, nowSeconds:0, pendingReservations:[], primaryEndpointValue:'', confirmationInput:'alice.dusk',
+    subnameLabel:'', subnameManager:'', recordDraftMutations:[{action:'set',key:'website',value:'https://test.example'}], recordDraftErrors:[] }
+  const state = deriveAppDerivedState(ready as never)
+  expect(state.canSaveRecords).toBe(false)
+  expect(state.canRemoveRecords).toBe(false)
+})
+
+
+it('requires name authority to set primary but only endpoint control to clear it', () => {
+  const address = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
+  const name = {node:'child',owner:'holder',manager:'holder',expiresAt:200,graceEndsAt:300,
+    ancestors:[{node:'root',name:'alice.dusk',owner:'ancestor',manager:'ancestor',expiresAtBlockHeight:200}]}
+  const ready = {walletSigningReady:true,selectedAddress:address,selectedAuthority:'ancestor',nodeHex:'child',displayName:'docs.alice.dusk',
+    managedName:name,moonlightRecord:{key:'moonlight_address',value:address},primaryName:'docs.alice.dusk',connectedPrimaryName:'docs.alice.dusk',primaryEndpointValue:address,
+    currentBlockHeight:100,nowSeconds:0,pendingReservations:[],subnames:[],subnameLabel:'',subnameManager:'',confirmationInput:'',recordDraftMutations:[],recordDraftErrors:[]}
+  const before = deriveAppDerivedState(ready as never)
+  expect(before.primaryVerification.verified).toBe(true)
+  expect(before.canSetPrimary).toBe(false)
+  expect(before.canClearPrimary).toBe(true)
+  const after = deriveAppDerivedState({...ready,managedName:{...name,owner:'ancestor',manager:'ancestor'}} as never)
+  expect(after.canSetPrimary).toBe(true)
+  expect(after.canClearPrimary).toBe(true)
 })

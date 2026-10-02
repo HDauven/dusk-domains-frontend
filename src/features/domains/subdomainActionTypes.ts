@@ -22,6 +22,8 @@ export type AppendSubdomainActivity = (input: {
 }) => void
 
 export type UseSubdomainActionsProps = {
+  managedName?: import('../../app/managedNameState').ManagedNameState
+  subnames?: SubnameState[]
   appendActivity: AppendSubdomainActivity
   canCreateSubname: boolean
   currentBlockHeight: number | null

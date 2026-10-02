@@ -1,3 +1,4 @@
+import { checkNamespaceControls } from './namespace-smoke.mjs'
 import { checkOpenRenewal } from './open-renewal-smoke.mjs'
 import { checkPricingDraft } from './treasury-draft-smoke.mjs'
 import { checkRefreshOrdering, checkLockedClaims } from './shell-refresh-smoke.mjs'
@@ -403,6 +404,7 @@ try {
   await checkMarketplaceBrowse(page)
   await checkMarketplaceInventory(page)
   await checkNameManagement(page)
+  await checkNamespaceControls(page)
   await checkOpenRenewal(page)
   await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)

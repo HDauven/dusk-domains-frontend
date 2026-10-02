@@ -132,7 +132,7 @@ describe('canonical marketplace signing state', () => {
       .rejects.toThrow('testnet.dusk is not registered on this network')
   })
 
-  it('blocks listings and offers for subnames or roots with subdomains', async () => {
+  it('blocks listings and offers when the contract reports the name is not transferable', async () => {
     const indexed = { node, canonicalName: 'example.dusk' } as IndexedNameSummary
     const encumbered = coreClientWith({
       getName: vi.fn(async () => ({ ok: true, value: {
@@ -149,9 +149,9 @@ describe('canonical marketplace signing state', () => {
       } })),
     })
 
-    await expect(canonicalOwnedName(encumbered, indexed, authority)).rejects.toThrow('without subnames')
+    await expect(canonicalOwnedName(encumbered, indexed, authority)).rejects.toThrow('second-level')
     await expect(canonicalOfferTarget(encumbered, 'example.dusk', node, `0x${'33'.repeat(32)}`))
-      .rejects.toThrow('without subnames')
+      .rejects.toThrow('second-level')
   })
 
   it('blocks stale or absent offers before cancellation or expiry', async () => {
