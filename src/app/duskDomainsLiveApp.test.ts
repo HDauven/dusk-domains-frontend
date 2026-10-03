@@ -41,8 +41,16 @@ async function fixture(chainId = 'dusk:2') {
   const { names } = createDuskDomainsLiveApp({ runtimeConfig, wallet: base, session, autoConnect: false })
   const write = () => names.writeContract({ contract: contracts.core, functionName: 'commit_runtime', args: { commitment: Array(32).fill(1) } })
   provider.request.mockClear()
-  return { provider, session, emit, write, info }
+  return { provider, session, emit, write, info, names }
 }
+
+it('keeps the wallet chain live through the app wrapper', async () => {
+  const { names, provider, emit } = await fixture()
+  expect(names.chainId).toBe('dusk:2')
+  provider.chainId = 'dusk:1'
+  emit('chainChanged', provider.chainId)
+  expect(names.chainId).toBe('dusk:1')
+})
 
 it.each(['dusk:0', 'dusk:2'])('sends an unchanged %s session through installed connect and its data driver', async chain => {
   const { provider, write } = await fixture(chain)

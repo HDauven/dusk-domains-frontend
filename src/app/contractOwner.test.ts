@@ -2,6 +2,11 @@ import { expect, it, vi } from 'vitest'
 import { isDeployedContract } from './contractOwner'
 
 const id = '11'.repeat(32)
+it.each(['00'.repeat(32), `0x${'00'.repeat(32)}`])('never queries a zero contract ID: %s', async authority => {
+  const fetchImpl = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ contract_owner: id })))
+  expect(await isDeployedContract('https://node.example', authority, new AbortController().signal, fetchImpl)).toBe(false)
+  expect(fetchImpl).not.toHaveBeenCalled()
+})
 it('requires deployed contract metadata before treating a name authority as a contract', async () => {
   const fetchImpl = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ contract_owner: '00'.repeat(32) })))
   const signal = new AbortController().signal

@@ -51,6 +51,7 @@ export function createDuskDomainsLiveApp(options: DuskDomainsLiveAppOptions): Du
     dusk,
     names: {
       ...names,
+      get chainId() { return names.chainId },
       async writeContract(params) {
         const wallet = createSessionWriteWallet(options.wallet, options.session, options.runtimeConfig.chainId, options.runtimeConfig.nodeUrl)
         try {

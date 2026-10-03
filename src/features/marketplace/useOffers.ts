@@ -11,6 +11,7 @@ import {
   validateName,
   type DuskDomainsMarketplaceOnChainClient,
   type DuskDomainsOnChainClient,
+  type DuskDomainsOnChainOffer,
   type IndexedMarketplaceOffer,
   type IndexedNameSummary,
 } from '../../names/internal'
@@ -107,21 +108,26 @@ export function useOffers({
     )
   }, [duskDomainsOnChainClient, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
 
-  const acceptOffer = useCallback(async function acceptOffer(offer: IndexedMarketplaceOffer, reviewed = false) {
+  const acceptOffer = useCallback(async function acceptOffer(offer: IndexedMarketplaceOffer, reviewed?: DuskDomainsOnChainOffer) {
     if (!marketplaceOnChainClient || !duskDomainsOnChainClient) return
     const ownedName = ownedNames.find((name) => name.node === offer.node)
     if (!ownedName) {
       setError('Name ownership changed. Check the owner before trying again.')
       return
     }
+    let current: DuskDomainsOnChainOffer
     try {
-      await canonicalOffer(marketplaceOnChainClient, offer)
+      current = await canonicalOffer(marketplaceOnChainClient, offer)
+      if (reviewed && (current.offerId !== reviewed.offerId || current.feeBps !== reviewed.feeBps || current.amountLux !== reviewed.amountLux)) {
+        throw new Error('Marketplace state changed on-chain. Review the latest terms before trying again.')
+      }
       await canonicalOwnedName(duskDomainsOnChainClient, ownedName, selectedAuthority)
     } catch (readError) {
       setError(userFacingErrorMessage(readError))
       return
     }
     if (!reviewed) {
+      const terms = { ...current }
       writes.requestReview({
         title: `Accept offer for ${offer.name}`,
         rows: [
@@ -131,7 +137,7 @@ export function useOffers({
           { label: 'Your payout address', value: selectedAddress, address: true },
         ],
         note: 'You give up ownership and management of this name. The buyer’s escrowed funds pay you and the treasury. This sale cannot be canceled.',
-      }, () => acceptOffer(offer, true))
+      }, () => acceptOffer(offer, terms))
       return
     }
     await writes.submit(
@@ -141,8 +147,10 @@ export function useOffers({
         node: offer.node,
         marketplaceContract: marketplaceContractId,
         buyerAuthority: offer.buyerAuthority,
-        // The amount shown on the offer card: a different offer under this buyer fails.
-        expectedAmountLux: offer.amountLux,
+        // Bind the placement and financial terms captured by the review.
+        expectedAmountLux: Number(reviewed.amountLux),
+        expectedOfferId: reviewed.offerId,
+        expectedFeeBps: reviewed.feeBps,
         sellerRecipient: selectedAddress,
       }),
       0n,

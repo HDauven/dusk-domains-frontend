@@ -8,6 +8,7 @@ import { useAppCoreRuntimes } from './useAppCoreRuntimes'
 
 const marketplace = `0x${'ab'.repeat(32)}`
 const env = {
+  VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID: `0x${'11'.repeat(32)}`,
   VITE_DUSK_DOMAINS_ENABLE_MARKETPLACE: 'false',
   VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID: marketplace,
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { namehashHex } from '../../names/internal'
 import type {
   DuskDomainsMarketplaceOnChainClient,
   DuskDomainsOnChainClient,
@@ -17,7 +18,7 @@ import {
   minimumCanonicalBidLux,
 } from './canonicalMarketplaceState'
 
-const node = `0x${'11'.repeat(32)}`
+const node = namehashHex('example.dusk')
 const authority = `0x${'22'.repeat(32)}`
 
 describe('canonical marketplace signing state', () => {
@@ -157,8 +158,10 @@ describe('canonical marketplace signing state', () => {
   it('blocks stale or absent offers before cancellation or expiry', async () => {
     const indexed = {
       node,
+      name: 'example.dusk',
       buyerAuthority: authority,
       amountLux: 10,
+      feeBps: 250,
       expiresAtBlockHeight: 200,
     } as IndexedMarketplaceOffer
     const absent = clientWith({ getOffer: vi.fn(async () => ({ ok: true, value: null })) })
@@ -168,6 +171,8 @@ describe('canonical marketplace signing state', () => {
       node,
       buyerAuthority: authority,
       amountLux: 11n,
+      offerId: 1,
+      feeBps: 250,
       expiresAtBlock: 200,
     } })) })
     await expect(canonicalOffer(changed, indexed)).rejects.toThrow('changed on-chain')
@@ -181,6 +186,8 @@ describe('canonical marketplace signing state', () => {
       node,
       buyerAuthority: authority,
       amountLux: 10n,
+      offerId: 1,
+      feeBps: 250,
       expiresAtBlock: 200,
     } })) })
     await expect(canonicalOfferAbsent(occupied, node, authority)).rejects.toThrow('changed on-chain')
