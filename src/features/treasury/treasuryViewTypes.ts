@@ -40,7 +40,7 @@ export type TreasuryViewProps = {
   treasuryError: string
   treasuryLoading: boolean
   treasuryRecipientMatchesOperator: boolean
-  treasuryReviewAmountLux: number | null
+  treasuryReviewAmountLux: number | string | null
   treasuryReviewLabel: string
   treasuryState: IndexedTreasuryState
   treasuryTxState: DuskDomainTxState | null

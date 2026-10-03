@@ -1,8 +1,10 @@
+import { premiumDropsSoon } from './premiumTiming'
 import {
   createRegistrationCompletionState,
   markRegistrationCompletionFailed,
 } from './registrationCompletionState'
 import {
+  registrationFeeLux,
   userFacingErrorMessage,
 } from '../../names/internal'
 import { formatLifecycleDay } from '../domains/domainFormat'
@@ -14,7 +16,7 @@ import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import { updateRegistrationCompletion } from './registrationTxProgress'
 import { revealCommitmentMissing } from './strandedReservation'
 
-export async function completeRegistration(props: UseRegistrationActionsProps) {
+export async function completeRegistration(props: UseRegistrationActionsProps, confirmedTotalLux?: number) {
   const {
     displayName,
     preparedCommit,
@@ -37,6 +39,8 @@ export async function completeRegistration(props: UseRegistrationActionsProps) {
     return
   }
   if (!preparedCommit) return
+  if (premiumDropsSoon(props.result, props.lifecycleBaseBlockHeight)
+    && confirmedTotalLux !== registrationFeeLux(props.result.label, props.duration, props.feeConfig, props.result.premiumLux ?? 0)) return
 
   setWalletError('')
   setRegistrationCompletion(null)

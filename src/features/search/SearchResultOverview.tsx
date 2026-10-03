@@ -1,3 +1,4 @@
+import { PremiumNotice } from '../registration/PremiumNotice'
 import { Badge } from '../../components/ui/Badge'
 import { suggestedNames } from './debouncedSearch'
 import { NameCard } from '../../components/ui/NameCard'
@@ -20,6 +21,8 @@ import type { ReservationWindow } from './overviewTypes'
 // The result for a name nobody holds: a claim card with the term, the price and one action.
 // A saved reservation or a name that cannot be claimed replaces it with the right next step.
 export function SearchResultOverview({
+  premiumResult,
+  currentBlockHeight,
   readOnly = false,
   registrationUnavailable = readOnly,
   canRegister,
@@ -39,6 +42,8 @@ export function SearchResultOverview({
   savedReservation,
   savedReservationWindow,
 }: {
+  premiumResult?: NameResult
+  currentBlockHeight?: number | null
   readOnly?: boolean
   registrationUnavailable?: boolean
   canRegister: boolean
@@ -107,6 +112,7 @@ export function SearchResultOverview({
         <p>{readOnly ? 'Preview only. Availability has not been checked on the network.' : 'Your wallet will own the name. Network fees are shown before signing.'}</p>
       </div>
       <div className="claim-stub">
+        <PremiumNotice result={premiumResult} currentBlockHeight={currentBlockHeight} />
         <div className="claim-price">
           <strong>{feeConfigLoading ? '…' : formatDusk(registrationFee)} <small>DUSK</small></strong>
           <span>for {duration} {pluralize(duration, 'year')} · until {expiryDate}</span>

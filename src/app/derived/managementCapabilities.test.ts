@@ -37,7 +37,7 @@ it('limits active name actions to that target’s owner or manager, and blocks r
 it('refreshes unknown height before applying lifecycle state and refuses unhealthy hydration', async () => {
   let hydrate!: ReturnType<typeof useIndexedNameHydration>['hydrateNameFromIndexer']
   const setCurrentBlockHeight = vi.fn()
-  const props = { onChainClient: { readPrimaryName: vi.fn() }, selectedAddress: 'alice-address', currentBlockHeight: null, setCurrentBlockHeight, beginActivityRead: () => () => true, beginOwnershipRead: () => () => true }
+  const props = { onChainClient: { readPrimaryName: vi.fn() }, selectedAddress: 'alice-address', currentBlockHeight: null, setCurrentBlockHeight, setNowSeconds: vi.fn(), beginActivityRead: () => () => true, beginOwnershipRead: () => () => true }
   function Probe() {
     hydrate = useIndexedNameHydration(props as never).hydrateNameFromIndexer
     return null
@@ -48,7 +48,7 @@ it('refreshes unknown height before applying lifecycle state and refuses unhealt
   const getHealth = vi.fn().mockResolvedValue({ ok: true, currentBlockHeight: 100 })
   await hydrate({ getHealth } as never, {} as never)
   expect(setCurrentBlockHeight).toHaveBeenCalledExactlyOnceWith(100)
-  expect(applyIndexedNameHydration).toHaveBeenCalledExactlyOnceWith({ ...props, currentBlockHeight: 100 }, reads)
+  expect(applyIndexedNameHydration).toHaveBeenCalledExactlyOnceWith({ ...props, currentBlockHeight: 100, nowSeconds: expect.any(Number) }, reads)
   getHealth.mockResolvedValue({ ok: false, currentBlockHeight: 200 })
   await expect(hydrate({ getHealth } as never, {} as never)).rejects.toThrow('still syncing')
   expect(readIndexedName).toHaveBeenCalledExactlyOnceWith({ getHealth }, {}, 'alice-address', props.onChainClient)

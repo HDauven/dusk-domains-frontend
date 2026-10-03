@@ -88,7 +88,7 @@ export function useReferralActions({
       delayMs: 1_000,
       check: async () => {
         const nextReferralState = await indexerClient.getReferralState(selectedAuthority)
-        return nextReferralState.claimableLux < beforeClaimableLux
+        return BigInt(nextReferralState.claimableLux) < BigInt(beforeClaimableLux)
       },
       refresh: () => loadReferralAccount({ fresh: true }),
     })

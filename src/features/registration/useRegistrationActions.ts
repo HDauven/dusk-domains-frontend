@@ -6,7 +6,7 @@ import { restartStrandedReservation } from './strandedReservation'
 export function useRegistrationActions(props: UseRegistrationActionsProps) {
   return {
     handlePrepareCommit: () => prepareRegistrationCommit(props),
-    handleRegisterName: () => completeRegistration(props),
+    handleRegisterName: (confirmedTotalLux?: number) => completeRegistration(props, confirmedTotalLux),
     handleRestartReservation: () => restartStrandedReservation(props),
   }
 }

@@ -8,6 +8,7 @@ type SearchResultView = SearchWorkspaceProps['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
   referralAddress?: string
+  premiumResult?: SearchWorkspaceProps['overviewProps']['premiumResult']
   priceTiers?: SearchWorkspaceProps['priceTiers']
   activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
   hasMoreActivity?: boolean
@@ -52,6 +53,7 @@ type UseSearchWorkspaceFeatureProps = {
 
 export function useSearchWorkspaceFeature({
   referralAddress,
+  premiumResult,
   priceTiers,
   activityEntries,
   activityLoading,
@@ -140,6 +142,8 @@ export function useSearchWorkspaceFeature({
     onQueryChange,
     onResultViewChange,
     overviewProps: {
+      premiumResult,
+      currentBlockHeight,
       canRegister,
       displayName,
       duration,

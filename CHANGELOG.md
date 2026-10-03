@@ -6,6 +6,11 @@
 - Offer canonical name links with connected-wallet referrals and downloadable cards. ([#201])
 - Keep incoming referral attribution across routes for the browser session. ([#201])
 
+- Show dropped-name premiums in search and registration. ([#124])
+- Refresh premium dates and warnings with the current search height. ([#124])
+- Confirm upcoming price drops inside the claim card. ([#124])
+- Preserve exact Lux values when editing treasury fees. ([#124])
+
 - Offer cross-chain address records in the editor and copyable addresses on public profiles. ([#242])
 - Show whether a primary name was set or cleared for its address in Activity. ([#243])
 
@@ -41,3 +46,4 @@
 [#242]: https://github.com/HDauven/dusk-domains-protocol/issues/242
 [#243]: https://github.com/HDauven/dusk-domains-protocol/issues/243
 [#201]: https://github.com/HDauven/dusk-domains-protocol/issues/201
+[#124]: https://github.com/HDauven/dusk-domains-protocol/issues/124

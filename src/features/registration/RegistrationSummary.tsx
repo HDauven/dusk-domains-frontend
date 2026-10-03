@@ -1,3 +1,5 @@
+import type { NameResult } from '../../names/internal'
+import { PremiumNotice } from './PremiumNotice'
 import { useId } from 'react'
 import { Button } from '../../components/ui/Button'
 import { Switch } from '../../components/ui/Switch'
@@ -6,6 +8,8 @@ import type { ReferralState } from '../referrals/referralState'
 
 // The stub beside every step: what is being claimed, for whom, and what it costs.
 export function RegistrationSummary({
+  premiumResult,
+  currentBlockHeight,
   activeReferral,
   appliedReferral,
   committed,
@@ -21,6 +25,8 @@ export function RegistrationSummary({
   registrationTargetAddress,
   selectedAddress,
 }: {
+  premiumResult?: NameResult
+  currentBlockHeight?: number | null
   activeReferral: ReferralState | null
   appliedReferral: ReferralState | null
   committed: boolean
@@ -81,6 +87,7 @@ export function RegistrationSummary({
           </div>
         ) : null}
       </dl>
+      <PremiumNotice result={premiumResult} currentBlockHeight={currentBlockHeight} />
       <div className="claim-price">
         <strong>{formatDusk(registrationFee)} <small>DUSK</small></strong>
         <span>{registrationComplete ? 'Paid.' : 'Paid when you register.'} Network fees show in your wallet.</span>

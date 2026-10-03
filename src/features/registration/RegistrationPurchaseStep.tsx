@@ -1,3 +1,5 @@
+import type { PremiumConfirmationQuote } from './premiumTiming'
+import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 import { ReservationCountdown } from './ReservationCountdown'
 import { Button } from '../../components/ui/Button'
 import { ArrowRight } from 'lucide-react'
@@ -26,6 +28,8 @@ export function RegistrationPurchaseStep({
   installUrl,
   onOpenWalletConnection,
   onRegisterName,
+  onWaitForPremium,
+  premiumConfirmation,
   onRestartReservation,
   onSetAddress,
   registrationCompletion,
@@ -39,7 +43,9 @@ export function RegistrationPurchaseStep({
   commitWindow: CommitWindow
   installUrl: string
   onOpenWalletConnection: () => void
-  onRegisterName: () => void
+  onRegisterName: (confirmedTotalLux?: number) => void
+  onWaitForPremium?: () => void
+  premiumConfirmation?: PremiumConfirmationQuote | null
   onRestartReservation: () => void
   onSetAddress: () => void
   registrationCompletion: RegistrationCompletionState | null
@@ -48,6 +54,7 @@ export function RegistrationPurchaseStep({
   txState: DuskDomainTxState | null
   walletSetupState: WalletConnectionStatus
 }) {
+  const showPremiumConfirmation = premiumConfirmation && canRevealRegistration && !reservationStranded && commitWindow.status === 'ready'
   const walletReady = walletSetupState === 'connected'
   const registrationComplete = registrationCompletion?.status === 'executed'
   // While the second signature runs, or once it has, the progress card is the only thing to show.
@@ -85,7 +92,7 @@ export function RegistrationPurchaseStep({
         <div className="register-action">
           <div className="register-action-copy">
             {!walletReady || reservationStranded || commitWindow.status === 'stale' ? <strong>{actionTitle}</strong> : null}
-            <span>{actionCopy}</span>
+            {showPremiumConfirmation ? <span>The price drops to {formatLuxNumberAsDusk(premiumConfirmation.nextTotalLux)} at <time dateTime={premiumConfirmation.nextStepAt}>{new Date(premiumConfirmation.nextStepAt).toLocaleString()}</time>.</span> : <span>{actionCopy}</span>}
           </div>
           {walletReady && (reservationStranded || commitWindow.status === 'stale') ? (
             <Button variant="primary"
@@ -97,6 +104,12 @@ export function RegistrationPurchaseStep({
               Reserve again
               <ArrowRight size={17} />
             </Button>
+          ) : walletReady && showPremiumConfirmation ? (
+            <div className="register-wallet-actions">
+              <Button variant="secondary" type="button" disabled={txBusy} onClick={onWaitForPremium}>Wait</Button>
+              <Button variant="primary" type="button" disabled={!canRevealRegistration} loading={txBusy}
+                onClick={() => onRegisterName(premiumConfirmation.totalLux)}>Register at {formatLuxNumberAsDusk(premiumConfirmation.totalLux)}</Button>
+            </div>
           ) : walletReady ? (
             <Button variant="primary"
               className="compact"

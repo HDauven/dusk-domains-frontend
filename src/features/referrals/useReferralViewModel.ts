@@ -41,7 +41,7 @@ export function useReferralViewModel({
   const activeReferral = referralState.valid ? referralState : null
   const appliedReferral = activeReferral && referralAttributionEnabled ? activeReferral : null
   const referralRewardsSupported = referralAccountState.supported
-  const referralClaimable = referralAccountState.claimableLux > 0
+  const referralClaimable = BigInt(referralAccountState.claimableLux) > 0n
   const referralBusy = isDuskDomainTxBusy(referralTxState)
   const referralRewardClaimReady = Boolean(referralRewardClaimsAvailable && selectedIsMoonlightAccount)
   const referralClaimRecipient = selectedAddress || selectedAuthority

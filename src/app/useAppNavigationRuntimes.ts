@@ -40,6 +40,7 @@ export function useAppNavigationRuntimes({
     setCommitTxState: registrationState.setCommitTxState,
     setCommitted: registrationState.setCommitted,
     setConfirmationInput: domainState.setConfirmationInput,
+    setNowSeconds: searchState.setNowSeconds,
     setCurrentBlockHeight: searchState.setCurrentBlockHeight,
     setDuration: registrationState.setDuration,
     setIndexerConfirmation: searchState.setIndexerConfirmation,

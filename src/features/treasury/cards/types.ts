@@ -30,7 +30,7 @@ export type TreasuryClaimCardProps = {
   treasuryClaimGuidance: string
   treasuryConnectedWalletLabel: string
   treasuryRecipientMatchesOperator: boolean
-  treasuryReviewAmountLux: number | null
+  treasuryReviewAmountLux: number | string | null
   treasuryReviewLabel: string
   treasuryState: IndexedTreasuryState
   treasuryTxState: DuskDomainTxState | null

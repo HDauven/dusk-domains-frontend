@@ -53,7 +53,21 @@ export function TreasuryPricingCard({
           onChange={(value) => onFeeConfigFieldChange('fivePlusYearDusk', value)}
         />
         <FeeConfigInput
-          help="0-30% of first registration"
+          id="fee-premium-start"
+          label="Starting premium (DUSK)"
+          help="Halves daily for 21 days after grace. Use 0 to disable."
+          value={feeConfigForm.premiumStartDusk}
+          onChange={(value) => onFeeConfigFieldChange('premiumStartDusk', value)}
+        />
+        <FeeConfigInput
+          id="fee-premium-referral"
+          label="Premium referral"
+          help="0-30% of the premium. Default: 0%."
+          value={feeConfigForm.premiumReferralRewardPercent}
+          onChange={(value) => onFeeConfigFieldChange('premiumReferralRewardPercent', value)}
+        />
+        <FeeConfigInput
+          help="0-30% of the base registration fee"
           id="fee-referral"
           label="Registration referral"
           value={feeConfigForm.referralRewardPercent}

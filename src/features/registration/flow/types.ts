@@ -1,3 +1,4 @@
+import type { PremiumConfirmationQuote } from '../premiumTiming'
 import type { DuskDomainTxState, NameResult } from '../../../names/internal'
 import type { ReferralState } from '../../referrals/referralState'
 import type { WalletConnectionStatus } from '../../wallet/walletStatus'
@@ -27,6 +28,10 @@ export type RegistrationStatusProps = {
 }
 
 export type RegistrationStepPanelProps = {
+  premiumResult?: NameResult
+  currentBlockHeight?: number | null
+  premiumConfirmation?: PremiumConfirmationQuote | null
+  onWaitForPremium?: () => void
   activeReferral: ReferralState | null
   appliedReferral: ReferralState | null
   canPrepareCommit: boolean
@@ -46,7 +51,7 @@ export type RegistrationStepPanelProps = {
   onOpenWalletConnection: () => void
   onPrepareCommit: () => void
   onRefreshWalletProviders: () => Promise<unknown> | void
-  onRegisterName: () => void
+  onRegisterName: (confirmedTotalLux?: number) => void
   onRegisterSetsPrimaryChange: (checked: boolean) => void
   onRestartReservation: () => void
   onAddRecords?: () => void

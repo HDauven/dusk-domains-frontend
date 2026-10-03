@@ -30,6 +30,8 @@ export function RegistrationStepPanel(props: RegistrationStepPanelProps) {
       installUrl={props.installUrl}
       onOpenWalletConnection={props.onOpenWalletConnection}
       onRegisterName={props.onRegisterName}
+      onWaitForPremium={props.onWaitForPremium}
+      premiumConfirmation={props.premiumConfirmation}
       onRestartReservation={props.onRestartReservation}
       onSetAddress={props.onSetAddress}
       registrationCompletion={props.registrationCompletion}
