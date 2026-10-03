@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Require the displayed offer name to hash to its node before acceptance, cancellation or expiry. ([#239])
+- Keep marketplace escrow unknown for malformed or zero contract IDs. ([#239])
+- Preserve the current wallet chain through live write wrappers. ([#239])
+- Bind offer acceptance to the canonical placement and fee captured during review. ([#239])
+
 - Always reset identity for namespace Reassign and Take back, including names the caller owns. ([#237])
 - Offer connected endpoints primary clearing on the matching name’s overview page. ([#237])
 - Recover connected endpoints’ stored primary mappings when the indexer hides expired names. ([#237])
@@ -23,3 +28,5 @@
 [#235]: https://github.com/HDauven/dusk-domains-protocol/issues/235
 
 [#237]: https://github.com/HDauven/dusk-domains-protocol/issues/237
+
+[#239]: https://github.com/HDauven/dusk-domains-protocol/issues/239

@@ -1,3 +1,5 @@
+import { contractIdFromOutput } from '../names/internal'
+
 // Name authorities are untyped: a wallet hash and a contract ID are both 32 bytes.
 export async function isDeployedContract(
   nodeUrl: string,
@@ -5,10 +7,10 @@ export async function isDeployedContract(
   signal: AbortSignal,
   fetchImpl: typeof fetch = fetch,
 ): Promise<boolean> {
-  const id = authority.trim().replace(/^0x/i, '')
-  if (!nodeUrl || !/^[a-f0-9]{64}$/i.test(id)) return false
   try {
-    const response = await fetchImpl(new URL(`/on/contract:${id.toLowerCase()}/metadata`, nodeUrl), {
+    const id = contractIdFromOutput(authority.trim())
+    if (!nodeUrl || !id) return false
+    const response = await fetchImpl(new URL(`/on/contract:${id.slice(2)}/metadata`, nodeUrl), {
       method: 'POST',
       signal,
       headers: { Accept: 'application/json', 'rusk-version': '1.0.0-rc.0' },

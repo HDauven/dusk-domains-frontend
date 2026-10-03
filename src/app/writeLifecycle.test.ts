@@ -12,6 +12,8 @@ import { useDuskDomainWriter } from './useDuskDomainWriter'
 
 const wallet = { state: { installed: true, authorized: true, chainId: 'dusk:0', profiles: [{ account: 'owner', profileId: 'primary' }], selectedProfile: { account: 'owner', profileId: 'primary' } } as import('@dusk/connect').DuskWalletState }
 
+const contracts = { ...DUSK_DOMAINS_CONTRACTS, core: { ...DUSK_DOMAINS_CONTRACTS.core, contractId: `0x${'11'.repeat(32)}` } }
+
 afterEach(() => vi.unstubAllGlobals())
 
 function fixture(session = wallet, nodeUrl?: string) {
@@ -20,13 +22,14 @@ function fixture(session = wallet, nodeUrl?: string) {
     setItem: (key: string, value: string) => data.set(key, value), removeItem: (key: string) => data.delete(key) })
   let visit = { name: 'alpha.dusk' }
   const app = {
+    get chainId() { return session.state.chainId ?? undefined },
     readContract: vi.fn(async () => null), prepareContractCall: vi.fn(async (): Promise<unknown> => ({})),
     writeContract: vi.fn(async (): Promise<unknown> => ({ status: 'executed' })),
   }
   const onPendingConfirmation = vi.fn()
   let submit!: ReturnType<typeof useDuskDomainWriter>
   function Probe() {
-    submit = useDuskDomainWriter({ wallet: session, chainId: 'dusk:0', nodeUrl, liveDuskDomainsApp: app, contracts: DUSK_DOMAINS_CONTRACTS,
+    submit = useDuskDomainWriter({ wallet: session, chainId: 'dusk:0', nodeUrl, liveDuskDomainsApp: app, contracts,
       getWorkspaceToken: name => name === visit.name ? visit : null, onPendingConfirmation,
       writeAccess: createWriteAccess({ mode: 'live_ready', liveWritesEnabled: true }, app, unpaused) })
     return null
@@ -34,7 +37,7 @@ function fixture(session = wallet, nodeUrl?: string) {
   renderToStaticMarkup(createElement(Probe))
   const props = {
     canPrepareCommit: true, displayName: 'alpha.dusk', nodeHex: namehashHex('alpha.dusk'), duration: 1,
-    selectedAddress: 'owner', selectedAuthority: `0x${'11'.repeat(32)}`, runtimeConfig: { chainId: 'dusk:0', contracts: DUSK_DOMAINS_CONTRACTS },
+    selectedAddress: 'owner', selectedAuthority: `0x${'11'.repeat(32)}`, runtimeConfig: { chainId: 'dusk:0', contracts },
     liveDuskDomainsApp: null, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: vi.fn(async () => true),
     getCurrentBlockHeight: async () => 500, setCommitTxState: vi.fn(), setWalletError: vi.fn(),
@@ -166,5 +169,6 @@ it.each(['lock', 'disconnect', 'authorization', 'network', 'account', 'profile',
   await pending
   expect(h.app.writeContract).not.toHaveBeenCalled()
   expect(listPendingNameReservations()).toEqual([])
-  expect(h.props.setCommitTxState).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed', message: expect.stringContaining('wallet session changed') }))
+  const message = ['network', 'unknown chain'].includes(change) ? 'chain changed during preparation' : 'wallet session changed'
+  expect(h.props.setCommitTxState).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed', message: expect.stringContaining(message) }))
 })

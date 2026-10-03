@@ -76,6 +76,7 @@ export function useDuskDomainWriter({
     let walletRejected = false
     const app: DuskConnectAppLike = {
       ...liveDuskDomainsApp,
+      get chainId() { return liveDuskDomainsApp.chainId },
       async writeContract(params) {
         if (!currentWorkspace()) throw new Error('The name workspace changed before signing.')
         const unavailable = accessRef.current.reason(call)

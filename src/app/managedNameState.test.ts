@@ -12,8 +12,8 @@ it.each([
   expect(isMarketplaceEscrow(name, 'cd'.repeat(32))).toBe(false)
 })
 
-it.each(['0'.repeat(64), `0x${'0'.repeat(64)}`])('treats an unset marketplace as no escrow: %s', marketplaceContractId => {
-  expect(isMarketplaceEscrow({ owner: marketplaceContractId, manager: marketplaceContractId }, marketplaceContractId)).toBe(false)
+it.each(['0'.repeat(64), `0x${'0'.repeat(64)}`, '0x', 'invalid'])('keeps escrow unknown for an invalid marketplace ID: %s', marketplaceContractId => {
+  expect(isMarketplaceEscrow({ owner: marketplaceContractId, manager: marketplaceContractId }, marketplaceContractId)).toBeNull()
 })
 
 it.each([null, ''])('keeps escrow unknown without a marketplace identity: %s', id => {

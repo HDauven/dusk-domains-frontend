@@ -1,5 +1,6 @@
 import { sameAuthority } from '../features/identity/ownerLabel'
 import {
+  contractIdFromOutput,
   createRegistrationLifecycle,
   type SubnameExpiryPolicy,
 } from '../names/internal'
@@ -38,9 +39,11 @@ export function createManagedNameState(resolver: string): ManagedNameState {
 }
 
 export function isMarketplaceEscrow(name: Pick<ManagedNameState, 'owner' | 'manager'>, marketplaceContractId: string | null) {
-  if (!marketplaceContractId?.trim()) return null
-  return !/^(?:0x)?0{64}$/i.test(marketplaceContractId.trim())
-    && [name.owner, name.manager].some(authority => sameAuthority(authority, marketplaceContractId))
+  try {
+    const id = contractIdFromOutput(marketplaceContractId?.trim())
+    if (!id) return null
+    return [name.owner, name.manager].some(authority => sameAuthority(authority, id))
+  } catch { return null }
 }
 
 export function canRenewOutsideEscrow(name: Pick<ManagedNameState, 'ownerIsContract' | 'inMarketplaceEscrow'>) {

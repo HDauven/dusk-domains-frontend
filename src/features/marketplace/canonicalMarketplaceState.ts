@@ -1,3 +1,4 @@
+import { namehashHex, validateName } from '../../names/internal'
 import type {
   DuskDomainsMarketplaceOnChainClient,
   DuskDomainsOnChainClient,
@@ -100,11 +101,15 @@ export async function canonicalOffer(
   client: DuskDomainsMarketplaceOnChainClient,
   indexed: IndexedMarketplaceOffer,
 ): Promise<DuskDomainsOnChainOffer> {
+  if (!validateName(indexed.name).ok || namehashHex(indexed.name) !== indexed.node.toLowerCase()) {
+    throw new Error('This offer does not match the displayed name. Refresh the offers before trying again.')
+  }
   const offer = await required(client.getOffer(indexed.node, indexed.buyerAuthority))
   if (!offer
     || offer.node !== indexed.node
     || normalizedAuthority(offer.buyerAuthority) !== normalizedAuthority(indexed.buyerAuthority)
     || offer.amountLux !== BigInt(indexed.amountLux)
+    || offer.feeBps !== indexed.feeBps
     || offer.expiresAtBlock !== indexed.expiresAtBlockHeight) throw new Error(changedMessage)
   return offer
 }
