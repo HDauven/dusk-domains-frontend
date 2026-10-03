@@ -44,7 +44,8 @@ export async function checkAppShell(page) {
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: /My names/ }).focus()
   await page.keyboard.press('Tab')
   assert.ok(await page.locator('.wallet-connect').evaluate(element => element === document.activeElement), 'Desktop navigation releases the phone focus trap')
-  assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'), 'false')
+  // The breakpoint listener closes the menu on its next render; wait for it rather than racing it.
+  await page.waitForFunction(() => document.querySelector('.menu-toggle')?.getAttribute('aria-expanded') === 'false', null, { timeout: 5_000 })
   await page.setViewportSize({ width: 390, height: 844 })
   assert.equal(await page.getByRole('navigation', { name: 'Primary' }).isVisible(), false, 'Returning to phone keeps the menu closed')
   await page.getByRole('button', { name: 'Open menu' }).click()
