@@ -180,7 +180,9 @@ export function blockHeightFromDateInput(value: string, currentBlockHeight: numb
 export function recordPlaceholder(key: ResolverRecordKey) {
   if (key === 'moonlight_address') return 'Dusk address'
   if (key === 'phoenix_payment_endpoint') return 'dusk1shielded...'
-  if (key === 'evm_address') return '0x...'
+  if (key === 'evm_address' || key === 'address.eth' || key === 'address.evm') return '0x...'
+  if (key === 'address.btc') return 'bc1...'
+  if (key === 'address.sol') return 'Base58 address'
   if (key === 'dusk_contract') return `0x${'0'.repeat(64)}`
   if (key === 'website') return 'https://example.com'
   if (key === 'avatar') return 'https://example.com/avatar.png'

@@ -18,3 +18,12 @@ it('warns only about payment records changed by another actor', () => {
   expect(paymentWarnings([warning('me','moonlight_address'),other,warning('other','website'),warning('other','moonlight_address:address','primary_name')],'me')).toEqual([other])
   expect(paymentWarnings([other],'')).toEqual([other])
 })
+it.each(['primary_name_set', 'primary_name_cleared'] as const)('keeps %s as the action above its record changes', eventType => {
+  expect(activityActions([entry('record_update'), entry(eventType)])[0].entry.eventType).toBe(eventType)
+})
+
+it.each(['address.btc', 'address.eth', 'address.sol', 'address.evm'])('warns about changes to %s by another actor', target => {
+  const warning = { actor: 'other', target, eventType: 'record_update' } as RecentChangeWarning
+  expect(paymentWarnings([warning], 'me')).toEqual([warning])
+  expect(paymentWarnings([warning], 'other')).toEqual([])
+})

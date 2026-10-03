@@ -11,6 +11,17 @@ function entry(eventType: ActivityEntry['eventType'], target: string, extra: Par
 }
 
 describe('activity copy', () => {
+  it.each(['set', 'cleared'] as const)('names the address whose primary name was %s', action => {
+    for (const target of [address, `moonlight_address:${address}`]) {
+      const primary = entry(`primary_name_${action}`, target)
+      expect(activityTitle(primary)).toBe(`Primary name ${action} for oCqYsUMRqp...x79yWu`)
+      expect(activityDetail(primary)).toBe('')
+      expect(activityEventDetail(primary)).toBe(`Dusk address: ${address}`)
+    }
+    expect(activityTitle(entry(`primary_name_${action}`, ''))).toBe(`Primary name ${action}`)
+    expect(activityEventDetail(entry(`primary_name_${action}`, ''))).toBe('')
+  })
+
   it('reads raw activity targets as plain words', () => {
     expect(activityDetail(entry('registration', me), me)).toBe('Owner: you')
     expect(activityDetail(entry('transfer', other), me)).toBe(`Owner: Owner ID ${other.slice(0, 10)}...${other.slice(-6)}`)

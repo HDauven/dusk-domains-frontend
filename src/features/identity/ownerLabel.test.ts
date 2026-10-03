@@ -29,3 +29,7 @@ it('uses known primary endpoints without mistaking a different payment address f
   expect(candidates).toEqual(['another address', address])
   expect(ownerLabel(authority, { addresses: candidates }).value).toBe(address)
 })
+
+it.each(['primary_name_set', 'primary_name_cleared'])('uses endpoints retained in %s activity', eventType => {
+  expect(ownerAddressCandidates([], [{ eventType, target: `moonlight_address:${address}` }])).toEqual([address])
+})

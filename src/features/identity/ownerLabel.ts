@@ -35,6 +35,6 @@ export function ownerLabel(authority: string, { viewerAuthority, addresses = [] 
 export function ownerAddressCandidates(records: readonly { key: string; value: string }[], activity: readonly { eventType: string; target?: string | null }[] = []) {
   return [...new Set([
     ...records.filter(record => record.key === 'moonlight_address').map(record => record.value),
-    ...activity.filter(entry => entry.eventType === 'primary_name' && entry.target?.startsWith('moonlight_address:')).map(entry => entry.target!.slice('moonlight_address:'.length)),
+    ...activity.filter(entry => ['primary_name', 'primary_name_set', 'primary_name_cleared'].includes(entry.eventType) && entry.target?.startsWith('moonlight_address:')).map(entry => entry.target!.slice('moonlight_address:'.length)),
   ])]
 }

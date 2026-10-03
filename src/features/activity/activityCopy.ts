@@ -29,8 +29,22 @@ function primaryTarget(target: string) {
   return address ? `Shown for ${abbreviate(address)}` : 'Cleared'
 }
 
+function isPrimaryName(entry: ActivityEntry) {
+  return ['primary_name', 'primary_name_set', 'primary_name_cleared'].includes(entry.eventType)
+}
+
+function primaryAddress(entry: ActivityEntry) {
+  const address = entry.target?.replace(/^moonlight_address:/, '')
+  return address && address !== 'cleared' ? address : ''
+}
+
 export function activityTitle(entry: ActivityEntry) {
   if (entry.eventType === 'primary_name') return 'Primary name changed'
+  if (entry.eventType === 'primary_name_set' || entry.eventType === 'primary_name_cleared') {
+    const action = entry.eventType === 'primary_name_set' ? 'set' : 'cleared'
+    const address = primaryAddress(entry)
+    return `Primary name ${action}${address ? ` for ${abbreviate(address)}` : ''}`
+  }
   if (entry.eventType === 'subname_created') return 'Subname created'
   if (entry.eventType === 'subname_pruned') return 'Expired subname removed'
   if (entry.eventType === 'domain_fixed_sale_filled') return 'Sold'
@@ -42,16 +56,16 @@ export function activityDetail(entry: ActivityEntry, viewerAuthority?: string | 
   if (entry.eventType === 'registration' || entry.eventType === 'transfer') return target ? `Owner: ${who(target, viewerAuthority, addresses)}` : ''
   if (entry.eventType === 'renewal') return /^\d{4}-\d{2}-\d{2}/u.test(target) ? `Now runs until ${target.slice(0, 10)}` : ''
   if (entry.eventType === 'record_update') return target ? recordLabel(target) : ''
-  if (entry.eventType === 'primary_name') return ''
+  if (isPrimaryName(entry)) return ''
   if (entry.eventType === 'subname_created') return entry.name
   if (/^\d+$/u.test(target) && Number.isSafeInteger(Number(target))) return formatLuxNumberAsDusk(Number(target))
   return activityDescription(entry)
 }
 
 export function activityEventDetail(entry: ActivityEntry, viewerAuthority?: string | null, addresses?: readonly string[]) {
-  if (entry.eventType !== 'primary_name') return activityDetail(entry, viewerAuthority, addresses)
-  const address = entry.target?.replace(/^moonlight_address:/, '')
-  return address && address !== 'cleared' ? `Dusk address: ${address}` : ''
+  if (!isPrimaryName(entry)) return activityDetail(entry, viewerAuthority, addresses)
+  const address = primaryAddress(entry)
+  return address ? `Dusk address: ${address}` : ''
 }
 
 export function activityActor(actor: string | null | undefined, viewerAuthority?: string | null, addresses?: readonly string[]) {

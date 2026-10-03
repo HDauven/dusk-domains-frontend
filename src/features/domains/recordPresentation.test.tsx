@@ -5,7 +5,9 @@ import { NameHeader } from '../search/NameHeader'
 import { DomainDetailsView } from './DomainDetailsView'
 import { RecordDraftEditor } from './RecordDraftEditor'
 import { RecordsView } from './RecordsView'
-import { recordLabel } from './recordPresentation'
+import { isIdentifierRecord, recordLabel } from './recordPresentation'
+import { editableRecordKeys } from '../../app/appConstants'
+import { recordPlaceholder } from './domainFormat'
 
 const record = (key: ResolverRecordKey, value: string): ResolverRecord => ({
   key, value, visibility: 'public', ttlSeconds: 300, updatedAt: '',
@@ -23,6 +25,30 @@ function profile(parentResolverRecords = records) {
 }
 
 describe('record presentation', () => {
+  it('offers chain addresses in the editor and copies them after the Dusk address in the profile', () => {
+    const chains = [
+      ['address.btc', 'Bitcoin address', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', 'bc1...'],
+      ['address.eth', 'Ethereum address', '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed', '0x...'],
+      ['address.sol', 'Solana address', 'So11111111111111111111111111111111111111112', 'Base58 address'],
+      ['address.evm', 'EVM address', '0x52908400098527886E0F7030069857D2E4169EE7', '0x...'],
+    ] as const
+    const html = profile([...chains.map(([key, , value]) => record(key, value)), ...records])
+    const send = html.slice(html.indexOf('<ul class="address-list">'), html.indexOf('</ul>'))
+    const editor = renderToStaticMarkup(<RecordDraftEditor editableRecordKeys={editableRecordKeys}
+      recordDraftValues={{}} walletAddressAvailable={false} onDraftValueChange={vi.fn()} onUseWalletPublicAddress={vi.fn()} onUseWalletShieldedAddress={vi.fn()} />)
+    for (const [key, label, value, placeholder] of chains) {
+      expect(editableRecordKeys).toContain(key)
+      expect(editor).toContain(`aria-label="${label} record"`)
+      expect(recordPlaceholder(key)).toBe(placeholder)
+      expect(isIdentifierRecord(key)).toBe(true)
+      expect(send).toContain(`<span>${label}</span>`)
+      expect(send).toContain(`title="${value}"`)
+      expect(send).toContain(`aria-label="Copy ${label}"`)
+      expect(send.indexOf(`<span>${label}</span>`)).toBeGreaterThan(send.indexOf('<span>Dusk address</span>'))
+      expect(html.split(`<span>${label}</span>`)).toHaveLength(2)
+    }
+  })
+
   it('uses SDK labels for fixed keys and readable labels for dynamic keys', () => {
     for (const definition of STATIC_RECORD_DEFINITIONS) {
       expect(recordLabel(definition.key)).toBe(definition.key === 'moonlight_address' ? 'Dusk address' : definition.label)

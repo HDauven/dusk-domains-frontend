@@ -63,9 +63,9 @@ export async function clearPrimaryDomainName({
       setConnectedPrimaryName(null)
       if (moonlightRecord?.value === primaryEndpoint) setPrimaryName(null)
       appendActivity({
-        eventType: 'primary_name',
+        eventType: 'primary_name_cleared',
         actor: selectedAuthority,
-        target: 'cleared',
+        target: `moonlight_address:${primaryEndpoint}`,
         txId: finalState.txId,
       })
     }

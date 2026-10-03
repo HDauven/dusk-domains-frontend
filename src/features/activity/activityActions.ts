@@ -3,7 +3,7 @@ import { sameAuthority } from '../identity/ownerLabel'
 
 const priority: Partial<Record<ActivityEntry['eventType'], number>> = {
   registration: 100, subname_created: 90, domain_fixed_sale_filled: 85, domain_offer_accepted: 85,
-  domain_auction_settled: 85, transfer: 80, renewal: 70, primary_name: 60, record_update: 50,
+  domain_auction_settled: 85, transfer: 80, renewal: 70, primary_name: 60, primary_name_set: 60, primary_name_cleared: 60, record_update: 50,
 }
 
 // A transaction can emit registration, transfer, record and primary events together.
@@ -22,7 +22,8 @@ export function activityActions(entries: ActivityEntry[]) {
   }))
 }
 
-const paymentKeys = new Set(['moonlight_address', 'phoenix_payment_endpoint', 'evm_address', 'dusk_contract', 'dusk_asset'])
+const paymentKeys = new Set(['moonlight_address', 'phoenix_payment_endpoint', 'evm_address',
+  'address.btc', 'address.eth', 'address.sol', 'address.evm', 'dusk_contract', 'dusk_asset'])
 export function paymentWarnings(warnings: RecentChangeWarning[], viewerAuthority: string) {
   return warnings.filter(warning => warning.eventType === 'record_update'
     && paymentKeys.has(warning.target ?? '') && !sameAuthority(warning.actor, viewerAuthority))

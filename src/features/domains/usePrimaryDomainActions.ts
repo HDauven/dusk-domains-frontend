@@ -8,7 +8,7 @@ import { clearPrimaryDomainName } from './clearPrimaryDomainName'
 import { setPrimaryDomainName } from './setPrimaryDomainName'
 
 type AppendActivity = (input: {
-  eventType: 'primary_name'
+  eventType: 'primary_name_set' | 'primary_name_cleared'
   actor: string
   target?: string
   txId?: string
