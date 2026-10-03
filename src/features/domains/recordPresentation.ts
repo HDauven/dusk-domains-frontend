@@ -13,6 +13,6 @@ export function recordLabel(key: ResolverRecordKey) {
 }
 
 export function isIdentifierRecord(key: ResolverRecordKey) {
-  return ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address', 'dusk_contract', 'dusk_asset',
+  return ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address', 'address.btc', 'address.eth', 'address.sol', 'address.evm', 'dusk_contract', 'dusk_asset',
     'content_pointer', 'attestation_ref', 'compliance_ref'].includes(key)
 }

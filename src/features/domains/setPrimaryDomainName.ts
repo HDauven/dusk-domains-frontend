@@ -69,9 +69,9 @@ export async function setPrimaryDomainName({
       if (selectedAddress === primaryEndpoint) setConnectedPrimaryName(displayName)
       setPrimaryEndpointValue(primaryEndpoint)
       appendActivity({
-        eventType: 'primary_name',
+        eventType: 'primary_name_set',
         actor: selectedAuthority,
-        target: primaryEndpoint,
+        target: `moonlight_address:${primaryEndpoint}`,
         txId: finalState.txId,
       })
     }

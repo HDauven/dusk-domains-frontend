@@ -18,7 +18,8 @@ import type { PrimaryVerificationSummary } from './details/primaryVerification'
 import { isIdentifierRecord, recordLabel } from './recordPresentation'
 
 // Records a sender needs, in the order a wallet would look for them.
-const payableKeys = ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address', 'dusk_contract', 'dusk_asset']
+const payableKeys = ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address',
+  'address.btc', 'address.eth', 'address.sol', 'address.evm', 'dusk_contract', 'dusk_asset']
 const hiddenKeys = new Set([...payableKeys, 'text.description', 'avatar'])
 
 function safeLink(value: string) {

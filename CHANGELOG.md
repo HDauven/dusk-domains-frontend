@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Offer cross-chain address records in the editor and copyable addresses on public profiles. ([#242])
+- Show whether a primary name was set or cleared for its address in Activity. ([#243])
+
 - Require the displayed offer name to hash to its node before acceptance, cancellation or expiry. ([#239])
 - Keep marketplace escrow unknown for malformed or zero contract IDs. ([#239])
 - Preserve the current wallet chain through live write wrappers. ([#239])
@@ -30,3 +33,6 @@
 [#237]: https://github.com/HDauven/dusk-domains-protocol/issues/237
 
 [#239]: https://github.com/HDauven/dusk-domains-protocol/issues/239
+
+[#242]: https://github.com/HDauven/dusk-domains-protocol/issues/242
+[#243]: https://github.com/HDauven/dusk-domains-protocol/issues/243

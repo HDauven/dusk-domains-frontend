@@ -57,16 +57,20 @@ it.each([
   { action: 'set', matchesForward: true }, { action: 'set', matchesForward: false },
   { action: 'clear', matchesForward: true }, { action: 'clear', matchesForward: false },
 ])('updates only the matching primary states after $action with matchesForward=$matchesForward', async ({ action, matchesForward }) => {
-  const setPrimaryName = vi.fn(), setConnectedPrimaryName = vi.fn()
+  const setPrimaryName = vi.fn(), setConnectedPrimaryName = vi.fn(), appendActivity = vi.fn()
   const submitNameWrite = Object.assign(vi.fn(async () => ({ status: 'executed', txId: action })), { captureWorkspace: () => () => true })
   await (action === 'set' ? setPrimaryDomainName : clearPrimaryDomainName)({
     ...ready, primaryEndpoint: address, canSetPrimary: true, canClearPrimary: true,
     moonlightRecord: { key: 'moonlight_address', value: matchesForward ? address : 'another-address' },
     runtimeConfig: { contracts: {} }, walletSetupState: 'connected', submitNameWrite, setPrimaryName, setConnectedPrimaryName,
-    setPrimaryEndpointValue: vi.fn(), setPrimaryError: vi.fn(), setPrimaryTxState: vi.fn(), appendActivity: vi.fn(),
+    setPrimaryEndpointValue: vi.fn(), setPrimaryError: vi.fn(), setPrimaryTxState: vi.fn(), appendActivity,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
     shouldApplyPreviewWriteFallback: async () => true,
   } as never)
+  expect(appendActivity).toHaveBeenCalledWith({
+    eventType: action === 'set' ? 'primary_name_set' : 'primary_name_cleared',
+    actor: 'alice', target: `moonlight_address:${address}`, txId: action,
+  })
   const primary = action === 'set' ? 'alice.dusk' : null
   if (matchesForward) expect(setPrimaryName).toHaveBeenCalledWith(primary)
   else expect(setPrimaryName).not.toHaveBeenCalled()
