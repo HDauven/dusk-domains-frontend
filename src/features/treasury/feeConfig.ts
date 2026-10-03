@@ -1,5 +1,6 @@
 import {
   formatLuxAsDusk,
+  validateFeeConfigPrices,
   type CoreFeeConfig,
   type IndexedReferralState,
 } from '../../names/internal'
@@ -8,13 +9,15 @@ export type FeeConfigFormState = {
   threeCharYearDusk: string
   fourCharYearDusk: string
   fivePlusYearDusk: string
+  premiumStartDusk: string
+  premiumReferralRewardPercent: string
   referralRewardPercent: string
   renewalReferralRewardPercent: string
 }
 
-export function formatLuxNumberAsDusk(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return '0 DUSK'
-  return formatLuxAsDusk(BigInt(Math.trunc(value)))
+export function formatLuxNumberAsDusk(value: number | string | bigint) {
+  if ((typeof value === 'number' && !Number.isSafeInteger(value)) || BigInt(value) <= 0n) return '0 DUSK'
+  return formatLuxAsDusk(BigInt(value))
 }
 
 export function parseDuskAmountToLux(value: string) {
@@ -29,9 +32,10 @@ export function parseDuskAmountToLux(value: string) {
 
 function formatLuxInput(value: number) {
   if (!Number.isFinite(value) || value <= 0) return '0'
-  const dusk = value / 1_000_000_000
-  if (Number.isInteger(dusk)) return String(dusk)
-  return dusk.toFixed(9).replace(/0+$/, '').replace(/\.$/, '')
+  const lux = BigInt(value)
+  const whole = lux / 1_000_000_000n
+  const fraction = (lux % 1_000_000_000n).toString().padStart(9, '0').replace(/0+$/, '')
+  return fraction ? `${whole}.${fraction}` : String(whole)
 }
 
 function formatBasisPointsPercent(bps: number) {
@@ -46,6 +50,8 @@ export function feeConfigFormFromConfig(config: CoreFeeConfig): FeeConfigFormSta
     threeCharYearDusk: formatLuxInput(config.threeCharYearLux),
     fourCharYearDusk: formatLuxInput(config.fourCharYearLux),
     fivePlusYearDusk: formatLuxInput(config.fivePlusYearLux),
+    premiumStartDusk: formatLuxInput(config.premiumStartLux),
+    premiumReferralRewardPercent: formatBasisPointsPercent(config.premiumReferralRewardBps),
     referralRewardPercent: formatBasisPointsPercent(config.referralRewardBps),
     renewalReferralRewardPercent: formatBasisPointsPercent(config.renewalReferralRewardBps),
   }
@@ -64,11 +70,25 @@ export function parseFeeConfigForm(form: FeeConfigFormState) {
   if (fivePlusYearLux === null || fivePlusYearLux <= 0n) {
     return { ok: false as const, error: 'Enter a valid 5+ character annual price.' }
   }
+  const premiumStartLux = parseDuskAmountToLux(form.premiumStartDusk)
+  if (premiumStartLux === null || premiumStartLux < 0n) {
+    return { ok: false as const, error: 'Enter a valid starting premium. Use 0 to disable it.' }
+  }
   const maxClientLux = BigInt(Number.MAX_SAFE_INTEGER)
-  if (threeCharYearLux > maxClientLux || fourCharYearLux > maxClientLux || fivePlusYearLux > maxClientLux) {
+  if (premiumStartLux > maxClientLux || threeCharYearLux > maxClientLux || fourCharYearLux > maxClientLux || fivePlusYearLux > maxClientLux) {
     return { ok: false as const, error: 'One of the prices is too large for this client.' }
   }
 
+  try {
+    validateFeeConfigPrices({ threeCharYearLux: Number(threeCharYearLux), fourCharYearLux: Number(fourCharYearLux),
+      fivePlusYearLux: Number(fivePlusYearLux), premiumStartLux: Number(premiumStartLux) })
+  } catch {
+    return { ok: false as const, error: 'The starting premium plus 10 years must not exceed 9,007,199.254740991 DUSK.' }
+  }
+  const premiumReferralPercent = Number(form.premiumReferralRewardPercent.trim())
+  if (!Number.isFinite(premiumReferralPercent) || premiumReferralPercent < 0 || premiumReferralPercent > 30) {
+    return { ok: false as const, error: 'Premium referral reward must be between 0% and 30%.' }
+  }
   const referralPercent = Number(form.referralRewardPercent.trim())
   if (!Number.isFinite(referralPercent) || referralPercent < 0 || referralPercent > 30) {
     return { ok: false as const, error: 'Referral reward must be between 0% and 30%.' }
@@ -86,7 +106,8 @@ export function parseFeeConfigForm(form: FeeConfigFormState) {
       fivePlusYearLux: Number(fivePlusYearLux),
       referralRewardBps: Math.round(referralPercent * 100),
       renewalReferralRewardBps: Math.round(renewalReferralPercent * 100),
-      premiumReferralRewardBps: 0,
+      premiumReferralRewardBps: Math.round(premiumReferralPercent * 100),
+      premiumStartLux: Number(premiumStartLux),
     },
   }
 }
@@ -101,6 +122,7 @@ export function feeConfigValuesMatch(
     && current.referralRewardBps === next.referralRewardBps
     && current.renewalReferralRewardBps === next.renewalReferralRewardBps
     && current.premiumReferralRewardBps === next.premiumReferralRewardBps
+    && current.premiumStartLux === next.premiumStartLux
 }
 
 export function referralRewardStatusLabel(args: {
@@ -134,7 +156,7 @@ export function referralRewardStatusGuidance(args: {
 }
 
 export function referralRewardEmptyCopy(state: IndexedReferralState) {
-  return state.referralCount > 0 || state.claimedLux > 0 || state.recentActivity.length > 0
+  return state.referralCount > 0 || BigInt(state.claimedLux) > 0n || state.recentActivity.length > 0
     ? 'No rewards available to claim.'
     : 'Share your link to start earning rewards.'
 }

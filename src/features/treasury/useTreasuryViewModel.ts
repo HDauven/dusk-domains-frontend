@@ -46,7 +46,7 @@ export function useTreasuryViewModel({
   )
   const treasuryRecipientKey = treasuryRecipientPrincipalResult?.ok ? principalKey(treasuryRecipientPrincipalResult.principal) : ''
   const treasuryRecipientMatchesOperator = Boolean(treasuryOperatorKey && treasuryRecipientKey && treasuryOperatorKey === treasuryRecipientKey)
-  const treasuryAvailable = treasuryState.availableLux > 0
+  const treasuryAvailable = BigInt(treasuryState.availableLux) > 0n
   const connectedAsTreasuryOperator = Boolean(selectedTypedPrincipalKey && treasuryOperatorKey && selectedTypedPrincipalKey === treasuryOperatorKey)
   const treasuryBusy = isDuskDomainTxBusy(treasuryTxState)
   const feeConfigBusy = isDuskDomainTxBusy(feeConfigTxState)

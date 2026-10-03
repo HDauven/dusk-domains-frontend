@@ -87,6 +87,7 @@ export function useAppSearchProps({
   return useSearchWorkspaceFeature({
     referralAddress: appRuntime.runtimeConfig.capabilities.referralAttribution && walletRuntime.walletSetupState === 'connected'
       ? walletRuntime.selectedAddress : '',
+    premiumResult: result,
     priceTiers: ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
     hasMoreActivity: activityFeed.hasMoreActivity,
     onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),

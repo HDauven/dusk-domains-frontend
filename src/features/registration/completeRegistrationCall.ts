@@ -31,7 +31,7 @@ export function createCompleteRegistrationRequest({
   appliedReferral: ReferralState | null
   preparedCommit: PreparedRegistrationCommit
 }) {
-  const feeLux = registrationFeeLux(result.label, duration, feeConfig)
+  const feeLux = registrationFeeLux(result.label, duration, feeConfig, result.premiumLux ?? 0)
   const lifecycle = createRegistrationLifecycle({
     startsAt: lifecycleBaseBlockHeight,
     years: duration,

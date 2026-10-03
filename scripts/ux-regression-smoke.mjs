@@ -1,3 +1,4 @@
+import { checkPremiumConfirmation } from './premium-confirmation-smoke.mjs'
 import { checkNamespaceControls } from './namespace-smoke.mjs'
 import { checkOpenRenewal } from './open-renewal-smoke.mjs'
 import { checkPricingDraft } from './treasury-draft-smoke.mjs'
@@ -398,6 +399,7 @@ try {
   const staleSubmit = await page.evaluate(() => window.firstSubmit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' })
     .then(() => 'submitted', (error) => error.message))
   assert.match(staleSubmit, /Marketplace trading is paused/)
+  await checkPremiumConfirmation(page)
   await checkAuctionRoute(page)
   await checkListingFeeReview(page)
   await checkMarketplaceReviews(page)

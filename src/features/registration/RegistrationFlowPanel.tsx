@@ -21,6 +21,8 @@ export function RegistrationFlowPanel({ navigation, resultIssues, status, step, 
         <RegistrationFlowStatus {...status} walletError={step.registrationCompletion ? '' : status.walletError} />
       </div>
       <RegistrationSummary
+        premiumResult={step.premiumResult}
+        currentBlockHeight={step.currentBlockHeight}
         activeReferral={step.activeReferral} appliedReferral={step.appliedReferral} committed={step.committed}
         duration={step.duration} expiryDate={step.expiryDate}
         feeConfigError={step.feeConfigError} onChangeTerm={navigation.onBackToOverview}

@@ -116,7 +116,7 @@ export async function checkPrimaryNameSwitches(page) {
       const [primary, setConnectedPrimaryName] = React.useState(null)
       const hydration = useIndexedNameHydration({ displayName: 'alice.dusk', selectedAddress: address, indexerClient: client,
         beginActivityRead: () => () => true, beginOwnershipRead: () => () => true,
-        setCurrentBlockHeight: noop, setResolverRecordSets: noop, setPrimaryEndpointValue: noop, setPrimaryName: noop, setConnectedPrimaryName,
+        setCurrentBlockHeight: noop, setNowSeconds: noop, setResolverRecordSets: noop, setPrimaryEndpointValue: noop, setPrimaryName: noop, setConnectedPrimaryName,
         setManagedName: noop, setActivityEntries: noop, setActivityCursor: noop, setSubnames: noop, setIndexerError: noop })
       window.hydratePrimary = () => hydration.hydrateNameFromIndexer(client, { canonical: 'alice.dusk' })
       return React.createElement('output', { id: 'primary-hydration', 'data-address': address }, primary)
@@ -157,7 +157,7 @@ export async function checkPrimaryNameSwitches(page) {
       const selectedAddress = connected ? alice : ''
       const hydration = useIndexedNameHydration({ ...domain, displayName: 'bob.dusk', selectedAddress, indexerClient: client,
         onChainClient: null, beginActivityRead: () => () => true, recordSourceContractId: 'resolver',
-        setCurrentBlockHeight: noop, setResolverRecordSets, setActivityEntries: noop, setActivityCursor: noop, setIndexerError: noop })
+        setCurrentBlockHeight: noop, setNowSeconds: noop, setResolverRecordSets, setActivityEntries: noop, setActivityCursor: noop, setIndexerError: noop })
       window.hydrateBobProfile = () => hydration.hydrateNameFromIndexer(client, { canonical: 'bob.dusk' })
       const state = deriveAppDerivedState({ ...domain, selectedAddress, selectedAuthority: connected ? 'alice' : '',
         displayName: 'bob.dusk', nodeHex: node, moonlightRecord: records[node]?.[0], currentBlockHeight: 100,

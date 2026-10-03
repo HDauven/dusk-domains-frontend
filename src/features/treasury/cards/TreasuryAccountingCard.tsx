@@ -13,6 +13,7 @@ export function TreasuryAccountingCard({
     <AccountCard heading="Fees" title="Accounting">
       <AccountDetailList>
         <AccountDetailItem label="Registrations" value={formatLuxNumberAsDusk(treasuryState.registrationReceivedLux)} />
+        <AccountDetailItem label="Premiums (included in registrations)" value={formatLuxNumberAsDusk(treasuryState.premiumReceivedLux ?? 0)} />
         <AccountDetailItem label="Renewals" value={formatLuxNumberAsDusk(treasuryState.renewalReceivedLux)} />
         <AccountDetailItem label="Referral claimable" value={formatLuxNumberAsDusk(treasuryState.referralClaimableLux)} />
         <AccountDetailItem label="Referral paid" value={formatLuxNumberAsDusk(treasuryState.referralClaimedLux)} />

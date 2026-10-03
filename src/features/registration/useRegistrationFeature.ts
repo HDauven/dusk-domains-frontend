@@ -1,3 +1,4 @@
+import { premiumConfirmationQuote } from './premiumTiming'
 import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { duskWalletInstallUrl } from '../../app/appConstants'
 import type { DuskDomainTxState, NameResult } from '../../names/internal'
@@ -54,6 +55,10 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
   const registrationComplete = props.registrationCompletion?.status === 'executed'
 
   const step: RegistrationFlowPanelProps['step'] = {
+    premiumResult: props.result,
+    currentBlockHeight: props.lifecycleBaseBlockHeight,
+    premiumConfirmation: premiumConfirmationQuote(props.result, props.duration, props.feeConfig, props.lifecycleBaseBlockHeight),
+    onWaitForPremium: props.onBackToOverview,
     activeReferral: props.activeReferral,
     appliedReferral: props.appliedReferral,
     canPrepareCommit: props.canPrepareCommit,
@@ -73,7 +78,7 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
     onOpenWalletConnection: props.onOpenWalletConnection,
     onPrepareCommit: () => void withPrimaryChoiceLocked(handlePrepareCommit),
     onRefreshWalletProviders: props.onRefreshWalletProviders,
-    onRegisterName: () => void withPrimaryChoiceLocked(handleRegisterName),
+    onRegisterName: confirmedTotalLux => void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux)),
     onRestartReservation: () => void withPrimaryChoiceLocked(handleRestartReservation),
     primaryChoiceLocked: primaryChoiceLocked || props.commitBusy || props.txBusy,
     onRegisterSetsPrimaryChange: value => {

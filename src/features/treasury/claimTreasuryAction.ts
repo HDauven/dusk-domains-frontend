@@ -46,11 +46,11 @@ export async function claimTreasury(
     return
   }
   const amountLux = mode === 'partial' ? treasuryClaimAmountLux : treasuryState.availableLux
-  if (!amountLux || amountLux <= 0) {
+  if (!amountLux || BigInt(amountLux) <= 0n) {
     setTreasuryError(treasuryClaimAmountError || 'Enter an amount to claim.')
     return
   }
-  if (amountLux > treasuryState.availableLux) {
+  if (BigInt(amountLux) > BigInt(treasuryState.availableLux)) {
     setTreasuryError('Amount exceeds available balance.')
     return
   }
@@ -59,7 +59,7 @@ export async function claimTreasury(
 
   const beforeAvailableLux = treasuryState.availableLux
   const call = mode === 'partial'
-    ? treasuryClaimRuntimeCall({ amountLux })
+    ? treasuryClaimRuntimeCall({ amountLux: Number(amountLux) })
     : treasuryClaimAllRuntimeCall()
   const finalState = await submitNameWrite('treasury.dusk', call, {
     contracts: runtimeConfig.contracts,
@@ -83,7 +83,7 @@ export async function claimTreasury(
     delayMs: 1_000,
     check: async () => {
       const nextTreasury = await indexerClient.getTreasury()
-      return nextTreasury.availableLux < beforeAvailableLux || nextTreasury.lastEventType === 'treasury_claimed'
+      return BigInt(nextTreasury.availableLux) < BigInt(beforeAvailableLux) || nextTreasury.lastEventType === 'treasury_claimed'
     },
     refresh: () => loadTreasury({ fresh: true }),
   })

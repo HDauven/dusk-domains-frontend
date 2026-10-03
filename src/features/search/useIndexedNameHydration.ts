@@ -17,7 +17,8 @@ import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
 async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult, selectedAddress: string, onChainClient: DuskDomainsOnChainClient | null) {
   const health = await client.getHealth()
   if (!health.ok) throw new Error('Name data is still syncing. It will update automatically.')
-  return { currentBlockHeight: currentBlockHeightFromHealth(health), reads: await readIndexedName(client, searchResult, selectedAddress, onChainClient) }
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  return { currentBlockHeight: currentBlockHeightFromHealth(health), nowSeconds, reads: await readIndexedName(client, searchResult, selectedAddress, onChainClient) }
 }
 
 export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
@@ -55,10 +56,11 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     const isCurrentActivity = props.beginActivityRead(safeNamehashHex(searchResult.canonical))
     const isCurrentOwnership = props.beginOwnershipRead(safeNamehashHex(searchResult.canonical))
     const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership() && currentAddress.current === selectedAddress
-    const { currentBlockHeight, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult, selectedAddress, onChainClient), [client, searchResult.canonical, selectedAddress, onChainClient], options?.fresh)
+    const { currentBlockHeight, nowSeconds, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult, selectedAddress, onChainClient), [client, searchResult.canonical, selectedAddress, onChainClient], options?.fresh)
     if (!shouldApply()) return
     props.setCurrentBlockHeight(currentBlockHeight)
-    if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight }, reads)
+    props.setNowSeconds(nowSeconds)
+    if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight, nowSeconds }, reads)
   }, [hydrationFlight, props, selectedAddress, onChainClient])
 
   const readData = useCallback(async (options?: RefreshOptions) => {
