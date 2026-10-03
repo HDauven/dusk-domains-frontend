@@ -31,6 +31,7 @@ export function SearchWorkspace({
   primaryProps,
   query,
   recordsProps,
+  referralAddress,
   registrationProps,
   resultReady,
   resultView,
@@ -65,6 +66,7 @@ export function SearchWorkspace({
           overviewProps={overviewProps}
           primaryProps={primaryProps}
           recordsProps={recordsProps}
+          referralAddress={referralAddress}
           registrationProps={registrationProps}
           resultView={resultView}
           settingsProps={settingsProps}

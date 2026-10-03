@@ -7,6 +7,7 @@ type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
+  referralAddress?: string
   priceTiers?: SearchWorkspaceProps['priceTiers']
   activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
   hasMoreActivity?: boolean
@@ -50,6 +51,7 @@ type UseSearchWorkspaceFeatureProps = {
 }
 
 export function useSearchWorkspaceFeature({
+  referralAddress,
   priceTiers,
   activityEntries,
   activityLoading,
@@ -158,6 +160,7 @@ export function useSearchWorkspaceFeature({
     primaryProps,
     query,
     recordsProps,
+    referralAddress,
     registrationProps,
     resultReady,
     resultView,

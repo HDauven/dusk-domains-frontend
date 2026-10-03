@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   initialReferralInput,
   settleReferralInput,
+  writeStoredReferralInput,
   type ReferralState,
 } from './referralState'
 
@@ -29,7 +30,22 @@ export function useReferralControls({
   const referralLink = useMemo(() => referralLinkForAddress(selectedAddress), [selectedAddress])
 
   useEffect(() => {
+    const capture = () => {
+      const url = new URL(window.location.href)
+      if (!url.searchParams.has('ref')) return
+      const next = (url.searchParams.get('ref') ?? '').trim()
+      setInput(next)
+      url.searchParams.delete('ref')
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+    }
+    capture()
+    window.addEventListener('popstate', capture)
+    return () => window.removeEventListener('popstate', capture)
+  }, [])
+
+  useEffect(() => {
     let current = true
+    writeStoredReferralInput('')
     void settleReferralInput(input, () => current).then((state) => {
       if (state) setValidatedReferral(state)
     })

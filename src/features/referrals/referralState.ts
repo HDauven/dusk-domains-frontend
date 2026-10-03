@@ -54,15 +54,15 @@ export async function settleReferralInput(input: string, isCurrent: () => boolea
 
 export function initialReferralInput(): string {
   const urlRef = typeof globalThis.location === 'undefined'
-    ? ''
-    : new URLSearchParams(globalThis.location.search).get('ref') ?? ''
+    ? null
+    : new URLSearchParams(globalThis.location.search).get('ref')
   const storedRef = readStoredReferralInput()
-  return (urlRef || storedRef).trim()
+  return (urlRef ?? storedRef).trim()
 }
 
 export function readStoredReferralInput() {
   try {
-    return readReferralAttribution(globalThis.localStorage, referralStorageKey)
+    return readReferralAttribution(globalThis.sessionStorage, referralStorageKey)
   } catch {
     return ''
   }
@@ -70,7 +70,7 @@ export function readStoredReferralInput() {
 
 export function writeStoredReferralInput(value: string) {
   try {
-    writeReferralAttribution(globalThis.localStorage, referralStorageKey, value)
+    writeReferralAttribution(globalThis.sessionStorage, referralStorageKey, value)
   } catch {
     // Browser storage can be unavailable in hardened browser modes.
   }

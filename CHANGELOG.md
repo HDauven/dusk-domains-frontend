@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Update name-page metadata as visitors navigate. ([#201])
+- Offer canonical name links with connected-wallet referrals and downloadable cards. ([#201])
+- Keep incoming referral attribution across routes for the browser session. ([#201])
+
 - Offer cross-chain address records in the editor and copyable addresses on public profiles. ([#242])
 - Show whether a primary name was set or cleared for its address in Activity. ([#243])
 
@@ -36,3 +40,4 @@
 
 [#242]: https://github.com/HDauven/dusk-domains-protocol/issues/242
 [#243]: https://github.com/HDauven/dusk-domains-protocol/issues/243
+[#201]: https://github.com/HDauven/dusk-domains-protocol/issues/201

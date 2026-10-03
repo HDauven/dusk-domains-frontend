@@ -33,8 +33,15 @@ Playwright Chromium installed, run the browser regressions:
 DUSK_DOMAINS_E2E_BASE_URL=http://127.0.0.1:5217/ node scripts/ux-regression-smoke.mjs
 ```
 
+## Deploy
+
 `npm run build` produces static files in `dist/`. Serve driver files as Wasm and
 configure the indexer's allowed browser origin to match the app.
+
+Fall back to `index.html` for app routes. For link previews, Caddy rewrites known
+preview bots visiting `/name/*` to `/api/share/name/*` before that fallback; other
+visitors receive the SPA. Use the [indexer's Caddy configuration](https://github.com/HDauven/dusk-domains-indexer/blob/main/deploy/README.md#app-and-link-previews-on-duskdomains),
+including `Vary: User-Agent`. The indexer also serves the PNG cards under `/api/share/name/*.png`.
 
 ## Product behavior
 
