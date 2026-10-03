@@ -24,7 +24,7 @@ describe('referral links', () => {
     vi.stubGlobal('location', { search: `?ref=${encodeURIComponent(input)}` })
     expect(await referralStateFromInput(initialReferralInput())).toMatchObject({ principal: null, valid: false, reason: 'Referral ignored: this address cannot claim rewards.' })
     vi.stubGlobal('location', { search: '' })
-    vi.stubGlobal('localStorage', { getItem: () => JSON.stringify({ version: 1, input, expiresAt: Date.now() + 10000 }) })
+    vi.stubGlobal('sessionStorage', { getItem: () => JSON.stringify({ version: 1, input, expiresAt: Date.now() + 10000 }) })
     expect(await referralStateFromInput(initialReferralInput())).toMatchObject({ principal: null, valid: false })
   })
 

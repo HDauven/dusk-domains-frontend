@@ -35,7 +35,7 @@ afterEach(() => {
 describe('settling referral input', () => {
   it('clears a previously stored referral when the new one cannot be checked', async () => {
     const storage = memoryStorage()
-    vi.stubGlobal('localStorage', storage)
+    vi.stubGlobal('sessionStorage', storage)
     expect(await settleReferralInput(contractRef, () => true)).toMatchObject({ valid: true })
     expect(storage.stored()).toContain(contractRef)
 
@@ -47,7 +47,7 @@ describe('settling referral input', () => {
 
   it('leaves storage alone when a newer input replaced this one', async () => {
     const storage = memoryStorage()
-    vi.stubGlobal('localStorage', storage)
+    vi.stubGlobal('sessionStorage', storage)
     expect(await settleReferralInput(contractRef, () => false)).toBeNull()
     expect(storage.stored()).toBe('')
   })

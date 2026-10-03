@@ -25,6 +25,16 @@
   min-width: 0;
 }
 
+.name-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
 .name-hero-title {
   flex: 1;
   min-width: 0;

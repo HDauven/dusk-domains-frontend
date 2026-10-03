@@ -16,10 +16,13 @@ import { RegistrationFlowPanel } from '../registration/RegistrationFlowPanel'
 import { NameHeader } from './NameHeader'
 import { SearchResultOverview } from './SearchResultOverview'
 import { namePageAccess, nameSections } from './namePageAccess'
+import { useNamePageMetadata } from './namePageMetadata'
+import { NameShare } from './NameShare'
 
 export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'subnames' | 'activity'
 
 export type SearchResultPanelProps = {
+  referralAddress?: string
   activityProps: ComponentProps<typeof ActivityHistoryView>
   detailsProps: ComponentProps<typeof DomainDetailsView>
   headerProps: ComponentProps<typeof NameHeader>
@@ -35,7 +38,8 @@ export type SearchResultPanelProps = {
   subdomainsProps: ComponentProps<typeof SubdomainsView>
 }
 
-export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
+export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, referralAddress, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
+  useNamePageMetadata(headerProps.displayName, headerProps.records)
   const managedName = nodeHex && settingsProps?.managedName.node === nodeHex ? settingsProps.managedName : null
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
   const ancestorControl = canControlThroughAncestor(managedName, headerProps.viewerAuthority ?? '', settingsProps?.currentBlockHeight ?? null)
@@ -56,6 +60,7 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
   </>
   return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
     {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} /> : null}
+    {headerProps.status !== 'invalid' ? <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} /> : null}
     {parent && !sameAuthority(parent.owner, managedName?.owner) ? <p className="field-note">The owner of {parent.name} can take this name back, and it expires with {parent.name}.</p> : null}
     {ancestorControl && namespaceTarget ? <>
       <SubnameAuthorityControls key={namespaceTarget.node} name={namespaceTarget.name}

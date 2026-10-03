@@ -307,7 +307,7 @@ try {
   await page.evaluate(async () => {
     const { React, root } = window
     const { useReferralControls } = await import('/src/features/referrals/useReferralControls.ts')
-    localStorage.removeItem('dusk-domains.active-referral')
+    sessionStorage.removeItem('dusk-domains.active-referral')
     function Referrals() {
       const controls = useReferralControls({ selectedAddress: '', setReferralError: () => {} })
       window.referralControls = controls
@@ -338,10 +338,10 @@ try {
   }, moonlight)
   await page.waitForTimeout(30)
   assert.equal(await page.evaluate(() => window.referralControls.referralState.input), '', 'Late validation restored a cleared referral')
-  assert.equal(await page.evaluate(() => localStorage.getItem('dusk-domains.active-referral')), null)
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('dusk-domains.active-referral')), null)
   await page.evaluate(input => window.openReferralLink(input), `  ${moonlight}  `)
   await page.waitForFunction(() => window.referralControls.referralState.valid)
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('dusk-domains.active-referral')).input), moonlight)
+  assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem('dusk-domains.active-referral')).input), moonlight)
   for (const lastByte of [0, 2]) {
     await page.evaluate(async lastByte => {
       const { encodeBase58 } = await import('/src/names/internal.ts')
@@ -349,7 +349,7 @@ try {
     }, lastByte)
     await page.waitForFunction(() => window.referralControls.referralState.reason === 'Referral ignored: this address cannot claim rewards.')
     assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
-    assert.equal(await page.evaluate(() => localStorage.getItem('dusk-domains.active-referral')), null)
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('dusk-domains.active-referral')), null)
   }
   await checkIndexerPagination(page)
   await checkInitialHydration(page)
