@@ -22,8 +22,20 @@ const result = { ...analyzeName('aurora'), premiumLux: 1_000_000_000, graceEndsA
 afterEach(() => vi.unstubAllGlobals())
 
 it('shows the premium and end date in the search card and claim summary', () => {
-  const summary = renderToStaticMarkup(<RegistrationSummary premiumResult={result} activeReferral={null} appliedReferral={null} committed duration={1} expiryDate="3 Oct 2027" feeConfigError="" onChangeTerm={() => {}} registerSetsPrimary registrationComplete={false} registrationFee={11} registrationTargetAddress="" selectedAddress="" />)
-  const search = renderToStaticMarkup(<SearchResultOverview premiumResult={result} canRegister displayName="aurora.dusk" duration={1} expiryDate="3 Oct 2027" feeConfigLoading={false} onContinueRegistration={() => {}} onDurationChange={() => {}} onOpenPendingReservation={() => {}} onOpenPendingReservations={() => {}} onViewDetails={() => {}} registrationFee={11} resultIssues={[]} resultStatus="available" savedReservation={null} savedReservationWindow={null} />)
+  const summary = renderToStaticMarkup(<RegistrationSummary committed
+    registrationComplete={false}
+    selectedAddress=""
+    quote={{ premiumResult: result, duration: 1, expiryDate: "3 Oct 2027", feeConfigError: "", onChangeTerm: () => {}, registrationFee: 11, registrationTargetAddress: "" }}
+    referral={{ activeReferral: null, appliedReferral: null }}
+    primaryChoice={{ registerSetsPrimary: true }} />)
+  const search = renderToStaticMarkup(<SearchResultOverview canRegister
+    displayName="aurora.dusk"
+    onContinueRegistration={() => {}}
+    onViewDetails={() => {}}
+    resultIssues={[]}
+    resultStatus="available"
+    quote={{ premiumResult: result, duration: 1, expiryDate: "3 Oct 2027", feeConfigLoading: false, onDurationChange: () => {}, registrationFee: 11 }}
+    reservation={{ onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, savedReservation: null, savedReservationWindow: null }} />)
   for (const html of [summary, search]) {
     expect(html).toContain('Premium: 1 DUSK, halves daily until')
     expect(html).toContain('2026')
@@ -88,8 +100,10 @@ it('shows premium income within registration receipts in Treasury', () => {
 })
 
 it('renders the starting premium and separate referral controls', () => {
-  const props = { feeConfig: DEFAULT_FEE_CONFIG, feeConfigForm: feeConfigFormFromConfig(DEFAULT_FEE_CONFIG),
-    selectedAddress: '', onFeeConfigFieldChange: vi.fn() } as unknown as ComponentProps<typeof TreasuryPricingCard>
+  const props = {
+    pricing: { feeConfig: DEFAULT_FEE_CONFIG, feeConfigForm: feeConfigFormFromConfig(DEFAULT_FEE_CONFIG), onFeeConfigFieldChange: vi.fn() },
+    wallet: { selectedAddress: '' },
+  } as unknown as ComponentProps<typeof TreasuryPricingCard>
   const html = renderToStaticMarkup(<TreasuryPricingCard {...props} />)
   expect(html).toContain('id="fee-premium-start"')
   expect(html).toContain('value="1000000"')
@@ -112,8 +126,20 @@ it('round-trips every Lux field exactly at the contract cap, including referral-
 
 it('uses block heights for warnings in both callers even with stale dates', () => {
   const stale = { ...result, premiumNextStepAt: '2000-01-01T00:00:00.000Z' }
-  const summary = renderToStaticMarkup(<RegistrationSummary premiumResult={stale} currentBlockHeight={boundary - 30} activeReferral={null} appliedReferral={null} committed duration={1} expiryDate="3 Oct 2027" feeConfigError="" onChangeTerm={() => {}} registerSetsPrimary registrationComplete={false} registrationFee={11} registrationTargetAddress="" selectedAddress="" />)
-  const search = renderToStaticMarkup(<SearchResultOverview premiumResult={stale} currentBlockHeight={boundary - 30} canRegister displayName="aurora.dusk" duration={1} expiryDate="3 Oct 2027" feeConfigLoading={false} onContinueRegistration={() => {}} onDurationChange={() => {}} onOpenPendingReservation={() => {}} onOpenPendingReservations={() => {}} onViewDetails={() => {}} registrationFee={11} resultIssues={[]} resultStatus="available" savedReservation={null} savedReservationWindow={null} />)
+  const summary = renderToStaticMarkup(<RegistrationSummary committed
+    registrationComplete={false}
+    selectedAddress=""
+    quote={{ premiumResult: stale, currentBlockHeight: boundary - 30, duration: 1, expiryDate: "3 Oct 2027", feeConfigError: "", onChangeTerm: () => {}, registrationFee: 11, registrationTargetAddress: "" }}
+    referral={{ activeReferral: null, appliedReferral: null }}
+    primaryChoice={{ registerSetsPrimary: true }} />)
+  const search = renderToStaticMarkup(<SearchResultOverview canRegister
+    displayName="aurora.dusk"
+    onContinueRegistration={() => {}}
+    onViewDetails={() => {}}
+    resultIssues={[]}
+    resultStatus="available"
+    quote={{ premiumResult: stale, currentBlockHeight: boundary - 30, duration: 1, expiryDate: "3 Oct 2027", feeConfigLoading: false, onDurationChange: () => {}, registrationFee: 11 }}
+    reservation={{ onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, savedReservation: null, savedReservationWindow: null }} />)
   for (const html of [summary, search]) expect(html).toContain('The price drops within 10 minutes.')
 })
 

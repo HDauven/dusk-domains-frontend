@@ -9,7 +9,7 @@ import type { AppViewModelInputs } from './appViewTypes'
 
 type UseAppSearchPropsArgs =
   & AppViewModelInputs
-  & ReturnType<typeof useDomainManagementFeature>
+  & { management: ReturnType<typeof useDomainManagementFeature> }
   & ReturnType<typeof useRegistrationFeature>
 
 function paysPreviousOwner({ owner, records, selectedAddress, selectedAuthority }: {
@@ -23,25 +23,13 @@ function paysPreviousOwner({ owner, records, selectedAddress, selectedAuthority 
   return owns && address && selectedAddress && address !== selectedAddress ? address : null
 }
 
-export function useAppSearchProps({
-  activityFeed,
-  appRuntime,
-  derivedState,
-  domainRecordState,
-  domainState,
-  economicsRuntime,
-  mainViewRuntime,
-  namePreview,
-  registrationProps,
-  registrationState,
-  searchRuntime,
-  searchState,
-  walletRuntime,
-  primaryProps,
-  recordsProps,
-  settingsProps,
-  subdomainsProps,
-}: UseAppSearchPropsArgs) {
+export function useAppSearchProps({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, mainViewRuntime, namePreview, registrationProps, registrationState, searchRuntime, searchState, walletRuntime, management }: UseAppSearchPropsArgs) {
+  const {
+    primaryProps,
+    recordsProps,
+    settingsProps,
+    subdomainsProps,
+  } = management
   const {
     checked,
     query,

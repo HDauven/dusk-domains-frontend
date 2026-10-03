@@ -10,33 +10,44 @@ import {
 import { formatWait } from './registrationCopy'
 import { RegistrationWalletSetupCard } from './setup/RegistrationWalletSetupCard'
 
-export function RegistrationReviewStep({
-  onRefreshWalletProviders,
-  walletDiscoveryRefreshing,
-  canPrepareCommit,
-  commitBusy,
-  commitStale,
-  commitTxState,
-  committed,
-  installUrl,
-  onOpenWalletConnection,
-  onPrepareCommit,
-  txBusy,
-  walletSetupState,
-}: {
-  onRefreshWalletProviders: () => Promise<unknown> | void
-  walletDiscoveryRefreshing: boolean
-  canPrepareCommit: boolean
-  commitBusy: boolean
-  commitStale: boolean
-  commitTxState: DuskDomainTxState | null
-  committed: boolean
-  installUrl: string
-  onOpenWalletConnection: () => void
-  onPrepareCommit: () => void
-  txBusy: boolean
-  walletSetupState: WalletConnectionStatus
+export function RegistrationReviewStep({ wallet, reservation, purchase }: {
+  wallet: {
+    onRefreshWalletProviders: () => Promise<unknown> | void
+    walletDiscoveryRefreshing: boolean
+    installUrl: string
+    onOpenWalletConnection: () => void
+    walletSetupState: WalletConnectionStatus
+  }
+  reservation: {
+    canPrepareCommit: boolean
+    commitBusy: boolean
+    commitStale: boolean
+    commitTxState: DuskDomainTxState | null
+    committed: boolean
+    onPrepareCommit: () => void
+  }
+  purchase: {
+    txBusy: boolean
+  }
 }) {
+  const {
+    onRefreshWalletProviders,
+    walletDiscoveryRefreshing,
+    installUrl,
+    onOpenWalletConnection,
+    walletSetupState,
+  } = wallet
+  const {
+    canPrepareCommit,
+    commitBusy,
+    commitStale,
+    commitTxState,
+    committed,
+    onPrepareCommit,
+  } = reservation
+  const {
+    txBusy,
+  } = purchase
   const walletReady = walletSetupState === 'connected'
   const actionTitle = walletReady
     ? committed ? commitTxState?.status === 'executed' ? 'Reserved' : 'Request saved' : 'Sign the reservation'

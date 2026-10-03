@@ -1,3 +1,6 @@
+import { clampDurationYears } from './appConstants'
+import { readReservationPrimaryChoice } from '../features/registration/reservationPrimaryChoice'
+import type { PendingNameReservation } from '../names/internal'
 import { useState } from 'react'
 import type { DuskDomainTxState } from '../names/internal'
 import type { RegistrationCompletionState } from '../features/registration/registrationCompletionState'
@@ -18,6 +21,36 @@ export function useRegistrationAppState() {
   const [strandedCommitment, setStrandedCommitment] = useState<StrandedCommitment | null>(null)
 
   return {
+    searchActions: {
+      reset: () => {
+        setCommitted(false)
+        setPreparedCommit(null)
+        setRegisterSetsPrimary(true)
+        setRegistrationStep('review')
+        setTxState(null)
+        setCommitTxState(null)
+        setRegistrationCompletion(null)
+      },
+      review: () => setRegistrationStep('review'),
+      resume: (reservation: PendingNameReservation) => {
+        setRegisterSetsPrimary(readReservationPrimaryChoice(reservation))
+        setDuration(clampDurationYears(reservation.durationYears))
+        setRegistrationStep('purchase')
+        setCommitted(true)
+        setPreparedCommit({
+          commitment: reservation.commitment,
+          secret: reservation.secret,
+          committedBlockHeight: reservation.committedBlockHeight,
+          committedTxId: reservation.committedTxId,
+        })
+      },
+      clearCompleted: () => {
+        setCommitted(false)
+        setPreparedCommit(null)
+        setRegistrationCompletion(null)
+      },
+      updateCommit: (commit: PreparedRegistrationCommit) => setPreparedCommit(commit),
+    },
     commitTxState,
     committed,
     duration,

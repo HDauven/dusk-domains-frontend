@@ -28,8 +28,8 @@ export function useSearchRuntime({
     indexerClient: props.indexerClient,
     liveDuskDomainsApp,
     refreshCurrentNameFromIndexer,
-    setIndexerConfirmation: props.setIndexerConfirmation,
-    setIndexerError: props.setIndexerError,
+    setIndexerConfirmation: props.search.confirm,
+    setIndexerError: props.search.fail,
   })
 
   const searchController = useSearchController({

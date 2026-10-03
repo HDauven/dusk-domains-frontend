@@ -8,25 +8,28 @@ export async function checkPremiumConfirmation(page) {
     const { analyzeName, DEFAULT_FEE_CONFIG, registrationPremiumSchedule } = await import('/src/names/internal.ts')
     window.premiumApprovals = 0
     window.premiumWaits = 0
-    const props = { result: { ...analyzeName('aurora'), graceEndsAtBlockHeight: 10_000 },
-      feeConfig: { ...DEFAULT_FEE_CONFIG, premiumStartLux: 2_000_000_000 }, duration: 1,
-      displayName: 'aurora.dusk', lifecycleBaseBlockHeight: 18_610, canRegister: true, canRevealRegistration: true,
-      committed: true, preparedCommit: {}, commitWindow: { status: 'ready', staleInBlocks: 100, waitBlocks: 0 },
-      selectedAddress: 'wallet', registrationTargetAddress: 'wallet', registrationTargetReady: true,
-      registrationTargetAddressErrors: [], registrationStep: 'purchase', resultIssues: [],
-      walletSetupState: 'connected', expiryDate: '3 Oct 2027', feeConfigError: '',
-      txBusy: false, commitBusy: false, registrationCompletion: null, txState: null,
-      submitNameWrite: { captureWorkspace: () => () => true },
-      onBackToOverview: () => { window.premiumWaits++ },
-      ensureContractAuthorityForLiveWrite: () => { window.premiumApprovals++; return false },
-      setWalletError: () => {}, setRegistrationCompletion: () => {} }
+    const feeConfig = { ...DEFAULT_FEE_CONFIG, premiumStartLux: 2_000_000_000 }
     function Probe({ height }) {
-      const premium = registrationPremiumSchedule({ premiumStartLux: props.feeConfig.premiumStartLux,
+      const premium = registrationPremiumSchedule({ premiumStartLux: feeConfig.premiumStartLux,
         graceEndsAtBlockHeight: 10_000, currentBlockHeight: height, nowSeconds: Date.now() / 1000 })
-      const result = { ...props.result, premiumLux: premium.premiumLux, premiumNextStepBlockHeight: premium.nextStepBlockHeight,
+      const result = { ...analyzeName('aurora'), graceEndsAtBlockHeight: 10_000,
+        premiumLux: premium.premiumLux, premiumNextStepBlockHeight: premium.nextStepBlockHeight,
         premiumNextStepAt: premium.nextStepAt, premiumEndsAt: premium.premiumEndsAt }
-      const feature = useRegistrationFeature({ ...props, result, lifecycleBaseBlockHeight: height,
-        registrationFee: 10 + premium.premiumLux / 1e9 })
+      const feature = useRegistrationFeature({
+        activityFeed: {}, appRuntime: {}, domainRecordState: {}, domainState: {}, mainViewRuntime: {}, searchRuntime: {},
+        namePreview: { result, lifecycleBaseBlockHeight: height, displayName: 'aurora.dusk', canRegister: true,
+          registrationFee: 10 + premium.premiumLux / 1e9, expiryDate: '3 Oct 2027' },
+        economicsRuntime: { feeConfig, feeConfigError: '' },
+        derivedState: { canRevealRegistration: true, txBusy: false, commitBusy: false,
+          commitWindow: { status: 'ready', staleInBlocks: 100, waitBlocks: 0 } },
+        registrationState: { duration: 1, committed: true, preparedCommit: {}, registrationStep: 'purchase',
+          registrationCompletion: null, txState: null, setRegistrationCompletion: () => {} },
+        registrationRuntime: { registrationTargetAddress: 'wallet', registrationTargetReady: true, registrationTargetAddressErrors: [] },
+        searchState: { setResultView: () => { window.premiumWaits++ } },
+        walletRuntime: { selectedAddress: 'wallet', walletSetupState: 'connected',
+          submitNameWrite: { captureWorkspace: () => () => true }, setWalletError: () => {},
+          ensureContractAuthorityForLiveWrite: () => { window.premiumApprovals++; return false } },
+      })
       return React.createElement(RegistrationFlowPanel, feature.registrationProps)
     }
     window.renderPremium = height => root.render(React.createElement(Probe, { height }))

@@ -13,14 +13,16 @@ it('keeps the submitted payment and expiry after hydration changes availability'
   const noop = () => {}
   // The panel reads the fee and expiry from the completion summary, not the live preview.
   const html = renderToStaticMarkup(<RegistrationPurchaseStep
-    canRestartReservation={false} canRevealRegistration={false} commitWindow={{ status: 'missing', staleInBlocks: 0, waitBlocks: 0 }}
-    installUrl="" onOpenWalletConnection={noop} onRegisterName={noop} onRestartReservation={noop} onSetAddress={noop}
-    registrationCompletion={completed} reservationStranded={false} txBusy={false} txState={null} walletSetupState="connected"
+    reservation={{ canRestartReservation: false, commitWindow: { status: 'missing', staleInBlocks: 0, waitBlocks: 0 }, onRestartReservation: noop, reservationStranded: false }}
+        purchase={{ canRevealRegistration: false, onRegisterName: noop, onSetAddress: noop, registrationCompletion: completed, txBusy: false, txState: null }}
+        wallet={{ installUrl: "", onOpenWalletConnection: noop, walletSetupState: "connected" }}
   />) + renderToStaticMarkup(<RegistrationSummary
-    activeReferral={null} appliedReferral={null} committed={true} duration={1}
-    expiryDate={completed.summary?.expiryDate ?? '-'} feeConfigError="" onChangeTerm={noop}
-    registerSetsPrimary={true} registrationComplete={true} registrationFee={completed.summary?.registrationFee ?? 0}
-    registrationTargetAddress="account" selectedAddress="account"
+    committed={true}
+        registrationComplete={true}
+        selectedAddress="account"
+        referral={{ activeReferral: null, appliedReferral: null }}
+        quote={{ duration: 1, expiryDate: completed.summary?.expiryDate ?? '-', feeConfigError: "", onChangeTerm: noop, registrationFee: completed.summary?.registrationFee ?? 0, registrationTargetAddress: "account" }}
+        primaryChoice={{ registerSetsPrimary: true }}
   />)
   expect(html).toContain('10 <small>DUSK</small>')
   expect(html).toContain(summary.expiryDate)

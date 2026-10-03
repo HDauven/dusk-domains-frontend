@@ -5,9 +5,20 @@ export async function checkNameManagement(page) {
     const { React, root } = window
     const { RegistrationPurchaseStep } = await import('/src/features/registration/RegistrationPurchaseStep.tsx')
     root.render(React.createElement(RegistrationPurchaseStep, {
-      canRevealRegistration: false, canRestartReservation: false,
-      commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 },
-      walletSetupState: 'connected', registrationCompletion: null, txState: null, txBusy: false,
+      purchase: {
+        canRevealRegistration: false,
+        registrationCompletion: null,
+        txState: null,
+        txBusy: false,
+      },
+      reservation: {
+        canRestartReservation: false,
+        commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 },
+      },
+      wallet: {
+        walletSetupState: 'connected',
+      },
+      quote: {},
     }))
   })
   await page.getByText('Ready in about 50 s', { exact: true }).waitFor()
@@ -21,11 +32,38 @@ export async function checkNameManagement(page) {
     const { SearchResultPanel } = await import('/src/features/search/SearchResultPanel.tsx')
     root.render(React.createElement(SearchResultPanel, {
       headerProps: { status: 'registered', displayName: 'alpha.dusk', records: [], viewerAuthority: 'owner' },
-      settingsProps: { managedName: { node: 'node', owner: 'owner', manager: 'owner' } },
-      detailsProps: { displayName: 'alpha.dusk', parentResolverRecords: [], activityEntries: [], subnames: [], primaryVerification: { tone: 'muted' } },
-      primaryProps: { primaryVerification: { verified: false }, displayName: 'alpha.dusk' },
-      subdomainsProps: { subnames: [] }, overviewProps: { canRegister: false }, nodeHex: 'node', resultView: 'details',
+      detailsProps: {
+        displayName: 'alpha.dusk',
+        parentResolverRecords: [],
+        subnames: [],
+        primaryVerification: { tone: 'muted' },
+        activity: {
+          activityEntries: [],
+        },
+      },
+      overviewProps: {
+        canRegister: false,
+        quote: {},
+        reservation: {},
+      },
+      nodeHex: 'node',
+      resultView: 'details',
       onResultViewChange: value => { window.selectedNameSection = value },
+      management: {
+        settingsProps: {
+          managedName: { node: 'node', owner: 'owner', manager: 'owner' },
+          ownership: {},
+          renewal: {},
+          clock: {},
+        },
+        primaryProps: { primaryVerification: { verified: false }, displayName: 'alpha.dusk' },
+        subdomainsProps: {
+          subnames: [],
+          creation: {},
+          authority: {},
+          clock: {},
+        },
+      },
     }))
   })
   for (const width of [390, 360]) {
@@ -53,18 +91,33 @@ export async function checkNameManagement(page) {
     function RecordsProbe() {
       const state = useDomainRecordState({ displayName: 'alpha.dusk', nodeHex: 'node', editableRecordKeys: ['website', 'text.description'] })
       return React.createElement(RecordsView, {
-        ...state, displayName: 'alpha.dusk', editableRecordKeys: ['website', 'text.description'], canRemoveRecords: true,
-        canSaveRecords: state.recordDraftMutations.length > 0 && state.recordDraftErrors.length === 0,
-        recordBusy: false, walletAddressAvailable: false, error: '', txState: null,
-        onDraftValueChange: (key, value) => state.setRecordDrafts(current => ({ ...current, [key]: value })),
-        onDiscardDrafts: () => state.setRecordDrafts({}),
-        onSaveRecords: async () => {
-          window.savedMutations = state.recordDraftMutations
-          state.setResolverRecordSets(current => ({ node: applyRecordMutations(current.node ?? [], state.recordDraftMutations) }))
-          state.setRecordDrafts({})
-          return true
+        resolverRecords: state.resolverRecords,
+        displayName: 'alpha.dusk',
+        editableRecordKeys: ['website', 'text.description'],
+        actions: {
+          canRemoveRecords: true,
+          canSaveRecords: state.recordDraftMutations.length > 0 && state.recordDraftErrors.length === 0,
+          recordBusy: false,
+          error: '',
+          txState: null,
+          onSaveRecords: async () => {
+            window.savedMutations = state.recordDraftMutations
+            state.setResolverRecordSets(current => ({ node: applyRecordMutations(current.node ?? [], state.recordDraftMutations) }))
+            state.setRecordDrafts({})
+            return true
+          },
+          onClearRecord: record => state.setResolverRecordSets(current => ({ node: current.node.filter(existing => existing.key !== record.key) })),
         },
-        onClearRecord: record => state.setResolverRecordSets(current => ({ node: current.node.filter(existing => existing.key !== record.key) })),
+        wallet: {
+          walletAddressAvailable: false,
+        },
+        draft: {
+          criticalRecordChange: state.criticalRecordChange,
+          recordDraftErrors: state.recordDraftErrors,
+          recordDraftValues: state.recordDraftValues,
+          onDraftValueChange: (key, value) => state.setRecordDrafts(current => ({ ...current, [key]: value })),
+          onDiscardDrafts: () => state.setRecordDrafts({}),
+        },
       })
     }
     root.render(React.createElement(RecordsProbe))
@@ -97,11 +150,20 @@ export async function checkNameManagement(page) {
     function TransferProbe() {
       const [confirmationInput, onConfirmationInputChange] = React.useState('')
       return React.createElement(RecipientSettingsPanel, {
-        displayName: 'alpha.dusk', confirmationInput, onConfirmationInputChange,
-        managedName: { owner: 'owner', manager: 'owner' }, viewerAuthority: 'owner',
-        managementError: '', managementTxState: null, canManageName: confirmationInput === 'alpha.dusk',
-        onResolveRecipient: input => resolveRecipient(input, { getHealth: async () => ({ ok: true }), resolveForward: async () => ({ canonicalName: 'alice.dusk', verificationStatus: 'forward_resolved', errors: [], expiry: { status: 'active', expiresAt: '2099-01-01T00:00:00Z' }, resolver: { health: 'ok' }, cache: { staleAt: '2099-01-01T00:00:00Z' }, records: [{ key: 'moonlight_address', value: address }] }) }),
-        onOwnershipUpdate: async change => { window.transferChange = change; return true },
+        displayName: 'alpha.dusk',
+        managedName: { owner: 'owner', manager: 'owner' },
+        ownership: {
+          confirmationInput,
+          onConfirmationInputChange,
+          viewerAuthority: 'owner',
+          managementError: '',
+          managementTxState: null,
+          canManageName: confirmationInput === 'alpha.dusk',
+          onResolveRecipient: input => resolveRecipient(input, { getHealth: async () => ({ ok: true }), resolveForward: async () => ({ canonicalName: 'alice.dusk', verificationStatus: 'forward_resolved', errors: [], expiry: { status: 'active', expiresAt: '2099-01-01T00:00:00Z' }, resolver: { health: 'ok' }, cache: { staleAt: '2099-01-01T00:00:00Z' }, records: [{ key: 'moonlight_address', value: address }] }) }),
+          onOwnershipUpdate: async change => { window.transferChange = change; return true },
+        },
+        renewal: {},
+        clock: {},
       })
     }
     root.render(React.createElement(TransferProbe))

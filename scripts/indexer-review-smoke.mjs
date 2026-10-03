@@ -18,11 +18,10 @@ export async function checkInitialHydration(page) {
     const noop = () => {}
     function Hydration({ name }) {
       const feed = useActivityFeed({ defaultName: name, defaultNode: safeNamehashHex(name), indexerClient: client, setError: noop })
-      const hydration = useIndexedNameHydration({ ...feed, displayName: name, indexerClient: client,
-        beginOwnershipRead: () => () => true,
-        setCurrentBlockHeight: noop, setNowSeconds: noop, setResolverRecordSets: noop, setPrimaryEndpointValue: noop, setPrimaryName: noop, setConnectedPrimaryName: noop,
-        setManagedName: noop, setDraftOwner: noop, setDraftManager: noop, setSubnameManager: noop, setSubnames: noop,
-        setIndexerError: noop, setIndexerConfirmation: noop, setApiSearchResult: noop })
+      const hydration = useIndexedNameHydration({ displayName: name, indexerClient: client,
+        activity: feed.searchActions,
+        domain: { beginRead: () => () => true, hydrate: noop },
+        records: { hydrate: noop }, search: { updateClock: noop, fail: noop } })
       window.hydrationFeed = feed
       window.hydrate = options => hydration.hydrateNameFromIndexer(client, { canonical: name }, () => true, options)
       return React.createElement('output', { id: 'hydration-name' }, name)

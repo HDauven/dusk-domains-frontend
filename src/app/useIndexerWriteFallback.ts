@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, type Dispatch, type SetStateAction } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import {
   waitForConfirmedIndexerRefresh,
   userFacingMessageFromText,
@@ -13,8 +13,8 @@ type UseIndexerWriteFallbackArgs = {
   indexerClient: DuskDomainsIndexerClient | null
   liveDuskDomainsApp: DuskConnectAppLike | null
   refreshCurrentNameFromIndexer: (options?: { fresh?: boolean }) => Promise<boolean>
-  setIndexerConfirmation: Dispatch<SetStateAction<string>>
-  setIndexerError: Dispatch<SetStateAction<string>>
+  setIndexerConfirmation: (message: string) => void
+  setIndexerError: (message: string) => void
 }
 
 export function useIndexerWriteFallback({

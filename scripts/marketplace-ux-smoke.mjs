@@ -71,7 +71,27 @@ export async function checkMarketplaceReviews(page) {
         React.createElement('output', { id: 'market-review-error' }, error),
         React.createElement('output', { id: 'market-review-confirmation' }, confirmation),
         React.createElement(MarketplaceReview, { review: writes.review, disabled: false, onClose: writes.cancelReview, onConfirm: writes.confirmReview }),
-        React.createElement(MarketplaceBidReview, { props: { bidReview: bids.bidReview, selectedAddress: args.selectedAddress, currentBlockHeight: 1000, actionsAvailable: true, onCancelBidReview: () => bids.setBidReview(null), onPlaceBid: bids.placeBid } }))
+        React.createElement(MarketplaceBidReview, {
+          auction: {
+            bidReview: bids.bidReview,
+            onCancelBidReview: () => bids.setBidReview(null),
+            onPlaceBid: bids.placeBid,
+          },
+          wallet: {
+            selectedAddress: args.selectedAddress,
+            actionsAvailable: true,
+          },
+          market: {
+            currentBlockHeight: 1000,
+          },
+          listings: {},
+          selling: {},
+          offers: {},
+          feedback: {},
+          watchlist: {},
+          navigation: {},
+          withdrawal: {},
+        }))
     }
     window.renderMarketReview = (wallet = 'buyer', scope = 'browse') => root.render(React.createElement(Probe, { wallet, scope }))
     window.renderMarketReview()
@@ -178,18 +198,58 @@ export async function checkMarketplaceBrowse(page) {
       bidCount: 1, feeBps: 250, escrowed: true, createdAtBlockHeight: 900 }
     const sale = { node: 'fixed', name: 'fixed.dusk', priceLux: 250000e9, sellerAuthority: seller, privateBuyer: null,
       expiresAtBlockHeight: 2000, openedAtBlockHeight: 1000, escrowed: true }
-    const props = { auctions: [auction], fixedSales: [sale], currentBlockHeight: 1000, watchedNodes: ['auction'],
-      selectedAuthority: buyer, selectedAddress: 'buyer', actionsAvailable: true, onToggleWatch: () => {}, onTabChange: () => {}, onOpenAuction: () => {},
-      bidDrafts: {}, onBidDraftChange: (_node, value) => { window.minimumUsed = value }, auctionActivity: [{ id: 'bid', eventType: 'domain_bid_placed', target: '40000000000', actor: buyer, blockHeight: 1000, timestamp: '' },
-        { id: 'creation', eventType: 'domain_auction_created', target: '25000000000', actor: seller, blockHeight: 900, timestamp: '' }] }
+    const props = {
+      listings: {
+        auctions: [auction],
+        fixedSales: [sale],
+      },
+      market: {
+        currentBlockHeight: 1000,
+      },
+      watchlist: {
+        watchedNodes: ['auction'],
+        onToggleWatch: () => {},
+      },
+      wallet: {
+        selectedAuthority: buyer,
+        selectedAddress: 'buyer',
+        actionsAvailable: true,
+      },
+      navigation: {
+        onTabChange: () => {},
+      },
+      auction: {
+        onOpenAuction: () => {},
+        bidDrafts: {},
+        onBidDraftChange: (_node, value) => { window.minimumUsed = value },
+        auctionActivity: [{ id: 'bid', eventType: 'domain_bid_placed', target: '40000000000', actor: buyer, blockHeight: 1000, timestamp: '' },
+        { id: 'creation', eventType: 'domain_auction_created', target: '25000000000', actor: seller, blockHeight: 900, timestamp: '' }],
+      },
+      selling: {},
+      offers: {},
+      feedback: {},
+      withdrawal: {},
+    }
     window.marketBrowseProps = props
     window.renderMarketBrowse = () => root.render(React.createElement('div', { className: 'marketplace-panel' }, React.createElement(MarketplaceBrowse, props)))
-    window.renderMarketAuction = () => root.render(React.createElement('div', { className: 'marketplace-panel' }, React.createElement(MarketplaceAuctionDetail, { auction, props })))
-    window.renderMarketOffers = () => root.render(React.createElement('div', { className: 'marketplace-panel' }, React.createElement(MarketplaceOffers, { ...props,
-      offerName: '', offerAmountDusk: '25', offerDurationDays: '7', sellableNames: [], offers: [
-        { node: 'one', name: 'one.dusk', buyerAuthority: buyer, amountLux: 25e9, placedAtBlockHeight: 1000, expiresAtBlockHeight: 3000 },
-        { node: 'two', name: 'two.dusk', buyerAuthority: seller, amountLux: 50e9, placedAtBlockHeight: 1100, expiresAtBlockHeight: 2000 },
-      ] })))
+    window.renderMarketAuction = () => root.render(React.createElement('div', { className: 'marketplace-panel' }, React.createElement(MarketplaceAuctionDetail, { selectedAuction: auction, ...props })))
+    window.renderMarketOffers = () => root.render(React.createElement('div', { className: 'marketplace-panel' }, React.createElement(MarketplaceOffers, {
+      ...props,
+      offers: {
+        ...props.offers,
+        offerName: '',
+        offerAmountDusk: '25',
+        offerDurationDays: '7',
+        offers: [
+          { node: 'one', name: 'one.dusk', buyerAuthority: buyer, amountLux: 25e9, placedAtBlockHeight: 1000, expiresAtBlockHeight: 3000 },
+          { node: 'two', name: 'two.dusk', buyerAuthority: seller, amountLux: 50e9, placedAtBlockHeight: 1100, expiresAtBlockHeight: 2000 },
+        ],
+      },
+      selling: {
+        ...props.selling,
+        sellableNames: [],
+      },
+    })))
     window.renderMarketBrowse()
   })
   await page.getByLabel('Sort marketplace').waitFor()
@@ -239,11 +299,19 @@ export async function checkMarketplaceBrowse(page) {
   await page.evaluate(async () => {
     const { MarketplaceBidReview } = await import('/src/features/marketplace/MarketplaceBidReview.tsx')
     const { React, root, marketBrowseProps: props } = window
-    root.render(React.createElement(MarketplaceBidReview, { props: { ...props,
-      selectedAddress: `buyer-${'x'.repeat(100)}`, onCancelBidReview: () => {},
-      bidReview: { auction: { ...props.auctions[0], name: 'uxdemo.dusk', highestBid: { ...props.auctions[0].highestBid, amountLux: 43_123_456_789 } },
-        amountDusk: '46.123456789', amountLux: 46_123_456_789n, minimumBidLux: 45_279_629_629n },
-    } }))
+    root.render(React.createElement(MarketplaceBidReview, {
+      ...props,
+      wallet: {
+        ...props.wallet,
+        selectedAddress: `buyer-${'x'.repeat(100)}`,
+      },
+      auction: {
+        ...props.auction,
+        onCancelBidReview: () => {},
+        bidReview: { auction: { ...props.listings.auctions[0], name: 'uxdemo.dusk', highestBid: { ...props.listings.auctions[0].highestBid, amountLux: 43_123_456_789 } },
+          amountDusk: '46.123456789', amountLux: 46_123_456_789n, minimumBidLux: 45_279_629_629n },
+      },
+    }))
   })
   await page.getByRole('dialog').waitFor()
   assert.equal(await page.locator('.marketplace-review-amount strong').innerText(), '46.123456789 DUSK')

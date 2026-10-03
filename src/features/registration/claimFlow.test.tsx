@@ -7,10 +7,15 @@ const noop = () => {}
 const props = {
   navigation: { onBackToOverview: noop }, resultIssues: [], status: { walletError: '', showReservationRecovery: false },
   wizard: { registrationComplete: false, registrationStep: 'review', displayName: 'alpha.dusk' },
-  step: { displayName: 'alpha.dusk', registrationStep: 'review', walletSetupState: 'connected', registrationCompletion: null,
-    selectedAddress: 'address', registrationFee: 10, duration: 1, registrationTargetAddress: 'address', canPrepareCommit: true,
-    onSetAddress: noop, onRegisterSetsPrimaryChange: noop, registerSetsPrimary: true,
-    commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 } },
+  step: {
+    registrationStep: 'review',
+    wallet: { walletSetupState: 'connected', selectedAddress: 'address' },
+    purchase: { registrationCompletion: null, onSetAddress: noop },
+    quote: { displayName: 'alpha.dusk', registrationFee: 10, duration: 1, registrationTargetAddress: 'address' },
+    primaryChoice: { onRegisterSetsPrimaryChange: noop, registerSetsPrimary: true },
+    referral: {},
+    reservation: { canPrepareCommit: true, commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 } },
+  },
 } as unknown as RegistrationFlowPanelProps
 
 it('offers Reserve immediately after wallet connection, with primary name in the summary', () => {
@@ -22,7 +27,13 @@ it('offers Reserve immediately after wallet connection, with primary name in the
   expect(html).not.toContain('Continue')
 })
 it('replaces the flow with one claim moment and two next actions', () => {
-  const html = renderToStaticMarkup(<RegistrationFlowPanel {...props} wizard={{...props.wizard, registrationComplete:true}} step={{...props.step, registrationCompletion:markRegistrationCompletionExecuted(createRegistrationCompletionState())}} />)
+  const html = renderToStaticMarkup(<RegistrationFlowPanel {...props} wizard={{...props.wizard, registrationComplete:true}} step={{
+  ...props.step,
+  purchase: {
+    ...props.step.purchase,
+    registrationCompletion:markRegistrationCompletionExecuted(createRegistrationCompletionState()),
+  },
+}} />)
   expect(html.replace(/<[^>]*>/g, '')).toContain('alpha.dusk is yours')
   expect(html).toContain('>Open</button>')
   expect(html).toContain('>Add records</button>')

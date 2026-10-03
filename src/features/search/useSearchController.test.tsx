@@ -1,3 +1,4 @@
+import { searchActions } from './test-fixtures/searchActions'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useSearchController } from './useSearchController'
@@ -11,7 +12,7 @@ vi.mock('./searchControllerActions', () => ({
 afterEach(() => { vi.useRealTimers(); vi.clearAllMocks() })
 
 function controller() {
-  const props = new Proxy({ beginNameRead: vi.fn(), query: '' }, {
+  const props = new Proxy({ ...searchActions(), beginNameRead: vi.fn(), query: '' }, {
     get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn(),
   }) as unknown as UseSearchControllerProps
   let result!: ReturnType<typeof useSearchController>

@@ -19,6 +19,17 @@ export function useDomainRecordState({ displayName, editableRecordKeys, nodeHex 
   const recordDraftValues = useMemo(() => recordDraftValuesFor(editableRecordKeys, resolverRecords, recordDrafts), [editableRecordKeys, recordDrafts, resolverRecords])
   const recordDraftPlan = useMemo(() => recordMutationPlan(editableRecordKeys, resolverRecords, recordDrafts), [editableRecordKeys, recordDrafts, resolverRecords])
   return {
+    searchActions: {
+      reset: () => { setResolverRecordSets({}); setRecordDrafts({}) },
+      hydrate: (node: string, records: ResolverRecord[] | null) => {
+        setResolverRecordSets(current => {
+          const next = { ...current }
+          if (records) next[node] = records
+          else delete next[node]
+          return next
+        })
+      },
+    },
     activeRecordTarget,
     criticalRecordChange: recordDraftPlan.mutations.some(mutation => isCriticalRecordKey(mutation.key as ResolverRecordKey)),
     moonlightRecord: resolverRecords.find(record => record.key === 'moonlight_address'),

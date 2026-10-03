@@ -69,17 +69,48 @@ export async function checkPrimaryNameSwitches(page) {
         return { status: 'executed', txId: 'clear' }
       }, { captureWorkspace: () => () => true })
       return React.createElement(SearchResultPanel, {
-        nodeHex: 'name', resultView: mode === 'expired' ? 'overview' : 'details', settingsProps: { managedName },
+        nodeHex: 'name',
+        resultView: mode === 'expired' ? 'overview' : 'details',
         headerProps: { status: ['missing', 'expired'].includes(mode) ? 'available' : 'registered', displayName: 'alice.dusk', records: [], viewerAuthority: 'alice' },
-        detailsProps: { displayName: 'alice.dusk', parentResolverRecords: [], activityEntries: [], subnames: [], primaryVerification: { tone: 'muted' } },
-        subdomainsProps: { subnames: [] }, overviewProps: { canRegister: mode === 'expired', displayName: 'alice.dusk', duration: 1, registrationFee: 1 },
-        primaryProps: { ...state, displayName: 'alice.dusk', error: '', txState: null,
-          onSetPrimary: () => { throw new Error('Former holder cannot set a primary') },
-          onClearPrimary: () => clearPrimaryDomainName({ ...state, displayName: 'alice.dusk', selectedAuthority: 'alice',
-            runtimeConfig: { contracts: {} }, walletSetupState: 'connected', submitNameWrite, setPrimaryName, setConnectedPrimaryName, moonlightRecord,
-            setPrimaryError: () => {}, setPrimaryTxState: () => {}, appendActivity: () => {},
-            ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
-            shouldApplyPreviewWriteFallback: async () => true }) },
+        detailsProps: {
+          displayName: 'alice.dusk',
+          parentResolverRecords: [],
+          subnames: [],
+          primaryVerification: { tone: 'muted' },
+          activity: {
+            activityEntries: [],
+          },
+        },
+        overviewProps: {
+          canRegister: mode === 'expired',
+          displayName: 'alice.dusk',
+          quote: {
+            duration: 1,
+            registrationFee: 1,
+          },
+          reservation: {},
+        },
+        management: {
+          settingsProps: {
+            managedName,
+            ownership: {},
+            renewal: {},
+            clock: {},
+          },
+          subdomainsProps: {
+            subnames: [],
+            creation: {},
+            authority: {},
+            clock: {},
+          },
+          primaryProps: { ...state, displayName: 'alice.dusk', error: '', txState: null,
+            onSetPrimary: () => { throw new Error('Former holder cannot set a primary') },
+            onClearPrimary: () => clearPrimaryDomainName({ ...state, displayName: 'alice.dusk', selectedAuthority: 'alice',
+              runtimeConfig: { contracts: {} }, walletSetupState: 'connected', submitNameWrite, setPrimaryName, setConnectedPrimaryName, moonlightRecord,
+              setPrimaryError: () => {}, setPrimaryTxState: () => {}, appendActivity: () => {},
+              ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
+              shouldApplyPreviewWriteFallback: async () => true }) },
+        },
       })
     }
     window.renderPrimaryClearCase = mode => root.render(React.createElement(FormerHolder, { key: mode, mode }))
@@ -115,9 +146,9 @@ export async function checkPrimaryNameSwitches(page) {
     function Hydration({ address }) {
       const [primary, setConnectedPrimaryName] = React.useState(null)
       const hydration = useIndexedNameHydration({ displayName: 'alice.dusk', selectedAddress: address, indexerClient: client,
-        beginActivityRead: () => () => true, beginOwnershipRead: () => () => true,
-        setCurrentBlockHeight: noop, setNowSeconds: noop, setResolverRecordSets: noop, setPrimaryEndpointValue: noop, setPrimaryName: noop, setConnectedPrimaryName,
-        setManagedName: noop, setActivityEntries: noop, setActivityCursor: noop, setSubnames: noop, setIndexerError: noop })
+        activity: { beginRead: () => () => true, hydrate: noop },
+        domain: { beginRead: () => () => true, hydrate: snapshot => setConnectedPrimaryName(snapshot.connectedPrimaryName) },
+        records: { hydrate: noop }, search: { updateClock: noop, fail: noop } })
       window.hydratePrimary = () => hydration.hydrateNameFromIndexer(client, { canonical: 'alice.dusk' })
       return React.createElement('output', { id: 'primary-hydration', 'data-address': address }, primary)
     }
@@ -155,15 +186,24 @@ export async function checkPrimaryNameSwitches(page) {
       const domain = useDomainManagementAppState('resolver', null, null)
       const [records, setResolverRecordSets] = React.useState({})
       const selectedAddress = connected ? alice : ''
-      const hydration = useIndexedNameHydration({ ...domain, displayName: 'bob.dusk', selectedAddress, indexerClient: client,
-        onChainClient: null, beginActivityRead: () => () => true, recordSourceContractId: 'resolver',
-        setCurrentBlockHeight: noop, setNowSeconds: noop, setResolverRecordSets, setActivityEntries: noop, setActivityCursor: noop, setIndexerError: noop })
+      const hydration = useIndexedNameHydration({ domain: domain.searchActions, displayName: 'bob.dusk', selectedAddress, indexerClient: client,
+        onChainClient: null, recordSourceContractId: 'resolver',
+        activity: { beginRead: () => () => true, hydrate: noop },
+        records: { hydrate: (node, entries) => setResolverRecordSets(current => ({ ...current, [node]: entries ?? [] })) },
+        search: { updateClock: noop, fail: noop } })
       window.hydrateBobProfile = () => hydration.hydrateNameFromIndexer(client, { canonical: 'bob.dusk' })
       const state = deriveAppDerivedState({ ...domain, selectedAddress, selectedAuthority: connected ? 'alice' : '',
         displayName: 'bob.dusk', nodeHex: node, moonlightRecord: records[node]?.[0], currentBlockHeight: 100,
         nowSeconds: 0, pendingReservations: [], recordDraftMutations: [], recordDraftErrors: [], walletSigningReady: connected })
-      return React.createElement(DomainDetailsView, { displayName: 'bob.dusk', parentResolverRecords: records[node] ?? [],
-        activityEntries: [], subnames: [], primaryVerification: state.primaryVerification })
+      return React.createElement(DomainDetailsView, {
+        displayName: 'bob.dusk',
+        parentResolverRecords: records[node] ?? [],
+        subnames: [],
+        primaryVerification: state.primaryVerification,
+        activity: {
+          activityEntries: [],
+        },
+      })
     }
     window.renderBobProfile = connected => root.render(React.createElement(BobProfile, { key: String(connected), connected }))
   })
@@ -180,10 +220,25 @@ export async function checkPrimaryNameSwitches(page) {
     function Claim() {
       const [primary, setPrimary] = React.useState(false)
       return React.createElement(RegistrationSummary, {
-        activeReferral: null, appliedReferral: null, committed: true, duration: 1,
-        expiryDate: '2027-10-01', feeConfigError: '', onChangeTerm: () => {},
-        onRegisterSetsPrimaryChange: setPrimary, registerSetsPrimary: primary,
-        registrationComplete: false, registrationFee: 10, registrationTargetAddress: 'address', selectedAddress: 'address',
+        committed: true,
+        registrationComplete: false,
+        selectedAddress: 'address',
+        referral: {
+          activeReferral: null,
+          appliedReferral: null,
+        },
+        quote: {
+          duration: 1,
+          expiryDate: '2027-10-01',
+          feeConfigError: '',
+          onChangeTerm: () => {},
+          registrationFee: 10,
+          registrationTargetAddress: 'address',
+        },
+        primaryChoice: {
+          onRegisterSetsPrimaryChange: setPrimary,
+          registerSetsPrimary: primary,
+        },
       })
     }
     root.render(React.createElement(Claim))

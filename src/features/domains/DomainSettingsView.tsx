@@ -7,35 +7,7 @@ import { RenewalPanel } from './settings/RenewalPanel'
 import { SubnameExpiryPanel } from './settings/SubnameExpiryPanel'
 import type { DomainSettingsViewProps } from './settings/types'
 
-export function DomainSettingsView({
-  isOwner = true,
-  canManageName,
-  canRenewName,
-  confirmationInput,
-  currentBlockHeight,
-  displayName,
-  feeConfigError,
-  feeConfigLoading,
-  managedName,
-  managementError,
-  managementTxState,
-  maxDurationYears,
-  minDurationYears,
-  nowSeconds,
-  onConfirmationInputChange,
-  onOwnershipUpdate,
-  onResolveRecipient,
-  viewerAuthority,
-  ownerAddresses,
-  onRenewName,
-  onRenewalYearsChange,
-  renewalBusy,
-  renewalError,
-  renewalFee,
-  renewalPreviewExpiresAt,
-  renewalTxState,
-  renewalYears,
-}: DomainSettingsViewProps) {
+export function DomainSettingsView({ isOwner = true, displayName, managedName, ownership, renewal, clock }: DomainSettingsViewProps) {
   return (
     <Panel className="management-panel" id="my-names" aria-labelledby="management-heading">
       <PanelHeader
@@ -44,50 +16,16 @@ export function DomainSettingsView({
         title="Settings"
       />
 
-      {isOwner ? <RecipientSettingsPanel
-        canManageName={canManageName}
-        confirmationInput={confirmationInput}
-        displayName={displayName}
-        managedName={managedName}
-        managementError={managementError}
-        managementTxState={managementTxState}
-        onConfirmationInputChange={onConfirmationInputChange}
-        onOwnershipUpdate={onOwnershipUpdate}
-        onResolveRecipient={onResolveRecipient}
-        viewerAuthority={viewerAuthority}
-        ownerAddresses={ownerAddresses}
-      /> : null}
+      {isOwner ? <RecipientSettingsPanel displayName={displayName} managedName={managedName} ownership={ownership} /> : null}
 
       {isSubname(displayName) ? (
-        <SubnameExpiryPanel
-          currentBlockHeight={currentBlockHeight}
-          displayName={displayName}
-          managedName={managedName}
-          nowSeconds={nowSeconds}
-        />
+        <SubnameExpiryPanel displayName={displayName} managedName={managedName} clock={clock} />
       ) : managedName.inMarketplaceEscrow ? (
         <p>Renewal is available after the listing closes.</p>
       ) : !canRenewOutsideEscrow(managedName) ? (
         <p>Renewal is unavailable until marketplace custody can be checked.</p>
       ) : (
-        <RenewalPanel
-          canRenewName={canRenewName}
-          currentBlockHeight={currentBlockHeight}
-          feeConfigError={feeConfigError}
-          feeConfigLoading={feeConfigLoading}
-          managedName={managedName}
-          maxDurationYears={maxDurationYears}
-          minDurationYears={minDurationYears}
-          nowSeconds={nowSeconds}
-          onRenewName={onRenewName}
-          onRenewalYearsChange={onRenewalYearsChange}
-          renewalBusy={renewalBusy}
-          renewalError={renewalError}
-          renewalFee={renewalFee}
-          renewalPreviewExpiresAt={renewalPreviewExpiresAt}
-          renewalTxState={renewalTxState}
-          renewalYears={renewalYears}
-        />
+        <RenewalPanel managedName={managedName} renewal={renewal} clock={clock} />
       )}
     </Panel>
   )

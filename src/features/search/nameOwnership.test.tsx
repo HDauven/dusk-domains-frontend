@@ -1,3 +1,4 @@
+import { searchActions } from './test-fixtures/searchActions'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
 import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
@@ -12,10 +13,31 @@ import type { UseSearchControllerProps } from './searchControllerTypes'
 function page(managedName: ManagedNameState, viewerAuthority = 'viewer') {
   return renderToStaticMarkup(<SearchResultPanel {...{
     headerProps: { status: 'registered', displayName: 'other.dusk', owner: 'viewer', records: [], viewerAuthority },
-    primaryProps: { primaryVerification: { verified: false }, displayName: 'other.dusk' },
-    settingsProps: { managedName }, nodeHex: namehashHex('other.dusk'), resultView: 'details',
-    detailsProps: {displayName:'other.dusk', parentResolverRecords:[], activityEntries:[], subnames:[], primaryVerification:{tone:'muted'}},
-    subdomainsProps: {subnames:[]}, overviewProps: {canRegister:false},
+    nodeHex: namehashHex('other.dusk'),
+    resultView: 'details',
+    detailsProps: {
+      displayName:'other.dusk',
+      parentResolverRecords:[],
+      subnames:[],
+      primaryVerification:{tone:'muted'},
+      activity: { activityEntries:[] },
+    },
+    overviewProps: {
+      canRegister:false,
+      quote: {  },
+      reservation: {  },
+    },
+    management: { primaryProps: { primaryVerification: { verified: false }, displayName: 'other.dusk' }, settingsProps: {
+        managedName,
+        ownership: {  },
+        renewal: {  },
+        clock: {  },
+      }, subdomainsProps: {
+        subnames:[],
+        creation: {  },
+        authority: {  },
+        clock: {  },
+      } },
   } as unknown as SearchResultPanelProps} />)
 }
 
@@ -49,11 +71,14 @@ it.each(['open', 'search'])('clears ownership when %s succeeds but hydration hea
     resolveForward: vi.fn(async () => ({ records: [] })),
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
   }
-  const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setIndexerError', 'setPrimaryEndpointValue',
-    'setConnectedPrimaryName', 'setPrimaryName', 'setResolverRecordSets', 'setSubnames', 'setCurrentBlockHeight'].map(key => [key, vi.fn()]))
-  const props = new Proxy({ ...setters, selectedAddress: '', setManagedName, indexerClient: client, recordSourceContractId: 'resolver',
-    beginActivityRead: () => () => true, beginOwnershipRead: () => () => true, loadPendingReservations: () => [],
-  }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
+  const props = {
+    ...searchActions({ domain: {
+      reset: () => setManagedName(createManagedNameState('resolver')),
+      clearName: () => setManagedName(createManagedNameState('resolver')),
+      hydrate: snapshot => setManagedName(snapshot.managedName),
+    } }),
+    openSearchView: vi.fn(), selectedAddress: '', indexerClient: client, recordSourceContractId: 'resolver', loadPendingReservations: () => [],
+  }
   let hydration!: ReturnType<typeof useIndexedNameHydration>
   function Probe() { hydration = useIndexedNameHydration(props as never); return null }
   renderToStaticMarkup(<Probe />)
@@ -74,8 +99,7 @@ it.each(['open', 'search'])('clears ownership when %s succeeds but hydration hea
 })
 
 it('opens a preview name as an example result instead of a registered profile', async () => {
-  const setResultView = vi.fn()
-  const actions = new Proxy({ indexerClient:null,setResultView }, {get:(target,key)=>key in target ? target[key as keyof typeof target] : vi.fn()}) as unknown as Parameters<typeof openIndexedName>[0]
-  await openIndexedName(actions,'preview.dusk')
-  expect(setResultView).toHaveBeenLastCalledWith('overview')
+  const state = searchActions()
+  await openIndexedName({ ...state, indexerClient: null, openSearchView: vi.fn() } as never, 'preview.dusk')
+  expect(state.search.open).toHaveBeenLastCalledWith('overview')
 })

@@ -8,7 +8,7 @@ import { RegistrationSummary } from './RegistrationSummary'
 import { ClaimSuccess } from './ClaimSuccess'
 
 export function RegistrationFlowPanel({ navigation, resultIssues, status, step, wizard }: RegistrationFlowPanelProps) {
-  if (wizard.registrationComplete) return <ClaimSuccess name={wizard.displayName} onOpen={step.onSetAddress} onAddRecords={step.onAddRecords} progress={step.registrationCompletion} />
+  if (wizard.registrationComplete) return <ClaimSuccess name={wizard.displayName} onOpen={step.purchase.onSetAddress} onAddRecords={step.purchase.onAddRecords} progress={step.purchase.registrationCompletion} />
   return (
     <Panel className="claim-card register-card" aria-labelledby="register-heading">
       <div className="claim-main register-main">
@@ -18,18 +18,15 @@ export function RegistrationFlowPanel({ navigation, resultIssues, status, step, 
         </header>
         <RegistrationStepPanel {...step} />
         <RegistrationPolicyNotes issues={resultIssues} />
-        <RegistrationFlowStatus {...status} walletError={step.registrationCompletion ? '' : status.walletError} />
+        <RegistrationFlowStatus {...status} walletError={step.purchase.registrationCompletion ? '' : status.walletError} />
       </div>
       <RegistrationSummary
-        premiumResult={step.premiumResult}
-        currentBlockHeight={step.currentBlockHeight}
-        activeReferral={step.activeReferral} appliedReferral={step.appliedReferral} committed={step.committed}
-        duration={step.duration} expiryDate={step.expiryDate}
-        feeConfigError={step.feeConfigError} onChangeTerm={navigation.onBackToOverview}
-        onRegisterSetsPrimaryChange={step.onRegisterSetsPrimaryChange}
-        primaryChoiceLocked={step.primaryChoiceLocked}
-        registerSetsPrimary={step.registerSetsPrimary} registrationComplete={false}
-        registrationFee={step.registrationFee} registrationTargetAddress={step.registrationTargetAddress} selectedAddress={step.selectedAddress}
+        committed={step.reservation.committed}
+        registrationComplete={false}
+        selectedAddress={step.wallet.selectedAddress}
+        quote={{ ...step.quote, onChangeTerm: navigation.onBackToOverview }}
+        referral={step.referral}
+        primaryChoice={step.primaryChoice}
       />
     </Panel>
   )

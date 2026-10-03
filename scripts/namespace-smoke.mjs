@@ -5,12 +5,20 @@ export async function checkNamespaceControls(page) {
     const { React, root } = window
     const { SubdomainList } = await import('/src/features/domains/subdomains/SubdomainList.tsx')
     root.render(React.createElement(SubdomainList, {
-      selectedAuthority: 'root-owner', currentBlockHeight: 100, nowSeconds: 0,
-      canControlSubname: () => true, onRecordTargetSelect: () => {},
-      onReassignSubname: async (name, owner, manager) => { window.namespaceReassigned = [name.node, owner, manager] },
-      onTakeBackSubname: async name => { window.namespaceTakenBack = name.node },
-      onRemoveSubname: async name => { window.namespaceRemoved = name.node },
+      onRecordTargetSelect: () => {},
       subnames: [{node:'leaf',parentNode:'child',parentName:'docs.alice.dusk',name:'api.docs.alice.dusk',label:'api',owner:'seller',manager:'seller',expiresAt:200,parentExpiresAt:200,expiryPolicy:'inherits_parent',status:'active'}],
+      authority: {
+        selectedAuthority: 'root-owner',
+        canControlSubname: () => true,
+        onReassignSubname: async (name, owner, manager) => { window.namespaceReassigned = [name.node, owner, manager] },
+        onTakeBackSubname: async name => { window.namespaceTakenBack = name.node },
+        onRemoveSubname: async name => { window.namespaceRemoved = name.node },
+      },
+      clock: {
+        currentBlockHeight: 100,
+        nowSeconds: 0,
+      },
+      creation: {},
     }))
   })
   await page.getByRole('button', {name:'Reassign',exact:true}).click()

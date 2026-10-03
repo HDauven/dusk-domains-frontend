@@ -17,6 +17,26 @@ export function useSearchAppState(accountScope: string) {
   const [indexerConfirmation, setIndexerConfirmation] = useScopedState(feedbackScope, '')
 
   return {
+    searchActions: {
+      reset: (nextValue: string) => {
+        setQuery(nextValue)
+        setChecked(false)
+        setResultView('overview')
+        setApiSearchResult(null)
+        setIndexerError('')
+        setIndexerConfirmation('')
+      },
+      open: (view: SearchResultView) => { setChecked(true); setResultView(view) },
+      showResult: (result: NameResult | null) => setApiSearchResult(result),
+      showView: (view: SearchResultView) => setResultView(view),
+      startRead: () => { setIndexerError(''); setIndexerConfirmation('') },
+      fail: (message: string) => setIndexerError(message),
+      confirm: (message: string) => setIndexerConfirmation(message),
+      updateClock: (height: number | null, seconds?: number) => {
+        setCurrentBlockHeight(height)
+        if (seconds !== undefined) setNowSeconds(seconds)
+      },
+    },
     apiSearchResult,
     checked,
     currentBlockHeight,

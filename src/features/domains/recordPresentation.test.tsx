@@ -13,15 +13,20 @@ const record = (key: ResolverRecordKey, value: string): ResolverRecord => ({
   key, value, visibility: 'public', ttlSeconds: 300, updatedAt: '',
 })
 const records = [record('text.description', 'Building tools for Dusk.'), record('text.display_name', 'Aurora'),
-  record('website', 'https://example.test'), record('avatar', 'ipfs://avatar'),
-  record('service_endpoint.chat', 'https://example.test/chat'), record('attestation_ref', 'urn:example:123'),
-  record('moonlight_address', 'dusk1abcdefghijklmnopqrst')]
+record('website', 'https://example.test'), record('avatar', 'ipfs://avatar'),
+record('service_endpoint.chat', 'https://example.test/chat'), record('attestation_ref', 'urn:example:123'),
+record('moonlight_address', 'dusk1abcdefghijklmnopqrst')]
 
 function profile(parentResolverRecords = records) {
-  return renderToStaticMarkup(<DomainDetailsView displayName="aurora.dusk" parentResolverRecords={parentResolverRecords}
-    activityEntries={[]} currentBlockHeight={null} formatActivityTime={vi.fn()} onActivity={vi.fn()}
-    onManageRecords={vi.fn()} onSubdomains={vi.fn()} paysPreviousOwner={null}
-    primaryVerification={{ tone: 'success', title: 'Primary name', description: 'Name and address match.', displayValue: 'aurora.dusk' }} subnames={[]} viewerAuthority="" />)
+  return renderToStaticMarkup(<DomainDetailsView displayName="aurora.dusk"
+    parentResolverRecords={parentResolverRecords}
+    onManageRecords={vi.fn()}
+    onSubdomains={vi.fn()}
+    paysPreviousOwner={null}
+    primaryVerification={{ tone: 'success', title: 'Primary name', description: 'Name and address match.', displayValue: 'aurora.dusk' }}
+    subnames={[]}
+    viewerAuthority=""
+    activity={{ activityEntries: [], currentBlockHeight: null, formatActivityTime: vi.fn(), onActivity: vi.fn() }} />)
 }
 
 describe('record presentation', () => {
@@ -81,7 +86,12 @@ describe('record presentation', () => {
   })
 
   it('keeps record labels and prose consistent in the list', () => {
-    const html = renderToStaticMarkup(<RecordsView resolverRecords={records} canRemoveRecords recordBusy={false} onClearRecord={vi.fn()} displayName="aurora.dusk" canSaveRecords={false} criticalRecordChange={false} editableRecordKeys={['website']} error="" onDiscardDrafts={vi.fn()} onDraftValueChange={vi.fn()} onSaveRecords={vi.fn()} onUseWalletPublicAddress={vi.fn()} onUseWalletShieldedAddress={vi.fn()} recordDraftErrors={[]} recordDraftValues={{}} txState={null} walletAddressAvailable />)
+    const html = renderToStaticMarkup(<RecordsView resolverRecords={records}
+      displayName="aurora.dusk"
+      editableRecordKeys={['website']}
+      actions={{ canRemoveRecords: true, recordBusy: false, onClearRecord: vi.fn(), canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
+      draft={{ criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
+      wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('<strong>Description</strong>')
     expect(html).toContain('<p>Building tools for Dusk.</p>')
     expect(html).toContain('<code>urn:example:123</code>')
@@ -90,10 +100,11 @@ describe('record presentation', () => {
 
   it.each(['aurora.dusk', 'pay.aurora.dusk'])('shows unsupported records as read only with removal on %s', displayName => {
     const html = renderToStaticMarkup(<RecordsView resolverRecords={[record('text.email', 'hello@example.test'), record('website', 'https://example.test')]}
-      canRemoveRecords recordBusy={false} onClearRecord={vi.fn()} displayName={displayName} canSaveRecords={false}
-      criticalRecordChange={false} editableRecordKeys={['website']} error="" onDiscardDrafts={vi.fn()}
-      onDraftValueChange={vi.fn()} onSaveRecords={vi.fn()} onUseWalletPublicAddress={vi.fn()}
-      onUseWalletShieldedAddress={vi.fn()} recordDraftErrors={[]} recordDraftValues={{}} txState={null} walletAddressAvailable />)
+      displayName={displayName}
+      editableRecordKeys={['website']}
+      actions={{ canRemoveRecords: true, recordBusy: false, onClearRecord: vi.fn(), canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
+      draft={{ criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
+      wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('hello@example.test')
     expect(html).toContain('Read only')
     expect(html).toContain('aria-label="Remove Email"')

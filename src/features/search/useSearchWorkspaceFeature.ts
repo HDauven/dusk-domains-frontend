@@ -4,18 +4,18 @@ import type { SearchWorkspace } from './SearchWorkspace'
 import { formatActivityTime } from '../domains/domainFormat'
 
 type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
-type SearchResultView = SearchWorkspaceProps['resultView']
+type SearchResultView = SearchWorkspaceProps['result']['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
   referralAddress?: string
-  premiumResult?: SearchWorkspaceProps['overviewProps']['premiumResult']
-  priceTiers?: SearchWorkspaceProps['priceTiers']
-  activityEntries: SearchWorkspaceProps['activityProps']['activityEntries']
+  premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
+  priceTiers?: SearchWorkspaceProps['search']['priceTiers']
+  activityEntries: SearchWorkspaceProps['result']['activityProps']['activityEntries']
   hasMoreActivity?: boolean
   onLoadMoreActivity?: () => void
   activityLoading: boolean
   canRegister: boolean
-  checked: SearchWorkspaceProps['checked']
+  checked: SearchWorkspaceProps['search']['checked']
   currentBlockHeight: number | null
   displayName: string
   duration: number
@@ -23,31 +23,31 @@ type UseSearchWorkspaceFeatureProps = {
   expiryDate: string
   feeConfigLoading: boolean
   nodeHex: string
-  onCheckAvailability: SearchWorkspaceProps['onCheckAvailability']
+  onCheckAvailability: SearchWorkspaceProps['search']['onCheckAvailability']
   onDurationChange: (duration: number) => void
-  onOpenPendingReservation: SearchWorkspaceProps['overviewProps']['onOpenPendingReservation']
-  onOpenPendingReservations: SearchWorkspaceProps['overviewProps']['onOpenPendingReservations']
-  onQueryChange: SearchWorkspaceProps['onQueryChange']
+  onOpenPendingReservation: SearchWorkspaceProps['result']['overviewProps']['reservation']['onOpenPendingReservation']
+  onOpenPendingReservations: SearchWorkspaceProps['result']['overviewProps']['reservation']['onOpenPendingReservations']
+  onQueryChange: SearchWorkspaceProps['search']['onQueryChange']
   onResultViewChange: (view: SearchResultView) => void
   onStartRegistration: () => void
-  parentResolverRecords: SearchWorkspaceProps['detailsProps']['parentResolverRecords']
+  parentResolverRecords: SearchWorkspaceProps['result']['detailsProps']['parentResolverRecords']
   paysPreviousOwner: string | null
-  primaryProps: SearchWorkspaceProps['primaryProps']
-  primaryVerification: SearchWorkspaceProps['detailsProps']['primaryVerification']
+  primaryProps: SearchWorkspaceProps['result']['management']['primaryProps']
+  primaryVerification: SearchWorkspaceProps['result']['detailsProps']['primaryVerification']
   query: string
-  recentWarnings: SearchWorkspaceProps['activityProps']['recentWarnings']
-  recordsProps: SearchWorkspaceProps['recordsProps']
+  recentWarnings: SearchWorkspaceProps['result']['activityProps']['recentWarnings']
+  recordsProps: SearchWorkspaceProps['result']['management']['recordsProps']
   registrationFee: number
-  registrationProps: SearchWorkspaceProps['registrationProps']
+  registrationProps: SearchWorkspaceProps['result']['registrationProps']
   resultReady: boolean
-  resultStatus: SearchWorkspaceProps['headerProps']['status']
-  resultIssues: SearchWorkspaceProps['overviewProps']['resultIssues']
-  resultView: SearchWorkspaceProps['resultView']
-  savedReservation: SearchWorkspaceProps['overviewProps']['savedReservation']
-  savedReservationWindow: SearchWorkspaceProps['overviewProps']['savedReservationWindow']
-  settingsProps: SearchWorkspaceProps['settingsProps']
-  subdomainsProps: SearchWorkspaceProps['subdomainsProps']
-  subnames: SearchWorkspaceProps['detailsProps']['subnames']
+  resultStatus: SearchWorkspaceProps['result']['headerProps']['status']
+  resultIssues: SearchWorkspaceProps['result']['overviewProps']['resultIssues']
+  resultView: SearchWorkspaceProps['result']['resultView']
+  savedReservation: SearchWorkspaceProps['result']['overviewProps']['reservation']['savedReservation']
+  savedReservationWindow: SearchWorkspaceProps['result']['overviewProps']['reservation']['savedReservationWindow']
+  settingsProps: SearchWorkspaceProps['result']['management']['settingsProps']
+  subdomainsProps: SearchWorkspaceProps['result']['management']['subdomainsProps']
+  subnames: SearchWorkspaceProps['result']['detailsProps']['subnames']
   viewerAuthority: string
 }
 
@@ -97,79 +97,91 @@ export function useSearchWorkspaceFeature({
 }: UseSearchWorkspaceFeatureProps) {
   const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
   const searchProps: SearchWorkspaceProps = {
-    priceTiers,
-    activityProps: {
-      ownerAddresses,
-      hasMore: hasMoreActivity,
-      onLoadMore: onLoadMoreActivity,
-      activityEntries,
-      currentBlockHeight,
-      displayName,
-      formatActivityTime,
+    search: {
+      priceTiers,
+      checked,
       loading: activityLoading,
-      recentWarnings,
-      viewerAuthority,
+      onCheckAvailability,
+      onQueryChange,
+      query,
+      resultReady,
     },
-    checked,
-    detailsProps: {
-      activityEntries,
-      currentBlockHeight,
-      displayName,
-      formatActivityTime,
-      onActivity: () => onResultViewChange('activity'),
-      onManageRecords: () => onResultViewChange('records'),
-      onSubdomains: () => onResultViewChange('subnames'),
-      parentResolverRecords,
-      paysPreviousOwner,
-      primaryVerification,
-      subnames,
-      viewerAuthority,
+    result: {
+      activityProps: {
+        ownerAddresses,
+        hasMore: hasMoreActivity,
+        onLoadMore: onLoadMoreActivity,
+        activityEntries,
+        currentBlockHeight,
+        displayName,
+        formatActivityTime,
+        loading: activityLoading,
+        recentWarnings,
+        viewerAuthority,
+      },
+      detailsProps: {
+        displayName,
+        onManageRecords: () => onResultViewChange('records'),
+        onSubdomains: () => onResultViewChange('subnames'),
+        parentResolverRecords,
+        paysPreviousOwner,
+        primaryVerification,
+        subnames,
+        viewerAuthority,
+        activity: {
+          activityEntries,
+          currentBlockHeight,
+          formatActivityTime,
+          onActivity: () => onResultViewChange('activity'),
+        },
+      },
+      headerProps: {
+        ownerAddresses,
+        viewerAuthority,
+        displayName,
+        lifecycleLabel,
+        primaryVerified: primaryProps.primaryVerification.verified,
+        owner: nodeHex && settingsProps.managedName.node === nodeHex ? settingsProps.managedName.owner : null,
+        records: resultStatus === 'registered' ? parentResolverRecords : [],
+        reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
+        status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
+      },
+      nodeHex,
+      onResultViewChange,
+      overviewProps: {
+        canRegister,
+        displayName,
+        onContinueRegistration: onStartRegistration,
+        onSuggestion: onQueryChange,
+        onViewDetails: () => onResultViewChange('details'),
+        resultIssues,
+        resultStatus,
+        quote: {
+          premiumResult,
+          currentBlockHeight,
+          duration,
+          expiryDate,
+          feeConfigLoading,
+          onDurationChange,
+          registrationFee,
+        },
+        reservation: {
+          onOpenPendingReservation,
+          onOpenPendingReservations,
+          savedReservation,
+          savedReservationWindow,
+        },
+      },
+      referralAddress,
+      registrationProps,
+      resultView,
+      management: {
+        primaryProps,
+        recordsProps,
+        settingsProps,
+        subdomainsProps,
+      },
     },
-    headerProps: {
-      ownerAddresses,
-      viewerAuthority,
-      displayName,
-      lifecycleLabel,
-      primaryVerified: primaryProps.primaryVerification.verified,
-      owner: nodeHex && settingsProps.managedName.node === nodeHex ? settingsProps.managedName.owner : null,
-      records: resultStatus === 'registered' ? parentResolverRecords : [],
-      reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
-      status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
-    },
-    loading: activityLoading,
-    nodeHex,
-    onCheckAvailability,
-    onQueryChange,
-    onResultViewChange,
-    overviewProps: {
-      premiumResult,
-      currentBlockHeight,
-      canRegister,
-      displayName,
-      duration,
-      expiryDate,
-      feeConfigLoading,
-      onContinueRegistration: onStartRegistration,
-      onDurationChange,
-      onOpenPendingReservation,
-      onOpenPendingReservations,
-      onSuggestion: onQueryChange,
-      onViewDetails: () => onResultViewChange('details'),
-      registrationFee,
-      resultIssues,
-      resultStatus,
-      savedReservation,
-      savedReservationWindow,
-    },
-    primaryProps,
-    query,
-    recordsProps,
-    referralAddress,
-    registrationProps,
-    resultReady,
-    resultView,
-    settingsProps,
-    subdomainsProps,
   }
 
   return {

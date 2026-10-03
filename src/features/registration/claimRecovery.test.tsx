@@ -40,11 +40,18 @@ it('lets an expired reservation be replaced while preventing early registration'
   expect(deriveRegistrationCapabilities({...props,walletAuthorized:false}).canRestartReservation).toBe(false)
 })
 it('offers inline wallet recovery and a restart for expired claims', () => {
-  const review={canPrepareCommit:false,commitBusy:false,commitStale:false,commitTxState:null,committed:false,installUrl:'/wallet',onOpenWalletConnection:vi.fn(),onPrepareCommit:vi.fn(),onRefreshWalletProviders:vi.fn(),walletDiscoveryRefreshing:false,txBusy:false}
-  for (const [walletSetupState, copy] of [['disconnected','Connect'],['wrong-network','Switch'],['missing','Install Dusk Wallet']] as const) {
-    expect(renderToStaticMarkup(<RegistrationReviewStep {...review} walletSetupState={walletSetupState} />)).toContain(copy)
+  const review = {
+    reservation: { canPrepareCommit: false, commitBusy: false, commitStale: false, commitTxState: null, committed: false, onPrepareCommit: vi.fn() },
+    wallet: { installUrl: '/wallet', onOpenWalletConnection: vi.fn(), onRefreshWalletProviders: vi.fn(), walletDiscoveryRefreshing: false },
+    purchase: { txBusy: false },
   }
-  const html=renderToStaticMarkup(<RegistrationPurchaseStep canRestartReservation canRevealRegistration={false} commitWindow={{status:'stale',waitBlocks:0,staleInBlocks:0}} installUrl="" onOpenWalletConnection={vi.fn()} onRegisterName={vi.fn()} onRestartReservation={vi.fn()} onSetAddress={vi.fn()} registrationCompletion={null} reservationStranded={false} txBusy={false} txState={null} walletSetupState="connected" />)
+  for (const [walletSetupState, copy] of [['disconnected','Connect'],['wrong-network','Switch'],['missing','Install Dusk Wallet']] as const) {
+    expect(renderToStaticMarkup(<RegistrationReviewStep {...review}
+        wallet={{ ...review.wallet, walletSetupState }} />)).toContain(copy)
+  }
+  const html=renderToStaticMarkup(<RegistrationPurchaseStep reservation={{ canRestartReservation: true, commitWindow: {status:'stale',waitBlocks:0,staleInBlocks:0}, onRestartReservation: vi.fn(), reservationStranded: false }}
+        purchase={{ canRevealRegistration: false, onRegisterName: vi.fn(), onSetAddress: vi.fn(), registrationCompletion: null, txBusy: false, txState: null }}
+        wallet={{ installUrl: "", onOpenWalletConnection: vi.fn(), walletSetupState: "connected" }} />)
   expect(html).toContain('Reservation expired')
   expect(html).toContain('Reserve again')
 })

@@ -27,10 +27,8 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     indexerClient,
     onChainClient,
     selectedAddress,
-    setActivityLoading,
-    setApiSearchResult,
-    setIndexerConfirmation,
-    setIndexerError,
+    activity,
+    search,
   } = props
 
   const refreshScope = useMemo(() => ({ displayName, indexerClient, onChainClient, selectedAddress }), [displayName, indexerClient, onChainClient, selectedAddress])
@@ -53,36 +51,34 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     isCurrent: () => boolean = () => true,
     options?: RefreshOptions,
   ) => {
-    const isCurrentActivity = props.beginActivityRead(safeNamehashHex(searchResult.canonical))
-    const isCurrentOwnership = props.beginOwnershipRead(safeNamehashHex(searchResult.canonical))
+    const isCurrentActivity = props.activity.beginRead(safeNamehashHex(searchResult.canonical))
+    const isCurrentOwnership = props.domain.beginRead(safeNamehashHex(searchResult.canonical))
     const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership() && currentAddress.current === selectedAddress
     const { currentBlockHeight, nowSeconds, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult, selectedAddress, onChainClient), [client, searchResult.canonical, selectedAddress, onChainClient], options?.fresh)
     if (!shouldApply()) return
-    props.setCurrentBlockHeight(currentBlockHeight)
-    props.setNowSeconds(nowSeconds)
+    search.updateClock(currentBlockHeight, nowSeconds)
     if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight, nowSeconds }, reads)
-  }, [hydrationFlight, props, selectedAddress, onChainClient])
+  }, [hydrationFlight, props, search, selectedAddress, onChainClient])
 
   const readData = useCallback(async (options?: RefreshOptions) => {
     if (!indexerClient) return false
 
-    setActivityLoading(true)
-    setIndexerError('')
-    setIndexerConfirmation('')
+    activity.startLoading()
+    search.startRead()
 
     const isLatestRead = beginNameRead()
     const isCurrent = () => isLatestRead() && currentName.current === displayName && currentAddress.current === selectedAddress
     try {
       const nextResult = await searchNameFromIndexer(indexerClient, displayName, options)
       if (!isCurrent()) return false
-      setApiSearchResult(nextResult)
+      search.showResult(nextResult)
       await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent, options)
       return isCurrent()
     } catch (error) {
-      if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
+      if (isCurrent()) search.fail(userFacingErrorMessage(error))
       return false
     } finally {
-      if (isCurrent()) setActivityLoading(false)
+      if (isCurrent()) activity.finishLoading()
     }
   }, [
     beginNameRead,
@@ -91,10 +87,8 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     hydrateNameFromIndexer,
     indexerClient,
     selectedAddress,
-    setActivityLoading,
-    setApiSearchResult,
-    setIndexerConfirmation,
-    setIndexerError,
+    activity,
+    search,
   ])
 
   const refreshCurrentNameFromIndexer = useSingleFlight(readData, refreshScope)

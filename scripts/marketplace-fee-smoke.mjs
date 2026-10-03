@@ -12,7 +12,7 @@ export async function checkListingFeeReview(page) {
     const core = {
       getCurrentBlockHeight: async () => ({ ok: true, value: 1000 }),
       getName: async () => ({ ok: true, value: { canonicalName: owned.canonicalName, node, marketplaceTransferable: true,
-        record: { owner: seller, lifecycle: { expiresAtBlock: 90000 } } } }),
+          record: { owner: seller, lifecycle: { expiresAtBlock: 90000 } } } }),
     }
     const indexerClient = {
       getMarketplaceFixedSalesPage: async () => ({ fixedSales: [], nextCursor: null }),
@@ -34,23 +34,23 @@ export async function checkListingFeeReview(page) {
       window.feeReview = state
       const props = state.marketplaceProps
       return React.createElement(React.Fragment, null,
-        React.createElement('output', { id: 'listing-fee', 'data-mode': props.saleMode, 'data-tab': props.tab }, props.feeBps),
-        React.createElement(MarketplaceReview, { review: props.review, disabled: !props.actionsAvailable,
-          onClose: props.onCancelReview, onConfirm: props.onConfirmReview }))
+        React.createElement('output', { id: 'listing-fee', 'data-mode': props.selling.saleMode, 'data-tab': props.navigation.tab }, props.selling.feeBps),
+        React.createElement(MarketplaceReview, { review: props.feedback.review, disabled: !props.wallet.actionsAvailable,
+          onClose: props.feedback.onCancelReview, onConfirm: props.feedback.onConfirmReview }))
     }
     root.render(React.createElement(FeeReview))
   })
   await page.waitForFunction(() => document.querySelector('#listing-fee')?.textContent === '250')
-  await page.evaluate(() => window.feeReview.marketplaceProps.onTabChange('sell'))
+  await page.evaluate(() => window.feeReview.marketplaceProps.navigation.onTabChange('sell'))
   await page.locator('#listing-fee[data-tab="sell"]').waitFor()
   for (const mode of ['fixed', 'auction']) {
     await page.evaluate(async mode => {
       window.listingFee = 250
       await window.feeReview.loadMarketplace()
-      window.feeReview.marketplaceProps.onSaleModeChange(mode)
+      window.feeReview.marketplaceProps.selling.onSaleModeChange(mode)
     }, mode)
     await page.locator(`#listing-fee[data-mode="${mode}"]`).waitFor()
-    await page.evaluate(() => window.feeReview.marketplaceProps.onCreateListing())
+    await page.evaluate(() => window.feeReview.marketplaceProps.selling.onCreateListing())
     await page.getByRole('dialog').waitFor()
     assert.match(await page.getByRole('dialog').innerText(), /24\.375 DUSK/)
     // An unchanged poll must preserve the review.
@@ -59,15 +59,15 @@ export async function checkListingFeeReview(page) {
     await page.evaluate(async () => { window.listingFee = 1000; await window.feeReview.loadMarketplace() })
     await page.waitForFunction(() => document.querySelector('#listing-fee')?.textContent === '1000')
     assert.equal(await page.getByRole('dialog').count(), 0, `${mode}: fee changes invalidate the open review`)
-    await page.evaluate(() => window.feeReview.marketplaceProps.onConfirmReview())
+    await page.evaluate(() => window.feeReview.marketplaceProps.feedback.onConfirmReview())
     assert.equal(await page.evaluate(() => window.listingCalls.length), 0, 'A stale review cannot submit')
-    await page.evaluate(() => window.feeReview.marketplaceProps.onCreateListing())
+    await page.evaluate(() => window.feeReview.marketplaceProps.selling.onCreateListing())
     await page.getByRole('dialog').waitFor()
     assert.match(await page.getByRole('dialog').innerText(), /22\.5 DUSK/)
     assert.match(await page.getByRole('dialog').innerText(), /2\.5 DUSK/)
     await page.getByRole('button', { name: 'Go back' }).click()
   }
-  await page.evaluate(() => window.feeReview.marketplaceProps.onCreateListing())
+  await page.evaluate(() => window.feeReview.marketplaceProps.selling.onCreateListing())
   await page.getByRole('dialog').waitFor()
   await page.getByRole('button', { name: 'Confirm in wallet' }).click()
   await page.waitForFunction(() => window.listingCalls.length === 1)

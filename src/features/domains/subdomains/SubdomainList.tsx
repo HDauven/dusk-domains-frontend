@@ -9,30 +9,31 @@ import { OwnerLabel } from '../../identity/OwnerLabel'
 import { formatLifecycleDay } from '../domainFormat'
 import type { SubdomainListProps } from './types'
 
-export function SubdomainList({
-  ownerAddresses,
-  canControlSubname,
-  onReassignSubname,
-  onRemoveSubname,
-  onTakeBackSubname,
-  selectedAuthority,
-  currentBlockHeight,
-  nowSeconds,
-  onRecordTargetSelect,
-  subnames,
-}: SubdomainListProps) {
+export function SubdomainList({ onRecordTargetSelect, subnames, authority, clock }: SubdomainListProps) {
+  const {
+    ownerAddresses,
+    canControlSubname,
+    onReassignSubname,
+    onRemoveSubname,
+    onTakeBackSubname,
+    selectedAuthority,
+  } = authority
+  const {
+    currentBlockHeight,
+    nowSeconds,
+  } = clock
   return (
     <div className="subname-list">
       {subnames.map((subname) => (
         <div className="subname-row" key={subname.node}>
-        <Button variant="quiet"
-          disabled={subname.status !== 'active'}
-          title={subname.status === 'active' ? `Open ${subname.name}` : undefined}
-          type="button"
-          onClick={() => onRecordTargetSelect(subname)}
-        >
-          <NameSignature name={subname.name} />
-        </Button>
+          <Button variant="quiet"
+            disabled={subname.status !== 'active'}
+            title={subname.status === 'active' ? `Open ${subname.name}` : undefined}
+            type="button"
+            onClick={() => onRecordTargetSelect(subname)}
+          >
+            <NameSignature name={subname.name} />
+          </Button>
           <Badge>{subname.status}</Badge>
           <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
           <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>

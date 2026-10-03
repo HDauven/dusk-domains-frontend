@@ -26,37 +26,141 @@ export async function checkNameFit(page, screenshotDir) {
       const registration = { navigation: { onBackToOverview: noop }, resultIssues: [],
         status: { walletError: '', showReservationRecovery: false },
         wizard: { registrationComplete: view === 'success', registrationStep: 'review', displayName: name },
-        step: { displayName: name, registrationStep: 'review', walletSetupState: 'connected', registrationCompletion: null,
-          selectedAddress: 'owner', registrationFee: 10, duration: 1, expiryDate: '2027-10-01', registrationTargetAddress: 'owner',
-          canPrepareCommit: true, onSetAddress: noop, onRegisterSetsPrimaryChange: noop, registerSetsPrimary: true,
-          commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 } } }
-      const content = view === 'my-names' ? el(MyDomainsView, { currentBlockHeight: 200, loading: false, myNamesError: '', selectedAddress: 'owner',
-        pendingReservations: [], myNames: Array.from({ length: count }, (_, i) => ({ ...names[i % names.length], node: `node-${i}` })), primarySummaries: {}, onConnectWallet: noop, onForgetPendingReservation: noop,
-        onOpenIndexedName: noop, onOpenPendingReservation: noop, onRefresh: noop, onSearchHome: noop })
-        : view === 'market' || view === 'auction' ? el(MarketplaceView, { tab: 'browse', marketplaceEnabled: true, actionsAvailable: true,
-          selectedAuctionNode: view === 'auction' ? names[index].node : undefined,
-          auctions: view === 'auction' ? [{ node: names[index].node, name, sellerAuthority: 'seller', reservePriceLux: 25e9, durationBlocks: 8640,
-            startDeadlineBlockHeight: 3000, startBlockHeight: null, endBlockHeight: null, highestBid: null,
-            bidCount: 0, feeBps: 250, escrowed: true, createdAtBlockHeight: 100 }] : [],
-          auctionActivity: [], bidDrafts: {}, offers: [], watchedNodes: [], currentBlockHeight: 200, selectedAddress: 'buyer', selectedAuthority: 'buyer',
-          onTabChange: noop, onToggleWatch: noop, fixedSales: names.map((name, i) => ({ node: name.node, name: name.canonicalName,
-            sellerAuthority: 'seller', priceLux: (25 + i) * 1e9, privateBuyer: null, expiresAtBlockHeight: 9000000,
-            openedAtBlockHeight: 100, escrowed: true })) })
-        : el('section', { className: 'result-area' },
-          view === 'header' ? el(NameHeader, { displayName: name, status: 'available', records: [], primaryVerified: false, reserved: false })
-            : view === 'subnames' ? el(SubdomainList, { currentBlockHeight: 200, nowSeconds: 1790000000, selectedAuthority: 'owner', ownerAddresses: [], onRecordTargetSelect: noop,
-              subnames: names.map(name => ({ node: name.node, name: `child.${name.canonicalName}`, status: 'active', manager: 'owner', expiryPolicy: 'inherits_parent', expiresAt: 9000000 })) })
-              : view === 'chips' ? el(SearchHero, { checked: false, loading: false, query: '', onQueryChange: noop, onCheckAvailability: noop,
-                onOpenName: noop, featuredNames: names.map(name => ({ name: name.canonicalName })) })
-              : view === 'profile' ? el(DomainDetailsView, { displayName: name, currentBlockHeight: 200, activityEntries: [],
-                parentResolverRecords: [], paysPreviousOwner: null, primaryVerification: { tone: 'neutral' }, viewerAuthority: 'owner',
-                formatActivityTime: noop, onActivity: noop, onManageRecords: noop, onSubdomains: noop,
-                subnames: names.map(name => ({ node: name.node, name: `child.${name.canonicalName}` })) })
-              : el(RegistrationFlowPanel, registration))
-      root.render(el(AppShell, { launchLinks: {}, mainView: view === 'my-names' ? 'my-names' : ['market', 'auction'].includes(view) ? 'marketplace' : 'search',
-        network: { label: 'Preview', tone: 'preview' }, onMainViewChange: noop, onOpenName: noop, onOpenWallet: noop,
-        onSearchHome: noop, pendingReservationCount: 0, runtimeNotice: null, searching: true, skyNames: [],
-        walletState: { accounts: [] }, walletStatus: 'connected' }, el('div', { 'data-name-fit-view': `${view}-${index}` }, content)))
+        step: {
+          registrationStep: 'review',
+          quote: {
+            displayName: name,
+            registrationFee: 10,
+            duration: 1,
+            expiryDate: '2027-10-01',
+            registrationTargetAddress: 'owner',
+          },
+          wallet: {
+            walletSetupState: 'connected',
+            selectedAddress: 'owner',
+          },
+          purchase: {
+            registrationCompletion: null,
+            onSetAddress: noop,
+          },
+          reservation: {
+            canPrepareCommit: true,
+            commitWindow: { status: 'waiting', waitBlocks: 5, staleInBlocks: 100 },
+          },
+          primaryChoice: {
+            onRegisterSetsPrimaryChange: noop,
+            registerSetsPrimary: true,
+          },
+          referral: {},
+        } }
+      const content = view === 'my-names' ? el(MyDomainsView, {
+        currentBlockHeight: 200,
+        loading: false,
+        myNamesError: '',
+        pendingReservations: [],
+        myNames: Array.from({ length: count }, (_, i) => ({ ...names[i % names.length], node: `node-${i}` })),
+        primarySummaries: {},
+        onForgetPendingReservation: noop,
+        onOpenIndexedName: noop,
+        onOpenPendingReservation: noop,
+        onRefresh: noop,
+        onSearchHome: noop,
+        wallet: {
+          selectedAddress: 'owner',
+          onConnectWallet: noop,
+        },
+      })
+        : view === 'market' || view === 'auction' ? el(MarketplaceView, {
+          navigation: {
+            tab: 'browse',
+            onTabChange: noop,
+          },
+          market: {
+            marketplaceEnabled: true,
+            currentBlockHeight: 200,
+          },
+          wallet: {
+            actionsAvailable: true,
+            selectedAddress: 'buyer',
+            selectedAuthority: 'buyer',
+          },
+          auction: {
+            selectedAuctionNode: view === 'auction' ? names[index].node : undefined,
+            auctionActivity: [],
+            bidDrafts: {},
+          },
+          listings: {
+            auctions: view === 'auction' ? [{ node: names[index].node, name, sellerAuthority: 'seller', reservePriceLux: 25e9, durationBlocks: 8640,
+              startDeadlineBlockHeight: 3000, startBlockHeight: null, endBlockHeight: null, highestBid: null,
+              bidCount: 0, feeBps: 250, escrowed: true, createdAtBlockHeight: 100 }] : [],
+            fixedSales: names.map((name, i) => ({ node: name.node, name: name.canonicalName,
+              sellerAuthority: 'seller', priceLux: (25 + i) * 1e9, privateBuyer: null, expiresAtBlockHeight: 9000000,
+              openedAtBlockHeight: 100, escrowed: true })),
+          },
+          offers: {
+            offers: [],
+          },
+          watchlist: {
+            watchedNodes: [],
+            onToggleWatch: noop,
+          },
+          selling: {},
+          feedback: {},
+          withdrawal: {},
+        })
+          : el('section', { className: 'result-area' },
+            view === 'header' ? el(NameHeader, { displayName: name, status: 'available', records: [], primaryVerified: false, reserved: false })
+              : view === 'subnames' ? el(SubdomainList, {
+                onRecordTargetSelect: noop,
+                subnames: names.map(name => ({ node: name.node, name: `child.${name.canonicalName}`, status: 'active', manager: 'owner', expiryPolicy: 'inherits_parent', expiresAt: 9000000 })),
+                clock: {
+                  currentBlockHeight: 200,
+                  nowSeconds: 1790000000,
+                },
+                authority: {
+                  selectedAuthority: 'owner',
+                  ownerAddresses: [],
+                },
+                creation: {},
+              })
+                : view === 'chips' ? el(SearchHero, { checked: false, loading: false, query: '', onQueryChange: noop, onCheckAvailability: noop,
+                  onOpenName: noop, featuredNames: names.map(name => ({ name: name.canonicalName })) })
+                  : view === 'profile' ? el(DomainDetailsView, {
+                    displayName: name,
+                    parentResolverRecords: [],
+                    paysPreviousOwner: null,
+                    primaryVerification: { tone: 'neutral' },
+                    viewerAuthority: 'owner',
+                    onManageRecords: noop,
+                    onSubdomains: noop,
+                    subnames: names.map(name => ({ node: name.node, name: `child.${name.canonicalName}` })),
+                    activity: {
+                      currentBlockHeight: 200,
+                      activityEntries: [],
+                      formatActivityTime: noop,
+                      onActivity: noop,
+                    },
+                  })
+                    : el(RegistrationFlowPanel, registration))
+      root.render(el(AppShell, {
+        launchLinks: {},
+        network: { label: 'Preview', tone: 'preview' },
+        runtimeNotice: null,
+        skyNames: [],
+        navigation: {
+          mainView: view === 'my-names' ? 'my-names' : ['market', 'auction'].includes(view) ? 'marketplace' : 'search',
+          onMainViewChange: noop,
+          onOpenName: noop,
+          onSearchHome: noop,
+          pendingReservationCount: 0,
+          searching: true,
+        },
+        wallet: {
+          onOpenWallet: noop,
+          walletState: { accounts: [] },
+          walletStatus: 'connected',
+        },
+      }, el('div', { 'data-name-fit-view': `${view}-${index}` }, content)))
     }
   }, labels)
   await checkContentSizedNames(page)

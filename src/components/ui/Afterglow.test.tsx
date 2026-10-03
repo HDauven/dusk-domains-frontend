@@ -66,12 +66,24 @@ describe('Afterglow names and copy', () => {
 
   it('says what is missing and what to do in My names', () => {
     const props: MyDomainsViewProps = {
-      currentBlockHeight: null, loading: false, myNames: [], myNamesError: '', selectedAddress: '',
-      pendingReservations: [], primarySummaries: {}, onConnectWallet: vi.fn(), onForgetPendingReservation: vi.fn(),
-      onOpenIndexedName: vi.fn(), onOpenPendingReservation: vi.fn(), onSearchHome: vi.fn(),
+      currentBlockHeight: null,
+      loading: false,
+      myNames: [],
+      myNamesError: '',
+      pendingReservations: [],
+      primarySummaries: {},
+      onForgetPendingReservation: vi.fn(),
+      onOpenIndexedName: vi.fn(),
+      onOpenPendingReservation: vi.fn(),
+      onSearchHome: vi.fn(),
+      wallet: {
+        selectedAddress: '',
+        onConnectWallet: vi.fn(),
+      },
     }
     expect(text(renderToStaticMarkup(<MyDomainsView {...props} />))).toContain('Connect a wallet to see its names.')
-    const connected = text(renderToStaticMarkup(<MyDomainsView {...props} selectedAddress="wallet" />))
+    const connected = text(renderToStaticMarkup(<MyDomainsView {...props}
+      wallet={{ ...props.wallet, selectedAddress: "wallet" }} />))
     expect(connected).toContain('This wallet has no names. Search for a name to register.')
     expect(connected).not.toContain('good ones go first')
   })

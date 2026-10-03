@@ -1,3 +1,5 @@
+import { readReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { searchActions } from '../search/test-fixtures/searchActions'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -36,7 +38,7 @@ function args() {
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
-it.each([true, false])('preserves the primary name choice %s when an uncertain claim is reopened', async (registerSetsPrimary) => {
+it.each([true, false])('preserves the primary name choice %s when an uncertain claim is saved', async (registerSetsPrimary) => {
   const props = args()
   await prepareRegistrationCommit({ ...props, registerSetsPrimary,
     submitNameWrite: Object.assign(async (_name: unknown, _call: unknown, options: { beforeSign: () => void; onUpdate: (state: unknown) => void }) => {
@@ -46,11 +48,7 @@ it.each([true, false])('preserves the primary name choice %s when an uncertain c
     }, { captureWorkspace: () => () => true }),
   } as never)
   const saved = listPendingNameReservations()[0]
-  const setRegisterSetsPrimary = vi.fn()
-  await openPendingReservation({ ...props, chainId: 'dusk:0', setRegisterSetsPrimary,
-    openSearchView: vi.fn(), setDuration: vi.fn(), setChecked: vi.fn(), setResultView: vi.fn(),
-  } as never, saved)
-  expect(setRegisterSetsPrimary).toHaveBeenLastCalledWith(registerSetsPrimary)
+  expect(readReservationPrimaryChoice(saved)).toBe(registerSetsPrimary)
 })
 
 it('saves before wallet approval and preserves the secret while a confirmed height read stalls', async () => {
@@ -117,27 +115,25 @@ it('does not call an uncertain saved request signed or submitted after reopening
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   const saved = listPendingNameReservations()[0]
   expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: null })
-  const setPreparedCommit = vi.fn(), setRegistrationStep = vi.fn()
-  let committed = false, currentBlockHeight: number | null = null
+  const updateCommit = vi.fn(), resume = vi.fn()
+  let currentBlockHeight: number | null = null
   const noop = () => {}
   const getCommitment = vi.fn(async () => null)
-  await openPendingReservation({ ...props, chainId: 'dusk:0', setPreparedCommit, setRegistrationStep,
-    setCommitted: (value: boolean) => { committed = value },
-    setCurrentBlockHeight: (value: number | null) => { currentBlockHeight = value },
-    openSearchView: noop, setDuration: noop, setChecked: noop, setResultView: noop,
-    setActivityLoading: noop, setApiSearchResult: noop, beginNameRead: () => () => true, hydrateNameFromIndexer: noop,
+  await openPendingReservation({ ...props, chainId: 'dusk:0',
+    ...searchActions({ registration: { resume, updateCommit }, search: { updateClock: height => { currentBlockHeight = height } } }),
+    openSearchView: noop, beginNameRead: () => () => true, hydrateNameFromIndexer: noop,
     indexerClient: { getCommitment, getHealth: async () => ({ ok: true, currentBlockHeight: 500 }),
       searchName: async () => ({ canonical: saved.name, status: 'available' }) } } as never, saved)
   expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment, controller)
-  expect(setRegistrationStep).toHaveBeenLastCalledWith('purchase')
-  expect(committed).toBe(true) // This flag resumes the flow; it does not prove a broadcast.
-  const commitWindow = registrationCommitWindow(setPreparedCommit.mock.calls.at(-1)?.[0].committedBlockHeight, currentBlockHeight)
+  expect(resume).toHaveBeenCalledExactlyOnceWith(saved)
+  // Resuming the flow does not prove a broadcast.
+  const commitWindow = registrationCommitWindow(updateCommit.mock.calls.at(-1)?.[0].committedBlockHeight, currentBlockHeight)
   expect(commitWindow.status).toBe('missing')
-  const view = { ...props, committed, commitWindow, walletSetupState: 'connected',
-    canRegister: true, canPrepareCommit: false, canRevealRegistration: false, commitBusy: false,
-    commitStale: false, commitTxState: null, txBusy: false, txState: null,
-    activeReferral: null, appliedReferral: null, registrationCompletion: null,
-    registrationFee: 10, total: 10, networkFee: null, expiryDate: '-', registrationTargetAddress: 'owner' }
+  const view = {
+    wallet: { walletSetupState: 'connected' },
+    reservation: { committed: true, commitWindow, canPrepareCommit: false, commitBusy: false, commitStale: false, commitTxState: null },
+    purchase: { canRevealRegistration: false, txBusy: false, txState: null, registrationCompletion: null },
+  }
   const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, view as never))
     + renderToStaticMarkup(createElement(RegistrationReviewStep, view as never))
   expect(html).toContain('Unconfirmed')
@@ -209,8 +205,11 @@ it('reserves again instead of revealing where a registry added since the commit 
   const capabilities = deriveRegistrationCapabilities({ ...props, commitBusy: false, txBusy: false, walletAuthorized: true,
     nodeHex: props.nodeHex, registrationCompletion: null, strandedCommitment: stranded } as never)
   expect(capabilities).toMatchObject({ canRevealRegistration: false, canRestartReservation: true, reservationStranded: true })
-  const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, { ...props, ...capabilities,
-    walletSetupState: 'connected', registrationCompletion: null, txBusy: false, txState: null } as never)).replaceAll('&#x27;', '\'')
+  const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, {
+    reservation: { commitWindow: props.commitWindow, canRestartReservation: capabilities.canRestartReservation, reservationStranded: capabilities.reservationStranded },
+    wallet: { walletSetupState: 'connected' },
+    purchase: { canRevealRegistration: capabilities.canRevealRegistration, registrationCompletion: null, txBusy: false, txState: null },
+  } as never)).replaceAll('&#x27;', '\'')
   expect(html).toContain('Dusk Domains added capacity since you reserved, so this reservation can\'t be completed.')
   expect(html).toContain('Reserve again')
   expect(html).not.toContain('Register name')

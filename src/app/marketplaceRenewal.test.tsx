@@ -22,7 +22,7 @@ vi.mock('./useContractOwner', () => ({ useContractOwner: () => true }))
 vi.mock('./managedNameState', async importOriginal => {
   const original = await importOriginal<typeof import('./managedNameState')>()
   return { ...original, createManagedNameState: () => ({ ...original.createManagedNameState('resolver'),
-    node: 'node', owner, manager: owner, expiresAt: 200, graceEndsAt: 300 }) }
+      node: 'node', owner, manager: owner, expiresAt: 200, graceEndsAt: 300 }) }
 })
 
 function renderRenewal() {
@@ -41,11 +41,33 @@ function renderRenewal() {
     canRenew = capabilities.canRenewName
     return <SearchResultPanel {...{
       headerProps: { status: 'registered', displayName: 'alice.dusk', records: [], viewerAuthority: 'payer' },
-      settingsProps: { ...capabilities, managedName, displayName: 'alice.dusk', currentBlockHeight: 250,
-        nowSeconds: 1_790_000_000, renewalYears: 1, minDurationYears: 1, maxDurationYears: 10,
-        renewalFee: 10, renewalPreviewExpiresAt: 3_153_800 },
-      detailsProps: { displayName: 'alice.dusk', parentResolverRecords: [], activityEntries: [], subnames: [], primaryVerification: { tone: 'muted' } },
-      subdomainsProps: { subnames: [] }, overviewProps: { canRegister: false }, nodeHex: 'node', resultView: 'manage',
+      detailsProps: {
+        displayName: 'alice.dusk',
+        parentResolverRecords: [],
+        subnames: [],
+        primaryVerification: { tone: 'muted' },
+        activity: { activityEntries: [] },
+      },
+      overviewProps: {
+        canRegister: false,
+        quote: {  },
+        reservation: {  },
+      },
+      nodeHex: 'node',
+      resultView: 'manage',
+      management: { settingsProps: {
+          ...capabilities,
+          managedName,
+          displayName: 'alice.dusk',
+          ownership: {  },
+          renewal: { renewalYears: 1, minDurationYears: 1, maxDurationYears: 10, renewalFee: 10, renewalPreviewExpiresAt: 3_153_800 },
+          clock: { currentBlockHeight: 250, nowSeconds: 1_790_000_000 },
+        }, subdomainsProps: {
+          subnames: [],
+          creation: {  },
+          authority: {  },
+          clock: {  },
+        } },
     } as unknown as SearchResultPanelProps} />
   }
   const html = renderToStaticMarkup(<Probe />)

@@ -7,11 +7,25 @@ it.each(['failed', 'rejected'] as const)('explains the reservation cap in a %s r
   const commitTxState = { status, context: { title: 'Reserve .dusk domain' },
     message: 'Transaction rejected: runtime panic: DuskDomains: pending commitment limit reached (16)' } as DuskDomainTxState
   const markup = renderToStaticMarkup(<RegistrationReviewStep {...{
-    commitTxState, walletSetupState: 'connected', canPrepareCommit: true,
-    commitBusy: false, commitStale: false, committed: false, txBusy: false,
-    onRefreshWalletProviders: () => {}, walletDiscoveryRefreshing: false, installUrl: '',
-    onOpenWalletConnection: () => {}, onPrepareCommit: () => {},
-  }} />)
+  reservation: {
+    commitTxState,
+    canPrepareCommit: true,
+    commitBusy: false,
+    commitStale: false,
+    committed: false,
+    onPrepareCommit: () => {},
+  },
+  wallet: {
+    walletSetupState: 'connected',
+    onRefreshWalletProviders: () => {},
+    walletDiscoveryRefreshing: false,
+    installUrl: '',
+    onOpenWalletConnection: () => {},
+  },
+  purchase: {
+    txBusy: false,
+  },
+}} />)
   expect(markup).toContain('Reservation limit reached')
   expect(markup).toContain('This wallet has 16 pending reservations. Open My names to finish a reservation, or wait for one to expire before reserving another.')
   expect(markup).not.toContain('runtime panic')

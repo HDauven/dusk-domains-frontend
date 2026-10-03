@@ -3,24 +3,30 @@ import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { ReferralState } from './referralState'
 
 export type ReferralsViewProps = {
-  onClaimReferralRewards: () => void
   onClearReferral: () => void
-  onCopyReferralLink: () => void
-  onOpenWalletConnection: () => void
-  referralAccountState: IndexedReferralState
-  referralClaimRecipient: string
-  referralClaimable: boolean
-  referralCopied: boolean
   referralError: string
-  referralLink: string
-  referralRewardClaimReady: boolean
-  referralRewardGuidance: string
-  referralRewardSummaryValue: string
-  referralRewardsSupported: boolean
   referralState: ReferralState
-  referralBusy: boolean
   referralConfirmation: string
-  referralTxState: DuskDomainTxState | null
-  selectedAddress: string
-  walletSetupState: WalletConnectionStatus
+  rewards: {
+    onClaimReferralRewards: () => void
+    referralAccountState: IndexedReferralState
+    referralClaimRecipient: string
+    referralClaimable: boolean
+    referralRewardClaimReady: boolean
+    referralRewardGuidance: string
+    referralRewardSummaryValue: string
+    referralRewardsSupported: boolean
+    referralBusy: boolean
+    referralTxState: DuskDomainTxState | null
+  }
+  link: {
+    onCopyReferralLink: () => void
+    referralCopied: boolean
+    referralLink: string
+  }
+  wallet: {
+    onOpenWalletConnection: () => void
+    selectedAddress: string
+    walletSetupState: WalletConnectionStatus
+  }
 }

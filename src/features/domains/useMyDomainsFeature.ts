@@ -51,19 +51,21 @@ export function useMyDomainsFeature({
   })
 
   const myDomainsProps: ComponentProps<typeof MyDomainsView> = {
-    walletStatus,
     currentBlockHeight,
     loading: myNamesLoading,
     myNames,
     myNamesError,
-    onConnectWallet,
     onForgetPendingReservation,
     onOpenIndexedName,
     onOpenPendingReservation,
     onSearchHome,
     pendingReservations,
     primarySummaries: myNamePrimarySummaries,
-    selectedAddress,
+    wallet: {
+      walletStatus,
+      onConnectWallet,
+      selectedAddress,
+    },
   }
 
   return {

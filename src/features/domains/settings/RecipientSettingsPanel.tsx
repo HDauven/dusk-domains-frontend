@@ -9,7 +9,18 @@ import type { ResolvedRecipient } from '../../identity/resolveRecipient'
 import { ManagementFeedback } from '../ManagementFeedback'
 import type { RecipientSettingsPanelProps } from './types'
 
-export function RecipientSettingsPanel({ canManageName, confirmationInput, displayName, managedName, managementError, managementTxState, onConfirmationInputChange, onResolveRecipient, onOwnershipUpdate, viewerAuthority, ownerAddresses }: RecipientSettingsPanelProps) {
+export function RecipientSettingsPanel({ displayName, managedName, ownership }: RecipientSettingsPanelProps) {
+  const {
+    canManageName,
+    confirmationInput,
+    managementError,
+    managementTxState,
+    onConfirmationInputChange,
+    onResolveRecipient,
+    onOwnershipUpdate,
+    viewerAuthority,
+    ownerAddresses,
+  } = ownership
   const [mode, setMode] = useState<'transfer' | 'manager' | null>(null)
   const [input, setInput] = useState('')
   const [recipient, setRecipient] = useState<ResolvedRecipient | null>(null)
