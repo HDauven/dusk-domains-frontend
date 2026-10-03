@@ -7,7 +7,7 @@ import type {
   DuskDomainsIndexerClient,
   DuskDomainsOnChainClient,
 } from '../names/internal'
-import { createManagedNameState, isMarketplaceEscrow } from './managedNameState'
+import { createManagedNameState, isMarketplaceEscrow, type ManagedNameState } from './managedNameState'
 import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
 
 export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null, nodeUrl = '', marketplaceContractId: string | null = null) {
@@ -40,7 +40,46 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
   ), [subnames])
 
   return {
-    beginOwnershipRead: ownership.beginRead,
+    searchActions: {
+      beginRead: ownership.beginRead,
+      clearName: () => ownership.setManagedName(createManagedNameState(recordSourceContractId)),
+      reset: () => {
+        ownership.setManagedName(createManagedNameState(recordSourceContractId))
+        setManagementTxState(null)
+        setRenewalTxState(null)
+        setRecordTxState(null)
+        setPrimaryTxState(null)
+        setSubnameTxState(null)
+        setManagementError('')
+        setRenewalError('')
+        setRecordError('')
+        setPrimaryError('')
+        setSubnameError('')
+        setConfirmationInput('')
+        setPrimaryEndpointValue('')
+        setPrimaryName(null)
+        setConnectedPrimaryName(null)
+        setSubnames([])
+        setSubnameLabel('settlement')
+        setSubnameManager('')
+        setSubnameExpiryPolicy('inherits_parent')
+        setSubnameExpiryDate('')
+        setRenewalYears(1)
+      },
+      hydrate: (snapshot: {
+        managedName: ManagedNameState
+        primaryEndpoint: string
+        primaryName: string | null
+        connectedPrimaryName: string | null
+        subnames: SubnameState[]
+      }) => {
+        setPrimaryEndpointValue(snapshot.primaryEndpoint)
+        setPrimaryName(snapshot.primaryName)
+        setConnectedPrimaryName(snapshot.connectedPrimaryName)
+        ownership.setManagedName(snapshot.managedName)
+        setSubnames(snapshot.subnames)
+      },
+    },
     confirmOwnershipWrite: ownership.afterWrite,
     pendingOwnership,
     retryOwnershipConfirmation: ownership.retry,

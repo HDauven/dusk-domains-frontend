@@ -7,26 +7,53 @@ import { RecordDraftEditor } from './RecordDraftEditor'
 import { ManagementFeedback } from './ManagementFeedback'
 import { recordLabel, isIdentifierRecord } from './recordPresentation'
 
-export function RecordsView({ canRemoveRecords, canSaveRecords, criticalRecordChange, displayName, editableRecordKeys, error, onClearRecord, onDiscardDrafts, onDraftValueChange, onSaveRecords, onUseWalletPublicAddress, onUseWalletShieldedAddress, recordBusy, recordDraftErrors, recordDraftValues, resolverRecords, txState, walletAddressAvailable }: {
-  canRemoveRecords: boolean
-  canSaveRecords: boolean
-  criticalRecordChange: boolean
+export function RecordsView({ displayName, editableRecordKeys, resolverRecords, actions, draft, wallet }: {
   displayName: string
   editableRecordKeys: readonly ResolverRecordKey[]
-  error: string
-  onClearRecord: (record: ResolverRecord) => void
-  onDiscardDrafts: () => void
-  onDraftValueChange: (key: ResolverRecordKey, value: string) => void
-  onSaveRecords: () => Promise<boolean | undefined>
-  onUseWalletPublicAddress: () => void
-  onUseWalletShieldedAddress: () => Promise<void>
-  recordBusy: boolean
-  recordDraftErrors: string[]
-  recordDraftValues: Partial<Record<ResolverRecordKey, string>>
   resolverRecords: ResolverRecord[]
-  txState: DuskDomainTxState | null
-  walletAddressAvailable: boolean
+  actions: {
+    canRemoveRecords: boolean
+    canSaveRecords: boolean
+    error: string
+    onClearRecord: (record: ResolverRecord) => void
+    onSaveRecords: () => Promise<boolean | undefined>
+    recordBusy: boolean
+    txState: DuskDomainTxState | null
+  }
+  draft: {
+    criticalRecordChange: boolean
+    onDiscardDrafts: () => void
+    onDraftValueChange: (key: ResolverRecordKey, value: string) => void
+    recordDraftErrors: string[]
+    recordDraftValues: Partial<Record<ResolverRecordKey, string>>
+  }
+  wallet: {
+    onUseWalletPublicAddress: () => void
+    onUseWalletShieldedAddress: () => Promise<void>
+    walletAddressAvailable: boolean
+  }
 }) {
+  const {
+    canRemoveRecords,
+    canSaveRecords,
+    error,
+    onClearRecord,
+    onSaveRecords,
+    recordBusy,
+    txState,
+  } = actions
+  const {
+    criticalRecordChange,
+    onDiscardDrafts,
+    onDraftValueChange,
+    recordDraftErrors,
+    recordDraftValues,
+  } = draft
+  const {
+    onUseWalletPublicAddress,
+    onUseWalletShieldedAddress,
+    walletAddressAvailable,
+  } = wallet
   const [editing, setEditing] = useState<ResolverRecordKey | null>(null)
   const [adding, setAdding] = useState(false)
   const available = editableRecordKeys.filter(key => !resolverRecords.some(record => record.key === key))

@@ -7,20 +7,20 @@ import { marketplaceAmountRow } from './marketplaceAmounts'
 import { auctionDurationLabel, auctionTimeLabel } from './marketplacePresentation'
 import type { MarketplaceBidReviewProps } from './marketplaceTypes'
 
-export function MarketplaceBidReview({ props }: { props: MarketplaceBidReviewProps }) {
-  const review = props.bidReview
+export function MarketplaceBidReview(props: MarketplaceBidReviewProps) {
+  const review = props.auction.bidReview
   if (!review) return null
   const { auction } = review
 
   return (
-    <Dialog open onClose={props.onCancelBidReview} labelledBy="marketplace-bid-review-heading">
+    <Dialog open onClose={props.auction.onCancelBidReview} labelledBy="marketplace-bid-review-heading">
       <section className="marketplace-bid-review">
         <div className="marketplace-review-heading">
           <div>
             <span>Review transaction</span>
             <h2 id="marketplace-bid-review-heading">Bid on {auction.name}</h2>
           </div>
-          <Button aria-label="Close bid review" type="button" onClick={props.onCancelBidReview}><X aria-hidden="true" size={18} /></Button>
+          <Button aria-label="Close bid review" type="button" onClick={props.auction.onCancelBidReview}><X aria-hidden="true" size={18} /></Button>
         </div>
 
         <div className="marketplace-review-amount">
@@ -33,8 +33,8 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceBidReviewPro
           rows={[
             marketplaceAmountRow(auction.highestBid ? 'Current highest bid' : 'Reserve price', BigInt(auction.highestBid?.amountLux ?? auction.reservePriceLux)),
             marketplaceAmountRow('Minimum allowed', review.minimumBidLux),
-            { label: auction.startBlockHeight === null ? 'Auction starts' : 'Time remaining', value: auction.startBlockHeight === null ? `After confirmation · ${auctionDurationLabel(auction.durationBlocks)}` : auctionTimeLabel(auction, props.currentBlockHeight) },
-            { label: 'If you win, name moves to', value: props.selectedAddress, address: true },
+            { label: auction.startBlockHeight === null ? 'Auction starts' : 'Time remaining', value: auction.startBlockHeight === null ? `After confirmation · ${auctionDurationLabel(auction.durationBlocks)}` : auctionTimeLabel(auction, props.market.currentBlockHeight) },
+            { label: 'If you win, name moves to', value: props.wallet.selectedAddress, address: true },
             { label: 'Network fee', value: 'Shown by your wallet before approval' },
           ]}
         />
@@ -48,8 +48,8 @@ export function MarketplaceBidReview({ props }: { props: MarketplaceBidReviewPro
         </div>
 
         <div className="marketplace-review-actions">
-          <Button type="button" onClick={props.onCancelBidReview}>Go back</Button>
-          <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onPlaceBid(auction)}>Confirm in wallet</Button>
+          <Button type="button" onClick={props.auction.onCancelBidReview}>Go back</Button>
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onPlaceBid(auction)}>Confirm in wallet</Button>
         </div>
       </section>
     </Dialog>

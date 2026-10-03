@@ -27,38 +27,30 @@ function safeLink(value: string) {
 }
 
 // A registered name's public profile: where to send, what it links to, and what changed lately.
-export function DomainDetailsView({
-  canEdit = false,
-  primaryControl,
-  activityEntries,
-  currentBlockHeight,
-  displayName,
-  formatActivityTime,
-  onActivity,
-  onManageRecords,
-  onSubdomains,
-  parentResolverRecords,
-  paysPreviousOwner,
-  primaryVerification,
-  subnames,
-  viewerAuthority,
-}: {
+export function DomainDetailsView({ canEdit = false, primaryControl, displayName, onManageRecords, onSubdomains, parentResolverRecords, paysPreviousOwner, primaryVerification, subnames, viewerAuthority, activity }: {
   canEdit?: boolean
   primaryControl?: ReactNode
-  activityEntries: ActivityEntry[]
-  currentBlockHeight: number | null
   displayName: string
-  formatActivityTime: (timestamp: string) => string
-  onActivity: () => void
   onManageRecords: () => void
   onSubdomains: () => void
   parentResolverRecords: ResolverRecord[]
-  // Set when the viewer owns the name but it still pays another address, e.g. after a transfer.
   paysPreviousOwner: string | null
   primaryVerification: PrimaryVerificationSummary
   subnames: SubnameState[]
   viewerAuthority: string
+  activity: {
+    activityEntries: ActivityEntry[]
+    currentBlockHeight: number | null
+    formatActivityTime: (timestamp: string) => string
+    onActivity: () => void
+  }
 }) {
+  const {
+    activityEntries,
+    currentBlockHeight,
+    formatActivityTime,
+    onActivity,
+  } = activity
   const payable = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))
     .filter((record): record is ResolverRecord => Boolean(record))

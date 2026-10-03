@@ -9,21 +9,20 @@ import {
 } from '../wallet/walletStatus'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
-export function ReferralLinkCard({
-  onCopyReferralLink,
-  onOpenWalletConnection,
-  referralCopied,
-  referralLink,
-  selectedAddress,
-  walletSetupState,
-}: Pick<ReferralsViewProps,
-  | 'onCopyReferralLink'
-  | 'onOpenWalletConnection'
-  | 'referralCopied'
-  | 'referralLink'
-  | 'selectedAddress'
-  | 'walletSetupState'
->) {
+export function ReferralLinkCard({ link, wallet }: {
+  link: Pick<ReferralsViewProps['link'], 'onCopyReferralLink' | 'referralCopied' | 'referralLink'>
+  wallet: Pick<ReferralsViewProps['wallet'], 'onOpenWalletConnection' | 'selectedAddress' | 'walletSetupState'>
+}) {
+  const {
+    onCopyReferralLink,
+    referralCopied,
+    referralLink,
+  } = link
+  const {
+    onOpenWalletConnection,
+    selectedAddress,
+    walletSetupState,
+  } = wallet
   const heading = selectedAddress ? 'Share it anywhere' : 'Get your link'
   const intro = selectedAddress
     ? 'It counts when someone registers a new name through it.'

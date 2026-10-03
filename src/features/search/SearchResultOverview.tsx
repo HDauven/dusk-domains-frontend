@@ -20,49 +20,47 @@ import type { ReservationWindow } from './overviewTypes'
 
 // The result for a name nobody holds: a claim card with the term, the price and one action.
 // A saved reservation or a name that cannot be claimed replaces it with the right next step.
-export function SearchResultOverview({
-  premiumResult,
-  currentBlockHeight,
-  readOnly = false,
-  registrationUnavailable = readOnly,
-  canRegister,
-  displayName,
-  duration,
-  expiryDate,
-  feeConfigLoading,
-  onContinueRegistration,
-  onDurationChange,
-  onOpenPendingReservation,
-  onOpenPendingReservations,
-  onViewDetails,
-  onSuggestion,
-  registrationFee,
-  resultIssues,
-  resultStatus,
-  savedReservation,
-  savedReservationWindow,
-}: {
-  premiumResult?: NameResult
-  currentBlockHeight?: number | null
+export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
   readOnly?: boolean
   registrationUnavailable?: boolean
   canRegister: boolean
   displayName: string
-  duration: number
-  expiryDate: string
-  feeConfigLoading: boolean
   onContinueRegistration: () => void
-  onDurationChange: (duration: number) => void
-  onOpenPendingReservation: (reservation: PendingNameReservation) => void
-  onOpenPendingReservations: () => void
   onSuggestion?: (name: string) => void
   onViewDetails: () => void
-  registrationFee: number
   resultIssues: NameResult['issues']
   resultStatus: NameStatus
-  savedReservation: PendingNameReservation | null
-  savedReservationWindow: ReservationWindow | null
+  quote: {
+    premiumResult?: NameResult
+    currentBlockHeight?: number | null
+    duration: number
+    expiryDate: string
+    feeConfigLoading: boolean
+    onDurationChange: (duration: number) => void
+    registrationFee: number
+  }
+  reservation: {
+    onOpenPendingReservation: (reservation: PendingNameReservation) => void
+    onOpenPendingReservations: () => void
+    savedReservation: PendingNameReservation | null
+    savedReservationWindow: ReservationWindow | null
+  }
 }) {
+  const {
+    premiumResult,
+    currentBlockHeight,
+    duration,
+    expiryDate,
+    feeConfigLoading,
+    onDurationChange,
+    registrationFee,
+  } = quote
+  const {
+    onOpenPendingReservation,
+    onOpenPendingReservations,
+    savedReservation,
+    savedReservationWindow,
+  } = reservation
   if (savedReservation) {
     const status = savedReservationWindow?.status ?? 'missing'
     const waitBlocks = savedReservationWindow?.waitBlocks ?? 0

@@ -13,7 +13,14 @@ function Result({ indexed }: { indexed: NameResult | null }) {
   const { result, displayName, canRegister } = useNamePreview({ apiSearchResult: indexed, currentBlockHeight: 100, duration: 1, feeConfig: DEFAULT_FEE_CONFIG, managedNameExpiresAt: 10_000, nowSeconds: 1_790_000_000, query: 'wallet.dusk', renewalYears: 1 })
   return <>
     <NameHeader displayName={displayName} lifecycleLabel={null} primaryVerified={false} records={[]} reserved={false} status={result.status} owner={owner} />
-    <SearchResultOverview canRegister={canRegister} displayName={displayName} duration={1} expiryDate="" feeConfigLoading={false} onContinueRegistration={vi.fn()} onDurationChange={vi.fn()} onOpenPendingReservation={vi.fn()} onOpenPendingReservations={vi.fn()} onViewDetails={vi.fn()} registrationFee={0} resultIssues={result.issues} resultStatus={result.status} savedReservation={null} savedReservationWindow={null} />
+    <SearchResultOverview canRegister={canRegister}
+      displayName={displayName}
+      onContinueRegistration={vi.fn()}
+      onViewDetails={vi.fn()}
+      resultIssues={result.issues}
+      resultStatus={result.status}
+      quote={{ duration: 1, expiryDate: "", feeConfigLoading: false, onDurationChange: vi.fn(), registrationFee: 0 }}
+      reservation={{ onOpenPendingReservation: vi.fn(), onOpenPendingReservations: vi.fn(), savedReservation: null, savedReservationWindow: null }} />
   </>
 }
 

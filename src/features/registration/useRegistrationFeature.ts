@@ -1,46 +1,69 @@
+import type { AppViewModelInputs } from '../../app/appViewTypes'
+import { openRegisteredName } from './openRegisteredName'
 import { premiumConfirmationQuote } from './premiumTiming'
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useRef, useState } from 'react'
 import { duskWalletInstallUrl } from '../../app/appConstants'
-import type { DuskDomainTxState, NameResult } from '../../names/internal'
-import type { ReferralState } from '../referrals/referralState'
-import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import type { RegistrationFlowPanelProps } from './RegistrationFlowPanel'
-import type { UseRegistrationActionsProps } from './registrationActionTypes'
-import type { RegistrationCompletionState } from './registrationCompletionState'
-import type { RegistrationStepId } from './registrationSteps'
 import { useRegistrationActions } from './useRegistrationActions'
 import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 
-export type UseRegistrationFeatureProps = UseRegistrationActionsProps & {
-  activeReferral: ReferralState | null
-  canRevealRegistration: boolean
-  commitBusy: boolean
-  commitStale: boolean
-  commitTxState: DuskDomainTxState | null
-  expiryDate: string
-  feeConfigError: string
-  onBackToOverview: () => void
-  onOpenWalletConnection: () => void
-  onRefreshWalletProviders: () => Promise<unknown> | void
-  onAddRecords?: () => void
-  onSetAddress: () => void
-  onViewPendingReservation: () => void
-  registrationCompletion: RegistrationCompletionState | null
-  registrationFee: number
-  registrationStep: RegistrationStepId
-  reservationStranded: boolean
-  resultIssues: NameResult['issues']
-  setRegisterSetsPrimary: Dispatch<SetStateAction<boolean>>
-  showReservationRecovery: boolean
-  txBusy: boolean
-  txState: DuskDomainTxState | null
-  walletDiscoveryRefreshing: boolean
-  walletError: string
-  walletSetupState: WalletConnectionStatus
-}
+export type UseRegistrationFeatureProps = Pick<AppViewModelInputs,
+  'activityFeed' | 'appRuntime' | 'derivedState' | 'domainRecordState' | 'domainState' | 'economicsRuntime' | 'mainViewRuntime' | 'namePreview' | 'registrationRuntime' | 'registrationState' | 'searchRuntime' | 'searchState' | 'walletRuntime'
+>
 
-export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
-  const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions(props)
+export function useRegistrationFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, mainViewRuntime, namePreview, registrationRuntime, registrationState, searchRuntime, searchState, walletRuntime }: UseRegistrationFeatureProps) {
+  const onBackToOverview = () => searchState.setResultView('overview')
+  const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions({
+    appliedReferral: economicsRuntime.appliedReferral,
+    appendActivity: activityFeed.appendActivity,
+    canPrepareCommit: derivedState.canPrepareCommit,
+    canRegister: namePreview.canRegister,
+    canRestartReservation: derivedState.canRestartReservation,
+    committed: registrationState.committed,
+    commitWindow: derivedState.commitWindow,
+    displayName: namePreview.displayName,
+    duration: registrationState.duration,
+    duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
+    feeConfig: economicsRuntime.feeConfig,
+    getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
+    indexerClient: appRuntime.indexerClient,
+    lifecycleBaseBlockHeight: namePreview.lifecycleBaseBlockHeight,
+    liveDuskDomainsApp: appRuntime.liveDuskDomainsApp,
+    loadPendingReservations: registrationRuntime.loadPendingReservations,
+    nodeHex: namePreview.nodeHex,
+    preparedCommit: registrationState.preparedCommit,
+    recordSourceContractId: appRuntime.recordSourceContractId,
+    refreshCommitBlockState: registrationRuntime.refreshCommitBlockState,
+    registerSetsPrimary: registrationState.registerSetsPrimary,
+    registrationTargetAddress: registrationRuntime.registrationTargetAddress,
+    registrationTargetAddressErrors: registrationRuntime.registrationTargetAddressErrors,
+    registrationTargetReady: registrationRuntime.registrationTargetReady,
+    result: namePreview.result,
+    runtimeConfig: appRuntime.runtimeConfig,
+    selectedAddress: walletRuntime.selectedAddress,
+    selectedAuthority: walletRuntime.selectedAuthority,
+    setCommitTxState: registrationState.setCommitTxState,
+    setCommitted: registrationState.setCommitted,
+    setCurrentBlockHeight: searchState.setCurrentBlockHeight,
+    setIndexerConfirmation: searchState.setIndexerConfirmation,
+    setIndexerError: searchState.setIndexerError,
+    setManagedName: domainState.setManagedName,
+    setNowSeconds: searchState.setNowSeconds,
+    setPreparedCommit: registrationState.setPreparedCommit,
+    setPrimaryEndpointValue: domainState.setPrimaryEndpointValue,
+    setConnectedPrimaryName: domainState.setConnectedPrimaryName,
+    setPrimaryName: domainState.setPrimaryName,
+    setRegistrationCompletion: registrationState.setRegistrationCompletion,
+    setRegistrationStep: registrationState.setRegistrationStep,
+    setResolverRecordSets: domainRecordState.setResolverRecordSets,
+    setStrandedCommitment: registrationState.setStrandedCommitment,
+    setTxState: registrationState.setTxState,
+    setWalletError: walletRuntime.setWalletError,
+    shouldApplyPreviewWriteFallback: searchRuntime.shouldApplyPreviewWriteFallback,
+    submitNameWrite: walletRuntime.submitNameWrite,
+    ensureContractAuthorityForLiveWrite: walletRuntime.ensureContractAuthorityForLiveWrite,
+    ensurePublicBalanceForLiveWrite: walletRuntime.ensurePublicBalanceForLiveWrite,
+  })
   const primaryChoicePending = useRef(false)
   const [primaryChoiceLocked, setPrimaryChoiceLocked] = useState(false)
   async function withPrimaryChoiceLocked(action: () => Promise<void>) {
@@ -52,71 +75,83 @@ export function useRegistrationFeature(props: UseRegistrationFeatureProps) {
       setPrimaryChoiceLocked(false)
     }
   }
-  const registrationComplete = props.registrationCompletion?.status === 'executed'
+  const registrationComplete = registrationState.registrationCompletion?.status === 'executed'
 
   const step: RegistrationFlowPanelProps['step'] = {
-    premiumResult: props.result,
-    currentBlockHeight: props.lifecycleBaseBlockHeight,
-    premiumConfirmation: premiumConfirmationQuote(props.result, props.duration, props.feeConfig, props.lifecycleBaseBlockHeight),
-    onWaitForPremium: props.onBackToOverview,
-    activeReferral: props.activeReferral,
-    appliedReferral: props.appliedReferral,
-    canPrepareCommit: props.canPrepareCommit,
-    canRegister: props.canRegister,
-    canRestartReservation: props.canRestartReservation,
-    canRevealRegistration: props.canRevealRegistration,
-    commitBusy: props.commitBusy,
-    commitStale: props.commitStale,
-    commitTxState: props.commitTxState,
-    commitWindow: props.commitWindow,
-    committed: props.committed,
-    displayName: props.displayName,
-    duration: props.duration,
-    expiryDate: props.expiryDate,
-    feeConfigError: props.feeConfigError,
-    installUrl: duskWalletInstallUrl,
-    onOpenWalletConnection: props.onOpenWalletConnection,
-    onPrepareCommit: () => void withPrimaryChoiceLocked(handlePrepareCommit),
-    onRefreshWalletProviders: props.onRefreshWalletProviders,
-    onRegisterName: confirmedTotalLux => void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux)),
-    onRestartReservation: () => void withPrimaryChoiceLocked(handleRestartReservation),
-    primaryChoiceLocked: primaryChoiceLocked || props.commitBusy || props.txBusy,
-    onRegisterSetsPrimaryChange: value => {
-      if (primaryChoicePending.current || props.commitBusy || props.txBusy) return
-      props.setRegisterSetsPrimary(value)
-      if (props.preparedCommit) saveReservationPrimaryChoice({ chainId: props.runtimeConfig.chainId, commitment: props.preparedCommit.commitment }, value)
+    registrationStep: registrationState.registrationStep,
+    quote: {
+      premiumResult: namePreview.result,
+      currentBlockHeight: namePreview.lifecycleBaseBlockHeight,
+      premiumConfirmation: premiumConfirmationQuote(namePreview.result, registrationState.duration, economicsRuntime.feeConfig, namePreview.lifecycleBaseBlockHeight),
+      onWaitForPremium: onBackToOverview,
+      canRegister: namePreview.canRegister,
+      displayName: namePreview.displayName,
+      duration: registrationState.duration,
+      expiryDate: namePreview.expiryDate,
+      feeConfigError: economicsRuntime.feeConfigError,
+      registrationFee: namePreview.registrationFee,
+      registrationTargetAddress: registrationRuntime.registrationTargetAddress,
+      registrationTargetAddressErrors: registrationRuntime.registrationTargetAddressErrors,
     },
-    onAddRecords: props.onAddRecords,
-    onSetAddress: props.onSetAddress,
-    registerSetsPrimary: props.registerSetsPrimary,
-    registrationCompletion: props.registrationCompletion,
-    registrationFee: props.registrationFee,
-    registrationStep: props.registrationStep,
-    registrationTargetAddress: props.registrationTargetAddress,
-    registrationTargetAddressErrors: props.registrationTargetAddressErrors,
-    reservationStranded: props.reservationStranded,
-    selectedAddress: props.selectedAddress,
-    txBusy: props.txBusy,
-    txState: props.txState,
-    walletDiscoveryRefreshing: props.walletDiscoveryRefreshing,
-    walletSetupState: props.walletSetupState,
+    referral: {
+      activeReferral: economicsRuntime.activeReferral,
+      appliedReferral: economicsRuntime.appliedReferral,
+    },
+    reservation: {
+      canPrepareCommit: derivedState.canPrepareCommit,
+      canRestartReservation: derivedState.canRestartReservation,
+      commitBusy: derivedState.commitBusy,
+      commitStale: derivedState.commitStale,
+      commitTxState: registrationState.commitTxState,
+      commitWindow: derivedState.commitWindow,
+      committed: registrationState.committed,
+      onPrepareCommit: () => void withPrimaryChoiceLocked(handlePrepareCommit),
+      onRestartReservation: () => void withPrimaryChoiceLocked(handleRestartReservation),
+      reservationStranded: derivedState.reservationStranded,
+    },
+    purchase: {
+      canRevealRegistration: derivedState.canRevealRegistration,
+      onRegisterName: confirmedTotalLux => void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux)),
+      onAddRecords: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, async name => { await searchRuntime.openIndexedName(name); searchState.setResultView('records') }),
+      onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),
+      registrationCompletion: registrationState.registrationCompletion,
+      txBusy: derivedState.txBusy,
+      txState: registrationState.txState,
+    },
+    wallet: {
+      installUrl: duskWalletInstallUrl,
+      onOpenWalletConnection: () => void walletRuntime.handleOpenWalletConnection(),
+      onRefreshWalletProviders: () => walletRuntime.handleRefreshWalletProviders(),
+      selectedAddress: walletRuntime.selectedAddress,
+      walletDiscoveryRefreshing: walletRuntime.walletDiscoveryRefreshing,
+      walletSetupState: walletRuntime.walletSetupState,
+    },
+    primaryChoice: {
+      primaryChoiceLocked: primaryChoiceLocked || derivedState.commitBusy || derivedState.txBusy,
+      onRegisterSetsPrimaryChange: value => {
+        if (primaryChoicePending.current || derivedState.commitBusy || derivedState.txBusy) return
+        registrationState.setRegisterSetsPrimary(value)
+        if (registrationState.preparedCommit) saveReservationPrimaryChoice({ chainId: appRuntime.runtimeConfig.chainId, commitment: registrationState.preparedCommit.commitment }, value)
+      },
+      registerSetsPrimary: registrationState.registerSetsPrimary,
+    },
   }
 
   const registrationProps: RegistrationFlowPanelProps = {
     navigation: {
-      onBackToOverview: props.onBackToOverview,
+      onBackToOverview,
     },
-    resultIssues: props.resultIssues,
+    resultIssues: namePreview.result.issues,
     status: {
-      onViewPendingReservation: props.onViewPendingReservation,
-      showReservationRecovery: !registrationComplete && props.showReservationRecovery,
-      walletError: props.walletError,
+      onViewPendingReservation: () => void mainViewRuntime.handleMainViewChange('my-names'),
+      showReservationRecovery: !registrationComplete && Boolean(registrationState.committed && registrationState.preparedCommit && !derivedState.reservationStranded),
+      walletError: walletRuntime.walletError,
     },
     step,
     wizard: {
-      displayName: props.displayName,
+      displayName: namePreview.displayName,
       registrationComplete,
-      registrationStep: props.registrationStep,
+      registrationStep: registrationState.registrationStep,
     },
   }
 

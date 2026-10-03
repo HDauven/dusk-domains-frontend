@@ -34,11 +34,34 @@ function page(name: string, referralAddress = '', description = '') {
   const props = {
     referralAddress,
     headerProps: { status: 'registered', displayName: name, records: description ? [{ key: 'text.description', value: description, visibility: 'public' }] : [], viewerAuthority: '' },
-    settingsProps: { managedName: { node: 'node', owner: 'owner', manager: 'manager' } },
-    detailsProps: { displayName: name, parentResolverRecords: [], activityEntries: [], subnames: [], primaryVerification: { tone: 'muted' } },
-    subdomainsProps: { subnames: [] }, overviewProps: { canRegister: false }, nodeHex: 'node', resultView: 'details',
+    detailsProps: {
+      displayName: name,
+      parentResolverRecords: [],
+      subnames: [],
+      primaryVerification: { tone: 'muted' },
+      activity: { activityEntries: [] },
+    },
+    overviewProps: {
+      canRegister: false,
+      quote: {  },
+      reservation: {  },
+    },
+    nodeHex: 'node',
+    resultView: 'details',
+    management: { settingsProps: {
+        managedName: { node: 'node', owner: 'owner', manager: 'manager' },
+        ownership: {  },
+        renewal: {  },
+        clock: {  },
+      }, subdomainsProps: {
+        subnames: [],
+        creation: {  },
+        authority: {  },
+        clock: {  },
+      } },
   } as unknown as SearchResultPanelProps
-  return <SearchWorkspace {...props} checked resultReady loading={false} query={name} onCheckAvailability={() => {}} onQueryChange={() => {}} />
+  return <SearchWorkspace result={props}
+    search={{ checked: true, resultReady: true, loading: false, query: name, onCheckAvailability: () => {}, onQueryChange: () => {} }} />
 }
 
 const walletAddress = `contract:0x${'09'.repeat(32)}`
@@ -62,9 +85,21 @@ function AppNamePage({ selectedAddress = walletAddress, walletSetupState = 'conn
     derivedState: { primaryVerification: { tone: 'muted' } },
     namePreview: { displayName: 'aurora.dusk', nodeHex: 'node', result: { status: 'registered', issues: [] } },
     searchState: { checked: true, query: 'aurora.dusk', resultView: 'details' },
-    searchRuntime: {}, mainViewRuntime: {}, registrationState: { duration: 1 },
-    registrationProps: { wizard: {} }, primaryProps: { primaryVerification: {} },
-    settingsProps: { managedName }, subdomainsProps: { subnames: [] },
+    searchRuntime: {},
+    mainViewRuntime: {},
+    registrationState: { duration: 1 },
+    registrationProps: { wizard: {} },
+    management: { primaryProps: { primaryVerification: {} }, settingsProps: {
+        managedName,
+        ownership: {  },
+        renewal: {  },
+        clock: {  },
+      }, subdomainsProps: {
+        subnames: [],
+        creation: {  },
+        authority: {  },
+        clock: {  },
+      } },
   } as unknown as Parameters<typeof useAppSearchProps>[0])
   return <SearchWorkspace {...searchProps} />
 }

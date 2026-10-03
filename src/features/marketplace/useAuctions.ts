@@ -56,7 +56,7 @@ export function useAuctions({
   const activityPending = useRef(false)
   useEffect(() => () => { activityRequest.current += 1; activityPending.current = false }, [indexerClient, marketScope])
   const [auctionActivityLoading, setAuctionActivityLoading] = useState(false)
-  const [bidReview, setBidReview] = useScopedState<MarketplaceViewProps['bidReview']>(accountScope, null)
+  const [bidReview, setBidReview] = useScopedState<MarketplaceViewProps['auction']['bidReview']>(accountScope, null)
 
   // Fresh listings reset any draft that no longer clears the minimum bid.
   const [draftedAuctions, setDraftedAuctions] = useState(auctions)

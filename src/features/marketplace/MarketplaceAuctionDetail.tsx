@@ -25,19 +25,19 @@ import {
 } from './marketplacePresentation'
 import type { MarketplaceAuctionDetailProps } from './marketplaceTypes'
 
-export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedMarketplaceAuction; props: MarketplaceAuctionDetailProps }) {
-  const status = auctionStatus(auction, props.currentBlockHeight)
-  const ownAuction = sameAuthority(auction.sellerAuthority, props.selectedAuthority)
-  const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
-  const watched = props.watchedNodes.includes(auction.node)
+export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }: MarketplaceAuctionDetailProps & { selectedAuction: IndexedMarketplaceAuction }) {
+  const status = auctionStatus(auction, props.market.currentBlockHeight)
+  const ownAuction = sameAuthority(auction.sellerAuthority, props.wallet.selectedAuthority)
+  const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.wallet.selectedAuthority)
+  const watched = props.watchlist.watchedNodes.includes(auction.node)
   const minimum = minimumBidDusk(auction)
-  const marketplaceActivity = props.auctionActivity.filter((entry) => entry.eventType === 'domain_bid_placed' && (entry.blockHeight === null || entry.blockHeight >= auction.createdAtBlockHeight))
+  const marketplaceActivity = props.auction.auctionActivity.filter((entry) => entry.eventType === 'domain_bid_placed' && (entry.blockHeight === null || entry.blockHeight >= auction.createdAtBlockHeight))
 
   return (
     <div className="marketplace-auction-detail">
-      <div className="marketplace-navigation"><Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.onCloseAuction}>
+      <div className="marketplace-navigation"><Button variant="quiet" className="marketplace-back-button" type="button" onClick={props.auction.onCloseAuction}>
         <ArrowLeft aria-hidden="true" size={15} /> All listings
-      </Button><MarketplaceFreshness updatedAt={props.error === MARKETPLACE_SYNC_MESSAGE ? null : props.updatedAt} /></div>
+      </Button><MarketplaceFreshness updatedAt={props.feedback.error === MARKETPLACE_SYNC_MESSAGE ? null : props.market.updatedAt} /></div>
 
       <div className="marketplace-auction-hero">
         <div>
@@ -54,7 +54,7 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             aria-pressed={watched}
             className={`marketplace-watch-button labeled${watched ? ' active' : ''}`}
             type="button"
-            onClick={() => props.onToggleWatch(auction.node)}
+            onClick={() => props.watchlist.onToggleWatch(auction.node)}
           >
             <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={16} /> {watched ? 'Watching' : 'Watch'}
           </Button>
@@ -68,12 +68,12 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
               <h3 id="auction-details-heading" className="eyebrow">Details</h3>
             </div>
             <dl>
-              <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} /></dd></div>
+              <div><dt><UserRound aria-hidden="true" size={14} /> Seller</dt><dd><OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} /></dd></div>
               <div><dt><Clock3 aria-hidden="true" size={14} /> Duration</dt><dd>{auctionDurationLabel(auction.durationBlocks)}</dd></div>
               <div><dt>Bids</dt><dd>{auction.bidCount}</dd></div>
               <div><dt>Marketplace fee</dt><dd>{marketplaceFeeLabel(auction.feeBps)} from seller proceeds</dd></div>
               <div><dt><ShieldCheck aria-hidden="true" size={14} /> Custody</dt><dd>{auction.escrowed ? 'Name held in escrow' : 'Escrow verification failed'}</dd></div>
-              {auction.startBlockHeight === null ? <div><dt>Start window</dt><dd>{auctionStartWindowLabel(auction, props.currentBlockHeight)}</dd></div> : null}
+              {auction.startBlockHeight === null ? <div><dt>Start window</dt><dd>{auctionStartWindowLabel(auction, props.market.currentBlockHeight)}</dd></div> : null}
             </dl>
           </Panel>
 
@@ -81,18 +81,18 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
             <div className="marketplace-section-heading">
               <h3 id="auction-activity-heading" className="eyebrow">Bids · {auction.bidCount}</h3>
             </div>
-            {props.auctionActivityLoading ? (
+            {props.auction.auctionActivityLoading ? (
               <p className="marketplace-activity-empty">Loading auction activity…</p>
             ) : marketplaceActivity.length ? (
               <ol>
                 {marketplaceActivity.map((entry) => (
-                  <AuctionActivityRow currentBlockHeight={props.currentBlockHeight} entry={entry} key={entry.id} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} />
+                  <AuctionActivityRow currentBlockHeight={props.market.currentBlockHeight} entry={entry} key={entry.id} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} />
                 ))}
               </ol>
             ) : (
               <p className="marketplace-activity-empty">No bids yet. The first bid starts the auction.</p>
             )}
-            {props.auctionActivityHasMore ? <Button variant="quiet" disabled={props.auctionActivityLoading} type="button" onClick={props.onLoadMoreAuctionActivity}>Load more auction activity</Button> : null}
+            {props.auction.auctionActivityHasMore ? <Button variant="quiet" disabled={props.auction.auctionActivityLoading} type="button" onClick={props.auction.onLoadMoreAuctionActivity}>Load more auction activity</Button> : null}
           </Panel>
         </div>
 
@@ -102,13 +102,13 @@ export function MarketplaceAuctionDetail({ auction, props }: { auction: IndexedM
           <div className="marketplace-bid-price">
             <span>{auction.highestBid ? 'Current bid' : 'Minimum bid'}</span>
             <strong><MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} roundUp={!auction.highestBid} /></strong>
-            {auction.highestBid ? <div className="marketplace-owner">Highest bidder <OwnerLabel authority={auction.highestBid.bidderAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} /></div> : null}
+            {auction.highestBid ? <div className="marketplace-owner">Highest bidder <OwnerLabel authority={auction.highestBid.bidderAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} /></div> : null}
             <small>{auction.bidCount} confirmed {auction.bidCount === 1 ? 'bid' : 'bids'}</small>
           </div>
           <div className="marketplace-bid-timer">
             <span>{auction.endBlockHeight === null ? 'Starts with first bid' : 'Time remaining'}</span>
-            <strong>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : <AuctionCountdown endBlock={auction.endBlockHeight} currentBlock={props.currentBlockHeight} />}</strong>
-            <small>{auction.endBlockHeight === null ? `Start window: ${auctionStartWindowLabel(auction, props.currentBlockHeight)}` : 'Estimated from chain time.'} Bids in the last 10 minutes extend it to 10 minutes remaining.</small>
+            <strong>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : <AuctionCountdown endBlock={auction.endBlockHeight} currentBlock={props.market.currentBlockHeight} />}</strong>
+            <small>{auction.endBlockHeight === null ? `Start window: ${auctionStartWindowLabel(auction, props.market.currentBlockHeight)}` : 'Estimated from chain time.'} Bids in the last 10 minutes extend it to 10 minutes remaining.</small>
           </div>
 
           <AuctionAction auction={auction} minimum={minimum} ownAuction={ownAuction} props={props} status={status} />
@@ -135,7 +135,7 @@ function AuctionAction({
     return (
       <div className="marketplace-auction-action-stack">
         <p>The auction is over. Finalization transfers the name and pays the seller.</p>
-        <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={() => props.onSettleAuction(auction)}>Finalize auction</Button>
+        <Button variant="primary" className="compact" disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onSettleAuction(auction)}>Finalize auction</Button>
       </div>
     )
   }
@@ -143,7 +143,7 @@ function AuctionAction({
     return (
       <div className="marketplace-auction-action-stack">
         <p>No bid started this auction before its deadline.</p>
-        <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireAuction(auction)}>Close auction</Button>
+        <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onExpireAuction(auction)}>Close auction</Button>
       </div>
     )
   }
@@ -151,14 +151,14 @@ function AuctionAction({
     return auction.highestBid === null ? (
       <div className="marketplace-auction-action-stack">
         <p>You can cancel before the first bid. After bidding starts, the auction is binding.</p>
-        <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelAuction(auction)}>Cancel auction</Button>
+        <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onCancelAuction(auction)}>Cancel auction</Button>
       </div>
     ) : (
       <div className="marketplace-auction-action-stack"><p>Your name remains in escrow until the auction is finalized.</p></div>
     )
   }
-  if (!props.selectedAddress) {
-    return <Button variant="primary" className="compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet to bid</Button>
+  if (!props.wallet.selectedAddress) {
+    return <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet to bid</Button>
   }
   const form = (
     <div className="marketplace-auction-action-stack">
@@ -168,24 +168,24 @@ function AuctionAction({
           <Input
             aria-describedby={`bid-help-${auction.node}`}
             aria-label={`Bid on ${auction.name}`}
-            disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed}
+            disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !auction.escrowed}
             inputMode="decimal"
             type="text"
-            value={props.bidDrafts[auction.node] ?? minimum}
-            onChange={(event) => props.onBidDraftChange(auction.node, event.target.value)}
+            value={props.auction.bidDrafts[auction.node] ?? minimum}
+            onChange={(event) => props.auction.onBidDraftChange(auction.node, event.target.value)}
           />
           <span>DUSK</span>
         </div>
       </label>
       <div className="marketplace-minimum-row" id={`bid-help-${auction.node}`}>
         {auction.highestBid ? <span title={`${formatLuxAsDusk(minimumBidLux(auction))} DUSK`}>Minimum {minimum} DUSK</span> : null}
-        <Button type="button" onClick={() => props.onBidDraftChange(auction.node, minimum)}>Use minimum</Button>
+        <Button type="button" onClick={() => props.auction.onBidDraftChange(auction.node, minimum)}>Use minimum</Button>
       </div>
-      <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.onReviewBid(auction)}>Review bid</Button>
+      <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.auction.onReviewBid(auction)}>Review bid</Button>
       <p className="marketplace-custody-note">Your full bid is locked in the marketplace contract. If you’re outbid, it becomes withdrawable marketplace balance.</p>
     </div>
   )
-  return sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
+  return sameAuthority(auction.highestBid?.bidderAuthority, props.wallet.selectedAuthority)
     ? <details className="marketplace-raise-bid"><summary>Raise bid</summary>{form}</details>
     : form
 

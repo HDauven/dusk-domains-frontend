@@ -21,9 +21,9 @@ export async function checkOpenRenewal(page) {
     window.renewalMarketplaceUiEnabled = config.capabilities.marketplace
     const poolConfig = new Promise(resolve => { window.resolveRenewalPool = () => resolve({ marketplace: Array(32).fill(0xcc) }) })
     const read = createDuskDomainsOnChainReadTransport({ readContract: async ({ contract: target, functionName }) => {
-      if (target !== config.contracts.router || functionName !== 'config') throw new Error('Expected router config read')
-      return { output: await poolConfig, fnName: 'config' }
-    } }, config.contracts)
+        if (target !== config.contracts.router || functionName !== 'config') throw new Error('Expected router config read')
+        return { output: await poolConfig, fnName: 'config' }
+      } }, config.contracts)
     function Probe() {
       const [poolRead, setPoolRead] = React.useState(read)
       const marketplaceContractId = usePoolMarketplace(poolRead)
@@ -54,21 +54,57 @@ export async function checkOpenRenewal(page) {
       window.renewalOwner = managedName.owner
       return React.createElement(SearchResultPanel, {
         headerProps: { status: 'registered', displayName: 'alice.dusk', records: [], viewerAuthority: selectedAuthority },
-        settingsProps: { ...capabilities, managedName, displayName: 'alice.dusk', currentBlockHeight: 250,
-          nowSeconds: 1_790_000_000, renewalYears: 1, minDurationYears: 1, maxDurationYears: 10,
-          renewalFee: 10, renewalPreviewExpiresAt: 3_153_800,
-          onRenewName: () => renewDomainName({ ...capabilities, managedName, displayName: 'alice.dusk', nodeHex: 'node',
-            selectedAuthority, resultLabel: 'alice', renewalYears: 1, currentBlockHeight: 250, nowSeconds: 1_790_000_000,
-            walletSetupState: 'connected', runtimeConfig: { contracts: {} }, setRenewalError: message => { window.renewalError = message },
-            setManagedName, appendActivity: event => { window.renewalActivity = event },
-            ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
-            shouldApplyPreviewWriteFallback: async () => true,
-            submitNameWrite: Object.assign(async (_name, call) => { window.renewalCall = call; return { status: 'executed', txId: 'paid' } }, { captureWorkspace: () => () => true }),
-          }),
+        detailsProps: {
+          displayName: 'alice.dusk',
+          parentResolverRecords: [],
+          subnames: [],
+          primaryVerification: { tone: 'muted' },
+          activity: {
+            activityEntries: [],
+          },
         },
-        detailsProps: { displayName: 'alice.dusk', parentResolverRecords: [], activityEntries: [], subnames: [], primaryVerification: { tone: 'muted' } },
-        subdomainsProps: { subnames: [] }, overviewProps: { canRegister: false }, nodeHex: 'node', resultView,
+        overviewProps: {
+          canRegister: false,
+          quote: {},
+          reservation: {},
+        },
+        nodeHex: 'node',
+        resultView,
         onResultViewChange: setView,
+        management: {
+          settingsProps: {
+            managedName,
+            displayName: 'alice.dusk',
+            ownership: { canManageName: capabilities.canManageName },
+            clock: {
+              currentBlockHeight: 250,
+              nowSeconds: 1_790_000_000,
+            },
+            renewal: {
+              canRenewName: capabilities.canRenewName,
+              renewalBusy: capabilities.renewalBusy,
+              renewalYears: 1,
+              minDurationYears: 1,
+              maxDurationYears: 10,
+              renewalFee: 10,
+              renewalPreviewExpiresAt: 3_153_800,
+              onRenewName: () => renewDomainName({ ...capabilities, managedName, displayName: 'alice.dusk', nodeHex: 'node',
+                selectedAuthority, resultLabel: 'alice', renewalYears: 1, currentBlockHeight: 250, nowSeconds: 1_790_000_000,
+                walletSetupState: 'connected', runtimeConfig: { contracts: {} }, setRenewalError: message => { window.renewalError = message },
+                setManagedName, appendActivity: event => { window.renewalActivity = event },
+                ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
+                shouldApplyPreviewWriteFallback: async () => true,
+                submitNameWrite: Object.assign(async (_name, call) => { window.renewalCall = call; return { status: 'executed', txId: 'paid' } }, { captureWorkspace: () => () => true }),
+              }),
+            },
+          },
+          subdomainsProps: {
+            subnames: [],
+            creation: {},
+            authority: {},
+            clock: {},
+          },
+        },
       })
     }
     root.render(React.createElement(Probe))

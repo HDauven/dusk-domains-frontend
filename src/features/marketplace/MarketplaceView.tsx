@@ -30,20 +30,20 @@ const tabs: Array<{ id: MarketplaceTab; label: string }> = [
 ]
 
 export function MarketplaceView(props: MarketplaceViewProps) {
-  const { actionsAvailable, confirmation, error, loading, marketplaceEnabled, onTabChange, refund, tab, txState } = props
+  const { wallet: { actionsAvailable }, feedback: { confirmation, error, txState }, market: { loading, marketplaceEnabled }, navigation: { onTabChange, tab }, withdrawal: { refund } } = props
   const networkNotice = useContext(NetworkFreshnessContext)
   const syncing = error === MARKETPLACE_SYNC_MESSAGE
-  const selectedAuction = props.auctions.find((auction) => auction.node === props.selectedAuctionNode) ?? null
+  const selectedAuction = props.listings.auctions.find((auction) => auction.node === props.auction.selectedAuctionNode) ?? null
 
   return (
     <AccountPanel className="marketplace-panel" labelledBy="marketplace-heading" panelId="marketplace">
-      {!props.selectedAuctionNode ? <AccountViewHeader
+      {!props.auction.selectedAuctionNode ? <AccountViewHeader
         description="Buy, sell and bid on .dusk names. Names and payments are held in escrow."
         heading="Market"
         headingId="marketplace-heading"
       /> : null}
 
-      {!props.selectedAuctionNode ? <div className="marketplace-navigation"><Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" /><MarketplaceFreshness updatedAt={syncing ? null : props.updatedAt} /></div> : null}
+      {!props.auction.selectedAuctionNode ? <div className="marketplace-navigation"><Tabs id="marketplace-views" label="Marketplace views" items={tabs} value={tab} onChange={onTabChange} className="marketplace-tabs" /><MarketplaceFreshness updatedAt={syncing ? null : props.market.updatedAt} /></div> : null}
 
       {props.takeBackOffers?.map(offer => <Panel key={offer.name}>
         <p>{offer.name}: the seller still holds {offer.count} subnames. Taking them back clears their records and primary names.</p>
@@ -75,23 +75,23 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <details className="marketplace-tx-details"><summary>Details</summary><p>Transaction <code>{txState.txId}</code></p></details>
       ) : txState ? <TransactionStatusNotice state={txState} /> : null}
 
-      {loading && !props.fixedSales.length && !props.auctions.length && !props.offers.length ? (
+      {loading && !props.listings.fixedSales.length && !props.listings.auctions.length && !props.offers.offers.length ? (
         <PanelMessage icon={<RefreshCw size={18} />}>Loading marketplace</PanelMessage>
       ) : null}
 
-      {props.selectedAuctionNode ? (
-        selectedAuction ? <MarketplaceAuctionDetail auction={selectedAuction} props={props} /> : <div><h1 id="marketplace-heading">Auction</h1><PanelMessage icon={<Store size={18} />}>{loading ? 'Loading auction…' : 'This auction is no longer open.'}</PanelMessage><Button onClick={props.onCloseAuction}>All listings</Button></div>
+      {props.auction.selectedAuctionNode ? (
+        selectedAuction ? <MarketplaceAuctionDetail selectedAuction={selectedAuction} {...props} /> : <div><h1 id="marketplace-heading">Auction</h1><PanelMessage icon={<Store size={18} />}>{loading ? 'Loading auction…' : 'This auction is no longer open.'}</PanelMessage><Button onClick={props.auction.onCloseAuction}>All listings</Button></div>
       ) : <TabPanel id="marketplace-views" value={tab}>
         {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse {...props} /> : null}
-        {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity props={props} /> : null}
+        {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity {...props} /> : null}
         {marketplaceEnabled && tab === 'sell' ? <MarketplaceSell {...props} /> : null}
         {marketplaceEnabled && tab === 'offers' ? <MarketplaceOffers {...props} /> : null}
-        {marketplaceEnabled && props.hasMore && !selectedAuction && tab !== 'sell' ? (
-          <Button variant="quiet" disabled={loading} type="button" onClick={props.onLoadMore}>Load more marketplace results</Button>
+        {marketplaceEnabled && props.market.hasMore && !selectedAuction && tab !== 'sell' ? (
+          <Button variant="quiet" disabled={loading} type="button" onClick={props.market.onLoadMore}>Load more marketplace results</Button>
         ) : null}
       </TabPanel>}
-      <MarketplaceBidReview props={props} />
-      <MarketplaceReview review={props.review ?? null} disabled={Boolean(props.tradingPaused) || !actionsAvailable} onClose={() => props.onCancelReview?.()} onConfirm={() => props.onConfirmReview?.()} />
+      <MarketplaceBidReview {...props} />
+      <MarketplaceReview review={props.feedback.review ?? null} disabled={Boolean(props.wallet.tradingPaused) || !actionsAvailable} onClose={() => props.feedback.onCancelReview?.()} onConfirm={() => props.feedback.onConfirmReview?.()} />
     </AccountPanel>
   )
 }

@@ -1,3 +1,4 @@
+import { searchActions } from '../features/search/test-fixtures/searchActions'
 import { createWriteAccess } from './writeAccess'
 import { unpaused } from './operatorPause'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -59,10 +60,31 @@ function expectControls(managedName: ManagedNameState, allowed: boolean) {
   }
   const html = renderToStaticMarkup(<SearchResultPanel {...{
     headerProps:{status:'registered',displayName:'alpha.dusk',owner:'viewer',records:[],viewerAuthority:'viewer'},
-    settingsProps:{managedName},nodeHex:node,resultView:'details',
-    primaryProps:{primaryVerification:{verified:false},displayName:'alpha.dusk'},
-    detailsProps:{displayName:'alpha.dusk',parentResolverRecords:[],activityEntries:[],subnames:[],primaryVerification:{tone:'muted'}},
-    subdomainsProps:{subnames:[]},overviewProps:{canRegister:false},
+    nodeHex:node,
+    resultView:'details',
+    detailsProps:{
+      displayName:'alpha.dusk',
+      parentResolverRecords:[],
+      subnames:[],
+      primaryVerification:{tone:'muted'},
+      activity: { activityEntries:[] },
+    },
+    overviewProps:{
+      canRegister:false,
+      quote: {  },
+      reservation: {  },
+    },
+    management: { settingsProps:{
+        managedName,
+        ownership: {  },
+        renewal: {  },
+        clock: {  },
+      }, primaryProps:{primaryVerification:{verified:false},displayName:'alpha.dusk'}, subdomainsProps:{
+        subnames:[],
+        creation: {  },
+        authority: {  },
+        clock: {  },
+      } },
   } as unknown as SearchResultPanelProps} />)
   for (const text of ['>You</','>Records</','>Settings</']) expect(html.includes(text),text).toBe(allowed)
 }
@@ -136,10 +158,10 @@ it('ignores hydration started before a transfer even if it arrives after confirm
   const staleClient = {getHealth:async()=>({ok:true}),getNameState:()=>oldRead,
     resolveForward:async()=>({records:[]}),getActivityPage:async()=>({activity:[]}),getAllSubnames:async()=>[]}
   let hydration!: ReturnType<typeof useIndexedNameHydration>
-  const setters = Object.fromEntries(['setActivityEntries','setActivityCursor','setIndexerError','setPrimaryEndpointValue',
-    'setConnectedPrimaryName', 'setPrimaryName','setResolverRecordSets','setSubnames','setCurrentBlockHeight','setNowSeconds'].map(key=>[key,vi.fn()]))
-  const props = new Proxy({...setters,selectedAddress:'',beginActivityRead:()=>()=>true,beginOwnershipRead:h.ownership.beginRead,setManagedName:h.ownership.setManagedName},
-    {get:(target,key)=>key in target ? target[key as keyof typeof target] : vi.fn()})
+  const props = { ...searchActions({ domain: {
+    beginRead: h.ownership.beginRead,
+    hydrate: snapshot => h.ownership.setManagedName(snapshot.managedName),
+  } }), selectedAddress: '' }
   function Probe(){hydration=useIndexedNameHydration(props as never);return null}
   renderToStaticMarkup(<Probe />)
   const read = hydration.hydrateNameFromIndexer(staleClient as never,{canonical:'alpha.dusk'} as never)
@@ -225,12 +247,12 @@ it('restores fresh ownership and lifecycle after a pending name is reopened with
   await vi.runAllTimersAsync()
   await write
   h.ownership.setManagedName(createManagedNameState('resolver'))
-  const setters = Object.fromEntries(['setActivityEntries','setActivityCursor','setIndexerError','setPrimaryEndpointValue',
-    'setConnectedPrimaryName', 'setPrimaryName','setResolverRecordSets','setSubnames','setCurrentBlockHeight','setNowSeconds'].map(key=>[key,vi.fn()]))
   let hydration!: ReturnType<typeof useIndexedNameHydration>
   function Probe() {
-    hydration=useIndexedNameHydration({...setters,recordSourceContractId:'resolver',
-      beginActivityRead:()=>()=>true,beginOwnershipRead:h.ownership.beginRead,setManagedName:h.ownership.setManagedName} as never)
+    hydration = useIndexedNameHydration({ ...searchActions({ domain: {
+      beginRead: h.ownership.beginRead,
+      hydrate: snapshot => h.ownership.setManagedName(snapshot.managedName),
+    } }), recordSourceContractId: 'resolver' } as never)
     return null
   }
   renderToStaticMarkup(<Probe />)

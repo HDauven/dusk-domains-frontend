@@ -11,7 +11,10 @@ const root = { node: 'root', owner: 'root-owner', manager: 'root-manager', expir
 const base = { managedName: root, subnames: [child, leaf], selectedAuthority: 'root-owner', currentBlockHeight: 100 }
 it.each(['root-owner', 'root-manager', 'parent-owner', 'parent-manager'])('shows nested Reassign and Remove for %s', selectedAuthority => {
   const props = { ...base, selectedAuthority }
-  const markup = renderToStaticMarkup(<SubdomainList selectedAuthority={selectedAuthority} subnames={[leaf]} canControlSubname={subname => canControlSubname(props, subname)} currentBlockHeight={100} nowSeconds={0} onRecordTargetSelect={() => {}} />)
+  const markup = renderToStaticMarkup(<SubdomainList subnames={[leaf]}
+    onRecordTargetSelect={() => {}}
+    authority={{ selectedAuthority, canControlSubname: subname => canControlSubname(props, subname) }}
+    clock={{ currentBlockHeight: 100, nowSeconds: 0 }} />)
   expect(markup).toContain('Reassign')
   expect(markup).toContain('Take back')
   expect(markup).toContain('Remove')
@@ -59,8 +62,8 @@ it('submits reassignments with the chosen owner and manager and checks projected
 it('allows take-back on the displayed subname without granting record management', async () => {
   const authority = `0x${'11'.repeat(32)}`
   const managedName = { ...root, node: leaf.node, owner: 'holder', manager: 'holder', ancestors: [
-    {node:'child',name:'docs.alice.dusk',owner:authority,manager:authority,expiresAtBlockHeight:200},
-  ] }
+      {node:'child',name:'docs.alice.dusk',owner:authority,manager:authority,expiresAtBlockHeight:200},
+    ] }
   const submitNameWrite = Object.assign(vi.fn(async () => ({status:'executed'})), { captureWorkspace: () => () => true })
   const confirmation = vi.fn(async (_description, check) => {
     expect(await check({getNameState:async()=>({node:leaf.node,owner:authority,manager:authority})})).toBe(true)

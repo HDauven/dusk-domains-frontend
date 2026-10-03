@@ -7,29 +7,21 @@ import { abbreviate } from '../../utils/format'
 import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
-export function ReferralRewardsCard({
-  onClaimReferralRewards,
-  referralAccountState,
-  referralBusy,
-  referralClaimRecipient,
-  referralClaimable,
-  referralRewardClaimReady,
-  referralRewardGuidance,
-  referralRewardSummaryValue,
-  referralRewardsSupported,
-  referralTxState,
-}: Pick<ReferralsViewProps,
-  | 'onClaimReferralRewards'
-  | 'referralAccountState'
-  | 'referralBusy'
-  | 'referralClaimRecipient'
-  | 'referralClaimable'
-  | 'referralRewardClaimReady'
-  | 'referralRewardGuidance'
-  | 'referralRewardSummaryValue'
-  | 'referralRewardsSupported'
-  | 'referralTxState'
->) {
+export function ReferralRewardsCard({ rewards }: {
+  rewards: Pick<ReferralsViewProps['rewards'], 'onClaimReferralRewards' | 'referralAccountState' | 'referralBusy' | 'referralClaimRecipient' | 'referralClaimable' | 'referralRewardClaimReady' | 'referralRewardGuidance' | 'referralRewardSummaryValue' | 'referralRewardsSupported' | 'referralTxState'>
+}) {
+  const {
+    onClaimReferralRewards,
+    referralAccountState,
+    referralBusy,
+    referralClaimRecipient,
+    referralClaimable,
+    referralRewardClaimReady,
+    referralRewardGuidance,
+    referralRewardSummaryValue,
+    referralRewardsSupported,
+    referralTxState,
+  } = rewards
   return (
     <AccountCard
       className={referralRewardsSupported && referralClaimable ? 'rewards-account-card claimable' : 'rewards-account-card'}

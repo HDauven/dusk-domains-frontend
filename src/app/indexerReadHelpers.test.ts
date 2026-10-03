@@ -1,3 +1,4 @@
+import { searchActions } from '../features/search/test-fixtures/searchActions'
 import { afterEach, expect, it, vi } from 'vitest'
 import { createHealthyIndexerClient, waitForIndexerBlock } from './indexerReadHelpers'
 import { checkAvailability } from '../features/search/actions/checkAvailability'
@@ -55,11 +56,9 @@ it('clears the previous availability before a retry that fails', async () => {
   const setApiSearchResult = vi.fn()
   const setIndexerError = vi.fn()
   await checkAvailability({
-    setManagedName: vi.fn(),
+    ...searchActions({ search: { showResult: setApiSearchResult, fail: setIndexerError } }),
     query: 'owned.dusk', beginNameRead: () => () => true,
     indexerClient: { searchName: async () => { throw new Error('Failed to fetch') } },
-    setApiSearchResult, setIndexerError, setChecked: vi.fn(), setResultView: vi.fn(),
-    setRegistrationStep: vi.fn(), setActivityLoading: vi.fn(), setIndexerConfirmation: vi.fn(),
   } as never)
   expect(setApiSearchResult.mock.calls).toEqual([[null]])
   expect(setIndexerError.mock.calls.at(-1)?.[0]).toMatch(/not reachable/)

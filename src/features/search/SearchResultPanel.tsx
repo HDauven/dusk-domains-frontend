@@ -30,19 +30,27 @@ export type SearchResultPanelProps = {
   onOpenName?: (name: string) => void
   onResultViewChange: (view: SearchResultView) => void
   overviewProps: ComponentProps<typeof SearchResultOverview>
-  primaryProps: ComponentProps<typeof PrimaryNameControl>
-  recordsProps: ComponentProps<typeof RecordsView>
   registrationProps: ComponentProps<typeof RegistrationFlowPanel>
   resultView: SearchResultView
-  settingsProps: ComponentProps<typeof DomainSettingsView>
-  subdomainsProps: ComponentProps<typeof SubdomainsView>
+  management: {
+    primaryProps: ComponentProps<typeof PrimaryNameControl>
+    recordsProps: ComponentProps<typeof RecordsView>
+    settingsProps: ComponentProps<typeof DomainSettingsView>
+    subdomainsProps: ComponentProps<typeof SubdomainsView>
+  }
 }
 
-export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, primaryProps, recordsProps, referralAddress, registrationProps, resultView, settingsProps, subdomainsProps }: SearchResultPanelProps) {
+export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, referralAddress, registrationProps, resultView, management }: SearchResultPanelProps) {
+  const {
+    primaryProps,
+    recordsProps,
+    settingsProps,
+    subdomainsProps,
+  } = management
   useNamePageMetadata(headerProps.displayName, headerProps.records)
   const managedName = nodeHex && settingsProps?.managedName.node === nodeHex ? settingsProps.managedName : null
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
-  const ancestorControl = canControlThroughAncestor(managedName, headerProps.viewerAuthority ?? '', settingsProps?.currentBlockHeight ?? null)
+  const ancestorControl = canControlThroughAncestor(managedName, headerProps.viewerAuthority ?? '', settingsProps?.clock.currentBlockHeight ?? null)
   const parent = managedName?.ancestors?.[0]
   const namespaceTarget = managedName && parent ? { node: managedName.node, name: headerProps.displayName, parentNode: parent.node } : null
   const canPayRenewal = Boolean(managedName?.ownerIsContract && canRenewOutsideEscrow(managedName) && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
@@ -53,7 +61,9 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
   const content = <>
     {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit || primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
     {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
-    {nodeHex && view === 'subnames' ? <SubdomainsView {...subdomainsProps} ownerAddresses={headerProps.ownerAddresses} canEdit={canEdit} onRecordTargetSelect={subname => onOpenName?.(subname.name)} /> : null}
+    {nodeHex && view === 'subnames' ? <SubdomainsView {...subdomainsProps}
+      onRecordTargetSelect={subname => onOpenName?.(subname.name)}
+      authority={{ ...subdomainsProps.authority, ownerAddresses: headerProps.ownerAddresses, canEdit }} /> : null}
     {nodeHex && view === 'records' && canEdit ? <RecordsView {...recordsProps} /> : null}
     {view === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}
     {view === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
@@ -64,9 +74,9 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
     {parent && !sameAuthority(parent.owner, managedName?.owner) ? <p className="field-note">The owner of {parent.name} can take this name back, and it expires with {parent.name}.</p> : null}
     {ancestorControl && namespaceTarget ? <>
       <SubnameAuthorityControls key={namespaceTarget.node} name={namespaceTarget.name}
-        onReassign={(owner, manager) => subdomainsProps.onReassignSubname?.(namespaceTarget, owner, manager) ?? Promise.resolve()}
-        onTakeBack={() => subdomainsProps.onTakeBackSubname?.(namespaceTarget) ?? Promise.resolve()}
-        onRemove={() => subdomainsProps.onRemoveSubname?.(namespaceTarget) ?? Promise.resolve()} />
+        onReassign={(owner, manager) => subdomainsProps.authority.onReassignSubname?.(namespaceTarget, owner, manager) ?? Promise.resolve()}
+        onTakeBack={() => subdomainsProps.authority.onTakeBackSubname?.(namespaceTarget) ?? Promise.resolve()}
+        onRemove={() => subdomainsProps.authority.onRemoveSubname?.(namespaceTarget) ?? Promise.resolve()} />
       <ManagementFeedback error={subdomainsProps.error} txState={subdomainsProps.txState} />
     </> : null}
     {tabbed ? <>

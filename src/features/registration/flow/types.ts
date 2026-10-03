@@ -28,47 +28,59 @@ export type RegistrationStatusProps = {
 }
 
 export type RegistrationStepPanelProps = {
-  premiumResult?: NameResult
-  currentBlockHeight?: number | null
-  premiumConfirmation?: PremiumConfirmationQuote | null
-  onWaitForPremium?: () => void
-  activeReferral: ReferralState | null
-  appliedReferral: ReferralState | null
-  canPrepareCommit: boolean
-  canRegister: boolean
-  canRestartReservation: boolean
-  canRevealRegistration: boolean
-  commitBusy: boolean
-  commitStale: boolean
-  commitTxState: DuskDomainTxState | null
-  commitWindow: CommitWindow
-  committed: boolean
-  displayName: string
-  duration: number
-  expiryDate: string
-  feeConfigError: string
-  installUrl: string
-  onOpenWalletConnection: () => void
-  onPrepareCommit: () => void
-  onRefreshWalletProviders: () => Promise<unknown> | void
-  onRegisterName: (confirmedTotalLux?: number) => void
-  onRegisterSetsPrimaryChange: (checked: boolean) => void
-  onRestartReservation: () => void
-  onAddRecords?: () => void
-  onSetAddress: () => void
-  primaryChoiceLocked: boolean
-  registerSetsPrimary: boolean
-  registrationCompletion: RegistrationCompletionState | null
-  registrationFee: number
   registrationStep: RegistrationStepId
-  registrationTargetAddress: string
-  registrationTargetAddressErrors: string[]
-  reservationStranded: boolean
-  selectedAddress: string
-  txBusy: boolean
-  txState: DuskDomainTxState | null
-  walletDiscoveryRefreshing: boolean
-  walletSetupState: WalletConnectionStatus
+  quote: {
+    premiumResult?: NameResult
+    currentBlockHeight?: number | null
+    premiumConfirmation?: PremiumConfirmationQuote | null
+    onWaitForPremium?: () => void
+    canRegister: boolean
+    displayName: string
+    duration: number
+    expiryDate: string
+    feeConfigError: string
+    registrationFee: number
+    registrationTargetAddress: string
+    registrationTargetAddressErrors: string[]
+  }
+  referral: {
+    activeReferral: ReferralState | null
+    appliedReferral: ReferralState | null
+  }
+  reservation: {
+    canPrepareCommit: boolean
+    canRestartReservation: boolean
+    commitBusy: boolean
+    commitStale: boolean
+    commitTxState: DuskDomainTxState | null
+    commitWindow: CommitWindow
+    committed: boolean
+    onPrepareCommit: () => void
+    onRestartReservation: () => void
+    reservationStranded: boolean
+  }
+  purchase: {
+    canRevealRegistration: boolean
+    onRegisterName: (confirmedTotalLux?: number) => void
+    onAddRecords?: () => void
+    onSetAddress: () => void
+    registrationCompletion: RegistrationCompletionState | null
+    txBusy: boolean
+    txState: DuskDomainTxState | null
+  }
+  wallet: {
+    installUrl: string
+    onOpenWalletConnection: () => void
+    onRefreshWalletProviders: () => Promise<unknown> | void
+    selectedAddress: string
+    walletDiscoveryRefreshing: boolean
+    walletSetupState: WalletConnectionStatus
+  }
+  primaryChoice: {
+    onRegisterSetsPrimaryChange: (checked: boolean) => void
+    primaryChoiceLocked: boolean
+    registerSetsPrimary: boolean
+  }
 }
 
 export type RegistrationFlowPanelProps = {

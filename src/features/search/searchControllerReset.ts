@@ -1,85 +1,9 @@
-import { createManagedNameState } from '../../app/managedNameState'
-import type { UseSearchControllerProps } from './searchControllerTypes'
+import type { SearchStateActions } from './searchControllerTypes'
 
-export function resetSearchState({
-  recordSourceContractId,
-  setManagedName,
-  setActivityEntries,
-  setActivityCursor,
-  setActivityLoading,
-  setApiSearchResult,
-  setChecked,
-  setCommitTxState,
-  setCommitted,
-  setConfirmationInput,
-  setIndexerConfirmation,
-  setIndexerError,
-  setManagementError,
-  setManagementTxState,
-  setPreparedCommit,
-  setPrimaryEndpointValue,
-  setPrimaryError,
-  setPrimaryName,
-  setConnectedPrimaryName,
-  setPrimaryTxState,
-  setQuery,
-  setRecordDrafts,
-  setRecordError,
-  setRecordTxState,
-  setRegisterSetsPrimary,
-  setRegistrationCompletion,
-  setRegistrationStep,
-  setRenewalError,
-  setRenewalTxState,
-  setRenewalYears,
-  setResolverRecordSets,
-  setResultView,
-  setSubnameError,
-  setSubnameExpiryDate,
-  setSubnameExpiryPolicy,
-  setSubnameLabel,
-  setSubnameManager,
-  setSubnameTxState,
-  setSubnames,
-  setTxState,
-}: UseSearchControllerProps, nextValue: string) {
-  setManagedName(createManagedNameState(recordSourceContractId))
-  setQuery(nextValue)
-  setCommitted(false)
-  setPreparedCommit(null)
-  setChecked(false)
-  setRegisterSetsPrimary(true)
-  setRegistrationStep('review')
-  setResultView('overview')
-  setTxState(null)
-  setCommitTxState(null)
-  setRegistrationCompletion(null)
-  setManagementTxState(null)
-  setRenewalTxState(null)
-  setRecordTxState(null)
-  setPrimaryTxState(null)
-  setSubnameTxState(null)
-  setManagementError('')
-  setRenewalError('')
-  setRecordError('')
-  setPrimaryError('')
-  setSubnameError('')
-  setConfirmationInput('')
-  setActivityEntries([])
-  setActivityCursor(null)
-  setActivityLoading(false)
-  setApiSearchResult(null)
-  setIndexerError('')
-  setIndexerConfirmation('')
-  setResolverRecordSets({})
-  setRecordDrafts({})
-  setPrimaryEndpointValue('')
-  setPrimaryName(null)
-  setConnectedPrimaryName(null)
-  setSubnames([])
-  setSubnameLabel('settlement')
-  setSubnameManager('')
-  setSubnameExpiryPolicy('inherits_parent')
-  setSubnameExpiryDate('')
-  setRenewalYears(1)
+export function resetSearchState({ search, registration, domain, records, activity }: SearchStateActions, nextValue: string) {
+  domain.reset()
+  search.reset(nextValue)
+  registration.reset()
+  activity.reset()
+  records.reset()
 }

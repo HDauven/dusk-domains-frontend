@@ -15,45 +15,44 @@ import { RuntimeNotice } from './RuntimeNotice'
 import { SiteFooter } from './SiteFooter'
 import { TopBar, type NetworkBadge } from './TopBar'
 
-export function AppShell({
-  networkStatus,
-  pendingConfirmation,
-  walletDialog,
-  pause = unpaused,
-  children,
-  launchLinks,
-  mainView,
-  network,
-  onMainViewChange,
-  onOpenName,
-  onOpenWallet,
-  onSearchHome,
-  pendingReservationCount,
-  runtimeNotice,
-  searching,
-  skyNames,
-  walletState,
-  walletStatus,
-}: {
+export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused, children, launchLinks, network, runtimeNotice, skyNames, wallet, navigation }: {
   pendingConfirmation?: PendingConfirmation | null
   networkStatus?: { config: DuskDomainsRuntimeConfig; client: DuskDomainsIndexerClient | null; readOnly?: boolean }
-  walletDialog?: ComponentProps<typeof WalletDialog>
   pause?: OperatorPause
   children: ReactNode
   launchLinks: DuskDomainsRuntimeConfig['launchLinks']
-  mainView: AppMainView
   network: NetworkBadge
-  onMainViewChange: (view: AppMainView) => void
-  onOpenName: (name: string) => void
-  onOpenWallet: () => void
-  onSearchHome: () => void
-  pendingReservationCount: number
   runtimeNotice: RuntimeNoticeState | null
-  searching: boolean
   skyNames: SkyName[]
-  walletState: DuskWalletState
-  walletStatus: WalletConnectionStatus
+  wallet: {
+    walletDialog?: ComponentProps<typeof WalletDialog>
+    onOpenWallet: () => void
+    walletState: DuskWalletState
+    walletStatus: WalletConnectionStatus
+  }
+  navigation: {
+    mainView: AppMainView
+    onMainViewChange: (view: AppMainView) => void
+    onOpenName: (name: string) => void
+    onSearchHome: () => void
+    pendingReservationCount: number
+    searching: boolean
+  }
 }) {
+  const {
+    walletDialog,
+    onOpenWallet,
+    walletState,
+    walletStatus,
+  } = wallet
+  const {
+    mainView,
+    onMainViewChange,
+    onOpenName,
+    onSearchHome,
+    pendingReservationCount,
+    searching,
+  } = navigation
   const freshness = useIndexerFreshness(networkStatus?.client ?? null, networkStatus?.config.mode !== 'live_ready')
   return (
     <div className={mainView === 'search' && !searching ? 'page at-home' : 'page'}>

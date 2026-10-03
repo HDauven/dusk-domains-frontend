@@ -1,3 +1,4 @@
+import { searchActions } from './test-fixtures/searchActions'
 import { expect, it, vi } from 'vitest'
 import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
 import { applyIndexedNameHydration } from './applyIndexedNameHydration'
@@ -6,14 +7,9 @@ import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'
 
 function hydrate(managedName: ManagedNameState, stateValue: object, subnameValue: object | null) {
   let managed = managedName
-  const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setDraftManager', 'setDraftOwner', 'setIndexerError',
-    'setPrimaryEndpointValue', 'setConnectedPrimaryName', 'setPrimaryName', 'setResolverRecordSets', 'setSubnameManager', 'setSubnames']
-    .map((name) => [name, vi.fn()]))
-  const setManagedName = (update: ManagedNameState | ((current: ManagedNameState) => ManagedNameState)) => {
-    managed = typeof update === 'function' ? update(managed) : update
-  }
-  applyIndexedNameHydration({ ...setters, setManagedName, currentBlockHeight: 1_000, nowSeconds: 1_790_000_000,
-    recordSourceContractId: 'resolver', selectedAuthority: 'owner' } as never, {
+  const actions = searchActions({ domain: { hydrate: snapshot => { managed = snapshot.managedName } } })
+  applyIndexedNameHydration({ ...actions, currentBlockHeight: 1_000, nowSeconds: 1_790_000_000,
+    recordSourceContractId: 'resolver' } as never, {
     activityRead: { value: [], error: null }, forwardRead: { value: null, error: 'not found' },
     hydratedSubnames: [], node: 'node', ownSubnameRead: { value: subnameValue, error: null }, primaryName: null,
     readErrors: [], stateRead: { value: { owner: 'owner', manager: 'owner', resolverId: 'resolver', ...stateValue }, error: null },
@@ -121,11 +117,12 @@ it.each([null, { records: [] }, { records: [{ key: 'moonlight_address', value: '
     const reads = await readIndexedName(client as never, { canonical: 'alice.dusk' } as never, 'alice-address')
     expect(client.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: 'alice-address' })
     expect(reads?.connectedPrimaryName).toBe('alice.dusk')
-    const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setIndexerError', 'setManagedName',
-      'setPrimaryEndpointValue', 'setConnectedPrimaryName', 'setPrimaryName', 'setResolverRecordSets', 'setSubnames'].map(key => [key, vi.fn()]))
-    applyIndexedNameHydration({ ...setters, currentBlockHeight: 100, nowSeconds: 0, recordSourceContractId: 'resolver' } as never, reads!)
-    expect(setters.setPrimaryEndpointValue).toHaveBeenCalledWith('alice-address')
-    expect(setters.setConnectedPrimaryName).toHaveBeenCalledWith('alice.dusk')
-    expect(setters.setPrimaryName).toHaveBeenCalledWith(forward?.records.length ? 'alice.dusk' : null)
+    const hydrate = vi.fn()
+    const actions = searchActions({ domain: { hydrate } })
+    applyIndexedNameHydration({ ...actions, currentBlockHeight: 100, nowSeconds: 0, recordSourceContractId: 'resolver' } as never, reads!)
+    expect(hydrate).toHaveBeenCalledWith(expect.objectContaining({
+      primaryEndpoint: 'alice-address', connectedPrimaryName: 'alice.dusk',
+      primaryName: forward?.records.length ? 'alice.dusk' : null,
+    }))
   },
 )

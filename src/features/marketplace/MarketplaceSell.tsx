@@ -13,17 +13,17 @@ import type { MarketplaceSellProps } from './marketplaceTypes'
 const durations = [1, 3, 7, 14, 30]
 
 export function MarketplaceSell(props: MarketplaceSellProps) {
-  const selectedName = props.sellableNames.find((name) => name.node === props.selectedNode)
+  const selectedName = props.selling.sellableNames.find((name) => name.node === props.selling.selectedNode)
 
-  const amount = validLuxAmount(props.saleMode === 'auction' ? props.reserveDusk : props.fixedPriceDusk)
+  const amount = validLuxAmount(props.selling.saleMode === 'auction' ? props.selling.reserveDusk : props.selling.fixedPriceDusk)
 
   return (
     <div className="marketplace-form-view">
-      {!props.selectedAddress ? (
+      {!props.wallet.selectedAddress ? (
         <PanelMessage icon={<Store size={18} />} tone="subtle">
-          <Button variant="quiet" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</Button> to sell a name.
+          <Button variant="quiet" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect your wallet</Button> to sell a name.
         </PanelMessage>
-      ) : props.sellableNames.length === 0 ? (
+      ) : props.selling.sellableNames.length === 0 ? (
         <PanelMessage icon={<Store size={18} />} tone="subtle">No eligible names to sell. You need an active .dusk name with no existing listing. <a href="/">Find a name</a></PanelMessage>
       ) : (
         <Panel className="marketplace-editor" aria-labelledby="sell-domain-heading">
@@ -33,58 +33,58 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
               <p>It moves into escrow until it sells or you cancel.</p>
             </div>
             <div className="marketplace-mode-control" aria-label="Sale type">
-              <Button aria-pressed={props.saleMode === 'fixed'} type="button" onClick={() => props.onSaleModeChange('fixed')}>Fixed price</Button>
-              <Button aria-pressed={props.saleMode === 'auction'} type="button" onClick={() => props.onSaleModeChange('auction')}>Auction</Button>
+              <Button aria-pressed={props.selling.saleMode === 'fixed'} type="button" onClick={() => props.selling.onSaleModeChange('fixed')}>Fixed price</Button>
+              <Button aria-pressed={props.selling.saleMode === 'auction'} type="button" onClick={() => props.selling.onSaleModeChange('auction')}>Auction</Button>
             </div>
           </div>
 
           <div className="marketplace-form">
             <label className="marketplace-field-wide">
               <span>Name</span>
-              <Select value={props.selectedNode || ''} onChange={(event) => props.onSelectedNodeChange(event.target.value)}>
+              <Select value={props.selling.selectedNode || ''} onChange={(event) => props.selling.onSelectedNodeChange(event.target.value)}>
                 {!selectedName ? <option value="">Choose a name</option> : null}
-                {props.sellableNames.map((name) => <option key={name.node} value={name.node}>{name.canonicalName}</option>)}
+                {props.selling.sellableNames.map((name) => <option key={name.node} value={name.node}>{name.canonicalName}</option>)}
               </Select>
             </label>
 
-            {props.saleMode === 'fixed' ? (
+            {props.selling.saleMode === 'fixed' ? (
               <>
                 <label>
                   <span>Price</span>
-                  <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.fixedPriceDusk} onChange={(event) => props.onFixedPriceDuskChange(event.target.value)} /><span>DUSK</span></div>
+                  <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.selling.fixedPriceDusk} onChange={(event) => props.selling.onFixedPriceDuskChange(event.target.value)} /><span>DUSK</span></div>
                 </label>
                 <label>
                   <span>Private buyer (optional)</span>
-                  <Input placeholder="Dusk address" type="text" value={props.privateBuyer} onChange={(event) => props.onPrivateBuyerChange(event.target.value)} />
+                  <Input placeholder="Dusk address" type="text" value={props.selling.privateBuyer} onChange={(event) => props.selling.onPrivateBuyerChange(event.target.value)} />
                 </label>
               </>
             ) : (
               <label className="marketplace-field-wide">
                 <span>Minimum bid</span>
-                <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.reserveDusk} onChange={(event) => props.onReserveDuskChange(event.target.value)} /><span>DUSK</span></div>
+                <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.selling.reserveDusk} onChange={(event) => props.selling.onReserveDuskChange(event.target.value)} /><span>DUSK</span></div>
               </label>
             )}
 
             <label className="marketplace-field-wide">
-              <span>{props.saleMode === 'auction' ? 'Auction duration' : 'Listing duration'}</span>
-              <Select value={props.durationDays} onChange={(event) => props.onDurationDaysChange(event.target.value)}>
+              <span>{props.selling.saleMode === 'auction' ? 'Auction duration' : 'Listing duration'}</span>
+              <Select value={props.selling.durationDays} onChange={(event) => props.selling.onDurationDaysChange(event.target.value)}>
                 {durations.map((days) => <option key={days} value={days}>{days} {days === 1 ? 'day' : 'days'}</option>)}
               </Select>
             </label>
           </div>
 
-          {props.feeBps != null && amount !== null ? <MarketplaceReviewSummary ariaLabel="Seller proceeds" rows={proceedsRows(amount, props.feeBps)} /> : <p className="field-note">{props.feeBps == null ? 'Loading marketplace fee…' : 'Enter an amount to see the fee and proceeds.'}</p>}
-          {props.saleMode === 'auction' ? <p className="field-note">Proceeds shown at the minimum bid. Starts when someone bids, then runs {props.durationDays} {props.durationDays === '1' ? 'day' : 'days'}. Bids in the last 10 minutes extend it.</p> : null}
+          {props.selling.feeBps != null && amount !== null ? <MarketplaceReviewSummary ariaLabel="Seller proceeds" rows={proceedsRows(amount, props.selling.feeBps)} /> : <p className="field-note">{props.selling.feeBps == null ? 'Loading marketplace fee…' : 'Enter an amount to see the fee and proceeds.'}</p>}
+          {props.selling.saleMode === 'auction' ? <p className="field-note">Proceeds shown at the minimum bid. Starts when someone bids, then runs {props.selling.durationDays} {props.selling.durationDays === '1' ? 'day' : 'days'}. Bids in the last 10 minutes extend it.</p> : null}
           <div className="marketplace-review-line">
             <span>Payout</span>
-            <code>{abbreviate(props.selectedAddress)}</code>
+            <code>{abbreviate(props.wallet.selectedAddress)}</code>
           </div>
 
           <NamespaceSummary namespace={selectedName?.namespace} />
           <p className="field-note">The buyer controls the whole namespace. Subnames themselves can’t be sold.</p>
 
-          <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable || props.feeBps == null || !selectedName} type="button" onClick={() => props.onCreateListing()}>
-            {props.saleMode === 'auction' ? 'Start auction' : 'List for sale'}
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || props.selling.feeBps == null || !selectedName} type="button" onClick={() => props.selling.onCreateListing()}>
+            {props.selling.saleMode === 'auction' ? 'Start auction' : 'List for sale'}
           </Button>
         </Panel>
       )}

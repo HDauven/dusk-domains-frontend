@@ -13,13 +13,13 @@ import type { MarketplaceOffersProps } from './marketplaceTypes'
 const durations = [1, 3, 7, 14, 30]
 
 export function MarketplaceOffers(props: MarketplaceOffersProps) {
-  const ownedNodes = new Set(props.sellableNames.map((name) => name.node))
+  const ownedNodes = new Set(props.selling.sellableNames.map((name) => name.node))
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('recent')
   const [query, setQuery] = useState('')
-  const offers = props.offers.filter((offer) => (
+  const offers = props.offers.offers.filter((offer) => (
     offer.name.toLowerCase().includes(query.trim().toLowerCase())
-    && (filter !== 'sent' || sameAuthority(offer.buyerAuthority, props.selectedAuthority))
+    && (filter !== 'sent' || sameAuthority(offer.buyerAuthority, props.wallet.selectedAuthority))
     && (filter !== 'received' || ownedNodes.has(offer.node))
   )).sort((left, right) => sort === 'ending' ? left.expiresAtBlockHeight - right.expiresAtBlockHeight
     : sort === 'price-high' ? right.amountLux - left.amountLux : right.placedAtBlockHeight - left.placedAtBlockHeight)
@@ -33,27 +33,27 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
             <p>Your DUSK is held in escrow. After canceling or closing an expired offer, withdraw your refund under Yours.</p>
           </div>
         </div>
-        {!props.selectedAddress ? (
-          <Button variant="primary" className="compact" type="button" onClick={props.onOpenWalletConnection}>Connect wallet</Button>
+        {!props.wallet.selectedAddress ? (
+          <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet</Button>
         ) : (
           <>
             <div className="marketplace-form">
               <label className="marketplace-field-wide">
                 <span>Name</span>
-                <Input placeholder="name.dusk" type="text" value={props.offerName} onChange={(event) => props.onOfferNameChange(event.target.value)} />
+                <Input placeholder="name.dusk" type="text" value={props.offers.offerName} onChange={(event) => props.offers.onOfferNameChange(event.target.value)} />
               </label>
               <label>
                 <span>Offer</span>
-                <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.offerAmountDusk} onChange={(event) => props.onOfferAmountDuskChange(event.target.value)} /><span>DUSK</span></div>
+                <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.offers.offerAmountDusk} onChange={(event) => props.offers.onOfferAmountDuskChange(event.target.value)} /><span>DUSK</span></div>
               </label>
               <label>
                 <span>Valid for</span>
-                <Select value={props.offerDurationDays} onChange={(event) => props.onOfferDurationDaysChange(event.target.value)}>
+                <Select value={props.offers.offerDurationDays} onChange={(event) => props.offers.onOfferDurationDaysChange(event.target.value)}>
                   {durations.map((days) => <option key={days} value={days}>{days} {days === 1 ? 'day' : 'days'}</option>)}
                 </Select>
               </label>
             </div>
-            <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onPlaceOffer()}>Review offer</Button>
+            <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onPlaceOffer()}>Review offer</Button>
           </>
         )}
       </Panel>
@@ -68,7 +68,7 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
           <label><span className="sr-only">Sort offers</span><Select aria-label="Sort offers" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recent">Newest first</option><option value="ending">Ending soon</option><option value="price-high">Highest offer</option></Select></label>
         </div>
         {!offers.length ? (
-          <PanelMessage icon={<HandCoins size={18} />} tone="subtle">{props.offers.length ? 'No matching offers. Change your search or filters.' : 'No offers yet. Make an offer on a registered name.'}</PanelMessage>
+          <PanelMessage icon={<HandCoins size={18} />} tone="subtle">{props.offers.offers.length ? 'No matching offers. Change your search or filters.' : 'No offers yet. Make an offer on a registered name.'}</PanelMessage>
         ) : (
           <div className="marketplace-list">
             {offers.map((offer) => <OfferRow incoming={ownedNodes.has(offer.node)} key={`${offer.node}:${offer.buyerAuthority}`} offer={offer} props={props} />)}
@@ -80,20 +80,20 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
 }
 
 function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: IndexedMarketplaceOffer; props: MarketplaceOffersProps }) {
-  const ownOffer = sameAuthority(offer.buyerAuthority, props.selectedAuthority)
-  const expired = isExpired(offer.expiresAtBlockHeight, props.currentBlockHeight)
+  const ownOffer = sameAuthority(offer.buyerAuthority, props.wallet.selectedAuthority)
+  const expired = isExpired(offer.expiresAtBlockHeight, props.market.currentBlockHeight)
   return (
     <article className="marketplace-order-row marketplace-offer-row">
-      <div className="marketplace-order-name"><strong>{offer.name}</strong><div>{incoming ? 'Received · ' : ''}Buyer <OwnerLabel authority={offer.buyerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} /></div></div>
+      <div className="marketplace-order-name"><strong>{offer.name}</strong><div>{incoming ? 'Received · ' : ''}Buyer <OwnerLabel authority={offer.buyerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} /></div></div>
       <div><span>Offer</span><strong><MarketplaceAmount lux={offer.amountLux} /></strong></div>
-      <div><span>{expired ? 'Status' : 'Expires'}</span><strong>{expiryTimeLabel(offer.expiresAtBlockHeight, props.currentBlockHeight)}</strong></div>
+      <div><span>{expired ? 'Status' : 'Expires'}</span><strong>{expiryTimeLabel(offer.expiresAtBlockHeight, props.market.currentBlockHeight)}</strong></div>
       <div className="marketplace-order-action">
         {expired ? (
-          <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireOffer(offer)}>Close</Button>
+          <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onExpireOffer(offer)}>Close</Button>
         ) : incoming && !ownOffer ? (
-          <Button variant="primary" className="compact" disabled={props.tradingPaused || !props.actionsAvailable} type="button" onClick={() => props.onAcceptOffer(offer)}>Accept</Button>
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onAcceptOffer(offer)}>Accept</Button>
         ) : ownOffer ? (
-          <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelOffer(offer)}>Cancel</Button>
+          <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onCancelOffer(offer)}>Cancel</Button>
         ) : null}
       </div>
     </article>

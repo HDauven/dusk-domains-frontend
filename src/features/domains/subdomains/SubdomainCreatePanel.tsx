@@ -6,22 +6,22 @@ import {
 import { SelectField, TextField } from '../../../components/ui/FormControls'
 import type { SubdomainCreatePanelProps } from './types'
 
-export function SubdomainCreatePanel({
-  canCreateSubname,
-  displayName,
-  onCreateSubname,
-  onSubnameExpiryDateChange,
-  onSubnameExpiryPolicyChange,
-  onSubnameLabelChange,
-  onSubnameManagerChange,
-  parentExpiryDay,
-  selectedAuthority,
-  subdomainPreview,
-  subnameExpiryDate,
-  subnameExpiryPolicy,
-  subnameLabel,
-  subnameManager,
-}: SubdomainCreatePanelProps) {
+export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPreview, creation, authority }: SubdomainCreatePanelProps) {
+  const {
+    canCreateSubname,
+    onCreateSubname,
+    onSubnameExpiryDateChange,
+    onSubnameExpiryPolicyChange,
+    onSubnameLabelChange,
+    onSubnameManagerChange,
+    subnameExpiryDate,
+    subnameExpiryPolicy,
+    subnameLabel,
+    subnameManager,
+  } = creation
+  const {
+    selectedAuthority,
+  } = authority
   return (
     <>
       <div>

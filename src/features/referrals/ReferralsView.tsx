@@ -5,28 +5,7 @@ import { ReferralLinkCard } from './ReferralLinkCard'
 import { ReferralRewardsCard } from './ReferralRewardsCard'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
-export function ReferralsView({
-  onClaimReferralRewards,
-  onClearReferral,
-  onCopyReferralLink,
-  onOpenWalletConnection,
-  referralAccountState,
-  referralClaimRecipient,
-  referralClaimable,
-  referralCopied,
-  referralError,
-  referralLink,
-  referralRewardClaimReady,
-  referralRewardGuidance,
-  referralRewardSummaryValue,
-  referralRewardsSupported,
-  referralState,
-  referralBusy,
-  referralConfirmation,
-  referralTxState,
-  selectedAddress,
-  walletSetupState,
-}: ReferralsViewProps) {
+export function ReferralsView({ onClearReferral, referralError, referralState, referralConfirmation, wallet, link, rewards }: ReferralsViewProps) {
   return (
     <AccountViewLayout
       className="referrals-panel"
@@ -36,30 +15,12 @@ export function ReferralsView({
       labelledBy="referrals-heading"
       panelId="referrals"
     >
-      <ReferralLinkCard
-        onCopyReferralLink={onCopyReferralLink}
-        onOpenWalletConnection={onOpenWalletConnection}
-        referralCopied={referralCopied}
-        referralLink={referralLink}
-        selectedAddress={selectedAddress}
-        walletSetupState={walletSetupState}
-      />
+      <ReferralLinkCard link={link} wallet={wallet} />
 
       <ActiveReferralCard referral={referralState} onClear={onClearReferral} />
 
-      {selectedAddress ? (
-        <ReferralRewardsCard
-          onClaimReferralRewards={onClaimReferralRewards}
-          referralAccountState={referralAccountState}
-          referralBusy={referralBusy}
-          referralClaimRecipient={referralClaimRecipient}
-          referralClaimable={referralClaimable}
-          referralRewardClaimReady={referralRewardClaimReady}
-          referralRewardGuidance={referralRewardGuidance}
-          referralRewardSummaryValue={referralRewardSummaryValue}
-          referralRewardsSupported={referralRewardsSupported}
-          referralTxState={referralTxState}
-        />
+      {wallet.selectedAddress ? (
+        <ReferralRewardsCard rewards={rewards} />
       ) : null}
     </AccountViewLayout>
   )

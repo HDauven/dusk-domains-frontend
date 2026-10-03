@@ -1,7 +1,8 @@
+import { searchActions } from './test-fixtures/searchActions'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
 import { deriveAppDerivedState } from '../../app/derived/deriveAppDerivedState'
-import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
+import { createManagedNameState } from '../../app/managedNameState'
 import { namehashHex } from '../../names/internal'
 import { openIndexedName } from './actions/openIndexedName'
 import { SearchResultPanel, type SearchResultPanelProps, type SearchResultView } from './SearchResultPanel'
@@ -28,18 +29,18 @@ it.each([
   }
   const onChainClient = { readPrimaryName: vi.fn(async () => ({ ok: true, value: storedPrimary ? { name: storedPrimary } : null })) }
   const setIndexerError = vi.fn()
-  const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setResolverRecordSets', 'setSubnames', 'setCurrentBlockHeight']
-    .map(key => [key, vi.fn()]))
-  const props = new Proxy({
-    ...setters, setIndexerError,
-    displayName: name, selectedAddress, indexerClient, onChainClient, recordSourceContractId: 'resolver',
-    beginActivityRead: () => () => true, beginOwnershipRead: () => () => true,
-    setManagedName: (value: ManagedNameState) => { managedName = value },
-    setPrimaryName: (value: string | null) => { primaryName = value },
-    setConnectedPrimaryName: (value: string | null) => { connectedPrimaryName = value },
-    setPrimaryEndpointValue: (value: string) => { primaryEndpointValue = value },
-    setResultView: (value: SearchResultView) => { resultView = value },
-  }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
+  const props = {
+    ...searchActions({
+    search: { fail: setIndexerError, open: value => { resultView = value }, showView: value => { resultView = value } },
+    domain: { hydrate: snapshot => {
+      managedName = snapshot.managedName
+      primaryName = snapshot.primaryName
+      connectedPrimaryName = snapshot.connectedPrimaryName
+      primaryEndpointValue = snapshot.primaryEndpoint
+    } },
+    }),
+    openSearchView: vi.fn(), loadPendingReservations: () => [], displayName: name, selectedAddress, indexerClient, onChainClient, recordSourceContractId: 'resolver',
+  }
   let hydration!: ReturnType<typeof useIndexedNameHydration>
   function Probe() { hydration = useIndexedNameHydration(props as never); return null }
   renderToStaticMarkup(<Probe />)
@@ -60,10 +61,28 @@ it.each([
   expect(state.canSetPrimary).toBe(false)
   expect(state.primaryVerification.verified).toBe(false)
   const html = renderToStaticMarkup(<SearchResultPanel {...{
-    nodeHex: node, resultView, settingsProps: { managedName }, subdomainsProps: { subnames: [] },
+    nodeHex: node,
+    resultView,
     headerProps: { status: result.status, displayName: name, records: [], viewerAuthority: selectedAddress ? 'alice' : '' },
-    overviewProps: { canRegister: true, displayName: name, duration: 1, expiryDate: '2027-01-01', registrationFee: 1, resultIssues: [], resultStatus: result.status },
-    primaryProps: { ...state, displayName: name, error: '', txState: null, onClearPrimary: vi.fn(), onSetPrimary: vi.fn() },
+    overviewProps: {
+      canRegister: true,
+      displayName: name,
+      resultIssues: [],
+      resultStatus: result.status,
+      quote: { duration: 1, expiryDate: '2027-01-01', registrationFee: 1 },
+      reservation: {  },
+    },
+    management: { settingsProps: {
+        managedName,
+        ownership: {  },
+        renewal: {  },
+        clock: {  },
+      }, subdomainsProps: {
+        subnames: [],
+        creation: {  },
+        authority: {  },
+        clock: {  },
+      }, primaryProps: { ...state, displayName: name, error: '', txState: null, onClearPrimary: vi.fn(), onSetPrimary: vi.fn() } },
   } as unknown as SearchResultPanelProps} />)
   expect(html).toContain('Claim alice.dusk')
   expect(html).not.toContain('View profile')

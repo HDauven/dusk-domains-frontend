@@ -1,3 +1,4 @@
+import { searchActions } from '../features/search/test-fixtures/searchActions'
 import { resetSearchState } from '../features/search/searchControllerReset'
 import type { PendingConfirmation } from './confirmationRead'
 import { createWriteAccess } from './writeAccess'
@@ -95,10 +96,7 @@ it('keeps paused confirmation recoverable after navigation and releases the writ
     expect(fetchMock).toHaveBeenCalledTimes(reads)
     const globalPending = pendingUpdates.at(-1)
     expect(globalPending).toMatchObject({name:'slow.dusk',state:{txId,status:'executing',retryConfirmation:expect.any(Function)}})
-    const setters = new Proxy({setTxState:() => { updates.length = 0 }}, {
-      get:(target,key) => key in target ? target[key as keyof typeof target] : vi.fn(),
-    })
-    resetSearchState(setters as never, 'another.dusk')
+    resetSearchState(searchActions({ registration: { reset: () => { updates.length = 0 } } }), 'another.dusk')
     expect(updates).toEqual([])
     expect(pendingUpdates.at(-1)).toBe(globalPending)
     await expect(submit('another.dusk', {} as never)).rejects.toThrow('pending wallet transaction')

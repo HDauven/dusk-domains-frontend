@@ -21,45 +21,60 @@ import type { RegistrationCompletionState } from './registrationCompletionState'
 import { RegistrationCompletionProgress } from './RegistrationCompletionProgress'
 import { RegistrationWalletActionButton } from './RegistrationWalletActionButton'
 
-export function RegistrationPurchaseStep({
-  canRestartReservation,
-  canRevealRegistration,
-  commitWindow,
-  installUrl,
-  onOpenWalletConnection,
-  onRegisterName,
-  onWaitForPremium,
-  premiumConfirmation,
-  onRestartReservation,
-  onSetAddress,
-  registrationCompletion,
-  reservationStranded,
-  txBusy,
-  txState,
-  walletSetupState,
-}: {
-  canRestartReservation: boolean
-  canRevealRegistration: boolean
-  commitWindow: CommitWindow
-  installUrl: string
-  onOpenWalletConnection: () => void
-  onRegisterName: (confirmedTotalLux?: number) => void
-  onWaitForPremium?: () => void
-  premiumConfirmation?: PremiumConfirmationQuote | null
-  onRestartReservation: () => void
-  onSetAddress: () => void
-  registrationCompletion: RegistrationCompletionState | null
-  reservationStranded: boolean
-  txBusy: boolean
-  txState: DuskDomainTxState | null
-  walletSetupState: WalletConnectionStatus
+export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote = {} }: {
+  reservation: {
+    canRestartReservation: boolean
+    commitWindow: CommitWindow
+    onRestartReservation: () => void
+    reservationStranded: boolean
+  }
+  purchase: {
+    canRevealRegistration: boolean
+    onRegisterName: (confirmedTotalLux?: number) => void
+    onSetAddress: () => void
+    registrationCompletion: RegistrationCompletionState | null
+    txBusy: boolean
+    txState: DuskDomainTxState | null
+  }
+  wallet: {
+    installUrl: string
+    onOpenWalletConnection: () => void
+    walletSetupState: WalletConnectionStatus
+  }
+  quote?: {
+    onWaitForPremium?: () => void
+    premiumConfirmation?: PremiumConfirmationQuote | null
+  }
 }) {
+  const {
+    canRestartReservation,
+    commitWindow,
+    onRestartReservation,
+    reservationStranded,
+  } = reservation
+  const {
+    canRevealRegistration,
+    onRegisterName,
+    onSetAddress,
+    registrationCompletion,
+    txBusy,
+    txState,
+  } = purchase
+  const {
+    installUrl,
+    onOpenWalletConnection,
+    walletSetupState,
+  } = wallet
+  const {
+    onWaitForPremium,
+    premiumConfirmation,
+  } = quote
   const showPremiumConfirmation = premiumConfirmation && canRevealRegistration && !reservationStranded && commitWindow.status === 'ready'
   const walletReady = walletSetupState === 'connected'
   const registrationComplete = registrationCompletion?.status === 'executed'
   // While the second signature runs, or once it has, the progress card is the only thing to show.
   const actionDone = registrationCompletion?.status === 'running' || registrationComplete
-  const reservation = reservationStranded
+  const reservationCopy = reservationStranded
     ? 'Out of date'
     : pendingReservationStatusCopy(commitWindow.status, commitWindow.waitBlocks)
   const settled = commitWindow.status === 'waiting'
@@ -79,7 +94,7 @@ export function RegistrationPurchaseStep({
       {actionDone ? null : (
         <div className={`register-reservation ${reservationStranded ? 'stale' : commitWindow.status}`}>
           <span>Reservation</span>
-          {commitWindow.status === 'waiting' ? <ReservationCountdown key={commitWindow.waitBlocks} blocks={commitWindow.waitBlocks} /> : <strong>{reservation}</strong>}
+          {commitWindow.status === 'waiting' ? <ReservationCountdown key={commitWindow.waitBlocks} blocks={commitWindow.waitBlocks} /> : <strong>{reservationCopy}</strong>}
           {commitWindow.status === 'waiting' ? (
             <div className="register-settle" role="progressbar" aria-label="Reservation settling" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(settled * 100)}>
               <span style={{ width: `${settled * 100}%` }} />

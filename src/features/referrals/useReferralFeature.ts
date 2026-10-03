@@ -97,20 +97,32 @@ export function useReferralFeature({
   })
 
   const referralsProps: ComponentProps<typeof ReferralsView> = {
-    ...referralViewModel,
-    onClaimReferralRewards: () => void handleClaimReferralRewards(),
     onClearReferral: clearReferral,
-    onCopyReferralLink: () => void copyReferralLink(),
-    onOpenWalletConnection,
-    referralAccountState,
     referralConfirmation,
-    referralCopied,
     referralError,
-    referralLink,
     referralState,
-    referralTxState,
-    selectedAddress,
-    walletSetupState,
+    rewards: {
+      referralBusy: referralViewModel.referralBusy,
+      referralClaimRecipient: referralViewModel.referralClaimRecipient,
+      referralClaimable: referralViewModel.referralClaimable,
+      referralRewardClaimReady: referralViewModel.referralRewardClaimReady,
+      referralRewardGuidance: referralViewModel.referralRewardGuidance,
+      referralRewardSummaryValue: referralViewModel.referralRewardSummaryValue,
+      referralRewardsSupported: referralViewModel.referralRewardsSupported,
+      onClaimReferralRewards: () => void handleClaimReferralRewards(),
+      referralAccountState,
+      referralTxState,
+    },
+    link: {
+      onCopyReferralLink: () => void copyReferralLink(),
+      referralCopied,
+      referralLink,
+    },
+    wallet: {
+      onOpenWalletConnection,
+      selectedAddress,
+      walletSetupState,
+    },
   }
 
   return {

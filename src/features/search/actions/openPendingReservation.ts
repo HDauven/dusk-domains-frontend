@@ -1,4 +1,3 @@
-import { clampDurationYears } from '../../../app/appConstants'
 import { currentBlockHeightFromHealth } from '../../../app/indexerReadHelpers'
 import {
   updatePendingNameReservationBlock,
@@ -8,55 +7,24 @@ import {
 import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
 import { indexedOwnCommitment } from '../../registration/pendingReservationSync'
 import { resetSearchState } from '../searchControllerReset'
-import { readReservationPrimaryChoice } from '../../registration/reservationPrimaryChoice'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
 export async function openPendingReservation(
   props: UseSearchControllerProps,
   reservation: PendingNameReservation,
 ) {
-  const {
-    beginNameRead,
-    chainId,
-    hydrateNameFromIndexer,
-    getCurrentBlockHeight,
-    indexerClient,
-    loadPendingReservations,
-    openSearchView,
-    setActivityLoading,
-    setApiSearchResult,
-    setChecked,
-    setCommitted,
-    setCurrentBlockHeight,
-    setDuration,
-    setIndexerConfirmation,
-    setIndexerError,
-    setPreparedCommit,
-    setRegistrationCompletion,
-    setRegistrationStep,
-    setResultView,
-  } = props
+  const { beginNameRead, chainId, hydrateNameFromIndexer, getCurrentBlockHeight, indexerClient,
+    loadPendingReservations, openSearchView, search, registration, activity } = props
 
   openSearchView()
   resetSearchState(props, reservation.name)
-  props.setRegisterSetsPrimary(readReservationPrimaryChoice(reservation))
-  setDuration(clampDurationYears(reservation.durationYears))
-  setChecked(true)
-  setResultView('register')
-  setRegistrationStep('purchase')
-  setCommitted(true)
-  setPreparedCommit({
-    commitment: reservation.commitment,
-    secret: reservation.secret,
-    committedBlockHeight: reservation.committedBlockHeight,
-    committedTxId: reservation.committedTxId,
-  })
+  search.open('register')
+  registration.resume(reservation)
 
   if (!indexerClient) return
 
-  setActivityLoading(true)
-  setIndexerError('')
-  setIndexerConfirmation('')
+  activity.startLoading()
+  search.startRead()
 
   const isCurrent = beginNameRead()
   try {
@@ -66,7 +34,7 @@ export async function openPendingReservation(
       indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
     ])
     if (!isCurrent()) return
-    setApiSearchResult(nextResult)
+    search.showResult(nextResult)
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
     if (!isCurrent()) return
 
@@ -76,12 +44,10 @@ export async function openPendingReservation(
         chainId,
         loadPendingReservations,
       })
-      setCommitted(false)
-      setPreparedCommit(null)
-      setRegistrationCompletion(null)
-      setRegistrationStep('review')
-      setResultView('details')
-      setIndexerConfirmation('Registration is complete.')
+      registration.clearCompleted()
+      registration.review()
+      search.showView('details')
+      search.confirm('Registration is complete.')
       return
     }
 
@@ -90,8 +56,8 @@ export async function openPendingReservation(
     const committedBlockHeight = indexedCommit?.committedBlockHeight ?? reservation.committedBlockHeight
     const committedTxId = indexedCommit?.committedTxId ?? reservation.committedTxId
 
-    setCurrentBlockHeight(nextBlockHeight)
-    setPreparedCommit({
+    search.updateClock(nextBlockHeight)
+    registration.updateCommit({
       commitment: reservation.commitment,
       secret: reservation.secret,
       committedBlockHeight,
@@ -110,8 +76,8 @@ export async function openPendingReservation(
       loadPendingReservations()
     }
   } catch (error) {
-    if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
+    if (isCurrent()) search.fail(userFacingErrorMessage(error))
   } finally {
-    if (isCurrent()) setActivityLoading(false)
+    if (isCurrent()) activity.finishLoading()
   }
 }

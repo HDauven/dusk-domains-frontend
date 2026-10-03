@@ -16,37 +16,30 @@ export type MyNamePrimarySummary = {
 }
 
 export type MyDomainsViewProps = {
-  walletStatus?: WalletConnectionStatus
   currentBlockHeight: number | null
   loading: boolean
   myNames: IndexedNameSummary[]
   myNamesError: string
-  onConnectWallet: () => void
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onOpenIndexedName: (name: string) => void
   onOpenPendingReservation: (reservation: PendingNameReservation) => void
   onSearchHome: () => void
   pendingReservations: PendingNameReservation[]
   primarySummaries: Record<string, MyNamePrimarySummary>
-  selectedAddress: string
+  wallet: {
+    walletStatus?: WalletConnectionStatus
+    onConnectWallet: () => void
+    selectedAddress: string
+  }
 }
 
 // Everything the connected wallet holds: claims still in progress first, then its names.
-export function MyDomainsView({
-  walletStatus,
-  currentBlockHeight,
-  loading,
-  myNames,
-  myNamesError,
-  onConnectWallet,
-  onForgetPendingReservation,
-  onOpenIndexedName,
-  onOpenPendingReservation,
-  onSearchHome,
-  pendingReservations,
-  primarySummaries,
-  selectedAddress,
-}: MyDomainsViewProps) {
+export function MyDomainsView({ currentBlockHeight, loading, myNames, myNamesError, onForgetPendingReservation, onOpenIndexedName, onOpenPendingReservation, onSearchHome, pendingReservations, primarySummaries, wallet }: MyDomainsViewProps) {
+  const {
+    walletStatus,
+    onConnectWallet,
+    selectedAddress,
+  } = wallet
   const empty = myNames.length === 0 && pendingReservations.length === 0
   const pointsHere = (name: IndexedNameSummary) => name.records.find((record) => record.key === 'moonlight_address')?.value === selectedAddress
   const primaryCount = myNames.filter((name) => primarySummaries[name.node]?.tone === 'success' && pointsHere(name)).length

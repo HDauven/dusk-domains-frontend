@@ -2,11 +2,10 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
 import { listPendingNameReservations, namehashHex, type DuskDomainTxState } from '../../names/internal'
 import { useRegistrationFeature, type UseRegistrationFeatureProps } from './useRegistrationFeature'
+import type { PreparedRegistrationCommit } from './usePendingReservations'
 import { RegistrationFlowPanel } from './RegistrationFlowPanel'
 import { readReservationPrimaryChoice } from './reservationPrimaryChoice'
-import { openPendingReservation } from '../search/actions/openPendingReservation'
 
-vi.mock('../search/searchControllerReset', () => ({ resetSearchState: vi.fn() }))
 afterEach(() => vi.unstubAllGlobals())
 
 function deferred<T>() {
@@ -30,44 +29,46 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
   const props = new Proxy({ registerSetsPrimary, setRegisterSetsPrimary, setPreparedCommit, setCommitTxState, submitNameWrite,
     displayName: 'approval.dusk', nodeHex: namehashHex('approval.dusk'), duration: 1,
     selectedAuthority: `0x${'11'.repeat(32)}`, selectedAddress: 'wallet', canPrepareCommit: true,
-    runtimeConfig: { chainId: 'dusk:0', contracts: {} }, liveDuskDomainsApp: null, preparedCommit: null,
+    runtimeConfig: { chainId: 'dusk:0', contracts: {} }, liveDuskDomainsApp: null, preparedCommit: null as PreparedRegistrationCommit | null,
     commitBusy: false, txBusy: false, registrationCompletion: null, resultIssues: [], registrationStep: 'review',
     registrationTargetAddress: 'wallet', registrationTargetAddressErrors: [], registrationFee: 10,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: () => balance.promise,
     loadPendingReservations: () => listPendingNameReservations(),
-  }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() }) as unknown as UseRegistrationFeatureProps
+    result: { issues: [] },
+  }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
   let feature!: ReturnType<typeof useRegistrationFeature>
-  function Probe({ current = props }: { current?: UseRegistrationFeatureProps }) {
-    feature = useRegistrationFeature(current)
+  function Probe({ current = props }: { current?: typeof props }) {
+    feature = useRegistrationFeature({
+      activityFeed: current, appRuntime: current, derivedState: current,
+      domainRecordState: current, domainState: current, economicsRuntime: current,
+      mainViewRuntime: current, namePreview: current, registrationRuntime: current,
+      registrationState: current, searchRuntime: current, searchState: current, walletRuntime: current,
+    } as unknown as UseRegistrationFeatureProps)
     return null
   }
   renderToStaticMarkup(<Probe />)
   const step = feature.registrationProps.step
-  step.onPrepareCommit()
-  step.onRegisterSetsPrimaryChange(!registerSetsPrimary)
+  step.reservation.onPrepareCommit()
+  step.primaryChoice.onRegisterSetsPrimaryChange(!registerSetsPrimary)
   expect(setRegisterSetsPrimary).not.toHaveBeenCalled() // Locked even during balance preflight.
   balance.resolve(true)
   await vi.waitFor(() => expect(submitNameWrite).toHaveBeenCalledOnce())
   const saved = listPendingNameReservations()[0]
   expect(saved).toBeDefined()
   expect(setPreparedCommit).not.toHaveBeenCalled()
-  step.onRegisterSetsPrimaryChange(!registerSetsPrimary)
+  step.primaryChoice.onRegisterSetsPrimaryChange(!registerSetsPrimary)
   expect(setRegisterSetsPrimary).not.toHaveBeenCalled()
 
-  renderToStaticMarkup(<Probe current={{...props, commitBusy: true} as UseRegistrationFeatureProps} />)
+  renderToStaticMarkup(<Probe current={{...props, commitBusy: true}} />)
   const html = renderToStaticMarkup(<RegistrationFlowPanel {...feature.registrationProps} />)
   expect(html).toMatch(/<button[^>]*disabled=""[^>]*role="switch"|<button[^>]*role="switch"[^>]*disabled=""/)
-  feature.registrationProps.step.onRegisterSetsPrimaryChange(!registerSetsPrimary)
+  feature.registrationProps.step.primaryChoice.onRegisterSetsPrimaryChange(!registerSetsPrimary)
   expect(setRegisterSetsPrimary).not.toHaveBeenCalled()
   approval.resolve({status:'executed',txId:'commit'} as DuskDomainTxState)
   await vi.waitFor(() => expect(setPreparedCommit).toHaveBeenCalledOnce())
-  const setters = new Proxy({}, {get: () => vi.fn()})
-  const recovery = new Proxy({ chainId:'dusk:0', setRegisterSetsPrimary, indexerClient:null, beginNameRead:()=>()=>true,
-    getCurrentBlockHeight:async()=>null }, {get: (target,key) => key in target ? target[key as keyof typeof target] : Reflect.get(setters,key)})
-  await openPendingReservation(recovery as never, saved)
-  expect(setRegisterSetsPrimary).toHaveBeenLastCalledWith(registerSetsPrimary)
-  renderToStaticMarkup(<Probe current={{...props, preparedCommit: saved} as UseRegistrationFeatureProps} />)
-  expect(feature.registrationProps.step.primaryChoiceLocked).toBe(false)
-  feature.registrationProps.step.onRegisterSetsPrimaryChange(!registerSetsPrimary)
+  expect(readReservationPrimaryChoice(saved)).toBe(registerSetsPrimary)
+  renderToStaticMarkup(<Probe current={{...props, preparedCommit: saved}} />)
+  expect(feature.registrationProps.step.primaryChoice.primaryChoiceLocked).toBe(false)
+  feature.registrationProps.step.primaryChoice.onRegisterSetsPrimaryChange(!registerSetsPrimary)
   expect(readReservationPrimaryChoice(saved)).toBe(!registerSetsPrimary)
 })

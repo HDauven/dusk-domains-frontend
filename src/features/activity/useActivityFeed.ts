@@ -94,6 +94,16 @@ export function useActivityFeed({
   }, [defaultName, defaultNode])
 
   return {
+    searchActions: {
+      beginRead: beginActivityRead,
+      reset: () => { setActivityEntries([]); setActivityCursor(null); setActivityLoading(false) },
+      startLoading: () => setActivityLoading(true),
+      finishLoading: () => setActivityLoading(false),
+      hydrate: (node: string, entries: ActivityEntry[], cursor: string | null) => {
+        setActivityEntries(entries)
+        setActivityCursor({ node, cursor })
+      },
+    },
     beginActivityRead,
     activityEntries,
     activityLoading,

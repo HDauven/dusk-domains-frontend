@@ -8,15 +8,41 @@ const nowSeconds = 1_790_000_000
 const managedName = { node: 'node', owner: 'owner', manager: 'owner', resolver: 'resolver', expiresAt: 20_000, graceEndsAt: 300_000, expiryPolicy: null }
 const day = (height: number) => formatLifecycleDay(height, 1_000, nowSeconds)
 
-function settings(overrides: Partial<DomainSettingsViewProps>) {
+function settings(overrides: Partial<Omit<DomainSettingsViewProps, 'clock'>> & { clock?: Partial<DomainSettingsViewProps['clock']> }) {
   const props: DomainSettingsViewProps = {
-    canManageName: false, canRenewName: true, confirmationInput: '', currentBlockHeight: 1_000,
-    displayName: 'alphavnuc.dusk', feeConfigError: '',
-    feeConfigLoading: false, managedName, managementError: '', managementTxState: null, maxDurationYears: 10,
-    minDurationYears: 1, nowSeconds, onConfirmationInputChange: noop,
-    onOwnershipUpdate: async () => undefined, onRenewName: noop, onRenewalYearsChange: noop,
-    renewalBusy: false, renewalError: '', renewalFee: 10, renewalPreviewExpiresAt: 40_000,
-    renewalTxState: null, renewalYears: 1, ...overrides,
+    displayName: 'alphavnuc.dusk',
+    managedName,
+    ...overrides,
+    ownership: {
+      canManageName: false,
+      confirmationInput: '',
+      managementError: '',
+      managementTxState: null,
+      onConfirmationInputChange: noop,
+      onOwnershipUpdate: async () => undefined,
+      ...overrides.ownership,
+    },
+    renewal: {
+      canRenewName: true,
+      feeConfigError: '',
+      feeConfigLoading: false,
+      maxDurationYears: 10,
+      minDurationYears: 1,
+      onRenewName: noop,
+      onRenewalYearsChange: noop,
+      renewalBusy: false,
+      renewalError: '',
+      renewalFee: 10,
+      renewalPreviewExpiresAt: 40_000,
+      renewalTxState: null,
+      renewalYears: 1,
+      ...overrides.renewal,
+    },
+    clock: {
+      currentBlockHeight: 1_000,
+      nowSeconds,
+      ...overrides.clock,
+    },
   }
   return renderToStaticMarkup(<DomainSettingsView {...props} />).replaceAll('&#x27;', '\'')
 }
@@ -44,7 +70,11 @@ it('offers renewal through grace and explains the deadline and old-expiry basis'
   expect(active).toContain(`Runs until ${day(20_000)}. You can renew until ${day(300_000)}; after that anyone can register it.`)
   expect(active).toContain('Renewal extends from the previous expiry.')
   for (const currentBlockHeight of [20_000, 20_001, 299_999]) {
-    const expired = settings({ currentBlockHeight })
+    const expired = settings({
+      clock: {
+        currentBlockHeight,
+      },
+    })
     expect(expired).toContain('Renewal term')
     expect(expired).toContain('DUSK')
     expect(expired).toContain(`Renew by ${formatLifecycleDay(300_000, currentBlockHeight, nowSeconds)} to keep it.`)
@@ -52,7 +82,11 @@ it('offers renewal through grace and explains the deadline and old-expiry basis'
     expect(expired).toMatch(/<button(?![^>]*disabled)[^>]*>Renew<\/button>/)
   }
   for (const currentBlockHeight of [300_000, 300_001]) {
-    const released = settings({ currentBlockHeight })
+    const released = settings({
+      clock: {
+        currentBlockHeight,
+      },
+    })
     expect(released).not.toContain('Renewal term')
     expect(released).not.toContain('DUSK')
     expect(released).toContain('Anyone can register it now.')
@@ -61,7 +95,12 @@ it('offers renewal through grace and explains the deadline and old-expiry basis'
 
 it('uses the derived grace end for renewal controls and copy when grace is unknown', () => {
   for (const currentBlockHeight of [1_000, 20_000, 20_001, 279_199, 279_200]) {
-    const markup = settings({ currentBlockHeight, managedName: { ...managedName, graceEndsAt: 0 } })
+    const markup = settings({
+      managedName: { ...managedName, graceEndsAt: 0 },
+      clock: {
+        currentBlockHeight,
+      },
+    })
     const grace = formatLifecycleDay(279_200, currentBlockHeight, nowSeconds)
     if (currentBlockHeight < 279_200) {
       expect(markup).toContain('Renewal term')
@@ -75,12 +114,22 @@ it('uses the derived grace end for renewal controls and copy when grace is unkno
 
 it.each([0, 1_802_592_000])('uses the estimate margin for renewal controls and copy with grace end %s', (graceEndsAt) => {
   const name = { ...managedName, expiresAt: 1_800_000_000, graceEndsAt }
-  const open = settings({ managedName: name, nowSeconds: 1_802_588_399 })
+  const open = settings({
+    managedName: name,
+    clock: {
+      nowSeconds: 1_802_588_399,
+    },
+  })
   expect(open).toContain('Renewal term')
   expect(open).toContain(`Renew by ${formatLifecycleDay(1_802_588_400, null, 0)} to keep it.`)
   expect(open).toContain('Renewal closes one hour before the estimated grace end.')
   for (const nowSeconds of [1_802_588_400, 1_802_591_999, 1_802_592_000]) {
-    const closed = settings({ managedName: name, nowSeconds })
+    const closed = settings({
+      managedName: name,
+      clock: {
+        nowSeconds,
+      },
+    })
     expect(closed).not.toContain('Renewal term')
     expect(closed).toContain('Renewal is closed near the estimated grace end.')
     expect(closed).not.toContain('Anyone can register it now.')

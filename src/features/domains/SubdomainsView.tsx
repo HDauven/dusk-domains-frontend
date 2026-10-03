@@ -7,33 +7,10 @@ import { SubdomainCreatePanel } from './subdomains/SubdomainCreatePanel'
 import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubdomainsViewProps } from './subdomains/types'
 
-export function SubdomainsView({
-  ownerAddresses,
-  canControlSubname,
-  onReassignSubname,
-  onRemoveSubname,
-  onTakeBackSubname,
-  canEdit = true,
-  canCreateSubname,
-  currentBlockHeight,
-  displayName,
-  error,
-  managedNameExpiresAt,
-  nowSeconds,
-  onCreateSubname,
-  onRecordTargetSelect,
-  onSubnameExpiryDateChange,
-  onSubnameExpiryPolicyChange,
-  onSubnameLabelChange,
-  onSubnameManagerChange,
-  selectedAuthority,
-  subnameExpiryDate,
-  subnameExpiryPolicy,
-  subnameLabel,
-  subnameManager,
-  subnames,
-  txState,
-}: SubdomainsViewProps) {
+export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRecordTargetSelect, subnames, txState, authority, creation, clock }: SubdomainsViewProps) {
+  const { canEdit = true } = authority
+  const { subnameLabel } = creation
+  const { currentBlockHeight, nowSeconds } = clock
   const parentExpiryDay = formatLifecycleDay(managedNameExpiresAt, currentBlockHeight, nowSeconds)
   const subdomainPreview = subnameLabel.trim()
     ? `${subnameLabel.trim().toLowerCase()}.${displayName}`
@@ -48,36 +25,10 @@ export function SubdomainsView({
       />
 
       <div className="subname-box" aria-label="Subname controls">
-        {canEdit ? <SubdomainCreatePanel
-          canCreateSubname={canCreateSubname}
-          displayName={displayName}
-          onCreateSubname={onCreateSubname}
-          onSubnameExpiryDateChange={onSubnameExpiryDateChange}
-          onSubnameExpiryPolicyChange={onSubnameExpiryPolicyChange}
-          onSubnameLabelChange={onSubnameLabelChange}
-          onSubnameManagerChange={onSubnameManagerChange}
-          parentExpiryDay={parentExpiryDay}
-          selectedAuthority={selectedAuthority}
-          subdomainPreview={subdomainPreview}
-          subnameExpiryDate={subnameExpiryDate}
-          subnameExpiryPolicy={subnameExpiryPolicy}
-          subnameLabel={subnameLabel}
-          subnameManager={subnameManager}
-        /> : null}
+        {canEdit ? <SubdomainCreatePanel displayName={displayName} parentExpiryDay={parentExpiryDay} subdomainPreview={subdomainPreview} creation={creation} authority={authority} /> : null}
 
         {subnames.length ? (
-          <SubdomainList
-            canControlSubname={canControlSubname}
-            onReassignSubname={onReassignSubname}
-            onRemoveSubname={onRemoveSubname}
-            onTakeBackSubname={onTakeBackSubname}
-            ownerAddresses={ownerAddresses}
-            selectedAuthority={selectedAuthority}
-            currentBlockHeight={currentBlockHeight}
-            nowSeconds={nowSeconds}
-            onRecordTargetSelect={onRecordTargetSelect}
-            subnames={subnames}
-          />
+          <SubdomainList onRecordTargetSelect={onRecordTargetSelect} subnames={subnames} authority={authority} clock={clock} />
         ) : (
           <div className="activity-empty">
             <Info size={18} />

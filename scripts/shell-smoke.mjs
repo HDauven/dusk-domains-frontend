@@ -10,9 +10,25 @@ export async function checkAppShell(page) {
     function Shell() {
       const [mainView, setMainView] = React.useState('my-names')
       useAutoRefresh(() => { window.shellRefreshes++ })
-      return el(AppShell, {mainView, network:{label:'Local',tone:'local'}, launchLinks:{}, onMainViewChange:setMainView,
-        onOpenName:()=>{}, onOpenWallet:()=>{}, onSearchHome:()=>setMainView('search'), pendingReservationCount:1,
-        runtimeNotice:null, searching:false, skyNames:[], walletState:{accounts:[]},walletStatus:'locked'},el('h1',null,mainView))
+      return el(AppShell, {
+        network:{label:'Local',tone:'local'},
+        launchLinks:{},
+        runtimeNotice:null,
+        skyNames:[],
+        navigation: {
+          mainView,
+          onMainViewChange:setMainView,
+          onOpenName:()=>{},
+          onSearchHome:()=>setMainView('search'),
+          pendingReservationCount:1,
+          searching:false,
+        },
+        wallet: {
+          onOpenWallet:()=>{},
+          walletState:{accounts:[]},
+          walletStatus:'locked',
+        },
+      },el('h1',null,mainView))
     }
     root.render(el(Shell))
   })
@@ -68,23 +84,37 @@ export async function checkAppShell(page) {
     const state = { accounts:[],profiles:[],availableProviders:[],installed:true,authorized:false,selectedAddress:null,chainId:'dusk:0' }
     window.walletRequests = 0
     const wallet = {state,ready:async()=>{},refresh:async()=>{},discoverProviders:async()=>{},connect:()=>{
-      window.walletRequests++
-      return new Promise((resolve,reject) => { window.rejectWallet = () => reject(new Error('User rejected the request')); window.approveWallet = () => {
-        state.authorized=true;state.selectedAddress='ocXXBAafr7abcdefghijklmnopqrstuvwxyzBRM4eF';state.accounts=[state.selectedAddress];state.profiles=[{account:state.selectedAddress}];state.selectedProfile=state.profiles[0];resolve(state.profiles)
-      } })
-    }}
+        window.walletRequests++
+        return new Promise((resolve,reject) => { window.rejectWallet = () => reject(new Error('User rejected the request')); window.approveWallet = () => {
+            state.authorized=true;state.selectedAddress='ocXXBAafr7abcdefghijklmnopqrstuvwxyzBRM4eF';state.accounts=[state.selectedAddress];state.profiles=[{account:state.selectedAddress}];state.selectedProfile=state.profiles[0];resolve(state.profiles)
+          } })
+      }}
     function Wallet() {
       const [open,setOpen] = React.useState(false)
       const kit = React.useMemo(()=>({wallet,open:()=>setOpen(true),close:()=>setOpen(false),subscribe:()=>()=>{},destroy:()=>{}}),[])
       const session = useDuskWalletSession(kit, {}, 'dusk:0')
       return React.createElement(AppShell, {
-        mainView:'search',network:{label:'Local',tone:'local'},launchLinks:{},onMainViewChange:()=>{},
-        onOpenName:()=>{},onOpenWallet:session.handleOpenWalletConnection,onSearchHome:()=>{},
-        pendingReservationCount:0,runtimeNotice:null,searching:false,skyNames:[],
-        walletState:session.walletState,walletStatus:walletConnectionStatus(session.walletState,true,'dusk:0'),
-        walletDialog:{open,busy:session.walletBusy,error:session.walletError,
-          status:walletConnectionStatus(session.walletState,true,'dusk:0'),address:session.walletState.selectedAddress??'',
-          onClose:kit.close,onConnect:session.handleOpenWalletConnection,onDisconnect:()=>{window.disconnected=true;kit.close()},onReferrals:()=>{}}},
+        network:{label:'Local',tone:'local'},
+        launchLinks:{},
+        runtimeNotice:null,
+        skyNames:[],
+        navigation: {
+          mainView:'search',
+          onMainViewChange:()=>{},
+          onOpenName:()=>{},
+          onSearchHome:()=>{},
+          pendingReservationCount:0,
+          searching:false,
+        },
+        wallet: {
+          onOpenWallet:session.handleOpenWalletConnection,
+          walletState:session.walletState,
+          walletStatus:walletConnectionStatus(session.walletState,true,'dusk:0'),
+          walletDialog:{open,busy:session.walletBusy,error:session.walletError,
+            status:walletConnectionStatus(session.walletState,true,'dusk:0'),address:session.walletState.selectedAddress??'',
+            onClose:kit.close,onConnect:session.handleOpenWalletConnection,onDisconnect:()=>{window.disconnected=true;kit.close()},onReferrals:()=>{}},
+        },
+      },
         React.createElement('h1',null,'Wallet test'))
     }
     root.render(React.createElement(Wallet))
@@ -135,8 +165,6 @@ export async function checkAppShell(page) {
   await page.setViewportSize({width:1440,height:900})
   await checkNetworkFreshness(page)
 }
-
-
 export async function checkNetworkFreshness(page) {
   await page.evaluate(async () => {
     const { React, root } = window
@@ -148,12 +176,50 @@ export async function checkNetworkFreshness(page) {
     const config = { mode: 'live_ready', liveWritesEnabled: true, warnings: [], missingLiveInputs: [] }
     const noop = () => {}
     root.render(React.createElement(AppShell, {
-      mainView: 'marketplace', network: { label: 'Local', tone: 'local' }, networkStatus: { config, client },
-      launchLinks: {}, onMainViewChange: noop, onOpenName: noop, onOpenWallet: noop, onSearchHome: noop,
-      pendingReservationCount: 0, runtimeNotice: null, searching: false, skyNames: [],
-      walletState: { accounts: [] }, walletStatus: 'disconnected',
-    }, React.createElement(MarketplaceView, { auctions: [], fixedSales: [], offers: [], watchedNodes: [],
-      marketplaceEnabled: true, actionsAvailable: false, tab: 'browse', updatedAt: Date.now() })))
+      network: { label: 'Local', tone: 'local' },
+      networkStatus: { config, client },
+      launchLinks: {},
+      runtimeNotice: null,
+      skyNames: [],
+      navigation: {
+        mainView: 'marketplace',
+        onMainViewChange: noop,
+        onOpenName: noop,
+        onSearchHome: noop,
+        pendingReservationCount: 0,
+        searching: false,
+      },
+      wallet: {
+        onOpenWallet: noop,
+        walletState: { accounts: [] },
+        walletStatus: 'disconnected',
+      },
+    }, React.createElement(MarketplaceView, {
+      listings: {
+        auctions: [],
+        fixedSales: [],
+      },
+      offers: {
+        offers: [],
+      },
+      watchlist: {
+        watchedNodes: [],
+      },
+      market: {
+        marketplaceEnabled: true,
+        updatedAt: Date.now(),
+      },
+      wallet: {
+        actionsAvailable: false,
+      },
+      navigation: {
+        tab: 'browse',
+      },
+      auction: {},
+      selling: {},
+      feedback: {},
+      withdrawal: {},
+    })))
   })
   await page.getByRole('heading', { name: 'Market', exact: true }).waitFor()
   await page.waitForFunction(() => window.healthReads > 0)

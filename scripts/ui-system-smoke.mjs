@@ -23,8 +23,8 @@ export async function checkUiSystem(page) {
     window.copyValue = address
     window.actions = 0
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
-      writeText: value => new Promise((resolve, reject) => { window.copiedValue = value; window.finishCopy = resolve; window.failCopy = reject }),
-    } })
+        writeText: value => new Promise((resolve, reject) => { window.copiedValue = value; window.finishCopy = resolve; window.failCopy = reject }),
+      } })
     function Probe() {
       const [open, setOpen] = React.useState(false)
       const [busy, setBusy] = React.useState(false)
@@ -46,9 +46,9 @@ export async function checkUiSystem(page) {
           el(Button, { onClick: () => setOpen(false), disabled: busy }, 'Close review'),
           el('a', { href: '#probe-heading' }, 'Review details')),
         el(Tabs, { id: 'probe-tabs', label: 'Probe sections', value: tab, onChange: setTab, items: [
-          { id: 'one', label: 'One' }, { id: 'disabled', label: 'Disabled tab', disabled: true }, { id: 'two', label: 'Two' },
-          { id: 'loading', label: 'Loading tab', loading: true }, { id: 'three', label: 'Three' },
-        ] }),
+            { id: 'one', label: 'One' }, { id: 'disabled', label: 'Disabled tab', disabled: true }, { id: 'two', label: 'Two' },
+            { id: 'loading', label: 'Loading tab', loading: true }, { id: 'three', label: 'Three' },
+          ] }),
         el(TabPanel, { id: 'probe-tabs', value: tab }, `Panel ${tab}`),
         el(AddressChip, { value }),
         el(NameChip, { name: 'averylongname'.repeat(8) + '.dusk', onClick: () => window.actions++ }),
@@ -181,10 +181,26 @@ export async function checkUiSystem(page) {
     const { AppShell } = await import('/src/app/AppShell.tsx')
     const { SearchHero } = await import('/src/features/search/SearchHero.tsx')
     const noop = () => {}
-    root.render(React.createElement(AppShell, { launchLinks: {}, mainView: 'search', network: { label: 'Preview', tone: 'preview' },
-      onMainViewChange: noop, onOpenName: noop, onOpenWallet: noop, onSearchHome: noop, pendingReservationCount: 0,
-      runtimeNotice: null, searching: false, skyNames: [], walletState: { accounts: [] }, walletStatus: 'disconnected' },
-    React.createElement(SearchHero, { checked: false, loading: false, query: 'aurora', onQueryChange: noop, onCheckAvailability: noop })))
+    root.render(React.createElement(AppShell, {
+      launchLinks: {},
+      network: { label: 'Preview', tone: 'preview' },
+      runtimeNotice: null,
+      skyNames: [],
+      navigation: {
+        mainView: 'search',
+        onMainViewChange: noop,
+        onOpenName: noop,
+        onSearchHome: noop,
+        pendingReservationCount: 0,
+        searching: false,
+      },
+      wallet: {
+        onOpenWallet: noop,
+        walletState: { accounts: [] },
+        walletStatus: 'disconnected',
+      },
+    },
+      React.createElement(SearchHero, { checked: false, loading: false, query: 'aurora', onQueryChange: noop, onCheckAvailability: noop })))
   })
   await page.getByRole('heading', { name: 'Find your .dusk name' }).waitFor()
   await page.evaluate(() => document.fonts.ready)

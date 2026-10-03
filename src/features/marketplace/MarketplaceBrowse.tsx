@@ -24,9 +24,9 @@ import { useMarketplaceBrowse } from './useMarketplaceBrowse'
 import type { MarketplaceBrowseProps } from './marketplaceTypes'
 
 export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
-  const { filter, setFilter, query, setQuery, sort, setSort, watched, results } = useMarketplaceBrowse(props.fixedSales, props.auctions, props.watchedNodes)
-  if (!props.fixedSales.length && !props.auctions.length) {
-    return <PanelMessage icon={<Gavel size={18} />} tone="subtle">No names for sale yet. <Button variant="quiet" onClick={() => props.onTabChange('sell')}>List a name</Button><a href="/">Browse names</a></PanelMessage>
+  const { filter, setFilter, query, setQuery, sort, setSort, watched, results } = useMarketplaceBrowse(props.listings.fixedSales, props.listings.auctions, props.watchlist.watchedNodes)
+  if (!props.listings.fixedSales.length && !props.listings.auctions.length) {
+    return <PanelMessage icon={<Gavel size={18} />} tone="subtle">No names for sale yet. <Button variant="quiet" onClick={() => props.navigation.onTabChange('sell')}>List a name</Button><a href="/">Browse names</a></PanelMessage>
   }
 
   return (
@@ -48,7 +48,7 @@ export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
             ['all', 'All'],
             ['auction', 'Auctions'],
             ['buy-now', 'Buy now'],
-            ['watching', `Watching ${props.watchedNodes.length || ''}`.trim()],
+            ['watching', `Watching ${props.watchlist.watchedNodes.length || ''}`.trim()],
           ] as const).map(([id, label]) => (
             <Button aria-pressed={filter === id} className={filter === id ? 'active' : ''} key={id} type="button" onClick={() => setFilter(id)}>{label}</Button>
           ))}
@@ -78,9 +78,9 @@ export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
 }
 
 function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceAuction; props: MarketplaceBrowseProps; watched: boolean }) {
-  const status = auctionStatus(auction, props.currentBlockHeight)
-  const ownAuction = sameAuthority(auction.sellerAuthority, props.selectedAuthority)
-  const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority)
+  const status = auctionStatus(auction, props.market.currentBlockHeight)
+  const ownAuction = sameAuthority(auction.sellerAuthority, props.wallet.selectedAuthority)
+  const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.wallet.selectedAuthority)
   const amount = auction.highestBid?.amountLux ?? auction.reservePriceLux
 
   return (
@@ -92,24 +92,24 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
           aria-pressed={watched}
           className={`marketplace-watch-button${watched ? ' active' : ''}`}
           type="button"
-          onClick={() => props.onToggleWatch(auction.node)}
+          onClick={() => props.watchlist.onToggleWatch(auction.node)}
         >
           <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={17} />
         </Button>
       </div>
       <ListingName name={auction.name} />
       <NamespaceSummary namespace={auction.namespace} />
-      <div className="marketplace-owner">Seller <OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} compact /></div>
+      <div className="marketplace-owner">Seller <OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} compact /></div>
       {leading ? <p className="marketplace-personal-status leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
       {ownAuction ? <><p className="marketplace-personal-status selling">Your auction</p><p>Renewal is available after the listing closes.</p></> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>{auction.highestBid ? 'Current bid' : 'Reserve'}</dt><dd><MarketplaceAmount lux={amount} /></dd></div>
         <div>
           <dt><Clock3 aria-hidden="true" size={13} /> {auction.endBlockHeight === null ? 'Duration' : 'Time remaining'}</dt>
-          <dd>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : auctionTimeLabel(auction, props.currentBlockHeight)}</dd>
+          <dd>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : auctionTimeLabel(auction, props.market.currentBlockHeight)}</dd>
         </div>
       </dl>
-      <Button className="marketplace-card-action" type="button" onClick={() => props.onOpenAuction(auction.node)}>
+      <Button className="marketplace-card-action" type="button" onClick={() => props.auction.onOpenAuction(auction.node)}>
         View auction
       </Button>
     </Panel>
@@ -117,9 +117,9 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
 }
 
 function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps; sale: IndexedMarketplaceFixedSale; watched: boolean }) {
-  const ownSale = sameAuthority(sale.sellerAuthority, props.selectedAuthority)
-  const expired = isExpired(sale.expiresAtBlockHeight, props.currentBlockHeight)
-  const allowedBuyer = !sale.privateBuyer || sameAuthority(sale.privateBuyer, props.selectedAuthority)
+  const ownSale = sameAuthority(sale.sellerAuthority, props.wallet.selectedAuthority)
+  const expired = isExpired(sale.expiresAtBlockHeight, props.market.currentBlockHeight)
+  const allowedBuyer = !sale.privateBuyer || sameAuthority(sale.privateBuyer, props.wallet.selectedAuthority)
 
   return (
     <Panel as="article" className="marketplace-card marketplace-fixed-card">
@@ -130,28 +130,28 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps
           aria-pressed={watched}
           className={`marketplace-watch-button${watched ? ' active' : ''}`}
           type="button"
-          onClick={() => props.onToggleWatch(sale.node)}
+          onClick={() => props.watchlist.onToggleWatch(sale.node)}
         >
           <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={17} />
         </Button>
       </div>
       <ListingName name={sale.name} />
       <NamespaceSummary namespace={sale.namespace} />
-      <div className="marketplace-owner">Seller <OwnerLabel authority={sale.sellerAuthority} viewerAuthority={props.selectedAuthority} addresses={props.ownerAddresses} compact /></div>
+      <div className="marketplace-owner">Seller <OwnerLabel authority={sale.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} compact /></div>
       {ownSale ? <><p className="marketplace-personal-status selling">Your listing</p><p>Renewal is available after the listing closes.</p></> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>Price</dt><dd><MarketplaceAmount lux={sale.priceLux} /></dd></div>
-        <div><dt><Clock3 aria-hidden="true" size={13} /> {expired ? 'Ended' : 'Expires'}</dt><dd>{expiryTimeLabel(sale.expiresAtBlockHeight, props.currentBlockHeight)}</dd></div>
+        <div><dt><Clock3 aria-hidden="true" size={13} /> {expired ? 'Ended' : 'Expires'}</dt><dd>{expiryTimeLabel(sale.expiresAtBlockHeight, props.market.currentBlockHeight)}</dd></div>
       </dl>
       <div className="marketplace-card-action">
         {expired ? (
-          <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onExpireFixedSale(sale)}>Close listing</Button>
+          <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.listings.onExpireFixedSale(sale)}>Close listing</Button>
         ) : ownSale ? (
-          <Button disabled={!props.actionsAvailable} type="button" onClick={() => props.onCancelFixedSale(sale)}>Cancel listing</Button>
-        ) : !props.selectedAddress ? (
-          <Button type="button" onClick={props.onOpenWalletConnection}>Connect to buy</Button>
+          <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.listings.onCancelFixedSale(sale)}>Cancel listing</Button>
+        ) : !props.wallet.selectedAddress ? (
+          <Button type="button" onClick={props.wallet.onOpenWalletConnection}>Connect to buy</Button>
         ) : (
-          <Button disabled={props.tradingPaused || !props.actionsAvailable || !allowedBuyer || !sale.escrowed} type="button" onClick={() => props.onBuyFixedSale(sale)}>
+          <Button disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !allowedBuyer || !sale.escrowed} type="button" onClick={() => props.listings.onBuyFixedSale(sale)}>
             {allowedBuyer ? `Buy for ${compactLuxAsDusk(BigInt(sale.priceLux))} DUSK` : 'Private sale'}
           </Button>
         )}

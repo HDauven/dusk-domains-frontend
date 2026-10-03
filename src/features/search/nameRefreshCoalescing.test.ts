@@ -1,3 +1,4 @@
+import { searchActions } from './test-fixtures/searchActions'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
@@ -15,12 +16,7 @@ it('shares name reads between navigation and automatic refresh', async () => {
     getActivityPage: vi.fn(async () => ({activity:[]})), getAllSubnames: vi.fn(async () => []) }
   let loader!: ReturnType<typeof useIndexedNameHydration>
   function Probe() {
-    loader = useIndexedNameHydration({ indexerClient:client,displayName:'alpha.dusk',beginActivityRead:()=>()=>true,
-      beginOwnershipRead:()=>()=>true,setActivityLoading:vi.fn(),setApiSearchResult:vi.fn(),setIndexerError:vi.fn(),
-      setIndexerConfirmation:vi.fn(),setCurrentBlockHeight:vi.fn(),setNowSeconds:vi.fn(),setManagedName:vi.fn(),setSubnames:vi.fn(),
-      setResolverRecordSets:vi.fn(),setPrimaryName:vi.fn(),setConnectedPrimaryName:vi.fn(),setPrimaryEndpointValue:vi.fn(),setSubnameManager:vi.fn(),
-      setActivityEntries:vi.fn(),setActivityCursor:vi.fn(),
-    } as never)
+    loader = useIndexedNameHydration({ ...searchActions(), indexerClient: client, displayName: 'alpha.dusk' } as never)
     return null
   }
   renderToStaticMarkup(createElement(Probe))
@@ -42,11 +38,11 @@ it('displays alpha after alpha → beta → alpha even when beta resolves first'
   const alpha = Promise.withResolvers<NameResult>(), beta = Promise.withResolvers<NameResult>()
   const client = { searchName: vi.fn((name: string) => name === 'alpha.dusk' ? alpha.promise : beta.promise) }
   let loader!: ReturnType<typeof useIndexedNameHydration>
-  function Probe() { loader = useIndexedNameHydration({} as never); return null }
+  function Probe() { loader = useIndexedNameHydration(searchActions() as never); return null }
   renderToStaticMarkup(createElement(Probe))
   const setApiSearchResult = vi.fn()
-  const props = new Proxy({ indexerClient: client, beginNameRead: createNameReadGuard(),
-    searchNameFromIndexer: loader.searchNameFromIndexer, setApiSearchResult }, {
+  const props = new Proxy({ ...searchActions({ search: { showResult: setApiSearchResult } }), indexerClient: client, beginNameRead: createNameReadGuard(),
+    searchNameFromIndexer: loader.searchNameFromIndexer }, {
     get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn(),
   })
   const search = (query: string) => checkAvailability(new Proxy(props, {
@@ -67,20 +63,17 @@ it('refreshes the timestamp with each height after an idle search without reserv
   const result = { ...analyzeName('aurora'), graceEndsAtBlockHeight: 10_000 }
   const boundary = 18_640
   let currentBlockHeight = boundary - 210, nowSeconds = Date.now() / 1000
-  const setIndexerError = vi.fn()
-  const setNowSeconds = vi.fn((seconds: number) => { nowSeconds = seconds })
-  const setCurrentBlockHeight = vi.fn((height: number) => { currentBlockHeight = height })
+  const actions = searchActions({ search: { updateClock: vi.fn((height, seconds) => {
+    currentBlockHeight = height!
+    nowSeconds = seconds!
+  }) } })
   const client = { getHealth: vi.fn(async () => ({ ok: true, currentBlockHeight: boundary - 30 })),
     searchName: async () => result, resolveForward: async () => ({ records: [] }), getNameState: async () => null,
     getActivityPage: async () => ({ activity: [] }), getAllSubnames: async () => [] }
   let loader!: ReturnType<typeof useIndexedNameHydration>
   function Probe() {
-    const setters = Object.fromEntries(['setActivityLoading', 'setApiSearchResult', 'setIndexerConfirmation',
-      'setManagedName', 'setResolverRecordSets', 'setSubnames', 'setPrimaryEndpointValue', 'setPrimaryName',
-      'setConnectedPrimaryName', 'setActivityEntries', 'setActivityCursor'].map(key => [key, vi.fn()]))
-    loader = useIndexedNameHydration({ ...setters, indexerClient: client, displayName: 'aurora.dusk', selectedAddress: '',
-      onChainClient: null, currentBlockHeight, nowSeconds, setNowSeconds, setCurrentBlockHeight, setIndexerError,
-      beginActivityRead: () => () => true, beginOwnershipRead: () => () => true } as never)
+    loader = useIndexedNameHydration({ ...actions, indexerClient: client, displayName: 'aurora.dusk', selectedAddress: '',
+      onChainClient: null, currentBlockHeight, nowSeconds } as never)
     return null
   }
   let preview!: ReturnType<typeof useNamePreview>
@@ -94,10 +87,10 @@ it('refreshes the timestamp with each height after an idle search without reserv
     for (const timestamp of ['2026-10-03T12:30:00Z', '2026-10-03T13:00:00Z']) {
       clock.mockReturnValue(Date.parse(timestamp))
       const refreshed = await loader.refreshCurrentNameFromIndexer({ fresh: true })
-      expect(setIndexerError).toHaveBeenLastCalledWith('')
+      expect(actions.search.startRead).toHaveBeenCalled()
+      expect(actions.search.fail).not.toHaveBeenCalled()
       expect(refreshed).toBe(true)
-      expect(setCurrentBlockHeight).toHaveBeenLastCalledWith(boundary - 30)
-      expect(setNowSeconds).toHaveBeenLastCalledWith(Date.parse(timestamp) / 1000)
+      expect(actions.search.updateClock).toHaveBeenLastCalledWith(boundary - 30, Date.parse(timestamp) / 1000)
       renderToStaticMarkup(createElement(Preview))
       expect(Date.parse(preview.result.premiumNextStepAt!)).toBe(Date.parse(timestamp) + 300_000)
     }

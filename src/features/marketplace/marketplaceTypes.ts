@@ -26,189 +26,141 @@ export type MarketplaceReviewDetails = {
 
 export type MarketplaceViewProps = {
   takeBackOffers?: Array<{ name: string; count: number; takeBack: () => void }>
-  ownerAddresses?: string[]
-  review?: MarketplaceReviewDetails | null
-  onCancelReview?: () => void
-  onConfirmReview?: () => void
-  tradingPaused?: boolean
-  actionsAvailable: boolean
-  auctions: IndexedMarketplaceAuction[]
-  auctionActivity: ActivityEntry[]
-  auctionActivityLoading: boolean
-  auctionActivityHasMore?: boolean
-  onLoadMoreAuctionActivity?: () => void
-  bidDrafts: Record<string, string>
-  bidReview: MarketplaceBidReview | null
-  confirmation: string
-  updatedAt?: number | null
-  currentBlockHeight: number | null
-  durationDays: string
-  error: string
-  feeBps?: number | null
-  fixedPriceDusk: string
-  fixedSales: IndexedMarketplaceFixedSale[]
-  hasMore?: boolean
-  onLoadMore?: () => void
-  loading: boolean
-  marketplaceEnabled: boolean
-  offerAmountDusk: string
-  offerDurationDays: string
-  offerName: string
-  offers: IndexedMarketplaceOffer[]
-  privateBuyer: string
-  refund: IndexedMarketplaceRefund | null
-  reserveDusk: string
-  saleMode: MarketplaceSaleMode
-  selectedAddress: string
-  selectedAuctionNode: string
-  selectedAuthority: string
-  selectedNode: string
-  sellableNames: IndexedNameSummary[]
-  tab: MarketplaceTab
-  txState: DuskDomainTxState | null
-  watchedNodes: string[]
-  onAcceptOffer: (offer: IndexedMarketplaceOffer) => void
-  onBidDraftChange: (node: string, value: string) => void
-  onCancelBidReview: () => void
-  onBuyFixedSale: (sale: IndexedMarketplaceFixedSale) => void
-  onCancelAuction: (auction: IndexedMarketplaceAuction) => void
-  onCancelFixedSale: (sale: IndexedMarketplaceFixedSale) => void
-  onCancelOffer: (offer: IndexedMarketplaceOffer) => void
-  onClaimRefund: () => void
-  onCreateListing: () => void
-  onDurationDaysChange: (value: string) => void
-  onExpireAuction: (auction: IndexedMarketplaceAuction) => void
-  onExpireFixedSale: (sale: IndexedMarketplaceFixedSale) => void
-  onExpireOffer: (offer: IndexedMarketplaceOffer) => void
-  onFixedPriceDuskChange: (value: string) => void
-  onOfferAmountDuskChange: (value: string) => void
-  onOfferDurationDaysChange: (value: string) => void
-  onOfferNameChange: (value: string) => void
-  onOpenWalletConnection: () => void
-  onOpenAuction: (node: string) => void
-  onPlaceBid: (auction: IndexedMarketplaceAuction) => void
-  onPlaceOffer: () => void
-  onPrivateBuyerChange: (value: string) => void
-  onReviewBid: (auction: IndexedMarketplaceAuction) => void
-  onReserveDuskChange: (value: string) => void
-  onSaleModeChange: (mode: MarketplaceSaleMode) => void
-  onSelectedNodeChange: (node: string) => void
-  onSettleAuction: (auction: IndexedMarketplaceAuction) => void
-  onTabChange: (tab: MarketplaceTab) => void
-  onToggleWatch: (node: string) => void
-  onCloseAuction: () => void
+  wallet: {
+    ownerAddresses?: string[]
+    tradingPaused?: boolean
+    actionsAvailable: boolean
+    selectedAddress: string
+    selectedAuthority: string
+    onOpenWalletConnection: () => void
+  }
+  feedback: {
+    review?: MarketplaceReviewDetails | null
+    onCancelReview?: () => void
+    onConfirmReview?: () => void
+    confirmation: string
+    error: string
+    txState: DuskDomainTxState | null
+  }
+  listings: {
+    auctions: IndexedMarketplaceAuction[]
+    fixedSales: IndexedMarketplaceFixedSale[]
+    onBuyFixedSale: (sale: IndexedMarketplaceFixedSale) => void
+    onCancelFixedSale: (sale: IndexedMarketplaceFixedSale) => void
+    onExpireFixedSale: (sale: IndexedMarketplaceFixedSale) => void
+  }
+  auction: {
+    auctionActivity: ActivityEntry[]
+    auctionActivityLoading: boolean
+    auctionActivityHasMore?: boolean
+    onLoadMoreAuctionActivity?: () => void
+    bidDrafts: Record<string, string>
+    bidReview: MarketplaceBidReview | null
+    selectedAuctionNode: string
+    onBidDraftChange: (node: string, value: string) => void
+    onCancelBidReview: () => void
+    onCancelAuction: (auction: IndexedMarketplaceAuction) => void
+    onExpireAuction: (auction: IndexedMarketplaceAuction) => void
+    onOpenAuction: (node: string) => void
+    onPlaceBid: (auction: IndexedMarketplaceAuction) => void
+    onReviewBid: (auction: IndexedMarketplaceAuction) => void
+    onSettleAuction: (auction: IndexedMarketplaceAuction) => void
+    onCloseAuction: () => void
+  }
+  market: {
+    updatedAt?: number | null
+    currentBlockHeight: number | null
+    hasMore?: boolean
+    onLoadMore?: () => void
+    loading: boolean
+    marketplaceEnabled: boolean
+  }
+  selling: {
+    durationDays: string
+    feeBps?: number | null
+    fixedPriceDusk: string
+    privateBuyer: string
+    reserveDusk: string
+    saleMode: MarketplaceSaleMode
+    selectedNode: string
+    sellableNames: IndexedNameSummary[]
+    onCreateListing: () => void
+    onDurationDaysChange: (value: string) => void
+    onFixedPriceDuskChange: (value: string) => void
+    onPrivateBuyerChange: (value: string) => void
+    onReserveDuskChange: (value: string) => void
+    onSaleModeChange: (mode: MarketplaceSaleMode) => void
+    onSelectedNodeChange: (node: string) => void
+  }
+  offers: {
+    offerAmountDusk: string
+    offerDurationDays: string
+    offerName: string
+    offers: IndexedMarketplaceOffer[]
+    onAcceptOffer: (offer: IndexedMarketplaceOffer) => void
+    onCancelOffer: (offer: IndexedMarketplaceOffer) => void
+    onExpireOffer: (offer: IndexedMarketplaceOffer) => void
+    onOfferAmountDuskChange: (value: string) => void
+    onOfferDurationDaysChange: (value: string) => void
+    onOfferNameChange: (value: string) => void
+    onPlaceOffer: () => void
+  }
+  withdrawal: {
+    refund: IndexedMarketplaceRefund | null
+    onClaimRefund: () => void
+  }
+  navigation: {
+    tab: MarketplaceTab
+    onTabChange: (tab: MarketplaceTab) => void
+  }
+  watchlist: {
+    watchedNodes: string[]
+    onToggleWatch: (node: string) => void
+  }
 }
 
-export type MarketplaceBrowseProps = Pick<MarketplaceViewProps,
-  | 'ownerAddresses'
-  | 'actionsAvailable'
-  | 'auctions'
-  | 'currentBlockHeight'
-  | 'fixedSales'
-  | 'onBuyFixedSale'
-  | 'onCancelFixedSale'
-  | 'onExpireFixedSale'
-  | 'onOpenAuction'
-  | 'onOpenWalletConnection'
-  | 'onTabChange'
-  | 'onToggleWatch'
-  | 'selectedAddress'
-  | 'selectedAuthority'
-  | 'tradingPaused'
-  | 'watchedNodes'
->
+export type MarketplaceBrowseProps = {
+  wallet: Pick<MarketplaceViewProps['wallet'], 'ownerAddresses' | 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'selectedAuthority' | 'tradingPaused'>
+  listings: Pick<MarketplaceViewProps['listings'], 'auctions' | 'fixedSales' | 'onBuyFixedSale' | 'onCancelFixedSale' | 'onExpireFixedSale'>
+  market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
+  auction: Pick<MarketplaceViewProps['auction'], 'onOpenAuction'>
+  navigation: Pick<MarketplaceViewProps['navigation'], 'onTabChange'>
+  watchlist: Pick<MarketplaceViewProps['watchlist'], 'onToggleWatch' | 'watchedNodes'>
+}
 
-export type MarketplaceAuctionDetailProps = Pick<MarketplaceViewProps,
-  | 'error'
-  | 'ownerAddresses'
-  | 'updatedAt'
-  | 'actionsAvailable'
-  | 'auctionActivity'
-  | 'auctionActivityHasMore'
-  | 'auctionActivityLoading'
-  | 'bidDrafts'
-  | 'currentBlockHeight'
-  | 'onBidDraftChange'
-  | 'onCancelAuction'
-  | 'onCloseAuction'
-  | 'onExpireAuction'
-  | 'onLoadMoreAuctionActivity'
-  | 'onOpenWalletConnection'
-  | 'onReviewBid'
-  | 'onSettleAuction'
-  | 'onToggleWatch'
-  | 'selectedAddress'
-  | 'selectedAuthority'
-  | 'tradingPaused'
-  | 'watchedNodes'
->
+export type MarketplaceAuctionDetailProps = {
+  feedback: Pick<MarketplaceViewProps['feedback'], 'error'>
+  wallet: Pick<MarketplaceViewProps['wallet'], 'ownerAddresses' | 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'selectedAuthority' | 'tradingPaused'>
+  market: Pick<MarketplaceViewProps['market'], 'updatedAt' | 'currentBlockHeight'>
+  auction: Pick<MarketplaceViewProps['auction'], 'auctionActivity' | 'auctionActivityHasMore' | 'auctionActivityLoading' | 'bidDrafts' | 'onBidDraftChange' | 'onCancelAuction' | 'onCloseAuction' | 'onExpireAuction' | 'onLoadMoreAuctionActivity' | 'onReviewBid' | 'onSettleAuction'>
+  watchlist: Pick<MarketplaceViewProps['watchlist'], 'onToggleWatch' | 'watchedNodes'>
+}
 
-export type MarketplaceOffersProps = Pick<MarketplaceViewProps,
-  | 'ownerAddresses'
-  | 'actionsAvailable'
-  | 'currentBlockHeight'
-  | 'offerAmountDusk'
-  | 'offerDurationDays'
-  | 'offerName'
-  | 'offers'
-  | 'onAcceptOffer'
-  | 'onCancelOffer'
-  | 'onExpireOffer'
-  | 'onOfferAmountDuskChange'
-  | 'onOfferDurationDaysChange'
-  | 'onOfferNameChange'
-  | 'onOpenWalletConnection'
-  | 'onPlaceOffer'
-  | 'selectedAddress'
-  | 'selectedAuthority'
-  | 'sellableNames'
-  | 'tradingPaused'
->
+export type MarketplaceOffersProps = {
+  wallet: Pick<MarketplaceViewProps['wallet'], 'ownerAddresses' | 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'selectedAuthority' | 'tradingPaused'>
+  market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
+  offers: Pick<MarketplaceViewProps['offers'], 'offerAmountDusk' | 'offerDurationDays' | 'offerName' | 'offers' | 'onAcceptOffer' | 'onCancelOffer' | 'onExpireOffer' | 'onOfferAmountDuskChange' | 'onOfferDurationDaysChange' | 'onOfferNameChange' | 'onPlaceOffer'>
+  selling: Pick<MarketplaceViewProps['selling'], 'sellableNames'>
+}
 
-export type MarketplaceSellProps = Pick<MarketplaceViewProps,
-  | 'actionsAvailable'
-  | 'durationDays'
-  | 'feeBps'
-  | 'fixedPriceDusk'
-  | 'onCreateListing'
-  | 'onDurationDaysChange'
-  | 'onFixedPriceDuskChange'
-  | 'onOpenWalletConnection'
-  | 'onPrivateBuyerChange'
-  | 'onReserveDuskChange'
-  | 'onSaleModeChange'
-  | 'onSelectedNodeChange'
-  | 'privateBuyer'
-  | 'reserveDusk'
-  | 'saleMode'
-  | 'selectedAddress'
-  | 'selectedNode'
-  | 'sellableNames'
-  | 'tradingPaused'
->
+export type MarketplaceSellProps = {
+  wallet: Pick<MarketplaceViewProps['wallet'], 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'tradingPaused'>
+  selling: Pick<MarketplaceViewProps['selling'], 'durationDays' | 'feeBps' | 'fixedPriceDusk' | 'onCreateListing' | 'onDurationDaysChange' | 'onFixedPriceDuskChange' | 'onPrivateBuyerChange' | 'onReserveDuskChange' | 'onSaleModeChange' | 'onSelectedNodeChange' | 'privateBuyer' | 'reserveDusk' | 'saleMode' | 'selectedNode' | 'sellableNames'>
+}
 
-export type MarketplaceActivityProps = Pick<MarketplaceViewProps,
-  | 'actionsAvailable'
-  | 'auctions'
-  | 'currentBlockHeight'
-  | 'fixedSales'
-  | 'offers'
-  | 'onClaimRefund'
-  | 'onOpenAuction'
-  | 'onOpenWalletConnection'
-  | 'onTabChange'
-  | 'refund'
-  | 'selectedAddress'
-  | 'selectedAuthority'
-  | 'watchedNodes'
->
+export type MarketplaceActivityProps = {
+  wallet: Pick<MarketplaceViewProps['wallet'], 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'selectedAuthority'>
+  listings: Pick<MarketplaceViewProps['listings'], 'auctions' | 'fixedSales'>
+  market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
+  offers: Pick<MarketplaceViewProps['offers'], 'offers'>
+  withdrawal: Pick<MarketplaceViewProps['withdrawal'], 'onClaimRefund' | 'refund'>
+  auction: Pick<MarketplaceViewProps['auction'], 'onOpenAuction'>
+  navigation: Pick<MarketplaceViewProps['navigation'], 'onTabChange'>
+  watchlist: Pick<MarketplaceViewProps['watchlist'], 'watchedNodes'>
+}
 
-export type MarketplaceBidReviewProps = Pick<MarketplaceViewProps,
-  | 'actionsAvailable'
-  | 'bidReview'
-  | 'currentBlockHeight'
-  | 'onCancelBidReview'
-  | 'onPlaceBid'
-  | 'selectedAddress'
-  | 'tradingPaused'
->
+export type MarketplaceBidReviewProps = {
+  wallet: Pick<MarketplaceViewProps['wallet'], 'actionsAvailable' | 'selectedAddress' | 'tradingPaused'>
+  auction: Pick<MarketplaceViewProps['auction'], 'bidReview' | 'onCancelBidReview' | 'onPlaceBid'>
+  market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
+}

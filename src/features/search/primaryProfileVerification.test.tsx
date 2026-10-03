@@ -1,7 +1,8 @@
+import { searchActions } from './test-fixtures/searchActions'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
 import { deriveAppDerivedState } from '../../app/derived/deriveAppDerivedState'
-import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
+import { createManagedNameState } from '../../app/managedNameState'
 import { namehashHex } from '../../names/internal'
 import { SearchResultPanel, type SearchResultPanelProps } from './SearchResultPanel'
 import { useIndexedNameHydration } from './useIndexedNameHydration'
@@ -30,18 +31,18 @@ it.each([
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
   }
   const onChainClient = { readPrimaryName: vi.fn(async () => ({ ok: true, value: { name: 'alice.dusk' } })) }
-  const setters = Object.fromEntries(['setActivityEntries', 'setActivityCursor', 'setIndexerError', 'setSubnames', 'setCurrentBlockHeight']
-    .map(key => [key, vi.fn()]))
-  const props = new Proxy({
-    ...setters,
+  const props = {
+    ...searchActions({
+    records: { hydrate: (node, records) => { recordSets = { ...recordSets, [node]: records ?? [] } } },
+    domain: { hydrate: snapshot => {
+      managedName = snapshot.managedName
+      primaryName = snapshot.primaryName
+      connectedPrimaryName = snapshot.connectedPrimaryName
+      primaryEndpointValue = snapshot.primaryEndpoint
+    } },
+    }),
     displayName: name, selectedAddress, indexerClient, onChainClient, recordSourceContractId: 'resolver',
-    beginActivityRead: () => () => true, beginOwnershipRead: () => () => true,
-    setManagedName: (value: ManagedNameState) => { managedName = value },
-    setPrimaryName: (value: string | null) => { primaryName = value },
-    setConnectedPrimaryName: (value: string | null) => { connectedPrimaryName = value },
-    setPrimaryEndpointValue: (value: string) => { primaryEndpointValue = value },
-    setResolverRecordSets: (update: (current: ResolverRecordSets) => ResolverRecordSets) => { recordSets = update(recordSets) },
-  }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
+  }
   let hydration!: ReturnType<typeof useIndexedNameHydration>
   function Probe() { hydration = useIndexedNameHydration(props as never); return null }
   renderToStaticMarkup(<Probe />)
@@ -53,10 +54,27 @@ it.each([
     pendingReservations: [], subnames: [], subnameLabel: '', subnameManager: '', confirmationInput: '', recordDraftMutations: [], recordDraftErrors: [],
   } as never)
   const html = renderToStaticMarkup(<SearchResultPanel {...{
-    nodeHex: node, resultView: 'details', settingsProps: { managedName }, subdomainsProps: { subnames: [] },
+    nodeHex: node,
+    resultView: 'details',
     headerProps: { status: 'registered', displayName: name, records, viewerAuthority: selectedAuthority, primaryVerified: state.primaryVerification.verified },
-    detailsProps: { displayName: name, parentResolverRecords: recordSets[node], activityEntries: [], subnames: [], primaryVerification: state.primaryVerification },
-    primaryProps: { ...state, displayName: name, error: '', txState: null, onClearPrimary: vi.fn(), onSetPrimary: vi.fn() },
+    detailsProps: {
+      displayName: name,
+      parentResolverRecords: recordSets[node],
+      subnames: [],
+      primaryVerification: state.primaryVerification,
+      activity: { activityEntries: [] },
+    },
+    management: { settingsProps: {
+        managedName,
+        ownership: {  },
+        renewal: {  },
+        clock: {  },
+      }, subdomainsProps: {
+        subnames: [],
+        creation: {  },
+        authority: {  },
+        clock: {  },
+      }, primaryProps: { ...state, displayName: name, error: '', txState: null, onClearPrimary: vi.fn(), onSetPrimary: vi.fn() } },
   } as unknown as SearchResultPanelProps} />)
   expect(html).toContain('Apps show bob.dusk for this Dusk address.')
   expect(html).not.toContain('This name is not the primary name for its Dusk address.')

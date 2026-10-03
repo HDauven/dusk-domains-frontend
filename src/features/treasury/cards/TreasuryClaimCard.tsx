@@ -11,31 +11,33 @@ import { walletActionLabel, walletActionTitle } from '../../wallet/walletStatus'
 import { formatLuxNumberAsDusk } from '../feeConfig'
 import type { TreasuryClaimCardProps } from './types'
 
-export function TreasuryClaimCard({
-  canClaimTreasury,
-  canClaimTreasuryPartial,
-  connectedAsTreasuryOperator,
-  liveWritesAvailable,
-  onClaimTreasury,
-  onOpenWalletConnection,
-  onTreasuryClaimAmountChange,
-  selectedAddress,
-  showTreasuryClaimControls,
-  showTreasuryClaimReview,
-  treasuryAvailable,
-  treasuryBusy,
-  treasuryClaimAmount,
-  treasuryClaimAmountError,
-  treasuryClaimGuidance,
-  treasuryConnectedWalletLabel,
-  treasuryRecipientMatchesOperator,
-  treasuryReviewAmountLux,
-  treasuryReviewLabel,
-  treasuryState,
-  treasuryTxState,
-  treasuryWalletStatus,
-  walletSetupState,
-}: TreasuryClaimCardProps) {
+export function TreasuryClaimCard({ treasuryState, claim, wallet }: TreasuryClaimCardProps) {
+  const {
+    canClaimTreasury,
+    canClaimTreasuryPartial,
+    onClaimTreasury,
+    onTreasuryClaimAmountChange,
+    showTreasuryClaimControls,
+    showTreasuryClaimReview,
+    treasuryAvailable,
+    treasuryBusy,
+    treasuryClaimAmount,
+    treasuryClaimAmountError,
+    treasuryClaimGuidance,
+    treasuryRecipientMatchesOperator,
+    treasuryReviewAmountLux,
+    treasuryReviewLabel,
+    treasuryTxState,
+  } = claim
+  const {
+    connectedAsTreasuryOperator,
+    liveWritesAvailable,
+    onOpenWalletConnection,
+    selectedAddress,
+    treasuryConnectedWalletLabel,
+    treasuryWalletStatus,
+    walletSetupState,
+  } = wallet
   const operatorValue = treasuryRecipientMatchesOperator && treasuryState.operatorRecipient
     ? abbreviate(treasuryState.operatorRecipient)
     : principalLabel(treasuryState.operator)

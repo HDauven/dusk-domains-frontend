@@ -8,24 +8,27 @@ import { walletActionLabel, walletActionTitle } from '../../wallet/walletStatus'
 import { FeeConfigInput } from './FeeConfigInput'
 import type { TreasuryPricingCardProps } from './types'
 
-export function TreasuryPricingCard({
-  canUpdateFeeConfig,
-  connectedAsTreasuryOperator,
-  feeConfig,
-  feeConfigBusy,
-  feeConfigConfirmation,
-  feeConfigError,
-  feeConfigForm,
-  feeConfigFormError,
-  feeConfigLoading,
-  feeConfigTxState,
-  feeConfigUpdateError,
-  onFeeConfigFieldChange,
-  onOpenWalletConnection,
-  onUpdateFeeConfig,
-  selectedAddress,
-  walletSetupState,
-}: TreasuryPricingCardProps) {
+export function TreasuryPricingCard({ pricing, wallet }: TreasuryPricingCardProps) {
+  const {
+    canUpdateFeeConfig,
+    feeConfig,
+    feeConfigBusy,
+    feeConfigConfirmation,
+    feeConfigError,
+    feeConfigForm,
+    feeConfigFormError,
+    feeConfigLoading,
+    feeConfigTxState,
+    feeConfigUpdateError,
+    onFeeConfigFieldChange,
+    onUpdateFeeConfig,
+  } = pricing
+  const {
+    connectedAsTreasuryOperator,
+    onOpenWalletConnection,
+    selectedAddress,
+    walletSetupState,
+  } = wallet
   return (
     <AccountCard
       className="fee-config-card"

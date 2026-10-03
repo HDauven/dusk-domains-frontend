@@ -106,14 +106,49 @@ try {
   await page.evaluate(async () => {
     const { React, root } = window
     const { SearchWorkspace } = await import('/src/features/search/SearchWorkspace.tsx')
-    const props = { checked: true, loading: false, query: 'owned.dusk', resultView: 'overview',
-      onQueryChange: () => {}, onCheckAvailability: () => {}, onResultViewChange: () => {},
-      headerProps: { displayName: 'owned.dusk', expiresLabel: null, primaryVerified: false, records: [], reserved: false, status: 'available' },
-      overviewProps: { canRegister: true, displayName: 'owned.dusk', duration: 1, expiryDate: '2027-09-27', feeConfigLoading: false,
-        registrationFee: 10, resultStatus: 'available', resultIssues: [],
-        savedReservation: null, savedReservationWindow: null,
-        onContinueRegistration: () => {}, onDurationChange: () => {}, onOpenPendingReservation: () => {}, onOpenPendingReservations: () => {}, onViewDetails: () => {} } }
-    window.renderReadReady = resultReady => root.render(React.createElement(SearchWorkspace, { ...props, resultReady }))
+    const props = {
+      search: {
+        checked: true,
+        loading: false,
+        query: 'owned.dusk',
+        onQueryChange: () => {},
+        onCheckAvailability: () => {},
+      },
+      result: {
+        management: {},
+        resultView: 'overview',
+        onResultViewChange: () => {},
+        headerProps: { displayName: 'owned.dusk', expiresLabel: null, primaryVerified: false, records: [], reserved: false, status: 'available' },
+        overviewProps: {
+          canRegister: true,
+          displayName: 'owned.dusk',
+          resultStatus: 'available',
+          resultIssues: [],
+          onContinueRegistration: () => {},
+          onViewDetails: () => {},
+          quote: {
+            duration: 1,
+            expiryDate: '2027-09-27',
+            feeConfigLoading: false,
+            registrationFee: 10,
+            onDurationChange: () => {},
+          },
+          reservation: {
+            savedReservation: null,
+            savedReservationWindow: null,
+            onOpenPendingReservation: () => {},
+            onOpenPendingReservations: () => {},
+          },
+        },
+      },
+    }
+    window.renderReadReady = resultReady => root.render(React.createElement(SearchWorkspace, {
+      ...props,
+      search: {
+        ...props.search,
+        resultReady,
+      },
+    }))
     window.renderReadReady(true)
   })
   await page.getByRole('button', { name: 'Claim owned.dusk' }).waitFor()
@@ -127,9 +162,33 @@ try {
   await page.evaluate(async () => {
     const { React, root } = window
     const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')
-    root.render(React.createElement(MarketplaceView, { auctions: [], fixedSales: [], offers: [], watchedNodes: [],
-      actionsAvailable: false, marketplaceEnabled: true, tab: 'browse',
-      txState: { status: 'awaiting_approval', context: { title: 'Make offer' } } }))
+    root.render(React.createElement(MarketplaceView, {
+      listings: {
+        auctions: [],
+        fixedSales: [],
+      },
+      offers: {
+        offers: [],
+      },
+      watchlist: {
+        watchedNodes: [],
+      },
+      wallet: {
+        actionsAvailable: false,
+      },
+      market: {
+        marketplaceEnabled: true,
+      },
+      navigation: {
+        tab: 'browse',
+      },
+      feedback: {
+        txState: { status: 'awaiting_approval', context: { title: 'Make offer' } },
+      },
+      auction: {},
+      selling: {},
+      withdrawal: {},
+    }))
   })
   await page.locator('.tx-status.awaiting_approval').waitFor()
   assert.equal(await page.getByText('Connect a wallet to transact.', { exact: true }).count(), 0)
@@ -154,7 +213,7 @@ try {
       runtimeConfig: { chainId: 'dusk:0', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: `0x${'55'.repeat(32)}` } } },
       duskDomainsOnChainClient: createDuskDomainsOnChainClient({ read: { read: async () => null }, currentBlockHeight }),
       marketplaceOnChainClient: { getAuction: async () => ({ ok: true, value: { ...auction,
-        reservePriceLux: 5000000000n, startBlock: null, endBlock: null } }) },
+            reservePriceLux: 5000000000n, startBlock: null, endBlock: null } }) },
       ensurePublicBalanceForLiveWrite: async () => true, onOpenWalletConnection: () => {},
       submitNameWrite: async (_name, _call, options) => {
         window.heightBoundWrites = (window.heightBoundWrites || 0) + 1
@@ -165,17 +224,17 @@ try {
     function BidSync() {
       const { marketplaceProps: props } = useMarketplaceFeature(args)
       window.heightBoundMarketplace = props
-      return React.createElement('output', { id: 'height-bound-bid', 'data-status': props.txState?.status,
-        'data-watched': props.watchedNodes.includes(auction.node) }, `${props.confirmation} ${props.error}`)
+      return React.createElement('output', { id: 'height-bound-bid', 'data-status': props.feedback.txState?.status,
+        'data-watched': props.watchlist.watchedNodes.includes(auction.node) }, `${props.feedback.confirmation} ${props.feedback.error}`)
     }
     root.render(React.createElement(BidSync))
   })
   await page.locator('#height-bound-bid').waitFor({ state: 'attached' })
-  await page.evaluate(() => window.heightBoundMarketplace.onBidDraftChange(window.heightBoundAuction.node, '5'))
-  await page.waitForFunction(() => window.heightBoundMarketplace.bidDrafts[window.heightBoundAuction.node] === '5')
+  await page.evaluate(() => window.heightBoundMarketplace.auction.onBidDraftChange(window.heightBoundAuction.node, '5'))
+  await page.waitForFunction(() => window.heightBoundMarketplace.auction.bidDrafts[window.heightBoundAuction.node] === '5')
   await page.evaluate(() => {
     window.heightBoundBidDone = false
-    void window.heightBoundMarketplace.onPlaceBid(window.heightBoundAuction).then(() => { window.heightBoundBidDone = true })
+    void window.heightBoundMarketplace.auction.onPlaceBid(window.heightBoundAuction).then(() => { window.heightBoundBidDone = true })
   })
   await page.waitForFunction(() => window.heightFetchStarted)
   assert.equal(await page.locator('#height-bound-bid').getAttribute('data-status'), 'executed')
@@ -192,12 +251,23 @@ try {
     await import('/src/App.css')
     const { MyDomainsView } = await import('/src/features/domains/MyDomainsView.tsx')
     window.root.render(window.React.createElement('main', { className: 'page' },
-      window.React.createElement(MyDomainsView, { currentBlockHeight: 200, loading: false, myNamesError: '', selectedAddress: 'owner',
+      window.React.createElement(MyDomainsView, {
+        currentBlockHeight: 200,
+        loading: false,
+        myNamesError: '',
         pendingReservations: [{ name: 'a-long-domain-name.dusk', commitment: 'commit', committedBlockHeight: null,
           createdAt: new Date().toISOString(), durationYears: 1 }],
         myNames: [{ canonicalName: `${'a'.repeat(63)}.dusk`, node: 'node', records: [], subnameCount: 0, expiresAtBlockHeight: 900, graceEndsAtBlockHeight: 1000 }],
-        primarySummaries: {}, onConnectWallet: () => {}, onForgetPendingReservation: () => {}, onOpenIndexedName: () => {},
-        onOpenPendingReservation: () => {}, onSearchHome: () => {} })))
+        primarySummaries: {},
+        onForgetPendingReservation: () => {},
+        onOpenIndexedName: () => {},
+        onOpenPendingReservation: () => {},
+        onSearchHome: () => {},
+        wallet: {
+          selectedAddress: 'owner',
+          onConnectWallet: () => {},
+        },
+      })))
   })
   const open = page.getByRole('button', { name: 'Open', exact: true })
   await open.first().waitFor()
@@ -223,9 +293,28 @@ try {
       window.redrawReview = () => setHeight(value => value + 1)
       return React.createElement(React.Fragment, null,
         React.createElement('button', { id: 'review-trigger', onClick: () => setReview({ auction,
-          amountDusk: '5', amountLux: 5000000000n, minimumBidLux: 5000000000n }) }, 'Review bid'),
-        React.createElement(MarketplaceBidReview, { props: { bidReview, currentBlockHeight: height,
-          selectedAddress: 'x'.repeat(100), actionsAvailable: true, onCancelBidReview: () => setReview(null), onPlaceBid: () => {} } }))
+            amountDusk: '5', amountLux: 5000000000n, minimumBidLux: 5000000000n }) }, 'Review bid'),
+        React.createElement(MarketplaceBidReview, {
+          auction: {
+            bidReview,
+            onCancelBidReview: () => setReview(null),
+            onPlaceBid: () => {},
+          },
+          market: {
+            currentBlockHeight: height,
+          },
+          wallet: {
+            selectedAddress: 'x'.repeat(100),
+            actionsAvailable: true,
+          },
+          listings: {},
+          selling: {},
+          offers: {},
+          feedback: {},
+          watchlist: {},
+          navigation: {},
+          withdrawal: {},
+        }))
     }
     root.render(React.createElement(Review))
   })
@@ -265,11 +354,31 @@ try {
     const { ReferralLinkCard } = await import('/src/features/referrals/ReferralLinkCard.tsx')
     const address = 'owner-wallet-address'.repeat(8)
     root.render(React.createElement('main', { className: 'page' }, React.createElement('div', { className: 'account-grid' },
-      React.createElement(TreasuryClaimCard, { treasuryState: { availableLux: 50075000000, operatorRecipient: address },
-        treasuryRecipientMatchesOperator: true, selectedAddress: address, showTreasuryClaimControls: true,
-        showTreasuryClaimReview: true, treasuryReviewAmountLux: 1000000000, treasuryReviewLabel: 'Claim amount',
-        treasuryConnectedWalletLabel: 'Signing wallet', treasuryClaimAmount: '1', onTreasuryClaimAmountChange: () => {} }),
-      React.createElement(ReferralLinkCard, { selectedAddress: address, referralLink: 'https://example.test/?ref=wallet' }))))
+      React.createElement(TreasuryClaimCard, {
+        treasuryState: { availableLux: 50075000000, operatorRecipient: address },
+        claim: {
+          treasuryRecipientMatchesOperator: true,
+          showTreasuryClaimControls: true,
+          showTreasuryClaimReview: true,
+          treasuryReviewAmountLux: 1000000000,
+          treasuryReviewLabel: 'Claim amount',
+          treasuryClaimAmount: '1',
+          onTreasuryClaimAmountChange: () => {},
+        },
+        wallet: {
+          selectedAddress: address,
+          treasuryConnectedWalletLabel: 'Signing wallet',
+        },
+      }),
+      React.createElement(ReferralLinkCard, {
+        wallet: {
+          selectedAddress: address,
+        },
+        link: {
+          referralLink: 'https://example.test/?ref=wallet',
+        },
+        rewards: {},
+      }))))
   })
   await page.getByRole('textbox', { name: 'Referral link', exact: true }).waitFor()
   for (const width of [320, 390, 834, 1440]) {
@@ -282,10 +391,39 @@ try {
   await page.evaluate(async () => {
     const { React, root } = window
     const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')
-    const props = { auctions: [], fixedSales: [], offers: [], watchedNodes: [], marketplaceEnabled: false, actionsAvailable: false }
+    const props = {
+      listings: {
+        auctions: [],
+        fixedSales: [],
+      },
+      offers: {
+        offers: [],
+      },
+      watchlist: {
+        watchedNodes: [],
+      },
+      market: {
+        marketplaceEnabled: false,
+      },
+      wallet: {
+        actionsAvailable: false,
+      },
+      auction: {},
+      selling: {},
+      feedback: {},
+      navigation: {},
+      withdrawal: {},
+    }
     function Tabs() {
       const [tab, onTabChange] = React.useState('browse')
-      return React.createElement(MarketplaceView, { ...props, tab, onTabChange })
+      return React.createElement(MarketplaceView, {
+        ...props,
+        navigation: {
+          ...props.navigation,
+          tab,
+          onTabChange,
+        },
+      })
     }
     root.render(React.createElement(Tabs))
   })

@@ -5,24 +5,26 @@ import { formatLifecycleDay, lifecycleHeightReached, renewalDeadline, renewalWin
 import { ManagementFeedback } from '../ManagementFeedback'
 import type { RenewalPanelProps } from './types'
 
-export function RenewalPanel({
-  canRenewName,
-  currentBlockHeight,
-  feeConfigError,
-  feeConfigLoading,
-  managedName,
-  maxDurationYears,
-  minDurationYears,
-  nowSeconds,
-  onRenewName,
-  onRenewalYearsChange,
-  renewalBusy,
-  renewalError,
-  renewalFee,
-  renewalPreviewExpiresAt,
-  renewalTxState,
-  renewalYears,
-}: RenewalPanelProps) {
+export function RenewalPanel({ managedName, renewal, clock }: RenewalPanelProps) {
+  const {
+    canRenewName,
+    feeConfigError,
+    feeConfigLoading,
+    maxDurationYears,
+    minDurationYears,
+    onRenewName,
+    onRenewalYearsChange,
+    renewalBusy,
+    renewalError,
+    renewalFee,
+    renewalPreviewExpiresAt,
+    renewalTxState,
+    renewalYears,
+  } = renewal
+  const {
+    currentBlockHeight,
+    nowSeconds,
+  } = clock
   const renewalClosed = lifecycleHeightReached(renewalDeadline(managedName), currentBlockHeight, nowSeconds)
 
   return (

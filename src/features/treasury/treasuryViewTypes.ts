@@ -8,42 +8,48 @@ import type { FeeConfigFormState } from './feeConfig'
 import type { FeeConfigField } from './cards/types'
 
 export type TreasuryViewProps = {
-  canClaimTreasury: boolean
-  canClaimTreasuryPartial: boolean
-  canUpdateFeeConfig: boolean
-  connectedAsTreasuryOperator: boolean
-  feeConfig: CoreFeeConfig
-  feeConfigBusy: boolean
-  feeConfigConfirmation: string
-  feeConfigError: string
-  feeConfigForm: FeeConfigFormState
-  feeConfigFormError: string
-  feeConfigLoading: boolean
-  feeConfigTxState: DuskDomainTxState | null
-  feeConfigUpdateError: string
-  liveWritesAvailable: boolean
-  onClaimTreasury: (mode: 'all' | 'partial') => void
-  onFeeConfigFieldChange: (field: FeeConfigField, value: string) => void
-  onOpenWalletConnection: () => void
-  onTreasuryClaimAmountChange: (value: string) => void
-  onUpdateFeeConfig: () => void
-  selectedAddress: string
-  showTreasuryClaimControls: boolean
-  showTreasuryClaimReview: boolean
-  treasuryAvailable: boolean
-  treasuryBusy: boolean
-  treasuryClaimAmount: string
-  treasuryClaimAmountError: string
-  treasuryClaimGuidance: string
   treasuryConfirmation: string
-  treasuryConnectedWalletLabel: string
   treasuryError: string
   treasuryLoading: boolean
-  treasuryRecipientMatchesOperator: boolean
-  treasuryReviewAmountLux: number | string | null
-  treasuryReviewLabel: string
   treasuryState: IndexedTreasuryState
-  treasuryTxState: DuskDomainTxState | null
-  treasuryWalletStatus: string
-  walletSetupState: WalletConnectionStatus
+  claim: {
+    canClaimTreasury: boolean
+    canClaimTreasuryPartial: boolean
+    onClaimTreasury: (mode: 'all' | 'partial') => void
+    onTreasuryClaimAmountChange: (value: string) => void
+    showTreasuryClaimControls: boolean
+    showTreasuryClaimReview: boolean
+    treasuryAvailable: boolean
+    treasuryBusy: boolean
+    treasuryClaimAmount: string
+    treasuryClaimAmountError: string
+    treasuryClaimGuidance: string
+    treasuryRecipientMatchesOperator: boolean
+    treasuryReviewAmountLux: number | string | null
+    treasuryReviewLabel: string
+    treasuryTxState: DuskDomainTxState | null
+  }
+  pricing: {
+    canUpdateFeeConfig: boolean
+    feeConfig: CoreFeeConfig
+    feeConfigBusy: boolean
+    feeConfigConfirmation: string
+    feeConfigError: string
+    feeConfigForm: FeeConfigFormState
+    feeConfigFormError: string
+    feeConfigLoading: boolean
+    feeConfigTxState: DuskDomainTxState | null
+    feeConfigUpdateError: string
+    onFeeConfigFieldChange: (field: FeeConfigField, value: string) => void
+    onUpdateFeeConfig: () => void
+  }
+  wallet: {
+    connectedAsTreasuryOperator: boolean
+    liveWritesAvailable: boolean
+    onOpenWalletConnection: () => void
+    selectedAddress: string
+    treasuryConnectedWalletLabel: string
+    treasuryWalletStatus: string
+    walletSetupState: WalletConnectionStatus
+  }
 }

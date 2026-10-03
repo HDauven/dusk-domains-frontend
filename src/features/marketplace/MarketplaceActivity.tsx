@@ -7,24 +7,24 @@ import { MarketplaceAmount } from './MarketplaceAmount'
 import { auctionStatus, auctionTimeLabel, expiryTimeLabel, sameAuthority } from './marketplacePresentation'
 import type { MarketplaceActivityProps } from './marketplaceTypes'
 
-export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps }) {
-  const topBidder = props.auctions.filter((auction) => sameAuthority(auction.highestBid?.bidderAuthority, props.selectedAuthority))
-  const won = topBidder.filter((auction) => auctionStatus(auction, props.currentBlockHeight) === 'ended')
-  const leading = topBidder.filter((auction) => auctionStatus(auction, props.currentBlockHeight) !== 'ended')
-  const sellingAuctions = props.auctions.filter((auction) => sameAuthority(auction.sellerAuthority, props.selectedAuthority))
-  const sellingFixed = props.fixedSales.filter((sale) => sameAuthority(sale.sellerAuthority, props.selectedAuthority))
-  const sentOffers = props.offers.filter((offer) => sameAuthority(offer.buyerAuthority, props.selectedAuthority))
+export function MarketplaceActivity(props: MarketplaceActivityProps) {
+  const topBidder = props.listings.auctions.filter((auction) => sameAuthority(auction.highestBid?.bidderAuthority, props.wallet.selectedAuthority))
+  const won = topBidder.filter((auction) => auctionStatus(auction, props.market.currentBlockHeight) === 'ended')
+  const leading = topBidder.filter((auction) => auctionStatus(auction, props.market.currentBlockHeight) !== 'ended')
+  const sellingAuctions = props.listings.auctions.filter((auction) => sameAuthority(auction.sellerAuthority, props.wallet.selectedAuthority))
+  const sellingFixed = props.listings.fixedSales.filter((sale) => sameAuthority(sale.sellerAuthority, props.wallet.selectedAuthority))
+  const sentOffers = props.offers.offers.filter((offer) => sameAuthority(offer.buyerAuthority, props.wallet.selectedAuthority))
   const watchedOrders = [
-    ...props.auctions.filter((auction) => props.watchedNodes.includes(auction.node)),
-    ...props.fixedSales.filter((sale) => props.watchedNodes.includes(sale.node)),
+    ...props.listings.auctions.filter((auction) => props.watchlist.watchedNodes.includes(auction.node)),
+    ...props.listings.fixedSales.filter((sale) => props.watchlist.watchedNodes.includes(sale.node)),
   ]
-  const hasActivity = leading.length || won.length || sellingAuctions.length || sellingFixed.length || sentOffers.length || props.refund || watchedOrders.length
+  const hasActivity = leading.length || won.length || sellingAuctions.length || sellingFixed.length || sentOffers.length || props.withdrawal.refund || watchedOrders.length
 
-  if (!props.selectedAddress) {
+  if (!props.wallet.selectedAddress) {
     return (
       <div className="marketplace-my-view">
         <PanelMessage icon={<WalletCards size={18} />} tone="subtle">
-          <Button variant="quiet" type="button" onClick={props.onOpenWalletConnection}>Connect your wallet</Button> to see bids, listings, offers and marketplace funds.
+          <Button variant="quiet" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect your wallet</Button> to see bids, listings, offers and marketplace funds.
         </PanelMessage>
       </div>
     )
@@ -39,18 +39,18 @@ export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps
         <div><Eye aria-hidden="true" size={18} /><strong>{watchedOrders.length}</strong><span>Watching</span></div>
       </div> : null}
 
-      {props.refund?.amountLux ? (
+      {props.withdrawal.refund?.amountLux ? (
         <Panel className="marketplace-balance-card" aria-labelledby="marketplace-balance-heading">
           <div>
             <span>Refund ready to withdraw</span>
-            <strong id="marketplace-balance-heading">{<MarketplaceAmount lux={props.refund.amountLux} />}</strong>
+            <strong id="marketplace-balance-heading">{<MarketplaceAmount lux={props.withdrawal.refund.amountLux} />}</strong>
             <p>Funds from an outbid or closed offer stay in marketplace escrow until you withdraw them.</p>
           </div>
-          <Button variant="primary" className="compact" disabled={!props.actionsAvailable} type="button" onClick={props.onClaimRefund}>Withdraw to wallet</Button>
+          <Button variant="primary" className="compact" disabled={!props.wallet.actionsAvailable} type="button" onClick={props.withdrawal.onClaimRefund}>Withdraw to wallet</Button>
         </Panel>
       ) : null}
 
-      {!hasActivity ? <PanelMessage icon={<WalletCards size={18} />} tone="subtle">No bids, listings or offers yet. <Button variant="quiet" onClick={() => props.onTabChange('browse')}>Browse listings</Button></PanelMessage> : null}
+      {!hasActivity ? <PanelMessage icon={<WalletCards size={18} />} tone="subtle">No bids, listings or offers yet. <Button variant="quiet" onClick={() => props.navigation.onTabChange('browse')}>Browse listings</Button></PanelMessage> : null}
 
       {won.length ? (
         <PositionSection count={won.length} description="Finalize a won auction to receive the name." heading="Won — finalizing" icon={<Trophy size={17} />}>
@@ -61,7 +61,7 @@ export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps
               label={auction.name}
               meta="Auction ended"
               value={<MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} />}
-              onOpen={() => props.onOpenAuction(auction.node)}
+              onOpen={() => props.auction.onOpenAuction(auction.node)}
             />
           ))}
         </PositionSection>
@@ -74,9 +74,9 @@ export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps
               action="View auction"
               key={auction.node}
               label={auction.name}
-              meta={auctionTimeLabel(auction, props.currentBlockHeight)}
+              meta={auctionTimeLabel(auction, props.market.currentBlockHeight)}
               value={<MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} />}
-              onOpen={() => props.onOpenAuction(auction.node)}
+              onOpen={() => props.auction.onOpenAuction(auction.node)}
             />
           ))}
         </PositionSection>
@@ -89,9 +89,9 @@ export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps
               action="Manage auction"
               key={auction.node}
               label={auction.name}
-              meta={auctionTimeLabel(auction, props.currentBlockHeight)}
+              meta={auctionTimeLabel(auction, props.market.currentBlockHeight)}
               value={auction.highestBid ? <MarketplaceAmount lux={auction.highestBid.amountLux} /> : <>Reserve <MarketplaceAmount lux={auction.reservePriceLux} /></>}
-              onOpen={() => props.onOpenAuction(auction.node)}
+              onOpen={() => props.auction.onOpenAuction(auction.node)}
             />
           ))}
           {sellingFixed.map((sale) => (
@@ -99,9 +99,9 @@ export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps
               action="View listing"
               key={sale.node}
               label={sale.name}
-              meta={`Expires ${expiryTimeLabel(sale.expiresAtBlockHeight, props.currentBlockHeight)}`}
+              meta={`Expires ${expiryTimeLabel(sale.expiresAtBlockHeight, props.market.currentBlockHeight)}`}
               value={<MarketplaceAmount lux={sale.priceLux} />}
-              onOpen={() => props.onTabChange('browse')}
+              onOpen={() => props.navigation.onTabChange('browse')}
             />
           ))}
         </PositionSection>
@@ -114,9 +114,9 @@ export function MarketplaceActivity({ props }: { props: MarketplaceActivityProps
               action="Manage offers"
               key={`${offer.node}:${offer.buyerAuthority}`}
               label={offer.name}
-              meta={`Expires ${expiryTimeLabel(offer.expiresAtBlockHeight, props.currentBlockHeight)}`}
+              meta={`Expires ${expiryTimeLabel(offer.expiresAtBlockHeight, props.market.currentBlockHeight)}`}
               value={<MarketplaceAmount lux={offer.amountLux} />}
-              onOpen={() => props.onTabChange('offers')}
+              onOpen={() => props.navigation.onTabChange('offers')}
             />
           ))}
         </PositionSection>

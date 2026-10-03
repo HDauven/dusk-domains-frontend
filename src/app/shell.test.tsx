@@ -16,7 +16,12 @@ import { TransactionStatusNotice } from '../components/status/TransactionStatusN
 const noop = () => {}
 afterEach(() => vi.unstubAllGlobals())
 it('keeps network identification, a phone menu and referral access outside primary navigation', () => {
-  const html = renderToStaticMarkup(<AppShell mainView="search" launchLinks={{support:null,abuse:null,security:null,status:null}} network={{label:'Local',tone:'local'}} onMainViewChange={noop} onOpenName={noop} onOpenWallet={noop} onSearchHome={noop} pendingReservationCount={0} runtimeNotice={null} searching={false} skyNames={[]} walletState={{accounts:[]} as never} walletStatus="disconnected">Page</AppShell>)
+  const html = renderToStaticMarkup(<AppShell launchLinks={{support:null,abuse:null,security:null,status:null}}
+    network={{label:'Local',tone:'local'}}
+    runtimeNotice={null}
+    skyNames={[]}
+    navigation={{ mainView: "search", onMainViewChange: noop, onOpenName: noop, onSearchHome: noop, pendingReservationCount: 0, searching: false }}
+    wallet={{ onOpenWallet: noop, walletState: {accounts:[]} as never, walletStatus: "disconnected" }}>Page</AppShell>)
   expect(html).toContain('network-badge local')
   expect(html).toContain('aria-label="Open menu"')
   const nav = html.match(/<nav[^>]*aria-label="Primary"[\s\S]*?<\/nav>/)![0]
@@ -30,7 +35,15 @@ it('marks preview read-only, exposes configuration details and disables claiming
   expect(html).toContain('Availability and prices are examples')
   expect(html).toContain('<summary>Details</summary>')
   expect(html).toContain(config.missingLiveInputs[0])
-  const card = renderToStaticMarkup(<SearchResultOverview {...{readOnly:true,canRegister:true,displayName:'example.dusk',duration:1,registrationFee:10,resultStatus:'available',resultIssues:[],savedReservation:null,feeConfigLoading:false} as unknown as ComponentProps<typeof SearchResultOverview>} />)
+  const card = renderToStaticMarkup(<SearchResultOverview {...{
+    readOnly:true,
+    canRegister:true,
+    displayName:'example.dusk',
+    resultStatus:'available',
+    resultIssues:[],
+    quote: { duration:1, registrationFee:10, feeConfigLoading:false },
+    reservation: { savedReservation:null },
+  } as unknown as ComponentProps<typeof SearchResultOverview>} />)
   expect(card).toContain('Example name')
   expect(card).toMatch(/<button[^>]*disabled=""[^>]*>Registration unavailable<\/button>/)
   expect(card).not.toContain('>Available<')
@@ -84,7 +97,7 @@ it('scopes claim callbacks to the current remembered wallet and network', () => 
 })
 it('shows saved claims and an unlock action while the wallet is locked, without manual refresh', () => {
   const saved = {name:'alpha.dusk',node:'node',controller:'owner',commitment:'commit',committedBlockHeight:1} as PendingNameReservation
-  const props = {walletStatus:'locked',currentBlockHeight:10,loading:false,myNames:[],myNamesError:'',pendingReservations:[saved],primarySummaries:{},selectedAddress:''} as unknown as MyDomainsViewProps
+  const props = {wallet:{walletStatus:'locked',selectedAddress:''},currentBlockHeight:10,loading:false,myNames:[],myNamesError:'',pendingReservations:[saved],primarySummaries:{}} as unknown as MyDomainsViewProps
   const html = renderToStaticMarkup(<MyDomainsView {...props} />)
   expect(html).toContain('alpha.dusk')
   expect(html).toContain('Unlock your wallet to finish.')
@@ -102,10 +115,17 @@ it('keeps a pending transaction reference behind Details and offers a confirmati
 })
 
 it('keeps search on home and result pages and removes it from name and claim pages', () => {
-  const props = {checked:true,resultReady:false,query:'name',loading:false,onCheckAvailability:noop,onQueryChange:noop} as unknown as ComponentProps<typeof SearchWorkspace>
-  expect(renderToStaticMarkup(<SearchWorkspace {...props} checked={false} resultView="overview" />)).toContain('role="search"')
-  expect(renderToStaticMarkup(<SearchWorkspace {...props} resultView="overview" />)).toContain('role="search"')
-  for (const view of ['details','register'] as const) expect(renderToStaticMarkup(<SearchWorkspace {...props} resultView={view} />)).not.toContain('role="search"')
+  const props = {
+    result: {  },
+    search: { checked:true, resultReady:false, query:'name', loading:false, onCheckAvailability:noop, onQueryChange:noop },
+  } as unknown as ComponentProps<typeof SearchWorkspace>
+  expect(renderToStaticMarkup(<SearchWorkspace {...props}
+    search={{ ...props.search, checked: false }}
+    result={{ ...props.result, resultView: "overview" }} />)).toContain('role="search"')
+  expect(renderToStaticMarkup(<SearchWorkspace {...props}
+    result={{ ...props.result, resultView: "overview" }} />)).toContain('role="search"')
+  for (const view of ['details','register'] as const) expect(renderToStaticMarkup(<SearchWorkspace {...props}
+    result={{ ...props.result, resultView: view }} />)).not.toContain('role="search"')
 })
 it('keeps slow registration feedback and its retry visible in the claim flow', () => {
   const progress = {status:'running',steps:[{id:'register',status:'executing',txId:'registration-reference'}]} as unknown as ComponentProps<typeof RegistrationCompletionProgress>['progress']
@@ -118,7 +138,7 @@ it('keeps slow registration feedback and its retry visible in the claim flow', (
 
 it('keeps the app-level confirmation retry visible away from its name', () => {
   const pendingConfirmation = {name:'original.dusk',state:{status:'executing',message:'Still confirming…',context:{title:'Register'},txId:'original-transaction',retryConfirmation:noop}} as const
-  const html = renderToStaticMarkup(<AppShell {...{mainView:'treasury',network:{label:'Local',tone:'local'},launchLinks:{},walletState:{accounts:[]},walletStatus:'disconnected',skyNames:[],pendingReservationCount:0} as unknown as ComponentProps<typeof AppShell>} pendingConfirmation={pendingConfirmation as never}>Another page</AppShell>)
+  const html = renderToStaticMarkup(<AppShell {...{navigation:{mainView:'treasury',pendingReservationCount:0},network:{label:'Local',tone:'local'},launchLinks:{},wallet:{walletState:{accounts:[]},walletStatus:'disconnected'},skyNames:[]} as unknown as ComponentProps<typeof AppShell>} pendingConfirmation={pendingConfirmation as never}>Another page</AppShell>)
   expect(html).toContain('aria-label="Pending transaction"')
   expect(html).toContain('original.dusk')
   expect(html).toContain('original-transaction')

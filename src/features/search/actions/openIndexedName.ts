@@ -1,34 +1,18 @@
 import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
-import {
-  userFacingErrorMessage,
-} from '../../../names/internal'
+import { userFacingErrorMessage } from '../../../names/internal'
 import { resetSearchState } from '../searchControllerReset'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
 export async function openIndexedName(props: UseSearchControllerProps, name: string) {
-  const {
-    beginNameRead,
-    hydrateNameFromIndexer,
-    indexerClient,
-    openSearchView,
-    setActivityLoading,
-    setApiSearchResult,
-    setChecked,
-    setIndexerConfirmation,
-    setIndexerError,
-    setResultView,
-  } = props
+  const { beginNameRead, hydrateNameFromIndexer, indexerClient, openSearchView, search, activity } = props
 
   openSearchView()
   resetSearchState(props, name)
-  setChecked(true)
-  setResultView(indexerClient ? 'details' : 'overview')
-
+  search.open(indexerClient ? 'details' : 'overview')
   if (!indexerClient) return
 
-  setActivityLoading(true)
-  setIndexerError('')
-  setIndexerConfirmation('')
+  activity.startLoading()
+  search.startRead()
 
   const isCurrent = beginNameRead()
   try {
@@ -37,12 +21,12 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({ canonicalName: nextResult.canonical, chainId: props.chainId, loadPendingReservations: props.loadPendingReservations })
     }
-    setApiSearchResult(nextResult)
-    setResultView(nextResult.status === 'registered' ? 'details' : 'overview')
+    search.showResult(nextResult)
+    search.showView(nextResult.status === 'registered' ? 'details' : 'overview')
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
   } catch (error) {
-    if (isCurrent()) setIndexerError(userFacingErrorMessage(error))
+    if (isCurrent()) search.fail(userFacingErrorMessage(error))
   } finally {
-    if (isCurrent()) setActivityLoading(false)
+    if (isCurrent()) activity.finishLoading()
   }
 }

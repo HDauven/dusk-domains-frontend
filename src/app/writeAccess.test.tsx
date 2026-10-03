@@ -25,7 +25,7 @@ it('keeps the shell and registration read only with valid contracts but no index
   function Probe() { model = useDuskDomainsAppModel(); return null }
   renderToStaticMarkup(<Probe />)
   expect(model.shellProps.network.tone).toBe('preview')
-  expect(model.mainContentProps.searchProps.overviewProps).toMatchObject({ readOnly: true, registrationUnavailable: true })
+  expect(model.mainContentProps.searchProps.result.overviewProps).toMatchObject({ readOnly: true, registrationUnavailable: true })
   expect(model.shellProps.networkStatus.readOnly).toBe(true)
 })
 

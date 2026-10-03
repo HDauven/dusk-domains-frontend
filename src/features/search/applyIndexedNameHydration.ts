@@ -1,4 +1,4 @@
-import { createManagedNameState } from '../../app/managedNameState'
+import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
 import { lifecycleHeightFromIndexed, renewalGraceEnd, unixSecondsFromIso } from '../domains/domainFormat'
 import { userFacingMessageFromText } from '../../names/internal'
 import type { IndexedNameReadBundle } from './indexedNameReads'
@@ -9,15 +9,10 @@ export function applyIndexedNameHydration(
     currentBlockHeight,
     nowSeconds,
     recordSourceContractId,
-    setActivityEntries,
-    setActivityCursor,
-    setIndexerError,
-    setManagedName,
-    setPrimaryEndpointValue,
-    setPrimaryName,
-    setConnectedPrimaryName,
-    setResolverRecordSets,
-    setSubnames,
+    search,
+    domain,
+    records,
+    activity,
   }: UseIndexedNameHydrationProps,
   reads: IndexedNameReadBundle,
 ) {
@@ -34,22 +29,8 @@ export function applyIndexedNameHydration(
     stateRead,
   } = reads
 
-  if (forwardRead.value) {
-    setResolverRecordSets((current) => ({
-      ...current,
-      [node]: forwardRead.value.records,
-    }))
-  } else {
-    setResolverRecordSets((current) => {
-      const next = { ...current }
-      delete next[node]
-      return next
-    })
-  }
-
-  setPrimaryEndpointValue(primaryEndpoint)
-  setPrimaryName(primaryName)
-  setConnectedPrimaryName(connectedPrimaryName)
+  records.hydrate(node, forwardRead.value?.records ?? null)
+  let managedName: ManagedNameState
 
   if (stateRead.value) {
     // An unreported expiry stays unknown (0): the current one may be a placeholder.
@@ -61,7 +42,7 @@ export function applyIndexedNameHydration(
         expiresAt: unixSecondsFromIso(indexed.expiresAt) ?? 0,
         graceEndsAt: indexed.graceEndsAtBlockHeight ?? unixSecondsFromIso(indexed.graceEndsAt) ?? 0,
       })
-    setManagedName({
+    managedName = {
       node,
       ancestors: indexed.namespace?.ancestors,
       owner: indexed.owner ?? '',
@@ -75,22 +56,16 @@ export function applyIndexedNameHydration(
       ) ?? 0,
       graceEndsAt,
       expiryPolicy: ownSubnameRead.value?.expiryPolicy ?? null,
-    })
+    }
 
   } else {
-    setManagedName({ ...createManagedNameState(recordSourceContractId), node, owner: '', manager: '', expiresAt: 0, graceEndsAt: 0 })
+    managedName = { ...createManagedNameState(recordSourceContractId), node, owner: '', manager: '', expiresAt: 0, graceEndsAt: 0 }
   }
 
-  setActivityEntries(activityRead.value ?? [])
-  setActivityCursor({ node, cursor: reads.activityCursor })
-
-  if (hydratedSubnames) {
-    setSubnames(hydratedSubnames)
-  } else {
-    setSubnames([])
-  }
+  domain.hydrate({ managedName, primaryEndpoint, primaryName, connectedPrimaryName, subnames: hydratedSubnames ?? [] })
+  activity.hydrate(node, activityRead.value ?? [], reads.activityCursor)
 
   if (readErrors.length > 0) {
-    setIndexerError(userFacingMessageFromText(readErrors[0], 'Some name data is still syncing. Trying again automatically.'))
+    search.fail(userFacingMessageFromText(readErrors[0], 'Some name data is still syncing. Trying again automatically.'))
   }
 }

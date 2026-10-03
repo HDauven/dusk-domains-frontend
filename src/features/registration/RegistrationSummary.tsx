@@ -7,41 +7,49 @@ import { abbreviate, formatDusk, pluralize } from '../../utils/format'
 import type { ReferralState } from '../referrals/referralState'
 
 // The stub beside every step: what is being claimed, for whom, and what it costs.
-export function RegistrationSummary({
-  premiumResult,
-  currentBlockHeight,
-  activeReferral,
-  appliedReferral,
-  committed,
-  duration,
-  expiryDate,
-  feeConfigError,
-  onChangeTerm,
-  onRegisterSetsPrimaryChange,
-  primaryChoiceLocked = false,
-  registerSetsPrimary,
-  registrationComplete,
-  registrationFee,
-  registrationTargetAddress,
-  selectedAddress,
-}: {
-  premiumResult?: NameResult
-  currentBlockHeight?: number | null
-  activeReferral: ReferralState | null
-  appliedReferral: ReferralState | null
+export function RegistrationSummary({ committed, registrationComplete, selectedAddress, quote, referral, primaryChoice }: {
   committed: boolean
-  duration: number
-  expiryDate: string
-  feeConfigError: string
-  onRegisterSetsPrimaryChange?: (checked: boolean) => void
-  onChangeTerm: () => void
-  primaryChoiceLocked?: boolean
-  registerSetsPrimary: boolean
   registrationComplete: boolean
-  registrationFee: number
-  registrationTargetAddress: string
   selectedAddress: string
+  quote: {
+    premiumResult?: NameResult
+    currentBlockHeight?: number | null
+    duration: number
+    expiryDate: string
+    feeConfigError: string
+    onChangeTerm: () => void
+    registrationFee: number
+    registrationTargetAddress: string
+  }
+  referral: {
+    activeReferral: ReferralState | null
+    appliedReferral: ReferralState | null
+  }
+  primaryChoice: {
+    onRegisterSetsPrimaryChange?: (checked: boolean) => void
+    primaryChoiceLocked?: boolean
+    registerSetsPrimary: boolean
+  }
 }) {
+  const {
+    premiumResult,
+    currentBlockHeight,
+    duration,
+    expiryDate,
+    feeConfigError,
+    onChangeTerm,
+    registrationFee,
+    registrationTargetAddress,
+  } = quote
+  const {
+    activeReferral,
+    appliedReferral,
+  } = referral
+  const {
+    onRegisterSetsPrimaryChange,
+    primaryChoiceLocked = false,
+    registerSetsPrimary,
+  } = primaryChoice
   const pointsElsewhere = registrationTargetAddress && registrationTargetAddress !== selectedAddress
   const primaryLabelId = useId()
 
