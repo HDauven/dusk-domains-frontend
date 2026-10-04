@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as names from '../../names/internal'
 import { encodeBase58 } from '../../names/internal'
 import { initialReferralInput, referralStateFromInput } from './referralState'
 
@@ -36,4 +37,12 @@ describe('referral links', () => {
   it('treats empty attribution as no referral', async () => {
     expect(await referralStateFromInput(' ')).toEqual({ input: '', principal: null, valid: false, reason: '' })
   })
+})
+
+it('rejects oversized referrals before decoding Base58', async () => {
+  const parse = vi.spyOn(names, 'typedPrincipalFromWalletAccount')
+  try {
+    expect(await referralStateFromInput('z'.repeat(133))).toMatchObject({ valid: false, principal: null })
+    expect(parse).not.toHaveBeenCalled()
+  } finally { parse.mockRestore() }
 })

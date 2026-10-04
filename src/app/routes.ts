@@ -12,6 +12,15 @@ const viewPaths: Record<AppMainView, string> = {
 }
 
 export function parseRoute(pathname: string): AppRoute {
+  try {
+    return parseDecodedRoute(pathname)
+  } catch (error) {
+    if (error instanceof URIError) return { view: 'search' }
+    throw error
+  }
+}
+
+function parseDecodedRoute(pathname: string): AppRoute {
   const path = pathname.replace(/\/+$/, '') || '/'
   const sell = /^\/market\/sell\/([^/]+)$/.exec(path)
   if (sell) return { view: 'marketplace', sellName: decodeURIComponent(sell[1]).toLowerCase() }

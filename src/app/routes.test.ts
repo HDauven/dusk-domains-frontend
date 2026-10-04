@@ -32,3 +32,7 @@ it('round-trips a name selected for sale', () => {
   expect(routePath(route)).toBe('/market/sell/aurora.dusk')
   expect(parseRoute(routePath(route))).toEqual(route)
 })
+
+it.each(['/name/%', '/name/%E0%A4%A', '/market/sell/%FF'])('treats undecodable deep links as unknown routes: %s', path => {
+  expect(parseRoute(path)).toEqual(parseRoute('/not-found'))
+})
