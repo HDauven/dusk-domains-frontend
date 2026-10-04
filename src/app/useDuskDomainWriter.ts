@@ -7,6 +7,7 @@ import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
 import { walletConnectionStatus } from '../features/wallet/walletStatus'
 import type { createWriteAccess } from './writeAccess'
 import {
+  duskDomainCallGasLimit,
   submitDuskDomainWrite as submitDuskDomainWriteCall,
   type DuskConnectAppLike,
   type DuskDomainsIndexerClient,
@@ -136,6 +137,7 @@ export function useDuskDomainWriter({
       let state = await submitDuskDomainWriteCall(app, call, {
         contracts,
         ...writeOptions,
+        gas: { limit: duskDomainCallGasLimit(call, { senderAddress: profile?.account }) },
         onUpdate,
         allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
       })

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Apply the SDK gas policy to every wallet write using the connected Moonlight account.
+
 - Bind bids and marketplace lifecycle actions to the reviewed placement, and compare immutable auction terms and sale fees before signing. Show current bidding information without blocking a reviewed bid after an intervening bid.
 - Show namespace authority and descendant counts when accepting offers. Require explicit acknowledgement for listings and offer acceptance when descendants exist.
 

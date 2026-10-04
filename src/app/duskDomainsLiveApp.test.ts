@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, expect, it, vi } from 'vitest'
 import { announceDuskProvider, DuskWallet, type DuskProvider } from '@dusk/connect'
-import { DUSK_DOMAINS_CONTRACTS, type DuskDomainsRuntimeConfig } from '../names/internal'
+import { DUSK_DOMAINS_CONTRACTS, type DuskDomainGas, type DuskDomainsRuntimeConfig } from '../names/internal'
 import { createWalletSession } from '../features/wallet/walletSession'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 
@@ -39,7 +39,7 @@ async function fixture(chainId = 'dusk:2') {
   const contracts = Object.fromEntries(Object.entries(DUSK_DOMAINS_CONTRACTS).map(([key, value]) => [key, { ...value, contractId: `0x${'11'.repeat(32)}` }]))
   const runtimeConfig = { liveWritesEnabled: true, contracts, chainId, nodeUrl: 'http://127.0.0.1:18181/' } as DuskDomainsRuntimeConfig
   const { names } = createDuskDomainsLiveApp({ runtimeConfig, wallet: base, session, autoConnect: false })
-  const write = () => names.writeContract({ contract: contracts.core, functionName: 'commit_runtime', args: { commitment: Array(32).fill(1) } })
+  const write = (gas?: DuskDomainGas) => names.writeContract({ contract: contracts.core, functionName: 'commit_runtime', args: { commitment: Array(32).fill(1) }, ...(gas ? { gas } : {}) })
   provider.request.mockClear()
   return { provider, session, emit, write, info, names }
 }
@@ -59,6 +59,22 @@ it.each(['dusk:0', 'dusk:2'])('sends an unchanged %s session through installed c
   expect(sends).toHaveLength(1)
   expect(sends[0][0]).toMatchObject({ params: { kind: 'contract_call', fnName: 'commit_runtime', fnArgs: expect.any(String) } })
   expect(provider.request.mock.calls.some(([args]) => args.method === 'dusk_switchNetwork')).toBe(false)
+})
+
+it.each([
+  ['7', '7'],
+  ['2000', '10'],
+  ['18446744073709551616', '1'],
+  [Number.MAX_SAFE_INTEGER + 1, '1'],
+] as const)('passes a complete gas object through installed connect using wallet median %s', async (median, price) => {
+  const { provider, write } = await fixture()
+  const request = provider.request.getMockImplementation()!
+  provider.request.mockImplementation(args => args.method === 'dusk_estimateGas'
+    ? Promise.resolve({ average: '8', max: '20', median, min: '2' })
+    : request(args))
+  await write({ limit: 10_000_000n })
+  expect(provider.request).toHaveBeenCalledWith({ method: 'dusk_estimateGas', params: {} })
+  expect(provider.request).toHaveBeenCalledWith(expect.objectContaining({ method: 'dusk_sendTransaction', params: expect.objectContaining({ gas: { limit: '10000000', price } }) }))
 })
 
 it.each(['lock', 'disconnect', 'network', 'account', 'profile', 'authorization', 'node', 'encoding', 'announcement'])('refuses %s during installed connect preparation at the provider boundary', async change => {
