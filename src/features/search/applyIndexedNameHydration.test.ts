@@ -122,7 +122,7 @@ it.each([null, { records: [] }, { records: [{ key: 'moonlight_address', value: '
     applyIndexedNameHydration({ ...actions, currentBlockHeight: 100, nowSeconds: 0, recordSourceContractId: 'resolver' } as never, reads!)
     expect(hydrate).toHaveBeenCalledWith(expect.objectContaining({
       primaryEndpoint: 'alice-address', connectedPrimaryName: 'alice.dusk',
-      primaryName: forward?.records.length ? 'alice.dusk' : null,
+      primaryName: null,
     }))
   },
 )

@@ -69,6 +69,9 @@ export function deriveAppDerivedState({
     primaryVerification,
   } = derivePrimaryState({
     displayName,
+    expiresAt: managedName?.node === nodeHex ? managedName.expiresAt : 0,
+    currentBlockHeight,
+    nowSeconds,
     moonlightRecord,
     primaryEndpointValue,
     primaryName,

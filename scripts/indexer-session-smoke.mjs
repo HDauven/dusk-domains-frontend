@@ -38,7 +38,7 @@ export async function checkIndexerSessionBudget(page) {
         case 'resolve': {
           const name = url.searchParams.get('name')
           body = { canonicalName: name, node: safeNamehashHex(name), records: name === parent ? [{ key: 'moonlight_address', value: 'wallet' }] : [],
-            resolver: {}, expiry: {}, cache: {}, warnings: [], errors: [], verificationStatus: 'unverified' }
+            resolver: { health: 'ok' }, expiry: { status: 'active' }, cache: {}, warnings: [], errors: [], verificationStatus: 'forward_resolved' }
           break
         }
         case 'name': body = url.searchParams.get('node') === parentNode ? nameRow : null; break
