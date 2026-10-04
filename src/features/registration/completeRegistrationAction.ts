@@ -1,3 +1,4 @@
+import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import { premiumDropsSoon } from './premiumTiming'
 import {
   createRegistrationCompletionState,
@@ -42,39 +43,45 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
   if (premiumDropsSoon(props.result, props.lifecycleBaseBlockHeight)
     && confirmedTotalLux !== registrationFeeLux(props.result.label, props.duration, props.feeConfig, props.result.premiumLux ?? 0)) return
 
+  const session = submitNameWrite.captureSession(props.selectedAddress)
+  const checkSession = () => { if (!session()) throw new WalletSessionChangedError() }
   setWalletError('')
   setRegistrationCompletion(null)
-  if (!ensureContractAuthorityForLiveWrite('register this name', setWalletError)) return
-  // The purchase step then offers to reserve again instead of a reveal that would fail.
-  const missing = await revealCommitmentMissing(props)
-  if (!workspace()) return
-  if (missing) {
-    setStrandedCommitment({ controller: selectedAuthority, commitment: preparedCommit.commitment })
-    return
-  }
-  const request = createCompleteRegistrationRequest({
-    ...props,
-    preparedCommit,
-  })
-  if (!(await ensurePublicBalanceForLiveWrite(
-    'registering this name',
-    message => { if (workspace()) setWalletError(message) },
-    1,
-    BigInt(request.feeLux),
-  ))) return
-  if (!workspace()) return
-  setRegistrationCompletion(createRegistrationCompletionState({
-    registrationFee: request.feeLux / 1e9,
-    expiryDate: formatLifecycleDay(request.lifecycle.expiresAt, props.lifecycleBaseBlockHeight, Math.floor(Date.now() / 1000)),
-  }))
-
   try {
+    checkSession()
+    if (!ensureContractAuthorityForLiveWrite('register this name', setWalletError)) return
+    // The purchase step then offers to reserve again instead of a reveal that would fail.
+    const missing = await revealCommitmentMissing(props)
+    if (!workspace()) return
+    checkSession()
+    if (missing) {
+      setStrandedCommitment({ controller: selectedAuthority, commitment: preparedCommit.commitment })
+      return
+    }
+    const request = createCompleteRegistrationRequest({
+      ...props,
+      preparedCommit,
+    })
+    if (!(await ensurePublicBalanceForLiveWrite(
+      'registering this name',
+      message => { if (workspace()) setWalletError(message) },
+      1,
+      BigInt(request.feeLux),
+    ))) return
+    if (!workspace()) return
+    checkSession()
+    setRegistrationCompletion(createRegistrationCompletionState({
+      registrationFee: request.feeLux / 1e9,
+      expiryDate: formatLifecycleDay(request.lifecycle.expiresAt, props.lifecycleBaseBlockHeight, Math.floor(Date.now() / 1000)),
+    }))
+
     const finalState = await submitNameWrite(displayName, request.call, {
       workspace,
+      session,
       contracts: runtimeConfig.contracts,
       onUpdate: (state) => updateRegistrationCompletion(props, 'complete_registration', state),
     })
-    if (!workspace()) return
+    if (!workspace() || !session()) return
 
     if (finalState.status === 'executed') {
       await applyCompleteRegistrationSuccess(props, {

@@ -90,7 +90,7 @@ describe('record presentation', () => {
       displayName="aurora.dusk"
       editableRecordKeys={['website']}
       actions={{ canRemoveRecords: true, recordBusy: false, onClearRecord: vi.fn(), canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
-      draft={{ criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
+      draft={{ recordDraftMutations: [], criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
       wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('<strong>Description</strong>')
     expect(html).toContain('<p>Building tools for Dusk.</p>')
@@ -103,7 +103,7 @@ describe('record presentation', () => {
       displayName={displayName}
       editableRecordKeys={['website']}
       actions={{ canRemoveRecords: true, recordBusy: false, onClearRecord: vi.fn(), canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
-      draft={{ criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
+      draft={{ recordDraftMutations: [], criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
       wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('hello@example.test')
     expect(html).toContain('Read only')

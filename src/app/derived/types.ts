@@ -14,6 +14,7 @@ export type UseAppDerivedStateArgs = {
   registrationsPaused?: boolean
   activeRecordTarget: RecordTargetOption | undefined
   canRegister: boolean
+  chainId: string
   commitTxState: DuskDomainTxState | null
   committed: boolean
   confirmationInput: string

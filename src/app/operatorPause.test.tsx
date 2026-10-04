@@ -16,7 +16,7 @@ it('shows calm independent banners only for paused services', () => {
 })
 
 it('blocks both registration stages but preserves the existing commitment window', () => {
-  const base = { canRegister: true, commitBusy: false, committed: false, commitWindow: { status: 'ready' }, nodeHex: 'node', preparedCommit: { commitment: 'commitment' }, registrationCompletion: null, registrationTargetReady: true, selectedAddress: 'wallet', selectedAuthority: 'owner', strandedCommitment: null, txBusy: false, walletAuthorized: true } as Parameters<typeof deriveRegistrationCapabilities>[0]
+  const base = { canRegister: true, commitBusy: false, committed: false, commitWindow: { status: 'ready' }, nodeHex: 'node', chainId: 'dusk:0', preparedCommit: { commitment: 'commitment', controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0' }, registrationCompletion: null, registrationTargetReady: true, selectedAddress: 'wallet', selectedAuthority: 'owner', strandedCommitment: null, txBusy: false, walletAuthorized: true } as Parameters<typeof deriveRegistrationCapabilities>[0]
   expect(deriveRegistrationCapabilities(base).canPrepareCommit).toBe(true)
   expect(deriveRegistrationCapabilities({ ...base, registrationsPaused: true }).canPrepareCommit).toBe(false)
   expect(deriveRegistrationCapabilities({ ...base, committed: true }).canRevealRegistration).toBe(true)

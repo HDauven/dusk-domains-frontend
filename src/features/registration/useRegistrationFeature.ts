@@ -1,17 +1,28 @@
 import type { AppViewModelInputs } from '../../app/appViewTypes'
 import { openRegisteredName } from './openRegisteredName'
 import { premiumConfirmationQuote } from './premiumTiming'
-import { useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { duskWalletInstallUrl } from '../../app/appConstants'
 import type { RegistrationFlowPanelProps } from './RegistrationFlowPanel'
 import { useRegistrationActions } from './useRegistrationActions'
 import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { registrationCommitMatchesSession } from './pendingReservationTypes'
 
 export type UseRegistrationFeatureProps = Pick<AppViewModelInputs,
   'activityFeed' | 'appRuntime' | 'derivedState' | 'domainRecordState' | 'domainState' | 'economicsRuntime' | 'mainViewRuntime' | 'namePreview' | 'registrationRuntime' | 'registrationState' | 'searchRuntime' | 'searchState' | 'walletRuntime'
 >
 
 export function useRegistrationFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, mainViewRuntime, namePreview, registrationRuntime, registrationState, searchRuntime, searchState, walletRuntime }: UseRegistrationFeatureProps) {
+  const reservationToResume = registrationState.registrationStep === 'purchase'
+    && !registrationState.committed && !registrationState.preparedCommit
+    && walletRuntime.walletSetupState === 'connected'
+    && registrationCommitMatchesSession(derivedState.savedReservation, walletRuntime.selectedAuthority, walletRuntime.selectedAddress, appRuntime.runtimeConfig.chainId)
+    ? derivedState.savedReservation : null
+  const resumeReservation = useEffectEvent(registrationState.searchActions.resume)
+  useEffect(() => {
+    if (reservationToResume) resumeReservation(reservationToResume)
+  }, [reservationToResume])
+
   const onBackToOverview = () => searchState.setResultView('overview')
   const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions({
     appliedReferral: economicsRuntime.appliedReferral,
@@ -144,7 +155,8 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
     resultIssues: namePreview.result.issues,
     status: {
       onViewPendingReservation: () => void mainViewRuntime.handleMainViewChange('my-names'),
-      showReservationRecovery: !registrationComplete && Boolean(registrationState.committed && registrationState.preparedCommit && !derivedState.reservationStranded),
+      showReservationRecovery: !registrationComplete && !derivedState.reservationStranded
+        && (registrationState.registrationStep === 'purchase' || registrationState.committed),
       walletError: walletRuntime.walletError,
     },
     step,

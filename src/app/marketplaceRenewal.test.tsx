@@ -16,7 +16,7 @@ const runtime = { runtimeConfig: createDuskDomainsRuntimeConfig(env), marketplac
 let owner = marketplace
 
 vi.mock('./useAppRuntime', () => ({ useAppRuntime: () => runtime }))
-vi.mock('./useWalletRuntime', () => ({ useWalletRuntime: () => ({}) }))
+vi.mock('./useWalletRuntime', () => ({ useWalletRuntime: () => ({ walletState: {} }) }))
 vi.mock('./useEconomicsRuntime', () => ({ useEconomicsRuntime: () => ({}) }))
 vi.mock('./useContractOwner', () => ({ useContractOwner: () => true }))
 vi.mock('./managedNameState', async importOriginal => {

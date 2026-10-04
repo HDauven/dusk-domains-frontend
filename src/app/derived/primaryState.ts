@@ -1,3 +1,4 @@
+import { lifecycleHeightReached } from '../../features/domains/domainFormat'
 import {
   primaryNameStatus,
   validateRecordValue,
@@ -7,12 +8,18 @@ import { abbreviate } from '../../utils/format'
 
 export function derivePrimaryState({
   displayName,
+  expiresAt,
+  currentBlockHeight,
+  nowSeconds,
   moonlightRecord,
   primaryEndpointValue,
   primaryName,
   selectedAddress,
 }: {
   displayName: string
+  expiresAt: number
+  currentBlockHeight: number | null
+  nowSeconds: number
   moonlightRecord: ResolverRecord | undefined
   primaryEndpointValue: string
   primaryName: string | null
@@ -27,7 +34,7 @@ export function derivePrimaryState({
     endpointErrors: forwardAddress ? validateRecordValue('moonlight_address', forwardAddress) : [],
     endpointValue: forwardAddress,
     forwardRecordValue: moonlightRecord?.value ?? null,
-    primaryName,
+    primaryName: expiresAt > 0 && currentBlockHeight !== null && !lifecycleHeightReached(expiresAt, currentBlockHeight, nowSeconds) ? primaryName : null,
   })
 
   return {

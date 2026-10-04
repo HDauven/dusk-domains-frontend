@@ -1,7 +1,7 @@
 import type { DuskConnectOptions, DuskProfile, DuskWalletState, SwitchChainParams } from '../../names/internal'
 
 export type DuskWalletLike = {
-  state: DuskWalletState & { explicitlyDisconnected?: boolean }
+  state: DuskWalletState & { explicitlyDisconnected?: boolean; generation?: number }
   connect?: (options?: DuskConnectOptions) => Promise<DuskProfile[]>
   requestShieldedAddress?: (params?: { account?: string; reason?: string; label?: string }) => Promise<string>
   switchChain?: (params: SwitchChainParams) => Promise<unknown>

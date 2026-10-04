@@ -1,6 +1,6 @@
 import type { IndexedTreasuryState } from '../../names/internal'
 
-export function operatorClaimedLux(treasuryState: IndexedTreasuryState) {
+export function recentOperatorClaimsLux(treasuryState: IndexedTreasuryState) {
   return treasuryState.claims.reduce((total, claim) => total + BigInt(claim.amountLux), 0n)
 }
 

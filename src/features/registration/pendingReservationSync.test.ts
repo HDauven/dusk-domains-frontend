@@ -27,6 +27,7 @@ describe('pending reservation block sync', () => {
   it('uses node height when indexer health has no live block height', async () => {
     let currentBlockHeight: number | null = null
     let preparedCommit: PreparedRegistrationCommit | null = {
+      controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0',
       commitment: '0xcommit',
       secret: 'secret',
       committedBlockHeight: 100,
@@ -64,6 +65,7 @@ describe('pending reservation block sync', () => {
   it('recovers old saved reservations that have a tx id but no indexed block', async () => {
     let currentBlockHeight: number | null = null
     let preparedCommit: PreparedRegistrationCommit | null = {
+      controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0',
       commitment: '0xcommit',
       secret: 'secret',
       committedBlockHeight: null,
@@ -117,6 +119,7 @@ describe('pending reservation block sync', () => {
   it('updates the saved committed block when the indexer catches up', async () => {
     let currentBlockHeight: number | null = null
     let preparedCommit: PreparedRegistrationCommit | null = {
+      controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0',
       commitment: '0xcommit',
       secret: 'secret',
       committedBlockHeight: null,
@@ -173,6 +176,7 @@ describe('pending reservation block sync', () => {
 
   it("ignores another account's commit of the same hash", async () => {
     let preparedCommit: PreparedRegistrationCommit | null = {
+      controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0',
       commitment: '0xcommit',
       secret: 'secret',
       committedBlockHeight: 100,

@@ -1,13 +1,13 @@
 import { AccountViewHeader } from '../../../components/ui/AccountViewHeader'
 import { MetricSummary } from '../../../components/ui/MetricSummary'
 import { formatLuxNumberAsDusk } from '../feeConfig'
-import { operatorClaimedLux } from '../treasuryAccounting'
+import { recentOperatorClaimsLux } from '../treasuryAccounting'
 import type { TreasuryHeaderProps } from './types'
 
 export function TreasuryHeader({
   treasuryState,
 }: TreasuryHeaderProps) {
-  const claimedLux = operatorClaimedLux(treasuryState)
+  const claimedLux = recentOperatorClaimsLux(treasuryState)
 
   return (
     <AccountViewHeader
@@ -21,7 +21,7 @@ export function TreasuryHeader({
           items={[
             { label: 'available', value: formatLuxNumberAsDusk(treasuryState.availableLux) },
             { label: 'received', value: formatLuxNumberAsDusk(treasuryState.totalReceivedLux) },
-            { label: 'operator claimed', value: formatLuxNumberAsDusk(claimedLux) },
+            { label: 'recent operator claims', value: formatLuxNumberAsDusk(claimedLux) },
           ]}
         />
         </>

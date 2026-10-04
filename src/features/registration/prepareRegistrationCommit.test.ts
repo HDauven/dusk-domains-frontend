@@ -1,3 +1,4 @@
+import * as names from '../../names/internal'
 import { readReservationPrimaryChoice } from './reservationPrimaryChoice'
 import { searchActions } from '../search/test-fixtures/searchActions'
 import { createElement } from 'react'
@@ -45,7 +46,7 @@ it.each([true, false])('preserves the primary name choice %s when an uncertain c
       options.beforeSign()
       options.onUpdate({ status: 'awaiting_approval' })
       return { status: 'failed' }
-    }, { captureWorkspace: () => () => true }),
+    }, { captureSession: () => () => true, captureWorkspace: () => () => true }),
   } as never)
   const saved = listPendingNameReservations()[0]
   expect(readReservationPrimaryChoice(saved)).toBe(registerSetsPrimary)
@@ -61,7 +62,7 @@ it('saves before wallet approval and preserves the secret while a confirmed heig
     secretBeforeApproval = listPendingNameReservations()[0]?.secret
     return { status: 'executed', txId: 'confirmed-tx' } as DuskDomainTxState
   })
-  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
+  Object.assign(submitNameWrite, { captureSession: () => () => true, captureWorkspace: () => () => true })
   const getCurrentBlockHeight = vi.fn(() => height.promise)
   const pending = prepareRegistrationCommit({ ...props, submitNameWrite, getCurrentBlockHeight } as never)
   await vi.waitFor(() => expect(getCurrentBlockHeight).toHaveBeenCalledOnce())
@@ -84,7 +85,7 @@ it('fails before broadcast if storage fails or a previous uncertain reservation 
     broadcast()
     return { status: 'failed' }
   }
-  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
+  Object.assign(submitNameWrite, { captureSession: () => () => true, captureWorkspace: () => () => true })
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   const saved = listPendingNameReservations()[0]
   expect(saved?.secret).toBeTruthy() // A disconnected transport is not proof that nothing broadcast.
@@ -111,7 +112,7 @@ it('does not call an uncertain saved request signed or submitted after reopening
     options.onUpdate({ status: 'awaiting_approval' })
     return { status: 'failed' }
   })
-  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
+  Object.assign(submitNameWrite, { captureSession: () => () => true, captureWorkspace: () => () => true })
   await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
   const saved = listPendingNameReservations()[0]
   expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: null })
@@ -160,7 +161,7 @@ it('starts recovery aging after execution, not a long wallet approval', async ()
       options.onUpdate({ status: 'awaiting_approval' })
       vi.setSystemTime(startedAt + 90_000)
       return { status: 'executed', txId: 'confirmed-after-long-approval' }
-    }, { captureWorkspace: () => () => true }) } as never)
+    }, { captureSession: () => () => true, captureWorkspace: () => () => true }) } as never)
   const saved = listPendingNameReservations()[0]
   expect(saved).toMatchObject({ committedBlockHeight: null, committedTxId: 'confirmed-after-long-approval' })
   const getCommitment = vi.fn(async () => null)
@@ -186,12 +187,57 @@ function readyReservation(getPendingCommitment: () => Promise<unknown>) {
   upsertPendingNameReservation(saved)
   return { saved, props: { ...props, canRegister: true, committed: true, registrationTargetReady: true,
     registrationTargetAddressErrors: [], commitWindow: { status: 'ready', waitBlocks: 0, staleInBlocks: 100 },
-    preparedCommit: { commitment: saved.commitment, secret: saved.secret, committedBlockHeight: 100, committedTxId: 'old-commit' },
+    preparedCommit: { controller, ownerAddress: 'owner', chainId: 'dusk:0', commitment: saved.commitment, secret: saved.secret, committedBlockHeight: 100, committedTxId: 'old-commit' },
     duskDomainsOnChainClient: { getPendingCommitment: vi.fn(getPendingCommitment) }, setStrandedCommitment: vi.fn(),
-    submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'failed' })), { captureWorkspace: () => () => true }), result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
+    submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'failed' })), { captureSession: () => () => true, captureWorkspace: () => () => true }), result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
     lifecycleBaseBlockHeight: 500, registerSetsPrimary: false, appliedReferral: null,
     registrationTargetAddress: '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r' } }
 }
+
+it.each(['controller', 'address', 'chain'])('never reveals a reservation secret through another session: %s', async mismatch => {
+  const { props } = readyReservation(async () => ({ ok: true, value: null }))
+  const accountB = `0x${'55'.repeat(32)}`
+
+  await completeRegistration({ ...props,
+    selectedAddress: mismatch === 'address' ? 'account-b-address' : props.selectedAddress,
+    selectedAuthority: mismatch === 'controller' ? accountB : props.selectedAuthority,
+    runtimeConfig: { ...props.runtimeConfig, chainId: mismatch === 'chain' ? 'dusk:3' : 'dusk:0' },
+  } as never)
+
+  expect(props.submitNameWrite).not.toHaveBeenCalled()
+})
+
+it('aborts reservation preparation if preflight changes the initiating profile', async () => {
+  const props = args()
+  const accountB = `0x${'66'.repeat(32)}`
+  let liveAuthority = controller
+  let submitted: { call: unknown, signer: string } | null = null
+  const submitNameWrite = Object.assign(vi.fn(async (
+    _name: unknown,
+    call: unknown,
+    options: { beforeSign: () => void },
+  ) => {
+    submitted = { call, signer: liveAuthority }
+    options.beforeSign()
+    return { status: 'failed' }
+  }), {
+    captureSession: () => { const initial = liveAuthority; return () => initial === liveAuthority },
+    captureWorkspace: () => () => true,
+  })
+
+  await prepareRegistrationCommit({
+    ...props,
+    ensurePublicBalanceForLiveWrite: async () => {
+      liveAuthority = accountB
+      return true
+    },
+    submitNameWrite,
+  } as never)
+
+  expect(liveAuthority).toBe(accountB)
+  expect(submitted).toBeNull()
+  expect(listPendingNameReservations()).toEqual([])
+})
 
 it('reserves again instead of revealing where a registry added since the commit never saw it', async () => {
   const { props, saved } = readyReservation(async () => ({ ok: true, value: { commitment: `0x${'22'.repeat(32)}`, pending: null } }))
@@ -202,7 +248,7 @@ it('reserves again instead of revealing where a registry added since the commit 
   expect(props.setStrandedCommitment).toHaveBeenCalledExactlyOnceWith(stranded)
   expect(listPendingNameReservations()).toEqual([saved]) // Kept until the user reserves again.
 
-  const capabilities = deriveRegistrationCapabilities({ ...props, commitBusy: false, txBusy: false, walletAuthorized: true,
+  const capabilities = deriveRegistrationCapabilities({ ...props, chainId: 'dusk:0', commitBusy: false, txBusy: false, walletAuthorized: true,
     nodeHex: props.nodeHex, registrationCompletion: null, strandedCommitment: stranded } as never)
   expect(capabilities).toMatchObject({ canRevealRegistration: false, canRestartReservation: true, reservationStranded: true })
   const html = renderToStaticMarkup(createElement(RegistrationPurchaseStep, {
@@ -219,7 +265,7 @@ it('reserves again instead of revealing where a registry added since the commit 
     options.onUpdate({ status: 'awaiting_approval' })
     return { status: 'executed', txId: 'new-commit' } as DuskDomainTxState
   })
-  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
+  Object.assign(submitNameWrite, { captureSession: () => () => true, captureWorkspace: () => () => true })
   await restartStrandedReservation({ ...props, ...capabilities, submitNameWrite } as never)
   expect(submitNameWrite).toHaveBeenCalledOnce()
   expect(submitNameWrite.mock.calls[0][1]).toMatchObject({ functionName: 'commit_runtime' })
@@ -239,10 +285,10 @@ it('never judges or replaces another account’s reservation, from A to B and ba
   await completeRegistration(asB as never)
   expect(props.duskDomainsOnChainClient.getPendingCommitment).not.toHaveBeenCalled()
   expect(asB.setStrandedCommitment).not.toHaveBeenCalled()
-  expect(props.submitNameWrite).toHaveBeenCalledOnce() // As before: the contract judges B's reveal.
+  expect(props.submitNameWrite).not.toHaveBeenCalled() // Keep A's secret out of B's wallet.
 
   const capabilities = (selectedAuthority: string, strandedCommitment: unknown) => deriveRegistrationCapabilities({
-    ...props, commitBusy: false, txBusy: false, walletAuthorized: true, registrationCompletion: null,
+    ...props, chainId: 'dusk:0', commitBusy: false, txBusy: false, walletAuthorized: true, registrationCompletion: null,
     selectedAuthority, strandedCommitment } as never)
   expect(capabilities(controller, stranded)).toMatchObject({ canRevealRegistration: true, reservationStranded: false })
   // A stranded commitment found by one account never carries over to another.
@@ -277,7 +323,7 @@ it('keeps the saved reservation after an executed reveal until the name shows as
   const noop = () => {}
   const reveal = (shouldApplyPreviewWriteFallback: unknown) => {
     const { props } = readyReservation(pending)
-    return { ...props, shouldApplyPreviewWriteFallback, submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'executed', txId: 'reveal' })), { captureWorkspace: () => () => true }),
+    return { ...props, shouldApplyPreviewWriteFallback, submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'executed', txId: 'reveal' })), { captureSession: () => () => true, captureWorkspace: () => () => true }),
       setManagedName: noop, setResolverRecordSets: noop, setPrimaryName: noop, setPrimaryEndpointValue: noop,
       setDraftOwner: noop, setDraftManager: noop, appendActivity: noop }
   }
@@ -302,4 +348,30 @@ it('keeps the saved reservation after an executed reveal until the name shows as
   // Without live writes nothing is waited for, as before.
   await completeRegistration(reveal(async () => true) as never)
   expect(listPendingNameReservations()).toEqual([])
+})
+
+it('aborts before secret generation when registry routing changes the initiating session', async () => {
+  const props = args()
+  let current = true
+  const routing = vi.spyOn(names, 'registrationRegistry').mockImplementationOnce(async () => { current = false; return null })
+  const secret = vi.spyOn(names, 'createRegistrationSecret')
+  const submitNameWrite = Object.assign(vi.fn(), { captureWorkspace: () => () => true, captureSession: () => () => current })
+  try {
+    await prepareRegistrationCommit({ ...props, submitNameWrite } as never)
+    expect(routing).toHaveBeenCalledOnce()
+    expect(secret).not.toHaveBeenCalled()
+    expect(submitNameWrite).not.toHaveBeenCalled()
+    expect(listPendingNameReservations()).toEqual([])
+  } finally { routing.mockRestore(); secret.mockRestore() }
+})
+
+it.each(['commitment lookup', 'balance'])('aborts reveal when %s changes the initiating session', async step => {
+  let current = true
+  const { props } = readyReservation(async () => {
+    if (step === 'commitment lookup') current = false
+    return { ok: false, error: { message: 'offline' } }
+  })
+  Object.assign(props.submitNameWrite, { captureSession: () => () => current })
+  await completeRegistration({ ...props, ensurePublicBalanceForLiveWrite: async () => { current = false; return true } } as never)
+  expect(props.submitNameWrite).not.toHaveBeenCalled()
 })

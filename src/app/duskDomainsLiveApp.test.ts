@@ -94,3 +94,25 @@ it.each(['lock', 'disconnect', 'network', 'account', 'profile', 'authorization',
   await result
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
 })
+
+it.each(['profiles', 'encoding'])('rejects a return to the same account during installed connect %s preparation', async stage => {
+  const { provider, session, emit, write } = await fixture()
+  const delayed = Promise.withResolvers<unknown>()
+  const request = provider.request.getMockImplementation()!
+  let waiting = false
+  if (stage === 'encoding') vi.mocked(fetch).mockImplementationOnce(() => { waiting = true; return delayed.promise as Promise<Response> })
+  else provider.request.mockImplementation(args => {
+    if (!waiting && args.method === 'dusk_profiles') { waiting = true; return delayed.promise }
+    return request(args)
+  })
+  const outcome = write().then(() => 'sent', error => error.message)
+  await vi.waitFor(() => expect(waiting).toBe(true))
+  for (const account of ['B', 'A']) {
+    provider.profiles = [{ account, profileId: 'primary' }]
+    emit('profilesChanged', provider.profiles)
+    await session.refresh()
+  }
+  delayed.resolve(stage === 'encoding' ? new Response(readFileSync('public/contracts/dusk-domains-core.data-driver.wasm')) : provider.profiles)
+  expect(await outcome).toContain('wallet session changed')
+  expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
+})

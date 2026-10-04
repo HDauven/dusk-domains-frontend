@@ -26,7 +26,7 @@ it.each([
   const indexerClient = {
     getHealth: vi.fn(async () => ({ ok: true, currentBlockHeight: 100 })),
     getNameState: vi.fn(async () => ({ owner: 'bob', manager: 'bob', expiresAtBlockHeight: 200, graceEndsAtBlockHeight: 300 })),
-    resolveForward: vi.fn(async () => ({ records })),
+    resolveForward: vi.fn(async () => ({ records, verificationStatus: 'forward_resolved', resolver: { health: 'ok' }, expiry: { status: 'active' } })),
     getPrimaryName: vi.fn(async ({ value }: { value: string }) => value === bobAddress ? name : indexedPrimary),
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
   }
@@ -85,4 +85,15 @@ it.each([
   expect(indexerClient.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: bobAddress })
   expect(indexerClient.getPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress ? 2 : 1)
   expect(onChainClient.readPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress && !indexedPrimary ? 1 : 0)
+})
+
+it('drops the verified signal when a hydrated name reaches expiry', () => {
+  const state = deriveAppDerivedState({
+    displayName: 'bob.dusk', nodeHex: 'node', selectedAddress: bobAddress, selectedAuthority: 'bob',
+    managedName: { node: 'node', owner: 'bob', manager: 'bob', expiresAt: 200, graceEndsAt: 300 },
+    currentBlockHeight: 200, nowSeconds: 0, moonlightRecord: { key: 'moonlight_address', value: bobAddress },
+    primaryName: 'bob.dusk', primaryEndpointValue: bobAddress, connectedPrimaryName: 'bob.dusk',
+    pendingReservations: [], subnames: [], subnameLabel: '', subnameManager: '', confirmationInput: '', recordDraftMutations: [], recordDraftErrors: [],
+  } as never)
+  expect(state.primaryVerification.verified).toBe(false)
 })

@@ -8,6 +8,7 @@ describe('live write preflight locked-wallet recovery', () => {
   it('switches a local wallet away from its default 8080 node before reading balance', async () => {
     const calls: string[] = []
     const state = {
+      selectedProfile: { account: 'A', profileId: 'primary' },
       node: { chainId: 'dusk:0', networkName: 'Localnet', nodeUrl: 'http://127.0.0.1:8080/' },
     }
     const switchChain = vi.fn(async ({ nodeUrl }: { nodeUrl: string }) => {
@@ -240,4 +241,29 @@ describe('live write preflight locked-wallet recovery', () => {
     expect(getPublicBalance).toHaveBeenCalledOnce()
     expect(connectKit.open).toHaveBeenCalledOnce()
   })
+})
+
+it.each(['refresh', 'approval', 'balance'])('does not resume an A-scoped action when %s changes the profile to B', async change => {
+  const wallet = {
+    state: { selectedProfile: { account: 'A', profileId: 'primary' }, chainId: 'dusk:0' } as never,
+    connect: vi.fn(async () => { wallet.state = { selectedProfile: { account: 'B', profileId: 'primary' }, chainId: 'dusk:0' } as never }),
+    getPublicBalance: vi.fn(async () => {
+      if (change !== 'balance') throw new Error('Wallet is locked')
+      wallet.state = { selectedProfile: { account: 'B', profileId: 'primary' }, chainId: 'dusk:0' } as never
+      return { value: '1200000000' }
+    }),
+  }
+  const setError = vi.fn()
+  const ok = await ensurePublicBalanceForLiveWriteRequest({
+    action: 'claiming referral rewards', connectKit: { open: vi.fn() }, liveWritesEnabled: true,
+    refreshWalletConnectionState: async () => {
+      if (change === 'approval') return 'locked'
+      wallet.state = { selectedProfile: { account: 'B', profileId: 'primary' }, chainId: 'dusk:0' } as never
+      return 'connected'
+    },
+    refreshWalletSessionState: async () => 'connected', setError, wallet,
+  })
+  expect(ok).toBe(false)
+  expect(wallet.getPublicBalance).toHaveBeenCalledOnce()
+  expect(setError.mock.lastCall?.[0]).toContain('wallet session changed')
 })

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { type DuskDomainTxState, type ResolverRecord, type ResolverRecordKey } from '../../names/internal'
+import { type CoreRecordMutationInput, type DuskDomainTxState, type ResolverRecord, type ResolverRecordKey } from '../../names/internal'
 import { RecordDraftEditor } from './RecordDraftEditor'
 import { ManagementFeedback } from './ManagementFeedback'
 import { recordLabel, isIdentifierRecord } from './recordPresentation'
@@ -22,6 +22,7 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
   }
   draft: {
     criticalRecordChange: boolean
+    recordDraftMutations: CoreRecordMutationInput[]
     onDiscardDrafts: () => void
     onDraftValueChange: (key: ResolverRecordKey, value: string) => void
     recordDraftErrors: string[]
@@ -44,6 +45,7 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
   } = actions
   const {
     criticalRecordChange,
+    recordDraftMutations,
     onDiscardDrafts,
     onDraftValueChange,
     recordDraftErrors,
@@ -54,6 +56,8 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
     onUseWalletShieldedAddress,
     walletAddressAvailable,
   } = wallet
+  const discardOnUnmount = useEffectEvent(onDiscardDrafts)
+  useEffect(() => () => discardOnUnmount(), [])
   const [editing, setEditing] = useState<ResolverRecordKey | null>(null)
   const [adding, setAdding] = useState(false)
   const available = editableRecordKeys.filter(key => !resolverRecords.some(record => record.key === key))
@@ -64,6 +68,9 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
   }}>
     <RecordDraftEditor editableRecordKeys={[editing]} recordDraftValues={recordDraftValues} onDraftValueChange={onDraftValueChange} onUseWalletPublicAddress={onUseWalletPublicAddress} onUseWalletShieldedAddress={onUseWalletShieldedAddress} walletAddressAvailable={walletAddressAvailable} />
     {criticalRecordChange ? <p className="secure-note">Payments will use this address. Check it before saving.</p> : null}
+    {recordDraftMutations?.length ? <dl className="record-draft-review" aria-label="Record changes to save">{recordDraftMutations.map(mutation => <div key={mutation.key}>
+      <dt>{recordLabel(mutation.key as ResolverRecordKey)}</dt><dd>{mutation.action === 'clear' ? 'Remove record' : <code>{mutation.value}</code>}</dd>
+    </div>)}</dl> : null}
     {recordDraftErrors[0] ? <p role="alert" className="secure-note danger">{recordDraftErrors[0]}</p> : null}
     <div className="record-actions"><Button variant="primary" type="submit" disabled={!canSaveRecords} loading={recordBusy}>Save record</Button><Button disabled={recordBusy} onClick={() => { edit(null); setAdding(false) }}>Cancel</Button></div>
   </form> : null

@@ -13,6 +13,7 @@ export function deriveAppDerivedState({
   registrationsPaused,
   activeRecordTarget,
   canRegister,
+  chainId,
   commitTxState,
   committed,
   confirmationInput,
@@ -68,6 +69,9 @@ export function deriveAppDerivedState({
     primaryVerification,
   } = derivePrimaryState({
     displayName,
+    expiresAt: managedName?.node === nodeHex ? managedName.expiresAt : 0,
+    currentBlockHeight,
+    nowSeconds,
     moonlightRecord,
     primaryEndpointValue,
     primaryName,
@@ -91,6 +95,7 @@ export function deriveAppDerivedState({
   } = deriveRegistrationCapabilities({
     registrationsPaused,
     canRegister,
+    chainId,
     commitBusy,
     committed,
     commitWindow,

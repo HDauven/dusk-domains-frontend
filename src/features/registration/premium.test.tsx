@@ -59,9 +59,10 @@ it.each([undefined, 10_000_000_000, 11_000_000_000])('requires the displayed tot
   const ensureAuthority = vi.fn(() => false)
   await completeRegistration({
     result, lifecycleBaseBlockHeight: boundary - 1, displayName: 'aurora.dusk', duration: 1, feeConfig: DEFAULT_FEE_CONFIG,
-    canRegister: true, committed: true, commitWindow: { status: 'ready' }, preparedCommit: {},
+    canRegister: true, committed: true, commitWindow: { status: 'ready' }, preparedCommit: { controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0' },
+    selectedAuthority: 'owner', runtimeConfig: { chainId: 'dusk:0' },
     selectedAddress: 'wallet', registrationTargetReady: true, registrationTargetAddressErrors: [],
-    submitNameWrite: { captureWorkspace: () => () => true }, setWalletError: vi.fn(), setRegistrationCompletion: vi.fn(),
+    submitNameWrite: { captureSession: () => () => true, captureWorkspace: () => () => true }, setWalletError: vi.fn(), setRegistrationCompletion: vi.fn(),
     ensureContractAuthorityForLiveWrite: ensureAuthority,
   } as unknown as UseRegistrationActionsProps, confirmedTotal)
   expect(confirm).not.toHaveBeenCalled()

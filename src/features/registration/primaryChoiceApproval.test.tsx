@@ -25,7 +25,7 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
     options.onUpdate({status:'awaiting_approval'})
     return approval.promise
   })
-  Object.assign(submitNameWrite, { captureWorkspace: () => () => true })
+  Object.assign(submitNameWrite, { captureSession: () => () => true, captureWorkspace: () => () => true })
   const props = new Proxy({ registerSetsPrimary, setRegisterSetsPrimary, setPreparedCommit, setCommitTxState, submitNameWrite,
     displayName: 'approval.dusk', nodeHex: namehashHex('approval.dusk'), duration: 1,
     selectedAuthority: `0x${'11'.repeat(32)}`, selectedAddress: 'wallet', canPrepareCommit: true,
@@ -34,6 +34,7 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
     registrationTargetAddress: 'wallet', registrationTargetAddressErrors: [], registrationFee: 10,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: () => balance.promise,
     loadPendingReservations: () => listPendingNameReservations(),
+    searchActions: { resume: vi.fn() },
     result: { issues: [] },
   }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
   let feature!: ReturnType<typeof useRegistrationFeature>

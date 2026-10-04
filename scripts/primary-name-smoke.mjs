@@ -177,7 +177,7 @@ export async function checkPrimaryNameSwitches(page) {
     const node = namehashHex('bob.dusk'), noop = () => {}
     const client = {
       getHealth: async () => ({ ok: true, currentBlockHeight: 100 }),
-      resolveForward: async () => ({ records: [{ key: 'moonlight_address', value: bob }] }),
+      resolveForward: async () => ({ records: [{ key: 'moonlight_address', value: bob }], verificationStatus: 'forward_resolved', expiry: { status: 'active' }, resolver: { health: 'ok' } }),
       getNameState: async () => ({ owner: 'bob', manager: 'bob', expiresAtBlockHeight: 200, graceEndsAtBlockHeight: 300 }),
       getActivityPage: async () => ({ activity: [] }), getAllSubnames: async () => [],
       getPrimaryName: async ({ value }) => value === bob ? 'bob.dusk' : 'alice.dusk',

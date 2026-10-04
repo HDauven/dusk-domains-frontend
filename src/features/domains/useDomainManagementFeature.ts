@@ -1,3 +1,4 @@
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { canControlSubname } from './namespaceActions'
 import { resolveRecipient } from '../identity/resolveRecipient'
@@ -8,6 +9,20 @@ import { useDomainSettingsActions } from './useDomainSettingsActions'
 import { useSubdomainActions } from './useSubdomainActions'
 
 export function useDomainManagementFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, namePreview, searchRuntime, searchState, walletRuntime }: UseDomainManagementFeatureProps): DomainManagementFeatureProps {
+  const addressRequest = useRef({ generation: 0 })
+  useLayoutEffect(() => {
+    addressRequest.current.generation++
+    const request = addressRequest.current
+    return () => { request.generation++ }
+  }, [namePreview.displayName, domainRecordState.recordDrafts, searchState.mainView, searchState.resultView, walletRuntime.selectedAddress, walletRuntime.walletState?.generation])
+  const { setRecordDrafts } = domainRecordState
+  const { setRecordError, setRecordTxState } = domainState
+  const discardDrafts = useCallback(() => {
+    addressRequest.current.generation++
+    setRecordDrafts({})
+    setRecordError('')
+    setRecordTxState(null)
+  }, [setRecordDrafts, setRecordError, setRecordTxState])
   const writes = {
     appendActivity: activityFeed.appendActivity,
     runtimeConfig: appRuntime.runtimeConfig,
@@ -114,31 +129,40 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         canSaveRecords: derivedState.canSaveRecords,
         error: domainState.recordError,
         onClearRecord: (record) => void actions.handleRecordClear(record),
-        onSaveRecords: () => actions.handleRecordsSave(),
+        onSaveRecords: () => { addressRequest.current.generation++; return actions.handleRecordsSave() },
         recordBusy: derivedState.recordBusy,
         txState: domainState.recordTxState,
       },
       draft: {
         criticalRecordChange: domainRecordState.criticalRecordChange,
+        recordDraftMutations: domainRecordState.recordDraftMutations,
         onDraftValueChange: (key, value) => {
+          addressRequest.current.generation++
           domainRecordState.setRecordDrafts((current) => ({ ...current, [key]: value }))
           domainState.setRecordError('')
         },
-        onDiscardDrafts: () => { domainRecordState.setRecordDrafts({}); domainState.setRecordError(''); domainState.setRecordTxState(null) },
+        onDiscardDrafts: discardDrafts,
         recordDraftErrors: domainRecordState.recordDraftErrors,
         recordDraftValues: domainRecordState.recordDraftValues,
       },
       wallet: {
         onUseWalletPublicAddress: () => {
+          addressRequest.current.generation++
           domainRecordState.setRecordDrafts((current) => ({ ...current, moonlight_address: walletRuntime.selectedAddress }))
           domainState.setRecordError('')
         },
         onUseWalletShieldedAddress: async () => {
+          const request = ++addressRequest.current.generation
+          const workspace = walletRuntime.submitNameWrite.captureWorkspace(namePreview.displayName)
+          const session = walletRuntime.submitNameWrite.captureSession(walletRuntime.selectedAddress)
+          const isCurrent = () => request === addressRequest.current.generation && workspace() && session()
           domainState.setRecordError('')
           try {
             const shieldedAddress = await walletRuntime.requestSelectedShieldedAddress()
-            domainRecordState.setRecordDrafts((current) => ({ ...current, phoenix_payment_endpoint: shieldedAddress }))
+            if (!isCurrent()) return
+            domainRecordState.setRecordDrafts((current) => isCurrent() ? { ...current, phoenix_payment_endpoint: shieldedAddress } : current)
           } catch (error) {
+            if (!isCurrent()) return
             domainState.setRecordError(error instanceof Error ? error.message : 'Could not get shielded address from wallet.')
           }
         },

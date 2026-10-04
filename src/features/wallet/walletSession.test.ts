@@ -65,6 +65,22 @@ it('keeps explicit disconnect masked even when revocation fails and refresh rest
   expect(wallet.state).toMatchObject({ explicitlyDisconnected: false, authorized: true, selectedAddress: 'A' })
 })
 
+it('keeps explicit disconnect after rejected reconnection', async () => {
+  const { wallet, provider } = await fixture()
+  const request = provider.request.getMockImplementation()!
+  provider.request.mockImplementation(args => {
+    if (args.method === 'dusk_disconnect') return Promise.reject(new Error('offline'))
+    if (args.method === 'dusk_requestProfiles') {
+      return Promise.reject(Object.assign(new Error('User rejected the request'), { code: 4001 }))
+    }
+    return request(args)
+  })
+
+  await expect(wallet.disconnect()).rejects.toThrow('offline')
+  await expect(wallet.connect()).rejects.toThrow('User rejected')
+  expect(wallet.state).toMatchObject({ explicitlyDisconnected: true, authorized: false, selectedAddress: null })
+})
+
 it('keeps a new connection when an older profiles read finishes', async () => {
   const { wallet, provider } = await fixture()
   const delayed = Promise.withResolvers<unknown>()
@@ -97,6 +113,20 @@ it.each(['balance', 'shielded address'])('drops a %s from a session that disconn
   await wallet.connect()
   response.resolve((kind === 'balance' ? { value: '100000000000', nonce: '0' } : 'shielded') as never)
   await rejected
+})
+
+it('prioritizes session invalidation when an in-flight wallet read rejects', async () => {
+  const { wallet, provider, emit } = await fixture()
+  const response = Promise.withResolvers<never>()
+  provider.request.mockImplementationOnce(() => response.promise)
+  const pending = wallet.getPublicBalance()
+  await vi.waitFor(() => expect(provider.request).toHaveBeenCalledOnce())
+
+  provider.profiles = [{ account: 'B', profileId: 'secondary' }]
+  emit('profilesChanged', provider.profiles)
+  response.reject(new Error('Dusk Wallet is locked'))
+
+  await expect(pending).rejects.toThrow('wallet session changed')
 })
 
 it.each(['accountsChanged', 'profilesChanged', 'lock', 'chainChanged', 'duskNodeChanged', 'disconnect'])('re-syncs after %s during a slow refresh with at most one queued refresh', async event => {
@@ -185,7 +215,7 @@ it.each(['connected', 'locked', 'late authorization'])('re-syncs approval events
       else emit('connect', { chainId: 'dusk:0' })
       emit('profilesChanged', provider.profiles)
       if (status === 'locked') { provider.profiles = []; emit('profilesChanged', []) }
-      return [{ account: 'A', profileId: 'primary' }]
+      return [{ account: 'B', profileId: 'primary' }]
     }
     if (method === 'dusk_profiles') return provider.profiles
     if (method === 'dusk_chainId') return provider.chainId
@@ -262,4 +292,42 @@ it('forgets A through a delayed refresh, switch to B and lock, and remembers onl
   expect(storage.getItem(key)).toBeNull()
   await wallet.refresh()
   expect(storage.getItem(key)).toBe('B')
+})
+
+it('does not unmask a retained profile when approval returns no profiles', async () => {
+  const { wallet, provider } = await fixture()
+  provider.request.mockImplementation(async ({ method }) => {
+    if (method === 'dusk_disconnect') throw new Error('offline')
+    if (method === 'dusk_requestProfiles') return []
+    if (method === 'dusk_profiles') return [{ account: 'A', profileId: 'primary' }]
+    if (method === 'dusk_chainId') return 'dusk:0'
+    return null
+  })
+  await expect(wallet.disconnect()).rejects.toThrow('offline')
+  await expect(wallet.connect()).rejects.toThrow('wallet session changed')
+  expect(wallet.state).toMatchObject({ explicitlyDisconnected: true, selectedAddress: null })
+})
+
+it('keeps a later disconnect while approval is pending', async () => {
+  const { wallet, provider } = await fixture()
+  const approval = Promise.withResolvers<unknown>()
+  provider.request.mockImplementation(async ({ method }) => {
+    if (method === 'dusk_requestProfiles') return approval.promise
+    if (method === 'dusk_disconnect') throw new Error('offline')
+    if (method === 'dusk_profiles') return [{ account: 'A', profileId: 'primary' }]
+    if (method === 'dusk_chainId') return 'dusk:0'
+    return null
+  })
+  const pending = wallet.connect()
+  await expect(wallet.disconnect()).rejects.toThrow('offline')
+  approval.resolve([{ account: 'A', profileId: 'primary' }])
+  await expect(pending).rejects.toThrow('wallet session changed')
+  expect(wallet.state).toMatchObject({ explicitlyDisconnected: true, selectedAddress: null })
+})
+
+it('preserves an ordinary locked-wallet rejection when the session has not changed', async () => {
+  const { wallet, provider } = await fixture([])
+  const locked = new Error('Wallet is locked')
+  provider.request.mockRejectedValueOnce(locked)
+  await expect(wallet.getPublicBalance()).rejects.toBe(locked)
 })

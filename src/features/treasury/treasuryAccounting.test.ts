@@ -1,3 +1,7 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { TreasuryHeader } from './cards/TreasuryHeader'
+import { TreasuryAccountingCard } from './cards/TreasuryAccountingCard'
 import { expect, it, vi } from 'vitest'
 import { claimTreasury } from './claimTreasuryAction'
 import { useReferralActions } from '../referrals/useReferralActions'
@@ -33,9 +37,39 @@ it('recognizes a referral claim across decimal string digit boundaries', async (
     indexerClient: { getReferralState: async () => ({ claimableLux: '9999999999999999' }) },
     setReferralConfirmation, setReferralError: vi.fn(), setReferralTxState: vi.fn(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
-    submitNameWrite: async () => ({ status: 'executed' }), loadReferralAccount,
+    submitNameWrite: Object.assign(async () => ({ status: 'executed' }), { captureSession: () => () => true }), loadReferralAccount,
   } as never)
   await actions.handleClaimReferralRewards()
   expect(setReferralConfirmation).toHaveBeenLastCalledWith('Referral rewards claimed.')
   expect(loadReferralAccount).toHaveBeenCalledExactlyOnceWith({ fresh: true })
+})
+
+it('labels the bounded operator claims sum as recent in both treasury summaries', () => {
+  const treasuryState = { initialized: true, availableLux: '0', totalReceivedLux: '100000000000',
+    registrationReceivedLux: '0', renewalReceivedLux: '0', otherReceivedLux: '0',
+    referralClaimableLux: '0', referralClaimedLux: '0', claims: [{ amountLux: '2000000000' }] }
+  for (const Component of [TreasuryHeader, TreasuryAccountingCard]) {
+    const html = renderToStaticMarkup(createElement(Component, { treasuryState } as never))
+    expect(html.toLowerCase()).toContain('recent operator claims')
+    expect(html.toLowerCase()).not.toContain('operator claimed')
+    expect(html).toContain('2 DUSK')
+  }
+})
+
+it('carries the referral recipient session across preflight into submission', async () => {
+  let current = true
+  const submittedSessions: boolean[] = []
+  const submitNameWrite = Object.assign(vi.fn(async (_name, _call, options) => {
+    submittedSessions.push(options.session?.() ?? true)
+    return { status: 'rejected' }
+  }), { captureSession: () => () => current })
+  const actions = useReferralActions({ referralClaimable: true, referralBusy: false, referralRewardClaimReady: true,
+    selectedAddress: 'A', selectedAuthority: 'authority-a', liveDuskDomainsApp: {}, runtimeConfig: { contracts: {} },
+    referralAccountState: { claimableLux: '1' }, setReferralConfirmation: vi.fn(), setReferralError: vi.fn(), setReferralTxState: vi.fn(),
+    ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => { current = false; return true },
+    submitNameWrite,
+  } as never)
+  await actions.handleClaimReferralRewards()
+  expect(submittedSessions).toEqual([])
+  expect(submitNameWrite).not.toHaveBeenCalled()
 })

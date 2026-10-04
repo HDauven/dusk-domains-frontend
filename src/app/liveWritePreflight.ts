@@ -1,7 +1,9 @@
+import { captureWalletSession } from '../features/wallet/captureWalletSession'
+import { WalletSessionChangedError } from '../features/wallet/sessionWriteWallet'
+import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
 import {
   checkPublicBalanceForWrite,
   type DuskConnectOptions,
-  type DuskWalletState,
   isWalletLockedMessage,
   userFacingErrorMessage,
 } from '../names/internal'
@@ -11,7 +13,7 @@ import { normalizeWalletNodeUrl } from '../features/wallet/walletStatus'
 export type BalanceWallet = {
   connect?: (options?: DuskConnectOptions) => Promise<unknown>
   getPublicBalance: () => Promise<{ value: string }>
-  state?: DuskWalletState
+  state?: DuskWalletLike['state']
   switchChain?: (params: { nodeUrl: string }) => Promise<unknown>
 }
 
@@ -48,19 +50,25 @@ export async function ensurePublicBalanceForLiveWriteRequest({
 }: EnsurePublicBalanceForLiveWriteRequestArgs) {
   if (!liveWritesEnabled) return true
 
+  const session = wallet.state ? captureWalletSession(wallet as Pick<DuskWalletLike, 'state'>, false) : () => true
+  const checkSession = () => { if (!session()) throw new WalletSessionChangedError() }
   try {
+    checkSession()
     await ensureExpectedWalletNode({ expectedNodeUrl, refreshWalletSessionState, wallet })
-    return await checkWalletPublicBalance({
+    checkSession()
+    const sufficient = await checkWalletPublicBalance({
       action,
       extraRequiredLux,
       setError,
       transactionCount,
       wallet,
     })
+    checkSession()
+    return sufficient
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : String(error)
-    if (!isWalletLockedMessage(rawMessage)) {
-      setError(`Could not check public balance before ${action}: ${userFacingErrorMessage(error)}`)
+    if (!session() || !isWalletLockedMessage(rawMessage)) {
+      setError(`Could not check public balance before ${action}: ${userFacingErrorMessage(session() ? error : new WalletSessionChangedError())}`)
       return false
     }
 
@@ -74,16 +82,20 @@ export async function ensurePublicBalanceForLiveWriteRequest({
       wallet,
     })
     if (!recovered) return false
+    if (!session()) { setError(new WalletSessionChangedError().message); return false }
 
     try {
       await ensureExpectedWalletNode({ expectedNodeUrl, refreshWalletSessionState, wallet })
-      return await checkWalletPublicBalance({
+      checkSession()
+      const sufficient = await checkWalletPublicBalance({
         action,
         extraRequiredLux,
         setError,
         transactionCount,
         wallet,
       })
+      checkSession()
+      return sufficient
     } catch (retryError) {
       setError(`Could not check public balance before ${action}: ${userFacingErrorMessage(retryError)}`)
       return false

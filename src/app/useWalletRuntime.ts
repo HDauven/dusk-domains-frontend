@@ -1,3 +1,5 @@
+import { captureWalletSession } from '../features/wallet/captureWalletSession'
+import { WalletSessionChangedError } from '../features/wallet/sessionWriteWallet'
 import type { useAppRuntime } from './useAppRuntime'
 import type { PendingConfirmation } from './confirmationRead'
 import { useCallback, useState } from 'react'
@@ -74,12 +76,20 @@ export function useWalletRuntime({
     if (!selectedAddress) throw new Error('Connect a wallet first.')
     if (!wallet.requestShieldedAddress) throw new Error('This wallet does not expose a shielded receive address.')
 
+    const session = captureWalletSession(wallet)
+    if (!session() || wallet.state.selectedProfile?.account !== selectedAddress) throw new WalletSessionChangedError()
     const shieldedAddress = await wallet.requestShieldedAddress({
       account: selectedAddress,
       reason: 'payment_request',
       label: 'Dusk Domains',
     })
-    await refreshWalletSessionState().catch(() => undefined)
+    try {
+      await refreshWalletSessionState()
+    } catch (error) {
+      if (!session()) throw new WalletSessionChangedError()
+      throw error
+    }
+    if (!session()) throw new WalletSessionChangedError()
     return shieldedAddress
   }, [refreshWalletSessionState, selectedAddress, wallet])
 

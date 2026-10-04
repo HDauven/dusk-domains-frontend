@@ -16,18 +16,18 @@ export async function checkPremiumConfirmation(page) {
         premiumLux: premium.premiumLux, premiumNextStepBlockHeight: premium.nextStepBlockHeight,
         premiumNextStepAt: premium.nextStepAt, premiumEndsAt: premium.premiumEndsAt }
       const feature = useRegistrationFeature({
-        activityFeed: {}, appRuntime: {}, domainRecordState: {}, domainState: {}, mainViewRuntime: {}, searchRuntime: {},
+        activityFeed: {}, appRuntime: { runtimeConfig: { chainId: 'dusk:0' } }, domainRecordState: {}, domainState: {}, mainViewRuntime: {}, searchRuntime: {},
         namePreview: { result, lifecycleBaseBlockHeight: height, displayName: 'aurora.dusk', canRegister: true,
           registrationFee: 10 + premium.premiumLux / 1e9, expiryDate: '3 Oct 2027' },
         economicsRuntime: { feeConfig, feeConfigError: '' },
         derivedState: { canRevealRegistration: true, txBusy: false, commitBusy: false,
           commitWindow: { status: 'ready', staleInBlocks: 100, waitBlocks: 0 } },
-        registrationState: { duration: 1, committed: true, preparedCommit: {}, registrationStep: 'purchase',
-          registrationCompletion: null, txState: null, setRegistrationCompletion: () => {} },
+        registrationState: { duration: 1, committed: true, preparedCommit: { controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0' }, registrationStep: 'purchase',
+          registrationCompletion: null, txState: null, setRegistrationCompletion: () => {}, searchActions: { resume: () => {} } },
         registrationRuntime: { registrationTargetAddress: 'wallet', registrationTargetReady: true, registrationTargetAddressErrors: [] },
         searchState: { setResultView: () => { window.premiumWaits++ } },
-        walletRuntime: { selectedAddress: 'wallet', walletSetupState: 'connected',
-          submitNameWrite: { captureWorkspace: () => () => true }, setWalletError: () => {},
+        walletRuntime: { selectedAddress: 'wallet', selectedAuthority: 'owner', walletSetupState: 'connected',
+          submitNameWrite: { captureSession: () => () => true, captureWorkspace: () => () => true }, setWalletError: () => {},
           ensureContractAuthorityForLiveWrite: () => { window.premiumApprovals++; return false } },
       })
       return React.createElement(RegistrationFlowPanel, feature.registrationProps)

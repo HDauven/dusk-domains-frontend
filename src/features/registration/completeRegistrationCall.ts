@@ -1,3 +1,5 @@
+import { registrationCommitMatchesSession } from './pendingReservationTypes'
+import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import {
   coreCompleteRegistrationRuntimeCall,
   createRegistrationLifecycle,
@@ -19,6 +21,9 @@ export function createCompleteRegistrationRequest({
   registerSetsPrimary,
   registrationTargetAddress,
   result,
+  selectedAddress,
+  selectedAuthority,
+  runtimeConfig,
 }: Pick<UseRegistrationActionsProps,
   | 'displayName'
   | 'duration'
@@ -27,10 +32,14 @@ export function createCompleteRegistrationRequest({
   | 'registerSetsPrimary'
   | 'registrationTargetAddress'
   | 'result'
+  | 'selectedAddress'
+  | 'selectedAuthority'
+  | 'runtimeConfig'
 > & {
   appliedReferral: ReferralState | null
   preparedCommit: PreparedRegistrationCommit
 }) {
+  if (!registrationCommitMatchesSession(preparedCommit, selectedAuthority, selectedAddress, runtimeConfig.chainId)) throw new WalletSessionChangedError()
   const feeLux = registrationFeeLux(result.label, duration, feeConfig, result.premiumLux ?? 0)
   const lifecycle = createRegistrationLifecycle({
     startsAt: lifecycleBaseBlockHeight,

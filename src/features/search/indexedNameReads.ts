@@ -46,12 +46,15 @@ export async function readIndexedName(
     isSubname(canonicalName) ? indexerRead(client.getSubname(node)) : rootName,
   ])
   const forwardAddress = forwardRead.value?.records.find(record => record.key === 'moonlight_address')?.value || ''
-  const primaryReadPromise = forwardAddress ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
+  const forwardVerified = forwardRead.value?.verificationStatus === 'forward_resolved'
+    && forwardRead.value.expiry?.status === 'active' && forwardRead.value.resolver?.health === 'ok'
+  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
   const [primaryRead, connectedPrimaryRead] = await Promise.all([
     primaryReadPromise,
-    selectedAddress === forwardAddress ? primaryReadPromise
+    selectedAddress === forwardAddress && primaryReadPromise ? primaryReadPromise
       : selectedAddress ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: selectedAddress })) : null,
   ])
+  // The connected wallet can still clear a stale primary; this lookup never verifies the viewed name.
   const chainPrimaryRead = selectedAddress && !connectedPrimaryRead?.value && onChainClient
     ? await indexerRead(onChainClient.readPrimaryName({ type: 'moonlight_address', value: selectedAddress }))
     : null

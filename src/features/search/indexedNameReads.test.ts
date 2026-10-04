@@ -88,3 +88,40 @@ it('reports a failed fallback without dropping the other name reads', async () =
   expect(reads?.readErrors).toContain('Node unavailable')
   expect(reads?.stateRead.value?.owner).toBe('alice')
 })
+
+it.each(['expired', 'unverified', 'unhealthy', 'missing', 'missing resolver', 'missing expiry'])('does not verify an unsafe forward record as primary: %s', async unsafe => {
+  const { client, onChainClient, readContract } = setup('alice.dusk')
+  vi.mocked(client.resolveForward).mockResolvedValue({
+    canonicalName: 'alice.dusk',
+    node,
+    records: [{ key: 'moonlight_address', value: address }],
+    resolver: unsafe === 'missing resolver' ? undefined : { resolverId: registry, health: unsafe === 'unhealthy' ? 'unavailable' : 'ok' },
+    expiry: unsafe === 'missing expiry' ? undefined : { status: unsafe === 'expired' ? 'expired' : 'active', expiresAt: '2026-01-01T00:00:00.000Z' },
+    cache: { asOf: '2026-01-02T00:00:00.000Z', ttlSeconds: 60, staleAt: '2026-01-02T00:01:00.000Z' },
+    warnings: [],
+    errors: [{ code: 'expired_name', message: 'The name is expired.' }],
+    verificationStatus: unsafe === 'unverified' ? 'unverified' : unsafe === 'missing' ? undefined : 'forward_resolved',
+  } as never)
+
+  const reads = await readIndexedName(client, searchResult, address, onChainClient)
+  expect(reads?.primaryName).toBeNull()
+  const derived = deriveAppDerivedState({
+    walletSigningReady: true, selectedAddress: address, selectedAuthority: 'alice', nodeHex: node, displayName: 'alice.dusk',
+    managedName: { node, owner: 'alice', manager: 'alice', expiresAt: 100, graceEndsAt: 200 }, currentBlockHeight: 300, nowSeconds: 0,
+    moonlightRecord: { key: 'moonlight_address', value: address }, primaryName: reads?.primaryName,
+    connectedPrimaryName: reads?.connectedPrimaryName, primaryEndpointValue: reads?.primaryEndpoint, pendingReservations: [], subnames: [],
+    subnameLabel: '', subnameManager: '', confirmationInput: '', recordDraftMutations: [], recordDraftErrors: [],
+  } as never)
+  expect(derived.primaryVerification.verified).toBe(false)
+  expect(derived.canClearPrimary).toBe(true)
+  // The wallet's separate, unverified mapping remains available for clearing.
+  expect(reads?.connectedPrimaryName).toBe('alice.dusk')
+  expect(client.getPrimaryName).toHaveBeenCalledExactlyOnceWith({ type: 'moonlight_address', value: address })
+  expect(readContract).not.toHaveBeenCalled()
+  vi.mocked(client.getPrimaryName).mockClear()
+  const visitor = await readIndexedName(client, searchResult, '', onChainClient)
+  expect(visitor?.primaryName).toBeNull()
+  expect(visitor?.connectedPrimaryName).toBeNull()
+  expect(client.getPrimaryName).not.toHaveBeenCalled()
+  expect(readContract).not.toHaveBeenCalled()
+})
