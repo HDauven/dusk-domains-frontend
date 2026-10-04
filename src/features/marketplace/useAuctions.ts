@@ -24,7 +24,6 @@ export function useAuctions({
   accountScope,
   auctions,
   indexerClient,
-  loadMarketplace,
   marketplaceOnChainClient,
   marketScope,
   onBidPlaced,
@@ -38,7 +37,6 @@ export function useAuctions({
   accountScope: string
   auctions: IndexedMarketplaceAuction[]
   indexerClient: DuskDomainsIndexerClient | null
-  loadMarketplace: () => Promise<void>
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
   marketScope: string
   onBidPlaced: (node: string) => void
@@ -95,11 +93,11 @@ export function useAuctions({
     queueMicrotask(() => void loadAuctionActivity(selectedAuctionNode))
   }, [loadAuctionActivity, selectedAuctionNode, selectedBidCount])
 
-  // The contract's current minimum, or null after reporting why it could not be read.
-  const canonicalMinimum = useCallback(async (auction: IndexedMarketplaceAuction) => {
+  // The contract's current auction, or null after reporting why it could not be read.
+  const readCanonicalAuction = useCallback(async (auction: IndexedMarketplaceAuction) => {
     if (!marketplaceOnChainClient) return null
     try {
-      return minimumCanonicalBidLux(await canonicalAuction(marketplaceOnChainClient, auction))
+      return await canonicalAuction(marketplaceOnChainClient, auction)
     } catch (readError) {
       setError(userFacingErrorMessage(readError))
       return null
@@ -112,8 +110,9 @@ export function useAuctions({
       setError('Enter a valid bid.')
       return
     }
-    const minimumBid = await canonicalMinimum(auction)
-    if (minimumBid === null) return
+    const current = await readCanonicalAuction(auction)
+    if (!current) return
+    const minimumBid = minimumCanonicalBidLux(current)
     if (amountLux < minimumBid) {
       setError(`Bid at least ${compactLuxAsDusk(minimumBid, true)} DUSK.`)
       setBidDrafts((current) => ({ ...current, [auction.node]: compactLuxAsDusk(minimumBid, true) }))
@@ -121,30 +120,38 @@ export function useAuctions({
     }
     setError('')
     setConfirmation('')
-    setBidReview({ amountDusk: formatLuxAsDusk(amountLux), amountLux, auction, minimumBidLux: minimumBid })
-  }, [bidDrafts, canonicalMinimum, setBidReview, setConfirmation, setError])
+    setBidReview({
+      amountDusk: formatLuxAsDusk(amountLux), amountLux, minimumBidLux: minimumBid,
+      auction: {
+        ...auction,
+        startBlockHeight: current.startBlock,
+        endBlockHeight: current.endBlock,
+        bidCount: current.bidCount,
+        highestBid: current.highestBid ? {
+          bidderAuthority: current.highestBid.bidderAuthority,
+          amountLux: Number(current.highestBid.amountLux),
+          placedAtBlockHeight: current.highestBid.placedAtBlock,
+        } : null,
+      },
+    })
+  }, [bidDrafts, readCanonicalAuction, setBidReview, setConfirmation, setError])
 
   const placeBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
     setBidReview(null)
     const reviewed = bidReview?.auction.node === auction.node ? bidReview : null
-    const amountLux = reviewed?.amountLux ?? validLuxAmount(bidDrafts[auction.node] ?? '')
-    if (amountLux === null) {
-      setError('Enter a valid bid.')
+    if (!reviewed) {
+      setError('Review this bid before submitting it.')
       return
     }
-    const minimumBid = await canonicalMinimum(auction)
-    if (minimumBid === null) return
-    if (amountLux < minimumBid) {
-      setBidDrafts((current) => ({ ...current, [auction.node]: compactLuxAsDusk(minimumBid, true) }))
-      setError(`The minimum bid is now ${compactLuxAsDusk(minimumBid, true)} DUSK.`)
-      await loadMarketplace()
-      return
-    }
+    auction = reviewed.auction
+    const amountLux = reviewed.amountLux
+    if (!await readCanonicalAuction(auction)) return
     const result = await writes.submit(
       'placing this bid',
       auction.name,
       marketplacePlaceBidRuntimeCall({
         node: auction.node,
+        expectedAuctionId: auction.auctionId,
         amountLux: Number(amountLux),
         bidderManager: selectedAuthority || null,
       }),
@@ -155,7 +162,7 @@ export function useAuctions({
       onBidPlaced(auction.node)
       await loadAuctionActivity(auction.node)
     }
-  }, [bidDrafts, bidReview, canonicalMinimum, loadAuctionActivity, loadMarketplace, onBidPlaced, selectedAuthority, setBidReview, setError, writes])
+  }, [bidReview, readCanonicalAuction, loadAuctionActivity, onBidPlaced, selectedAuthority, setBidReview, setError, writes])
 
   const lifecycleAction = useCallback(async (
     auction: IndexedMarketplaceAuction,
@@ -198,10 +205,10 @@ export function useAuctions({
     setBidReview,
     setSelectedAuctionNode,
     cancelAuction: (auction: IndexedMarketplaceAuction) => lifecycleAction(
-      auction, 'cancelling this auction', marketplaceCancelAuctionRuntimeCall({ node: auction.node }), 'Auction canceled.'),
+      auction, 'cancelling this auction', marketplaceCancelAuctionRuntimeCall({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction canceled.'),
     expireAuction: (auction: IndexedMarketplaceAuction) => lifecycleAction(
-      auction, 'closing this dormant auction', marketplaceExpireAuctionRuntimeCall({ node: auction.node }), 'Auction closed.'),
+      auction, 'closing this dormant auction', marketplaceExpireAuctionRuntimeCall({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction closed.'),
     settleAuction: (auction: IndexedMarketplaceAuction) => lifecycleAction(
-      auction, 'settling this auction', marketplaceSettleAuctionRuntimeCall({ node: auction.node }), 'Auction settled.'),
+      auction, 'settling this auction', marketplaceSettleAuctionRuntimeCall({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction settled.'),
   }
 }

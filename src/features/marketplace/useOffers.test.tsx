@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { namehashHex, type DuskDomainsMarketplaceOnChainClient, type DuskDomainsOnChainOffer, type DuskDomainsOnChainClient, type IndexedMarketplaceOffer, type IndexedNameSummary } from '../../names/internal'
+import { MarketplaceReview } from './MarketplaceReview'
 import { useOffers } from './useOffers'
 import { useMarketplaceWrites } from './useMarketplaceWrites'
 
@@ -9,7 +10,7 @@ const buyerAuthority = `0x${'22'.repeat(32)}`
 const seller = `0x${'33'.repeat(32)}`
 const indexed = { node, name: 'example.dusk', buyerAuthority, amountLux: 10_000_000_000, feeBps: 250, expiresAtBlockHeight: 200 } as IndexedMarketplaceOffer
 
-function setup(offer = { ...indexed }) {
+function setup(offer = { ...indexed }, ownedName = { node, canonicalName: 'example.dusk' } as IndexedNameSummary) {
   const live: DuskDomainsOnChainOffer = { node, buyerAuthority, amountLux: 10_000_000_000n, offerId: 7, feeBps: 250, expiresAtBlock: 200 }
   const marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient = { getOffer: async () => ({ ok: true, value: live }), getFixedSale: async () => ({ ok: true, value: null }), getAuction: async () => ({ ok: true, value: null }), getRefund: async () => ({ ok: true, value: null }) }
   let confirm: (() => Promise<unknown>) | undefined
@@ -29,7 +30,7 @@ function setup(offer = { ...indexed }) {
         getCurrentBlockHeight: async () => ({ ok: true, value: 100 }),
         getName: async () => ({ ok: true, value: { canonicalName: 'example.dusk', node, marketplaceTransferable: true, record: { label: 'example', referrer: null, owner: seller, manager: seller, lifecycle: { expiresAtBlock: 300, graceEndsAtBlock: 400 } } } }),
       } as unknown as DuskDomainsOnChainClient,
-      ownedNames: [{ node, canonicalName: 'example.dusk' } as IndexedNameSummary],
+      ownedNames: [ownedName],
       selectedAddress: 'seller-address', selectedAuthority: seller, setError,
       writes: { ...writes, submit, requestReview },
     })
@@ -87,6 +88,24 @@ describe('offer acceptance review', () => {
     expect(h.submit).not.toHaveBeenCalled()
     expect(h.setError).toHaveBeenCalledWith(expect.stringContaining('changed on-chain'))
   })
+
+  it('discloses descendant authority and requires namespace confirmation when accepting an offer', async () => {
+    const h = setup({ ...indexed }, {
+      node,
+      canonicalName: 'example.dusk',
+      namespace: { descendantCount: 2, heldByOthersCount: 1, subnames: [], ancestors: [] },
+      subnameCount: 2,
+    } as unknown as IndexedNameSummary)
+    await h.accept()
+
+    const review = h.requestReview.mock.calls[0]?.[0]
+    const html = renderToStaticMarkup(<MarketplaceReview review={review} disabled={false} onClose={() => {}} onConfirm={() => {}} />)
+    expect(html).toMatch(/2 subnames?/i)
+    expect(html).toContain('1 held by others')
+    expect(html).toContain('can take back any subname')
+    expect(html).toContain('type="checkbox"')
+    expect(html).toMatch(/disabled=""[^>]*>Confirm in wallet/)
+  })
 })
 
 describe.each(['cancel', 'expire'] as const)('%s offer', action => {
@@ -101,6 +120,6 @@ describe.each(['cancel', 'expire'] as const)('%s offer', action => {
     const h = setup()
     await h[action]()
     expect(h.setError).not.toHaveBeenCalled()
-    expect(h.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), 'example.dusk', expect.objectContaining({ functionName: `${action}_offer_runtime`, args: expect.objectContaining({ node }) }), 0n, expect.any(String))
+    expect(h.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), 'example.dusk', expect.objectContaining({ functionName: `${action}_offer_runtime`, args: expect.objectContaining({ node, expectedOfferId: 7 }) }), 0n, expect.any(String))
   })
 })

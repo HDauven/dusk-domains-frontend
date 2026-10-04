@@ -85,6 +85,8 @@ export function useSellForm({
       if (!reviewed) {
         writes.requestReview({
           title: `Auction ${selectedName.canonicalName}`,
+          namespace: selectedName.namespace,
+          transfersNamespace: true,
           rows: [
             { label: 'Name moves to', value: 'Marketplace escrow' },
             marketplaceAmountRow('Minimum bid', reserveLux),
@@ -141,6 +143,8 @@ export function useSellForm({
     if (!reviewed) {
       writes.requestReview({
         title: `List ${selectedName.canonicalName}`,
+        namespace: selectedName.namespace,
+        transfersNamespace: true,
         rows: [
           { label: 'Name moves to', value: 'Marketplace escrow' },
           marketplaceAmountRow('Price', priceLux),

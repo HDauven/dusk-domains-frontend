@@ -36,12 +36,12 @@ export async function checkMarketplaceReviews(page) {
     const { namehashHex } = await import('/src/names/internal.ts')
     const seller = `0x${'22'.repeat(32)}`, buyer = `0x${'33'.repeat(32)}`
     const node = namehashHex('aurora.dusk')
-    const sale = { node, name: 'aurora.dusk', sellerAuthority: seller, priceLux: 25_123_456_789, privateBuyer: null, expiresAtBlockHeight: 5000, feeBps: 250 }
+    const sale = { saleId: 7, openedAtBlockHeight: 100, node, name: 'aurora.dusk', sellerAuthority: seller, priceLux: 25_123_456_789, privateBuyer: null, expiresAtBlockHeight: 5000, feeBps: 250 }
     const offer = { node, name: sale.name, buyerAuthority: buyer, amountLux: 20_123_456_789, expiresAtBlockHeight: 5000, feeBps: 250 }
-    const auction = { node, name: sale.name, sellerAuthority: seller, reservePriceLux: 25e9, startBlockHeight: null, endBlockHeight: null, highestBid: null, bidCount: 0, durationBlocks: 8640 }
+    const auction = { auctionId: 8, feeBps: 250, startDeadlineBlockHeight: 5000, createdAtBlockHeight: 100, node, name: sale.name, sellerAuthority: seller, reservePriceLux: 25e9, startBlockHeight: null, endBlockHeight: null, highestBid: null, bidCount: 0, durationBlocks: 8640 }
     const auctions = [auction]
     const refund = { authority: buyer, amountLux: 25_123_456_789 }
-    const owned = { node, canonicalName: sale.name, owner: seller }
+    const owned = { node, canonicalName: sale.name, owner: seller, namespace: { descendantCount: 2, heldByOthersCount: 1 } }
     window.reviewCalls = []
     window.changedPrice = false
     const marketplaceOnChainClient = {
@@ -141,6 +141,10 @@ export async function checkMarketplaceReviews(page) {
   assert.equal(await page.getByRole('dialog').getByTitle(`seller-${'x'.repeat(100)}`).textContent(), 'seller-xxx...xxxxxx')
   await checkReviewPhone(page)
   assert.equal(await calls(), 1)
+  assert.match(await page.getByRole('dialog').textContent(), /Includes 2 subnames · 1 held by others/)
+  assert.match(await page.getByRole('dialog').textContent(), /can take back any subname/)
+  assert.equal(await page.getByRole('button', { name: 'Confirm in wallet' }).isDisabled(), true)
+  await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Confirm in wallet' }).click()
   await page.waitForFunction(() => window.reviewCalls.length === 2)
   await page.waitForFunction(() => document.querySelector('#market-review-confirmation').textContent.includes('20.123456789 DUSK paid from escrow.'))
@@ -154,6 +158,8 @@ export async function checkMarketplaceReviews(page) {
   assert.equal(await page.getByRole('dialog').getByTitle('24.375 DUSK').textContent(), '24.375 DUSK')
   await checkReviewPhone(page)
   assert.equal(await calls(), 2)
+  assert.equal(await page.getByRole('button', { name: 'Confirm in wallet' }).isDisabled(), true)
+  await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Confirm in wallet' }).click()
   await page.waitForFunction(() => window.reviewCalls.length === 3)
   await page.evaluate(() => window.marketProbe.sell.setSaleMode('auction'))

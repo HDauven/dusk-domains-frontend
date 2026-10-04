@@ -198,7 +198,7 @@ try {
     const { createDuskNodeBlockHeightReader } = await import('/src/app/duskNodeHeight.ts')
     const { createDuskDomainsOnChainClient } = await import('/src/names/internal.ts')
     localStorage.removeItem('dusk-domains-marketplace-watchlist-v1')
-    const auction = { node: `0x${'11'.repeat(32)}`, name: 'heightbound.dusk', sellerAuthority: `0x${'22'.repeat(32)}`,
+    const auction = { auctionId: 1, durationBlocks: 8640, feeBps: 250, startDeadlineBlockHeight: 5000, createdAtBlockHeight: 100, node: `0x${'11'.repeat(32)}`, name: 'heightbound.dusk', sellerAuthority: `0x${'22'.repeat(32)}`,
       reservePriceLux: 5000000000, startBlockHeight: null, endBlockHeight: null, bidCount: 0, highestBid: null }
     window.heightBoundAuction = auction
     const currentBlockHeight = createDuskNodeBlockHeightReader('http://node.test/', async (_input, init) => {
@@ -232,6 +232,8 @@ try {
   await page.locator('#height-bound-bid').waitFor({ state: 'attached' })
   await page.evaluate(() => window.heightBoundMarketplace.auction.onBidDraftChange(window.heightBoundAuction.node, '5'))
   await page.waitForFunction(() => window.heightBoundMarketplace.auction.bidDrafts[window.heightBoundAuction.node] === '5')
+  await page.evaluate(() => window.heightBoundMarketplace.auction.onReviewBid(window.heightBoundAuction))
+  await page.waitForFunction(() => window.heightBoundMarketplace.auction.bidReview !== null)
   await page.evaluate(() => {
     window.heightBoundBidDone = false
     void window.heightBoundMarketplace.auction.onPlaceBid(window.heightBoundAuction).then(() => { window.heightBoundBidDone = true })

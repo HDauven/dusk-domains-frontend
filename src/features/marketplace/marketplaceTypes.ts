@@ -6,6 +6,7 @@ import type {
   IndexedMarketplaceOffer,
   IndexedMarketplaceRefund,
   IndexedNameSummary,
+  NamespaceSummary,
 } from '../../names/internal'
 
 export type MarketplaceTab = 'browse' | 'activity' | 'sell' | 'offers'
@@ -19,6 +20,8 @@ export type MarketplaceBidReview = {
 }
 
 export type MarketplaceReviewDetails = {
+  namespace?: NamespaceSummary
+  transfersNamespace?: boolean
   title: string
   rows: Array<{ label: string; value: string; exactValue?: string; address?: boolean; detail?: string }>
   note: string

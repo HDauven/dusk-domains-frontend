@@ -56,6 +56,44 @@ describe('canonical marketplace signing state', () => {
     expect(minimumCanonicalBidLux({ reservePriceLux: 10n, highestBid: { amountLux: 101n } } as never)).toBe(107n)
   })
 
+  it.each([{ durationBlocks: 259_200 }, { startDeadlineBlockHeight: 900 }, { createdAtBlockHeight: 400 }, { auctionId: 2 }, { feeBps: 500 }])('rejects changed auction identity and terms: %j', async changed => {
+    const indexed = {
+      node,
+      name: 'example.dusk',
+      sellerAuthority: authority,
+      auctionId: 1,
+      feeBps: 250,
+      reservePriceLux: 10,
+      durationBlocks: 8_640,
+      startDeadlineBlockHeight: 500,
+      createdAtBlockHeight: 100,
+      startBlockHeight: null,
+      endBlockHeight: null,
+      bidCount: 0,
+      highestBid: null,
+    } as IndexedMarketplaceAuction
+    const client = clientWith({
+      getAuction: vi.fn(async () => ({ ok: true, value: {
+        node,
+        name: 'example.dusk',
+        sellerAuthority: authority,
+        auctionId: 1,
+        feeBps: 250,
+        reservePriceLux: 10n,
+        durationBlocks: 8_640,
+        startDeadlineBlockHeight: 500,
+        createdAtBlockHeight: 100,
+        ...changed,
+        startBlock: null,
+        endBlock: null,
+        bidCount: 0,
+        highestBid: null,
+      } })),
+    })
+
+    await expect(canonicalAuction(client, indexed)).rejects.toThrow('changed on-chain')
+  })
+
   it('requires the canonical active owner before a listing enters escrow', async () => {
     const indexed = {
       node,

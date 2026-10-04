@@ -52,7 +52,7 @@ function fixtureAuction(overrides: Partial<IndexedMarketplaceAuction> = {}): Ind
     escrowed: true,
     txId: 'tx-auction',
     blockHeight: 100_000,
-    lastEventType: 'domain_auction_created',
+    auctionId: 1, lastEventType: 'domain_auction_created',
     ...overrides,
   }
 }

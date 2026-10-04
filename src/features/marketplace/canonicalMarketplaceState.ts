@@ -66,6 +66,9 @@ export async function canonicalFixedSale(
 ): Promise<DuskDomainsOnChainFixedSale> {
   const sale = await required(client.getFixedSale(indexed.node))
   if (!sale
+    || sale.saleId !== indexed.saleId
+    || sale.feeBps !== indexed.feeBps
+    || sale.openedAtBlockHeight !== indexed.openedAtBlockHeight
     || sale.node !== indexed.node
     || sale.name !== indexed.name
     || normalizedAuthority(sale.sellerAuthority) !== normalizedAuthority(indexed.sellerAuthority)
@@ -81,17 +84,15 @@ export async function canonicalAuction(
 ): Promise<DuskDomainsOnChainAuction> {
   const auction = await required(client.getAuction(indexed.node))
   if (!auction
+    || auction.auctionId !== indexed.auctionId
+    || auction.durationBlocks !== indexed.durationBlocks
+    || auction.startDeadlineBlockHeight !== indexed.startDeadlineBlockHeight
+    || auction.createdAtBlockHeight !== indexed.createdAtBlockHeight
+    || auction.feeBps !== indexed.feeBps
     || auction.node !== indexed.node
     || auction.name !== indexed.name
     || normalizedAuthority(auction.sellerAuthority) !== normalizedAuthority(indexed.sellerAuthority)
-    || auction.reservePriceLux !== BigInt(indexed.reservePriceLux)
-    || auction.startBlock !== indexed.startBlockHeight
-    || auction.endBlock !== indexed.endBlockHeight
-    || auction.bidCount !== indexed.bidCount
-    || normalizedOptionalAuthority(auction.highestBid?.bidderAuthority ?? null)
-      !== normalizedOptionalAuthority(indexed.highestBid?.bidderAuthority ?? null)
-    || (auction.highestBid?.amountLux ?? null)
-      !== (indexed.highestBid ? BigInt(indexed.highestBid.amountLux) : null)) {
+    || auction.reservePriceLux !== BigInt(indexed.reservePriceLux)) {
     throw new Error(changedMessage)
   }
   return auction
