@@ -35,12 +35,7 @@ export async function performWalletConnectionAction({
   if (status === 'wrong-network') throw new Error('Switch your wallet to this app’s network, then try again.')
   if (status === 'connected') return { openModal: true }
   if (status === 'missing' || !wallet.connect) throw new Error('No wallet found. Install or enable Dusk Wallet, then try again.')
-  try {
-    await wallet.connect(connectOptions)
-  } catch (error) {
-    // Approval events can finish connecting before the original response arrives.
-    if (walletStatusFromUnknown(await refreshWalletSessionState()) !== 'connected') throw error
-  }
+  await wallet.connect(connectOptions)
   const connected = walletStatusFromUnknown(await refreshWalletSessionState())
   if (connected === 'wrong-network') {
     if (!wallet.switchChain) throw new Error('Switch your wallet to this app’s network, then try again.')

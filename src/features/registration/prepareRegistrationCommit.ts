@@ -1,3 +1,4 @@
+import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import { waitForCommitmentBlock } from '../../app/commitmentBlocks'
 import {
   coreCommitRuntimeCall,
@@ -46,14 +47,24 @@ export async function prepareRegistrationCommit({
   const workspace = submitNameWrite.captureWorkspace(displayName)
   if (!canPrepareCommit || !selectedAddress) return
 
+  const session = submitNameWrite.captureSession(selectedAddress)
+  const checkSession = () => { if (!session()) throw new WalletSessionChangedError() }
   setWalletError('')
   setRegistrationCompletion(null)
-  if (!ensureContractAuthorityForLiveWrite('reserve this name', setWalletError)) return
-  if (!(await ensurePublicBalanceForLiveWrite('reserving this name', message => { if (workspace()) setWalletError(message) }))) return
-
-  if (!workspace()) return
-
   try {
+    checkSession()
+    if (!ensureContractAuthorityForLiveWrite('reserve this name', setWalletError)) return
+    if (!(await ensurePublicBalanceForLiveWrite('reserving this name', message => { if (workspace()) setWalletError(message) }))) return
+
+    if (!workspace()) return
+
+    checkSession()
+    // Resolve routing before generating recovery material, then recheck the initiating session.
+    const registry = liveDuskDomainsApp
+      ? await registrationRegistry(liveDuskDomainsApp, runtimeConfig.contracts, nodeHex)
+      : null
+    if (!workspace()) return
+    checkSession()
     const secret = createRegistrationSecret()
     const commitment = registrationCommitmentHex({
       node: nodeHex,
@@ -69,15 +80,13 @@ export async function prepareRegistrationCommit({
       committedBlockHeight: null, committedTxId: null,
       createdAt: reservationTimestamp, updatedAt: reservationTimestamp,
     }
-    // A released name comes back in the registry that holds it; the reveal finds it there too.
-    const registry = liveDuskDomainsApp
-      ? await registrationRegistry(liveDuskDomainsApp, runtimeConfig.contracts, nodeHex)
-      : null
     const call = { ...coreCommitRuntimeCall({ commitment }), ...(registry ? { contractId: registry } : {}) }
     const finalState = await submitNameWrite(displayName, call, {
       workspace,
+      session,
       contracts: runtimeConfig.contracts,
       beforeSign: () => {
+        checkSession()
         if (listPendingNameReservations({ chainId: runtimeConfig.chainId, controller: selectedAuthority }).some(saved => saved.node === nodeHex)) {
           throw new Error('Open the saved reservation in My names to check its status before trying again.')
         }
@@ -107,8 +116,11 @@ export async function prepareRegistrationCommit({
       committedTxId: finalState.txId ?? null,
     })
     loadPendingReservations()
-    if (!workspace()) return
+    if (!workspace() || !session()) return
     setPreparedCommit({
+      controller: selectedAuthority,
+      ownerAddress: selectedAddress,
+      chainId: runtimeConfig.chainId,
       commitment,
       secret,
       committedBlockHeight: initialBlockHeight,

@@ -13,6 +13,7 @@ export function deriveAppDerivedState({
   registrationsPaused,
   activeRecordTarget,
   canRegister,
+  chainId,
   commitTxState,
   committed,
   confirmationInput,
@@ -91,6 +92,7 @@ export function deriveAppDerivedState({
   } = deriveRegistrationCapabilities({
     registrationsPaused,
     canRegister,
+    chainId,
     commitBusy,
     committed,
     commitWindow,

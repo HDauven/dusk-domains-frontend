@@ -33,9 +33,27 @@ it('recognizes a referral claim across decimal string digit boundaries', async (
     indexerClient: { getReferralState: async () => ({ claimableLux: '9999999999999999' }) },
     setReferralConfirmation, setReferralError: vi.fn(), setReferralTxState: vi.fn(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
-    submitNameWrite: async () => ({ status: 'executed' }), loadReferralAccount,
+    submitNameWrite: Object.assign(async () => ({ status: 'executed' }), { captureSession: () => () => true }), loadReferralAccount,
   } as never)
   await actions.handleClaimReferralRewards()
   expect(setReferralConfirmation).toHaveBeenLastCalledWith('Referral rewards claimed.')
   expect(loadReferralAccount).toHaveBeenCalledExactlyOnceWith({ fresh: true })
+})
+
+it('carries the referral recipient session across preflight into submission', async () => {
+  let current = true
+  const submittedSessions: boolean[] = []
+  const submitNameWrite = Object.assign(vi.fn(async (_name, _call, options) => {
+    submittedSessions.push(options.session?.() ?? true)
+    return { status: 'rejected' }
+  }), { captureSession: () => () => current })
+  const actions = useReferralActions({ referralClaimable: true, referralBusy: false, referralRewardClaimReady: true,
+    selectedAddress: 'A', selectedAuthority: 'authority-a', liveDuskDomainsApp: {}, runtimeConfig: { contracts: {} },
+    referralAccountState: { claimableLux: '1' }, setReferralConfirmation: vi.fn(), setReferralError: vi.fn(), setReferralTxState: vi.fn(),
+    ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => { current = false; return true },
+    submitNameWrite,
+  } as never)
+  await actions.handleClaimReferralRewards()
+  expect(submittedSessions).toEqual([])
+  expect(submitNameWrite).not.toHaveBeenCalled()
 })

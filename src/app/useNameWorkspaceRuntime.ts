@@ -46,6 +46,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     nodeHex: namePreview.nodeHex,
   })
   const derivedState = deriveAppDerivedState({
+    chainId: walletRuntime.walletState.chainId ?? '',
     registrationsPaused: appRuntime.pause.registrationsPaused,
     activeRecordTarget: domainRecordState.activeRecordTarget,
     canRegister: namePreview.canRegister && appRuntime.writeAccess.canRegister,

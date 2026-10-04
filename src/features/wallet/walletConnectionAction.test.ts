@@ -122,3 +122,11 @@ it('explains a missing wallet and preserves a rejected connection', async () => 
   const rejected = new Error('User rejected the request')
   await expect(performWalletConnectionAction({ ...args, wallet: walletLike({ connect: async () => { throw rejected } }), refreshWalletConnectionState: async () => 'disconnected' })).rejects.toBe(rejected)
 })
+
+it('does not accept a refreshed old profile after rejected approval', async () => {
+  await expect(performWalletConnectionAction({
+    wallet: walletLike({ connect: async () => { throw new Error('User rejected') } }),
+    expectedChainId: 'dusk:0', refreshWalletConnectionState: async () => 'disconnected',
+    refreshWalletSessionState: async () => 'connected',
+  })).rejects.toThrow('User rejected')
+})

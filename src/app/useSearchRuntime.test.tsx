@@ -71,7 +71,7 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
     model.registration.setCommitted(true)
     model.registration.setRegisterSetsPrimary(false)
     model.registration.setRegistrationStep('purchase')
-    model.registration.setPreparedCommit({ commitment: 'commit', secret: 'secret', committedBlockHeight: 100, committedTxId: 'tx' })
+    model.registration.setPreparedCommit({ controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0', commitment: 'commit', secret: 'secret', committedBlockHeight: 100, committedTxId: 'tx' })
     model.registration.setRegistrationCompletion(createRegistrationCompletionState())
     model.domain.setManagedName({ ...createManagedNameState('resolver'), owner: 'owner', node: namehashHex('alpha.dusk') })
     model.domain.setPrimaryName('alpha.dusk')
@@ -120,7 +120,7 @@ it.each([true, false])('restores saved reservation primary choice %s and its bou
   await act(async () => model.runtime.openPendingReservation(reservation))
   expect(model.search).toMatchObject({ query: 'alpha.dusk', checked: true, resultView: 'register' })
   expect(model.registration).toMatchObject({ registrationStep: 'purchase', committed: true, duration: maxDurationYears, registerSetsPrimary: primary,
-    preparedCommit: { commitment: 'commit', secret: 'secret', committedBlockHeight: null, committedTxId: null } })
+    preparedCommit: { controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0', commitment: 'commit', secret: 'secret', committedBlockHeight: null, committedTxId: null } })
   await act(async () => model.runtime.handleSearchHome())
   expect(model.registration).toMatchObject({ committed: false, preparedCommit: null, registerSetsPrimary: true })
   expect(readReservationPrimaryChoice(reservation)).toBe(primary)

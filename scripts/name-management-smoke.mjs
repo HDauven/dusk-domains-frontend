@@ -89,11 +89,12 @@ export async function checkNameManagement(page) {
     const { useDomainRecordState } = await import('/src/features/domains/useDomainRecordState.ts')
     const { applyRecordMutations } = await import('/src/names/internal.ts')
     function RecordsProbe() {
-      const state = useDomainRecordState({ displayName: 'alpha.dusk', nodeHex: 'node', editableRecordKeys: ['website', 'text.description'] })
+      const editableRecordKeys = ['website', 'text.description', 'moonlight_address']
+      const state = useDomainRecordState({ displayName: 'alpha.dusk', nodeHex: 'node', editableRecordKeys })
       return React.createElement(RecordsView, {
         resolverRecords: state.resolverRecords,
         displayName: 'alpha.dusk',
-        editableRecordKeys: ['website', 'text.description'],
+        editableRecordKeys,
         actions: {
           canRemoveRecords: true,
           canSaveRecords: state.recordDraftMutations.length > 0 && state.recordDraftErrors.length === 0,
@@ -112,6 +113,7 @@ export async function checkNameManagement(page) {
           walletAddressAvailable: false,
         },
         draft: {
+          recordDraftMutations: state.recordDraftMutations,
           criticalRecordChange: state.criticalRecordChange,
           recordDraftErrors: state.recordDraftErrors,
           recordDraftValues: state.recordDraftValues,
@@ -120,7 +122,8 @@ export async function checkNameManagement(page) {
         },
       })
     }
-    root.render(React.createElement(RecordsProbe))
+    root.render(React.createElement('div', { className: 'page' },
+      React.createElement('main', { className: 'page-main' }, React.createElement(RecordsProbe))))
   })
   await page.getByRole('button', { name: 'Add record', exact: true }).click()
   await page.locator('#record-type').selectOption('website')
@@ -141,6 +144,35 @@ export async function checkNameManagement(page) {
   assert.deepEqual(await page.evaluate(() => window.savedMutations.map(({ key, value }) => ({ key, value }))), [{ key: 'text.description', value: 'Description' }])
   await page.getByRole('button', { name: 'Remove Website' }).click()
   await page.getByRole('button', { name: 'Edit Website' }).waitFor({ state: 'detached' })
+  await page.setViewportSize({ width: 360, height: 900 })
+  for (const [mode, address] of [
+    ['Add', '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'],
+    ['Edit', '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r'],
+  ]) {
+    await page.getByRole('button', { name: mode === 'Add' ? 'Add record' : 'Edit Dusk address', exact: true }).click()
+    if (mode === 'Add') await page.locator('#record-type').selectOption('moonlight_address')
+    await page.getByRole('textbox', { name: 'Dusk address record' }).fill(address)
+    const review = page.locator('dl[aria-label="Record changes to save"]')
+    await review.locator('code').filter({ hasText: address }).waitFor()
+    assert.equal(await review.locator('code').textContent(), address)
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `${mode} record review overflows at 360px`)
+    assert.ok(await review.evaluate(element => element.scrollWidth <= element.clientWidth), `${mode} record value is clipped at 360px`)
+    for (const name of ['Save record', 'Cancel']) {
+      const action = page.getByRole('button', { name, exact: true })
+      assert.ok(await action.isEnabled())
+      await action.scrollIntoViewIfNeeded()
+      assert.ok(await action.evaluate(element => {
+        const rect = element.getBoundingClientRect()
+        return rect.left >= 0 && rect.right <= document.documentElement.clientWidth
+          && rect.top >= 0 && rect.bottom <= innerHeight
+          && element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2))
+      }), `${mode} record: ${name} is clipped or obscured at 360px`)
+    }
+    await page.getByRole('button', { name: 'Save record', exact: true }).click()
+    await page.getByRole('button', { name: 'Edit Dusk address', exact: true }).waitFor()
+    assert.equal(await page.evaluate(() => window.savedMutations[0].value), address)
+  }
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.evaluate(async () => {
     const { React, root } = window
     const { RecipientSettingsPanel } = await import('/src/features/domains/settings/RecipientSettingsPanel.tsx')

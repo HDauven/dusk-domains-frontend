@@ -1,3 +1,4 @@
+import { registrationCommitMatchesSession } from './pendingReservationTypes'
 import { formatWait } from './registrationCopy'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 
@@ -13,9 +14,15 @@ export function completeRegistrationPreflight({
   registrationTargetAddressErrors,
   registrationTargetReady,
   selectedAddress,
+  selectedAuthority,
+  runtimeConfig,
 }: UseRegistrationActionsProps): CompleteRegistrationPreflightResult {
   if (!canRegister || !committed || !preparedCommit || !selectedAddress) {
     return { ok: false }
+  }
+
+  if (!registrationCommitMatchesSession(preparedCommit, selectedAuthority, selectedAddress, runtimeConfig.chainId)) {
+    return { ok: false, message: 'The wallet session changed. Open this reservation with the wallet that reserved it.' }
   }
 
   if (!registrationTargetReady) {

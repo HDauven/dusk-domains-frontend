@@ -1,3 +1,4 @@
+import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import type { Dispatch, SetStateAction } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
@@ -49,6 +50,7 @@ export function useReferralActions({
   async function handleClaimReferralRewards() {
     if (!referralClaimable || referralBusy) return
 
+    const session = submitNameWrite.captureSession(selectedAddress)
     setReferralError('')
     setReferralConfirmation('')
     if (!selectedAddress) {
@@ -62,12 +64,15 @@ export function useReferralActions({
     if (!ensureContractAuthorityForLiveWrite('claim referral rewards', setReferralError)) return
     if (!(await ensurePublicBalanceForLiveWrite('claiming referral rewards', setReferralError))) return
 
+    if (!session()) { setReferralError(new WalletSessionChangedError().message); return }
+
     const beforeClaimableLux = referralAccountState.claimableLux
     const call = treasuryClaimAllReferralRewardsRuntimeCall({
       recipient: selectedAddress,
     })
 
     const finalState = await submitNameWrite('referrals.dusk', call, {
+      session,
       contracts: runtimeConfig.contracts,
       onUpdate: setReferralTxState,
     })

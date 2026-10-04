@@ -58,6 +58,9 @@ export async function openPendingReservation(
 
     search.updateClock(nextBlockHeight)
     registration.updateCommit({
+      controller: reservation.controller,
+      ownerAddress: reservation.ownerAddress,
+      chainId: reservation.chainId,
       commitment: reservation.commitment,
       secret: reservation.secret,
       committedBlockHeight,

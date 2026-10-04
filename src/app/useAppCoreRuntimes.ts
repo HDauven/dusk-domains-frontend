@@ -18,7 +18,6 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     runtimeConfig,
     wallet,
   } = appRuntime
-  const registrationState = useRegistrationAppState()
   const domainState = useDomainManagementAppState(recordSourceContractId, indexerClient, appRuntime.duskDomainsOnChainClient, runtimeConfig.nodeUrl, appRuntime.marketplaceContractId)
   const openWorkspace = useRef<{ name: string } | null>(null)
   const getWorkspaceToken = useCallback((name: string) => openWorkspace.current?.name === name ? openWorkspace.current : null, [])
@@ -44,6 +43,7 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     submitNameWrite,
     walletSession,
   } = walletRuntime
+  const registrationState = useRegistrationAppState(`${walletRuntime.walletState.generation}:${walletRuntime.walletState.providerId}:${walletRuntime.walletState.chainId}:${walletRuntime.walletState.selectedProfile?.profileId}:${walletRuntime.selectedAddress}`)
   const searchState = useSearchAppState(`${runtimeConfig.chainId}:${walletRuntime.selectedAddress}`)
   useLayoutEffect(() => {
     const name = searchState.mainView === 'search' && searchState.checked ? searchState.apiSearchResult?.canonical : null

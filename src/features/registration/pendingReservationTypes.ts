@@ -3,6 +3,9 @@ import type { DuskDomainsIndexerClient } from '../../names/internal'
 import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 
 export type PreparedRegistrationCommit = {
+  controller: string
+  ownerAddress: string
+  chainId: string
   commitment: string
   secret: string
   committedBlockHeight: number | null
@@ -26,4 +29,9 @@ export type UsePendingReservationsArgs = {
   setCurrentBlockHeight: (height: number | null) => void
   setNowSeconds: (seconds: number) => void
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>
+}
+
+export function registrationCommitMatchesSession(commit: PreparedRegistrationCommit | null, controller: string, ownerAddress: string, chainId: string) {
+  return Boolean(commit && controller && ownerAddress && chainId
+    && commit.controller === controller && commit.ownerAddress === ownerAddress && commit.chainId === chainId)
 }

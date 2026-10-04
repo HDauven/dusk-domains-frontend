@@ -60,7 +60,8 @@ it.each(['/name/x.dusk', '/my', '/market', '/market/sell/aurora.dusk', '/referra
   const request = createCompleteRegistrationRequest({
     appliedReferral: controls.referralState,
     displayName: 'aurora.dusk', duration: 1, feeConfig: DEFAULT_FEE_CONFIG, lifecycleBaseBlockHeight: 100,
-    preparedCommit: { commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'tx' },
+    selectedAddress: account, selectedAuthority: 'controller', runtimeConfig: { chainId: 'dusk:0' } as never,
+    preparedCommit: { controller: 'controller', ownerAddress: account, chainId: 'dusk:0', commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'tx' },
     registerSetsPrimary: true, registrationTargetAddress: account, result: analyzeName('aurora.dusk'),
   })
   expect(request.call.args).toMatchObject({ referrer: { kind: 'Contract', bytes: Array(32).fill(9) } })

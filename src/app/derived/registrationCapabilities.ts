@@ -1,3 +1,4 @@
+import { registrationCommitMatchesSession } from '../../features/registration/pendingReservationTypes'
 import type { StrandedCommitment } from '../../features/registration/pendingReservationTypes'
 import type { RegistrationCompletionState } from '../../features/registration/registrationCompletionState'
 import type { PreparedRegistrationCommit } from '../../features/registration/usePendingReservations'
@@ -6,6 +7,7 @@ import { registrationCommitWindow } from '../../names/internal'
 export function deriveRegistrationCapabilities({
   registrationsPaused = false,
   canRegister,
+  chainId,
   commitBusy,
   committed,
   commitWindow,
@@ -21,6 +23,7 @@ export function deriveRegistrationCapabilities({
 }: {
   registrationsPaused?: boolean
   canRegister: boolean
+  chainId: string
   commitBusy: boolean
   committed: boolean
   commitWindow: ReturnType<typeof registrationCommitWindow>
@@ -48,7 +51,7 @@ export function deriveRegistrationCapabilities({
     canRevealRegistration: Boolean(
       !registrationsPaused && walletAuthorized
       && committed
-      && preparedCommit
+      && registrationCommitMatchesSession(preparedCommit, selectedAuthority, selectedAddress, chainId)
       && canRegister
       && registrationTargetReady
       && commitWindow.status === 'ready'

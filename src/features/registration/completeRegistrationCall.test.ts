@@ -11,7 +11,8 @@ it.each<DuskPrincipal | null>([null, { kind: 'Contract', bytes: Array(32).fill(9
     duration: 1,
     feeConfig: DEFAULT_FEE_CONFIG,
     lifecycleBaseBlockHeight: 100,
-    preparedCommit: { commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'commit-tx' },
+    selectedAddress: account, selectedAuthority: 'controller', runtimeConfig: { chainId: 'dusk:0' } as never,
+    preparedCommit: { controller: 'controller', ownerAddress: account, chainId: 'dusk:0', commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'commit-tx' },
     registerSetsPrimary: true,
     registrationTargetAddress: account,
     result: analyzeName('aurora.dusk'),
@@ -27,10 +28,22 @@ it('deposits the quoted premium plus the full base term', () => {
   const request = createCompleteRegistrationRequest({
     appliedReferral: null, displayName: 'aurora.dusk', duration: 3, feeConfig: DEFAULT_FEE_CONFIG,
     lifecycleBaseBlockHeight: 100,
-    preparedCommit: { commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'commit-tx' },
+    selectedAddress: account, selectedAuthority: 'controller', runtimeConfig: { chainId: 'dusk:0' } as never,
+    preparedCommit: { controller: 'controller', ownerAddress: account, chainId: 'dusk:0', commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'commit-tx' },
     registerSetsPrimary: false, registrationTargetAddress: account,
     result: { ...analyzeName('aurora'), premiumLux: 999_999_523_162_842 },
   })
   expect(request.feeLux).toBe(30_000_000_000 + 999_999_523_162_842)
   expect(request.call.args.feeLux).toBe(request.feeLux)
+})
+
+it.each(['controller', 'ownerAddress', 'chainId'])('refuses to construct a reveal with mismatched %s', field => {
+  expect(() => createCompleteRegistrationRequest({
+    appliedReferral: null, displayName: 'aurora.dusk', duration: 1, feeConfig: DEFAULT_FEE_CONFIG,
+    lifecycleBaseBlockHeight: 100, registerSetsPrimary: false, registrationTargetAddress: account,
+    selectedAddress: account, selectedAuthority: 'controller', runtimeConfig: { chainId: 'dusk:0' } as never,
+    result: analyzeName('aurora.dusk'),
+    preparedCommit: { controller: 'controller', ownerAddress: account, chainId: 'dusk:0', [field]: 'different',
+      commitment: `0x${'01'.repeat(32)}`, secret: `0x${'02'.repeat(32)}`, committedBlockHeight: 90, committedTxId: 'tx' },
+  })).toThrow('wallet session changed')
 })

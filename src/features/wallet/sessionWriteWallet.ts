@@ -11,9 +11,10 @@ export class WalletSessionChangedError extends Error {
 export function createSessionWriteWallet(wallet: DuskWallet, session: Pick<DuskWalletLike, 'state'>, chainId: string, nodeUrl: string) {
   const provider = wallet.provider
   const profile = session.state.selectedProfile
+  const generation = session.state.generation
   const checkSession = () => {
     const state = session.state
-    if (!provider || wallet.provider !== provider || state.explicitlyDisconnected
+    if (!provider || wallet.provider !== provider || state.generation !== generation || state.explicitlyDisconnected
       || walletConnectionStatus(state, true, chainId, chainId === 'dusk:0' ? nodeUrl : '') !== 'connected'
       || state.chainId?.trim().toLowerCase() !== chainId.trim().toLowerCase()
       || !profile || state.selectedProfile?.account !== profile.account || state.selectedProfile?.profileId !== profile.profileId) {

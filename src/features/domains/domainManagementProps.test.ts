@@ -15,7 +15,7 @@ it('discards drafts between inline edits and preserves wallet errors and renewal
     namePreview: { result: {}, renewalPreviewLifecycle: { expiresAt: 123 } },
     domainState: { ...setters, managedName: { expiresAt: 123 } },
     domainRecordState: { ...setters, recordDraftMutations: [{}, {}], moonlightRecord: { value: 'forward-record' } },
-    walletRuntime: { requestSelectedShieldedAddress, selectedAddress: 'public', walletSession: {} },
+    walletRuntime: { submitNameWrite: { captureWorkspace: () => () => true, captureSession: () => () => true }, requestSelectedShieldedAddress, selectedAddress: 'public', walletSession: {} },
   } as unknown as UseDomainManagementFeatureProps
   let views!: ReturnType<typeof useDomainManagementFeature>
   function Probe() {
@@ -44,4 +44,33 @@ it('discards drafts between inline edits and preserves wallet errors and renewal
   expect(setters.setRecordDrafts).toHaveBeenCalledWith({})
   expect(setters.setRecordError).toHaveBeenCalledWith('')
   expect(setters.setRecordTxState).toHaveBeenCalledWith(null)
+})
+
+it('does not restore a canceled record draft from a delayed shielded address', async () => {
+  const shielded = Promise.withResolvers<string>()
+  const setters = {
+    setRecordDrafts: vi.fn(), setRecordError: vi.fn(), setRecordTxState: vi.fn(),
+    setPrimaryEndpointValue: vi.fn(), setPrimaryError: vi.fn(), setRenewalYears: vi.fn(),
+  }
+  const inputs = {
+    appRuntime: {}, activityFeed: {}, derivedState: {}, economicsRuntime: {}, searchRuntime: {}, searchState: {},
+    namePreview: { result: {}, renewalPreviewLifecycle: { expiresAt: 123 } },
+    domainState: { ...setters, managedName: { expiresAt: 123 } },
+    domainRecordState: { ...setters, recordDraftMutations: [], moonlightRecord: { value: 'forward-record' } },
+    walletRuntime: { submitNameWrite: { captureWorkspace: () => () => true, captureSession: () => () => true }, requestSelectedShieldedAddress: () => shielded.promise, selectedAddress: 'public', walletSession: {} },
+  } as unknown as UseDomainManagementFeatureProps
+  let views!: ReturnType<typeof useDomainManagementFeature>
+  function Probe() {
+    views = useDomainManagementFeature(inputs)
+    return null
+  }
+  renderToStaticMarkup(createElement(Probe))
+
+  const request = views.recordsProps.wallet.onUseWalletShieldedAddress()
+  views.recordsProps.draft.onDiscardDrafts()
+  const callsAfterCancel = setters.setRecordDrafts.mock.calls.length
+  shielded.resolve('dusk1shielded-from-canceled-editor')
+  await request
+
+  expect(setters.setRecordDrafts).toHaveBeenCalledTimes(callsAfterCancel)
 })

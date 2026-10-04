@@ -149,13 +149,15 @@ it.each([true, false])('does not adopt a return visit after balance preflight (b
   expect(draft).toBe('new unsaved draft')
 })
 
-it.each(['lock', 'disconnect', 'authorization', 'network', 'account', 'profile', 'unknown chain', 'local node'])('sends nothing after %s during preparation without navigating', async change => {
-  const session = { state: { ...wallet.state, explicitlyDisconnected: false } }
+it.each(['lock', 'disconnect', 'authorization', 'network', 'account', 'profile', 'unknown chain', 'local node', 'generation', 'provider'])('sends nothing after %s during preparation without navigating', async change => {
+  const session = { state: { ...wallet.state, explicitlyDisconnected: false, generation: 1 } }
   const h = fixture(session, 'http://127.0.0.1:18181/')
   const prepared = Promise.withResolvers<unknown>()
   h.app.prepareContractCall.mockReturnValueOnce(prepared.promise)
   const pending = prepareRegistrationCommit(h.props as never)
   await vi.waitFor(() => expect(h.app.prepareContractCall).toHaveBeenCalledOnce())
+  if (change === 'generation') session.state.generation++
+  if (change === 'provider') session.state.providerId = 'replacement'
   if (change === 'lock') session.state = { ...session.state, profiles: [], selectedProfile: null }
   // Revocation can fail, leaving the base wallet authorized.
   if (change === 'disconnect') session.state.explicitlyDisconnected = true
@@ -171,4 +173,17 @@ it.each(['lock', 'disconnect', 'authorization', 'network', 'account', 'profile',
   expect(listPendingNameReservations()).toEqual([])
   const message = ['network', 'unknown chain'].includes(change) ? 'chain changed during preparation' : 'wallet session changed'
   expect(h.props.setCommitTxState).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed', message: expect.stringContaining(message) }))
+})
+
+it('keeps the initiating session through balance recovery and submission', async () => {
+  const session = { state: { ...wallet.state, generation: 1 } }
+  const h = fixture(session)
+  h.props.ensurePublicBalanceForLiveWrite.mockImplementationOnce(async () => {
+    session.state.selectedProfile = { account: 'other-owner', profileId: 'secondary' }
+    return true
+  })
+  await prepareRegistrationCommit(h.props as never)
+  expect(h.app.prepareContractCall).not.toHaveBeenCalled()
+  expect(h.app.writeContract).not.toHaveBeenCalled()
+  expect(listPendingNameReservations()).toEqual([])
 })

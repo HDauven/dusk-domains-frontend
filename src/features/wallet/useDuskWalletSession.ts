@@ -2,14 +2,13 @@ import { useCallback, useRef, useState } from 'react'
 import {
   type DuskConnectOptions,
   userFacingErrorMessage,
-  type DuskWalletState,
 } from '../../names/internal'
 import { useWalletAutoRefresh } from './useWalletAutoRefresh'
 import { useWalletBootstrap } from './useWalletBootstrap'
 import { useWalletErrorListeners } from './useWalletErrorListeners'
 import { performWalletConnectionAction } from './walletConnectionAction'
 import { walletConnectionStatus } from './walletStatus'
-import type { DuskConnectKitLike } from './walletSessionTypes'
+import type { DuskConnectKitLike, DuskWalletLike } from './walletSessionTypes'
 
 export function useDuskWalletSession(
   connectKit: DuskConnectKitLike,
@@ -18,7 +17,7 @@ export function useDuskWalletSession(
   expectedNodeUrl = '',
 ) {
   const wallet = connectKit.wallet
-  const [walletState, setWalletState] = useState<DuskWalletState & { explicitlyDisconnected?: boolean }>(() => wallet.state)
+  const [walletState, setWalletState] = useState<DuskWalletLike['state']>(() => wallet.state)
   const busy = useRef(false)
   const [walletBusy, setWalletBusy] = useState(false)
   const [walletError, setWalletError] = useState('')
