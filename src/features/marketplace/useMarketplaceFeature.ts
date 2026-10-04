@@ -94,7 +94,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     feeBps: data.feeBps, duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
   })
   const auctionState = useAuctions({
-    accountScope, auctions, indexerClient, loadMarketplace, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
+    accountScope, auctions, indexerClient, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
   })
   const offerState = useOffers({
     duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,

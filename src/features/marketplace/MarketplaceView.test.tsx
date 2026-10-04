@@ -272,7 +272,7 @@ function fixedSale(overrides: Partial<IndexedMarketplaceFixedSale> = {}): Indexe
     escrowed: true,
     txId: 'tx-sale',
     blockHeight: 1_000,
-    lastEventType: 'domain_fixed_sale_opened',
+    saleId: 1, lastEventType: 'domain_fixed_sale_opened',
     ...overrides,
   }
 }
@@ -295,7 +295,7 @@ function auction(overrides: Partial<IndexedMarketplaceAuction> = {}): IndexedMar
     escrowed: true,
     txId: 'tx-auction',
     blockHeight: 1_000,
-    lastEventType: 'domain_auction_created',
+    auctionId: 1, lastEventType: 'domain_auction_created',
     ...overrides,
   }
 }

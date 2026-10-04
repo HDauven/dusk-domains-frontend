@@ -130,13 +130,15 @@ export function useOffers({
       const terms = { ...current }
       writes.requestReview({
         title: `Accept offer for ${offer.name}`,
+        namespace: ownedName.namespace,
+        transfersNamespace: true,
         rows: [
           { label: 'Name moves to buyer', value: abbreviate(offer.buyerAuthority) },
           marketplaceAmountRow('Payment from escrow', BigInt(offer.amountLux)),
           ...proceedsRows(BigInt(offer.amountLux), offer.feeBps),
           { label: 'Your payout address', value: selectedAddress, address: true },
         ],
-        note: 'You give up ownership and management of this name. The buyer’s escrowed funds pay you and the treasury. This sale cannot be canceled.',
+        note: 'You transfer ownership and management to the buyer. This sale is final.',
       }, () => acceptOffer(offer, terms))
       return
     }
@@ -159,15 +161,17 @@ export function useOffers({
   }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes])
 
   const cancelOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
-    if (!await writes.guardCanonicalRead((client) => canonicalOffer(client, offer))) return
-    await writes.submit('cancelling this offer', offer.name, marketplaceCancelOfferRuntimeCall({ node: offer.node }), 0n,
+    let offerId = 0
+    if (!await writes.guardCanonicalRead(async (client) => { offerId = (await canonicalOffer(client, offer)).offerId })) return
+    await writes.submit('cancelling this offer', offer.name, marketplaceCancelOfferRuntimeCall({ node: offer.node, expectedOfferId: offerId }), 0n,
       'Offer canceled. Claim the refund when ready.')
   }, [writes])
 
   const expireOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
-    if (!await writes.guardCanonicalRead((client) => canonicalOffer(client, offer))) return
+    let offerId = 0
+    if (!await writes.guardCanonicalRead(async (client) => { offerId = (await canonicalOffer(client, offer)).offerId })) return
     await writes.submit('closing this expired offer', offer.name,
-      marketplaceExpireOfferRuntimeCall({ node: offer.node, buyerAuthority: offer.buyerAuthority }), 0n,
+      marketplaceExpireOfferRuntimeCall({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), 0n,
       'Offer closed. The buyer can claim the refund.')
   }, [writes])
 

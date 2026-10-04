@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Bind bids and marketplace lifecycle actions to the reviewed placement, and compare immutable auction terms and sale fees before signing. Show current bidding information without blocking a reviewed bid after an intervening bid.
+- Show namespace authority and descendant counts when accepting offers. Require explicit acknowledgement for listings and offer acceptance when descendants exist.
+
 - Update name-page metadata as visitors navigate. ([#201])
 - Offer canonical name links with connected-wallet referrals and downloadable cards. ([#201])
 - Keep incoming referral attribution across routes for the browser session. ([#201])

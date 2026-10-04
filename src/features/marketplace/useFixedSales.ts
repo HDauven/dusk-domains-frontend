@@ -30,6 +30,7 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
       return
     }
     if (!reviewed) {
+      const reviewedSale = { ...sale }
       const { proceedsLux, feeLux } = marketplaceProceeds(canonical.priceLux, sale.feeBps)
       writes.requestReview({
         title: `Buy ${sale.name}`,
@@ -41,7 +42,7 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
           { label: 'Name moves to your wallet', value: selectedAddress, address: true },
         ],
         note: 'You become the owner and manager. A completed purchase cannot be undone.',
-      }, () => buyFixedSale(sale, true))
+      }, () => buyFixedSale(reviewedSale, true))
       return
     }
     await writes.submit(
@@ -49,6 +50,7 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
       sale.name,
       marketplaceBuyFixedSaleRuntimeCall({
         node: sale.node,
+        expectedSaleId: sale.saleId,
         priceLux: Number(canonical.priceLux),
         buyerManager: selectedAuthority || null,
       }),
@@ -63,9 +65,9 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
   ) => {
     if (!await writes.guardCanonicalRead((client) => canonicalFixedSale(client, sale))) return
     if (kind === 'cancel') {
-      await writes.submit('cancelling this sale', sale.name, marketplaceCancelFixedSaleRuntimeCall({ node: sale.node }), 0n, 'Sale canceled.')
+      await writes.submit('cancelling this sale', sale.name, marketplaceCancelFixedSaleRuntimeCall({ node: sale.node, expectedSaleId: sale.saleId }), 0n, 'Sale canceled.')
     } else {
-      await writes.submit('closing this expired sale', sale.name, marketplaceExpireFixedSaleRuntimeCall({ node: sale.node }), 0n, 'Sale closed.')
+      await writes.submit('closing this expired sale', sale.name, marketplaceExpireFixedSaleRuntimeCall({ node: sale.node, expectedSaleId: sale.saleId }), 0n, 'Sale closed.')
     }
   }, [writes])
 

@@ -1,4 +1,4 @@
-import { NamespaceSummary } from './NamespaceSummary'
+import { NamespaceTransferWarning } from './NamespaceSummary'
 import { Button } from '../../components/ui/Button'
 import { Panel } from '../../components/ui/Panel'
 import { Select, Input } from '../../components/ui/Input'
@@ -80,8 +80,7 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
             <code>{abbreviate(props.wallet.selectedAddress)}</code>
           </div>
 
-          <NamespaceSummary namespace={selectedName?.namespace} />
-          <p className="field-note">The buyer controls the whole namespace. Subnames themselves can’t be sold.</p>
+          <NamespaceTransferWarning namespace={selectedName?.namespace} />
 
           <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || props.selling.feeBps == null || !selectedName} type="button" onClick={() => props.selling.onCreateListing()}>
             {props.selling.saleMode === 'auction' ? 'Start auction' : 'List for sale'}

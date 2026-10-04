@@ -55,6 +55,12 @@ Owner/subname lists use bounded complete-set reads. Marketplace and activity lis
 provide Load more. Issued reserved names have normal owner controls; the SDK's
 `saleLocked` profile metadata is not enforced as a sale lock by this app.
 
+Auction reviews retain the placement ID and chosen bid amount. Canonical reads
+verify that ID and immutable terms before signing. The review shows the current
+highest bid and end time as information; intervening bids do not block submission.
+The contract checks the chosen amount against the current minimum and applies
+bounded late-bid extensions.
+
 Healthy pause status is polled every ten seconds. The app disables affected
 registration/trading actions and keeps claims, refunds, settlement and ordinary
 name management available. Contracts enforce pause permissions independently.

@@ -61,6 +61,7 @@ export async function checkIndexerSessionBudget(page) {
             priceLux: 100, amountLux: 100, feeBps: 100, expiresAtBlockHeight: 200, openedAtBlockHeight: 100, placedAtBlockHeight: 100,
             reservePriceLux: 100, durationBlocks: 100, startDeadlineBlockHeight: 200, startBlockHeight: null, endBlockHeight: null,
             highestBid: null, privateBuyer: null, marketplaceContractId: null, txId: null, bidCount: 0, createdAtBlockHeight: 100, escrowed: true,
+            auctionId: 1, saleId: 1,
             lastEventType: field === 'fixedSales' ? 'domain_fixed_sale_opened' : field === 'auctions' ? 'domain_auction_created' : 'domain_offer_placed',
           })), nextCursor: cursor < 2 ? String(cursor + 1) : null }
           break

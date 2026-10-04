@@ -486,6 +486,13 @@
   font-size: 12.5px;
 }
 
+.marketplace-namespace-warning {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.marketplace-namespace-warning p { margin: 0; }
+
 /* Bid review */
 
 .marketplace-bid-review {
@@ -817,7 +824,11 @@
 @media (max-width: 640px) {
   .dialog:has(.marketplace-bid-review) { padding: var(--space-4); }
   .marketplace-bid-review { gap: var(--space-3); }
+  .marketplace-bid-review:has(.marketplace-namespace-warning) { gap: var(--space-2); }
+  .marketplace-bid-review:has(.marketplace-namespace-warning) .claim-review p { padding: var(--space-1) 0; }
+  .marketplace-bid-review:has(.marketplace-namespace-warning) .marketplace-custody-note { font-size: 13px; line-height: 1.4; }
   #marketplace-bid-review-heading,
+  #marketplace-review-heading,
   .marketplace-review-amount strong { font-size: var(--text-xl); }
   .marketplace-bid-review .claim-review p { padding: var(--space-2) 0; gap: var(--space-2); }
   .marketplace-bid-review .marketplace-review-address code { font-size: 12.5px; }
