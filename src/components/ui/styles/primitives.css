@@ -294,16 +294,23 @@ textarea.input { min-height: 96px; resize: vertical; }
   overflow: hidden;
   background: var(--portrait-gradient);
 }
-.name-portrait-art::before {
-  content: '';
+.name-portrait-art::before,
+.name-portrait-glow {
   position: absolute;
   top: var(--space-6);
   right: 17%;
   width: 22%;
   aspect-ratio: 1;
   border-radius: 50%;
+}
+.name-portrait-art::before {
+  content: '';
   background: var(--sunset);
-  box-shadow: 0 0 50px var(--sunset-glow);
+}
+.name-portrait-glow { box-shadow: 0 0 50px var(--sunset-glow); }
+.name-portrait-glow + .name-portrait-glow {
+  box-shadow: 0 0 75px var(--sunset-glow);
+  opacity: 0;
 }
 .name-portrait-art::after {
   content: '';
@@ -340,10 +347,12 @@ textarea.input { min-height: 96px; resize: vertical; }
 
 @media (prefers-reduced-motion: no-preference) {
   .hero-copy { animation: enter var(--motion-enter) var(--ease) both; }
-  .name-portrait-art::before { animation: breathe var(--motion-breathe) ease-in-out infinite alternate; }
+  .name-portrait-glow { animation: breathe-narrow var(--motion-breathe) ease-in-out infinite alternate; }
+  .name-portrait-glow + .name-portrait-glow { animation-name: breathe-wide; }
 }
 @keyframes enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-@keyframes breathe { to { box-shadow: 0 0 75px var(--sunset-glow); } }
+@keyframes breathe-narrow { to { opacity: 0; } }
+@keyframes breathe-wide { to { opacity: 1; } }
 .control-group > .field-error { color: var(--error); font-size: var(--text-sm); }
 .term-picker .button[aria-pressed="true"], .marketplace-mode-control .button[aria-pressed="true"] { border-color: var(--peach); background: var(--surface-hover); }
 

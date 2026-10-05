@@ -17,7 +17,12 @@ export function NameCard({ name, avatar, description, children, onOpen, loading,
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
   const showAvatar = avatar && /^https:\/\//.test(avatar) && avatar !== failedAvatar
   const content = <>
-    <span className="name-portrait-art" aria-hidden="true" />
+    <span className="name-portrait-art" aria-hidden="true">
+      {/* The sun's glow at its narrowest and its widest. Breathing fades from one to the other,
+          which the compositor does alone, where an animated shadow repaints every frame. */}
+      <span className="name-portrait-glow" />
+      <span className="name-portrait-glow" />
+    </span>
     <span className="name-portrait-content" id={detailsId}>
       {showAvatar ? <img src={avatar} alt="" className="name-avatar" width={48} height={48} referrerPolicy="no-referrer" loading="lazy" onError={() => setFailedAvatar(avatar)} /> : null}
       <NameSignature name={name} fit />

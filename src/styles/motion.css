@@ -35,10 +35,12 @@ a { transition: color var(--motion-feedback) var(--ease); }
     transform var(--motion-hover) var(--ease);
 }
 .name-portrait.button:active:not(:disabled) { transform: translateY(-1px); }
-.name-portrait-art::before { transition: transform var(--motion-hover) var(--ease), filter var(--motion-hover) var(--ease); }
+.name-portrait-art::before,
+.name-portrait-glow { transition: transform var(--motion-hover) var(--ease), filter var(--motion-hover) var(--ease); }
 @media (hover: hover) and (pointer: fine) {
   .name-portrait.button:hover:not(:disabled) { transform: translateY(-3px); }
-  .name-portrait.button:hover:not(:disabled) .name-portrait-art::before { transform: translateY(-3px); filter: brightness(1.1); }
+  .name-portrait.button:hover:not(:disabled) .name-portrait-art::before,
+  .name-portrait.button:hover:not(:disabled) .name-portrait-glow { transform: translateY(-3px); filter: brightness(1.1); }
   .name-chip.button:hover:not(:disabled) { border-color: var(--control-line); transform: translateY(-1px); }
 }
 
@@ -129,8 +131,12 @@ a { transition: color var(--motion-feedback) var(--ease); }
 
   /* A name's sun rises behind its horizon once, on its page and when it is claimed, then keeps
      breathing. */
-  :is(.name-hero, .claim-success) .name-portrait-art::before {
-    animation: sun-rise 1.2s var(--ease) backwards, breathe var(--motion-breathe) ease-in-out infinite alternate;
+  :is(.name-hero, .claim-success) .name-portrait-art::before { animation: sun-rise 1.2s var(--ease) backwards; }
+  :is(.name-hero, .claim-success) .name-portrait-glow {
+    animation: sun-rise 1.2s var(--ease) backwards, breathe-narrow var(--motion-breathe) ease-in-out infinite alternate;
+  }
+  :is(.name-hero, .claim-success) .name-portrait-glow + .name-portrait-glow {
+    animation-name: sun-rise, breathe-wide;
   }
   .name-hero-badges > * { animation: settle var(--motion-hover) var(--ease) backwards; animation-delay: calc(var(--motion-stagger) * 4); }
   .claim-main .name-portrait .status-badge { animation: settle var(--motion-hover) var(--ease) backwards; animation-delay: calc(var(--motion-stagger) * 3); }
