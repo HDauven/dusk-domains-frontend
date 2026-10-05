@@ -17,7 +17,11 @@ import {
 import { canUseLiveDuskDomainsWrites, createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 
 export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
-  const runtimeConfig = useMemo(() => createDuskDomainsRuntimeConfig(env), [env])
+  // A production build inlines import.meta.env as a new object at each use. Keying the
+  // config on the env's values keeps it, and everything built from it, stable across
+  // renders; keyed on identity, every render rebuilt the app and read the router again.
+  const envKey = JSON.stringify(env)
+  const runtimeConfig = useMemo(() => createDuskDomainsRuntimeConfig(JSON.parse(envKey) as DuskDomainsRuntimeEnv), [envKey])
   const recordSourceContractId = runtimeConfig.contracts.core.contractId
   const indexerClient = useMemo(() => (
     runtimeConfig.indexerUrl ? createHealthyIndexerClient(runtimeConfig.indexerUrl) : null

@@ -16,8 +16,11 @@ function networkBadge(config: DuskDomainsRuntimeConfig): NetworkBadge {
   return { label: config.chainId === 'dusk:3' ? 'Devnet' : 'Testnet', tone: 'testnet' }
 }
 
+// Read once: a production build inlines import.meta.env as a new object at each use.
+const appEnv = import.meta.env
+
 export function useDuskDomainsAppModel() {
-  const core = useAppCoreRuntimes(import.meta.env)
+  const core = useAppCoreRuntimes(appEnv)
   const workspace = useNameWorkspaceRuntime(core)
   const navigation = useAppNavigationRuntimes({ core, workspace })
 
