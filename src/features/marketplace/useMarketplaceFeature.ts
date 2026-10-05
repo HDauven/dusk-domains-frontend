@@ -4,6 +4,7 @@ import { userFacingErrorMessage, type IndexedNameSummary } from '../../names/int
 import { useMarketAddresses } from './useMarketAddresses'
 import { useState } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { AppRoute } from '../../app/routes'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
   isDuskDomainTxBusy,
@@ -34,11 +35,19 @@ type UseMarketplaceFeatureArgs = {
   liveWritesAvailable: boolean
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
   mainView: string
+  /** The route the app started at, so a market link opens its tab or auction on first render. */
+  openingRoute?: AppRoute
   onOpenWalletConnection: () => void
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
   submitNameWrite: SubmitNameWrite
+}
+
+/** The market a route opens: a sell link's Sell tab, or a linked auction. */
+export function marketOpening(route?: AppRoute): { tab: MarketplaceTab, sellName: string, auctionNode: string } {
+  const market = route?.view === 'marketplace' ? route : null
+  return { tab: market?.sellName ? 'sell' : 'browse', sellName: market?.sellName ?? '', auctionNode: market?.auctionNode ?? '' }
 }
 
 // The market: data and writes are shared, and each tab's state lives in its own hook.
@@ -56,10 +65,11 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   } = args
   const marketScope = `${runtimeConfig.chainId}:${runtimeConfig.contracts.marketplace?.contractId}`
   const accountScope = `${marketScope}:${selectedAuthority}`
-  const [sellName, setSellName] = useState('')
-  const [tab, setTab] = useState<MarketplaceTab>('browse')
+  const [opening] = useState(() => marketOpening(args.openingRoute))
+  const [sellName, setSellName] = useState(opening.sellName)
+  const [tab, setTab] = useState<MarketplaceTab>(opening.tab)
   // Auction selection belongs to the market, so wallet restoration keeps the detail open.
-  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, '')
+  const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, opening.auctionNode)
 
   // Feedback belongs to the tab it came from.
   const feedbackScope = `${accountScope}:${mainView}:${tab}:${selectedAuctionNode}`

@@ -22,14 +22,17 @@ export function useActivityFeed({
   defaultNode,
   indexerClient,
   setError,
+  startsLoading = false,
 }: {
   indexerClient: DuskDomainsIndexerClient | null
   setError: (message: string) => void
   defaultName: string
   defaultNode: string
+  /** The app opened on a name, whose read starts with its first effect. */
+  startsLoading?: boolean
 }) {
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([])
-  const [activityLoading, setActivityLoading] = useState(false)
+  const [activityLoading, setActivityLoading] = useState(startsLoading)
   const [activityCursor, updateCursor] = useState<{ node: string; cursor: string | null } | null>(null)
   const generation = useRef(0)
   const pending = useRef(false)

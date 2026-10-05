@@ -15,18 +15,34 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
   onOpenView: (view: AppMainView) => void
   searchedName: string | null
 }) {
+  const current: AppRoute = mainView === 'search' && checked && searchedName
+    ? { view: 'search', name: searchedName }
+    : mainView === 'marketplace' && sellName ? { view: mainView, sellName }
+    : mainView === 'marketplace' && selectedAuctionNode ? { view: mainView, auctionNode: selectedAuctionNode } : { view: mainView }
+  const path = routePath(current)
+
   // The route taken from the address bar that the app is still catching up to. It is fresh until
   // the app has rendered once after applying it, since that render still shows the old state.
   const pending = useRef<{ route: AppRoute, fresh: boolean } | null>(null)
   const open = useRef({ onOpenName, onOpenView, onOpenAuction, onOpenSell })
+  const shown = useRef(path)
   useEffect(() => {
     open.current = { onOpenName, onOpenView, onOpenAuction, onOpenSell }
+    shown.current = path
   })
 
   useEffect(() => {
     const apply = () => {
       const route = parseRoute(window.location.pathname)
-      pending.current = { route, fresh: true }
+      // The app can already show the route: it starts on the page its address names. Then only
+      // the address is tidied (case, trailing slash), and nothing stays pending to hold back the
+      // next navigation's history entry.
+      if (routePath(route) === shown.current) {
+        pending.current = null
+        if (window.location.pathname !== shown.current) window.history.replaceState(null, '', `${shown.current}${window.location.search}`)
+      } else {
+        pending.current = { route, fresh: true }
+      }
       if (route.name) open.current.onOpenName(route.name)
       else {
         open.current.onOpenView(route.view)
@@ -38,12 +54,6 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
     window.addEventListener('popstate', apply)
     return () => window.removeEventListener('popstate', apply)
   }, [])
-
-  const current: AppRoute = mainView === 'search' && checked && searchedName
-    ? { view: 'search', name: searchedName }
-    : mainView === 'marketplace' && sellName ? { view: mainView, sellName }
-    : mainView === 'marketplace' && selectedAuctionNode ? { view: mainView, auctionNode: selectedAuctionNode } : { view: mainView }
-  const path = routePath(current)
 
   useEffect(() => {
     if (window.location.pathname === path) {
