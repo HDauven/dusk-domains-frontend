@@ -80,6 +80,22 @@ look carries the mood, so the words don't have to.
 | "A name that's yours. A world to make." | *(no footer line)* |
 | "Make it yours." | "Manage aurora.dusk" |
 
+## Mark
+
+The mark is the share card's sunset in a tile: the sun half behind the planet's
+lilac-to-peach rim, in the card's palette. Two sources in `brand/` drive every
+brand file:
+
+- `mark.svg` is the master, for icons from 180 px, the logos and the social
+  images.
+- `mark-small.svg` drops the blur and enlarges the sun and rim, so the mark stays
+  crisp at 16 and 32 px. It is the favicon, the header mark and the mark on
+  share cards.
+
+To change the mark, edit those files and run `npm run brand`. Adding
+`-- --indexer ../dusk-domains-indexer` also writes the indexer's share-card mark.
+The tile's corner radius lives on the `tile` clip path; full-bleed icons drop it.
+
 ## Reference
 
 The concept mockups (home/search and a name page, desktop and phone) were the
