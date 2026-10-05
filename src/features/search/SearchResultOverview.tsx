@@ -111,7 +111,8 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
       </div>
       <div className="claim-stub">
         <PremiumNotice result={premiumResult} currentBlockHeight={currentBlockHeight} />
-        <div className="claim-price">
+        {/* Keyed, so a new term or price fades in rather than snapping. */}
+        <div className="claim-price" key={`${duration}:${feeConfigLoading ? '' : registrationFee}`}>
           <strong>{feeConfigLoading ? '…' : formatDusk(registrationFee)} <small>DUSK</small></strong>
           <span>for {duration} {pluralize(duration, 'year')} · until {expiryDate}</span>
         </div>

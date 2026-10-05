@@ -2,6 +2,7 @@
 import { act, StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
+import { ChoiceRow } from './ChoiceRow'
 import { Tabs } from './Tabs'
 
 type Item = { id: string, label: string }
@@ -65,5 +66,29 @@ it('follows the selected item when an item is inserted before it', async () => {
   } finally {
     vi.restoreAllMocks()
     await view.unmount()
+  }
+})
+
+it('gives a row of pressed buttons the same indicator, as a labelled group', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  const container = document.createElement('div')
+  document.body.append(container)
+  const root = createRoot(container)
+  const row = (value: string) => (
+    <ChoiceRow className="marketplace-mode-control" label="Sale type" value={value}>
+      <button type="button" aria-pressed={value === 'fixed'}>Fixed price</button>
+      <button type="button" aria-pressed={value === 'auction'}>Auction</button>
+    </ChoiceRow>
+  )
+  try {
+    await act(async () => { root.render(row('fixed')) })
+    await nextFrame()
+    const group = container.querySelector<HTMLElement>('[role="group"][aria-label="Sale type"]')!
+    expect(group.dataset.indicator).toBe('ready')
+    await act(async () => { root.render(row('none')) })
+    expect(group.dataset.indicator).toBeUndefined()
+  } finally {
+    await act(async () => { root.unmount() })
+    container.remove()
   }
 })

@@ -9,8 +9,9 @@ export function RegistrationCompletionProgress({ progress, onSetAddress, txState
   onSetAddress: () => void
 }) {
   const syncing = progress.status === 'running' && progress.steps.every(step => step.status === 'executed')
+  const title = progress.status === 'executed' ? 'Registration complete' : progress.status === 'failed' ? 'Registration needs attention' : syncing || txState?.message === 'Still confirming…' ? 'Still confirming…' : 'Registering…'
   return <div className={`registration-progress ${progress.status}`} role="status">
-    <strong>{progress.status === 'executed' ? 'Registration complete' : progress.status === 'failed' ? 'Registration needs attention' : syncing || txState?.message === 'Still confirming…' ? 'Still confirming…' : 'Registering…'}</strong>
+    <strong key={title}>{title}</strong>
     <p>{progress.status === 'failed' ? progress.message ?? 'Your reservation is saved. Retry when the issue is fixed.' : syncing ? 'Your transaction was submitted. Waiting for the name to appear.' : progress.status === 'running' ? txState?.txId ? 'Waiting for the network to confirm your registration.' : 'Confirm in your wallet and keep it open while this finishes.' : null}</p>
     {progress.steps.some(step => step.txId) ? <details><summary>Details</summary>{progress.steps.filter(step => step.txId).map(step => <code key={step.id}>{step.txId}</code>)}</details> : null}
     <ConfirmationRetry state={txState} />

@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { Button } from './Button'
+import { useSlidingIndicator } from './useSlidingIndicator'
 import { pluralize } from '../../utils/format'
 
 const termChoices = [1, 2, 3, 5, 10]
@@ -22,9 +24,11 @@ export function TermPicker({
   const terms = [...new Set([...termChoices, value])]
     .filter((years) => years >= min && years <= max)
     .sort((a, b) => a - b)
+  const row = useRef<HTMLDivElement>(null)
+  useSlidingIndicator(row, '[aria-pressed="true"]', value)
 
   return (
-    <div className="term-picker" role="group" aria-label={label}>
+    <div ref={row} className="term-picker" role="group" aria-label={label}>
       {terms.map((years) => (
         <Button
           key={years}
