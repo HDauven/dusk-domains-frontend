@@ -161,11 +161,13 @@
 }
 
 .profile-card h2 {
+  min-width: 0;
   margin: 0;
   color: var(--muted);
   font: 500 var(--text-xs) var(--font-ui);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .profile-card-head {
@@ -185,6 +187,7 @@
 .link-list,
 .recent-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -250,6 +253,11 @@
   font-size: var(--text-sm);
 }
 
+.recent-list li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .recent-list em {
   margin-left: 6px;
   color: var(--muted);
@@ -281,8 +289,12 @@
   white-space: normal;
 }
 
+/* Identifiers such as content pointers are one long token: wrap them whole, like addresses. */
 .link-list code {
   font: 500 var(--text-sm) var(--font-mono);
+  overflow-wrap: anywhere;
+  white-space: normal;
+  user-select: all;
 }
 
 .link-list a:hover {

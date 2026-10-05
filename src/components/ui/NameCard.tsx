@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { Button } from './Button'
 import { NameSignature } from './NameChip'
 
@@ -13,10 +13,13 @@ export function NameCard({ name, avatar, description, children, onOpen, loading,
   className?: string
 }) {
   const detailsId = useId()
+  // A dead avatar link is dropped as if the name had none; a different link gets a fresh try.
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
+  const showAvatar = avatar && /^https:\/\//.test(avatar) && avatar !== failedAvatar
   const content = <>
     <span className="name-portrait-art" aria-hidden="true" />
     <span className="name-portrait-content" id={detailsId}>
-      {avatar && /^https:\/\//.test(avatar) ? <img src={avatar} alt="" className="name-avatar" width={48} height={48} referrerPolicy="no-referrer" loading="lazy" onError={(event) => { event.currentTarget.hidden = true }} /> : null}
+      {showAvatar ? <img src={avatar} alt="" className="name-avatar" width={48} height={48} referrerPolicy="no-referrer" loading="lazy" onError={() => setFailedAvatar(avatar)} /> : null}
       <NameSignature name={name} fit />
       {description ? <span className="name-portrait-description">{description}</span> : null}
       {children}
