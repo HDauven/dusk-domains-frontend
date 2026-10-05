@@ -1,0 +1,46 @@
+name: Support request
+description: Get help with a .dusk name, your wallet, records or the market.
+title: "[Support]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never share a recovery phrase, private key or wallet backup. Nobody working on Dusk Domains will ask for one.
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - Wallet connection
+        - Registering or renewing a name
+        - Records or primary name
+        - Subnames
+        - Market (sales, auctions, offers)
+        - Referrals
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: Leave blank if your question isn't about one name.
+      placeholder: aurora.dusk
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Useful details
+      description: Transaction IDs, error messages or screenshots.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I did not include a recovery phrase, private key or wallet backup.
+          required: true
