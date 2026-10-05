@@ -5,7 +5,7 @@ import { currentUnixSeconds, type NameResult } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 
 export function useSearchAppState(accountScope: string) {
-  const [query, setQuery] = useState('aurora.dusk')
+  const [query, setQuery] = useState('')
   const [mainView, setMainView] = useState<AppMainView>('search')
   const [nowSeconds, setNowSeconds] = useState(() => currentUnixSeconds())
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)

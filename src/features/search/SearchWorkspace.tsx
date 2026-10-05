@@ -8,7 +8,7 @@ type SearchWorkspaceProps = {
   search: {
     priceTiers?: { label: string; price: string }[]
     checked: boolean
-    featuredNames?: ShowcaseName[]
+    featuredNames?: ShowcaseName[] | null
     loading: boolean
     resultReady: boolean
     onCheckAvailability: () => void

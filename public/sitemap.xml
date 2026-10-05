@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://dusk.domains/</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://dusk.domains/sitemap-pages.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://dusk.domains/sitemap-names.xml</loc>
+  </sitemap>
+</sitemapindex>

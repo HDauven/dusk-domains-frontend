@@ -59,3 +59,8 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* Until the app mounts, a deep link shows the static shell's frame without the home content. */
+html[data-deep-link] #root[data-static-shell] .page-main {
+  visibility: hidden;
+}

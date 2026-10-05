@@ -79,7 +79,7 @@ export async function checkIndexerSessionBudget(page) {
         selectedAddress: '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc',
         selectedAuthority: `0x${'11'.repeat(32)}`, setError: message => { window.sessionError = message } })
       window.sessionMarket = market
-      return React.createElement('output', { id: 'session' }, JSON.stringify({ sky: sky.length, feeLoading: fee.feeConfigLoading, feeError: fee.feeConfigError }))
+      return React.createElement('output', { id: 'session' }, JSON.stringify({ sky: sky === null ? null : sky.length, feeLoading: fee.feeConfigLoading, feeError: fee.feeConfigError }))
     }
     window.sessionCalls = calls
     window.renderSession = view => root.render(React.createElement(Session, { view }))

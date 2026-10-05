@@ -58,7 +58,7 @@ export function useDuskDomainsAppModel() {
       searchProps: {
         ...mainContentProps.searchProps,
         result: { ...mainContentProps.searchProps.result, overviewProps: { ...mainContentProps.searchProps.result.overviewProps, readOnly: appRuntime.writeAccess.readOnly, registrationUnavailable: !appRuntime.writeAccess.canRegister } },
-        search: { ...mainContentProps.searchProps.search, featuredNames: showcase(skyNames) },
+        search: { ...mainContentProps.searchProps.search, featuredNames: skyNames && showcase(skyNames) },
         onOpenName: openName,
       },
     },
@@ -68,7 +68,7 @@ export function useDuskDomainsAppModel() {
       pause: appRuntime.pause,
       launchLinks: appRuntime.runtimeConfig.launchLinks,
       network: networkBadge(appRuntime.runtimeConfig),
-      skyNames: skyNames.map(({ name, node }) => ({ label: name, node })),
+      skyNames: (skyNames ?? []).map(({ name, node }) => ({ label: name, node })),
       navigation: {
         mainView,
         onOpenName: openName,

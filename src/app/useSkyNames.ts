@@ -9,9 +9,10 @@ export type ShowcaseName = {
   activity: number
 }
 
-// Registered names light the sky and fill the home page's "Already on Dusk" row.
-export function useSkyNames(indexerClient: ReturnType<typeof useAppRuntime>['indexerClient']) {
-  const [names, setNames] = useState<ShowcaseName[]>([])
+// Registered names light the sky and fill the home page's "Already on Dusk" row. Null while
+// the first read is in flight; empty without an indexer or when it cannot be read.
+export function useSkyNames(indexerClient: ReturnType<typeof useAppRuntime>['indexerClient']): ShowcaseName[] | null {
+  const [names, setNames] = useState<ShowcaseName[] | null>(null)
 
   useEffect(() => {
     if (!indexerClient) return
@@ -29,11 +30,14 @@ export function useSkyNames(indexerClient: ReturnType<typeof useAppRuntime>['ind
             activity: entry.activityCount,
           })))
       })
-      .catch(() => { /* The sky is decoration; an unreachable indexer leaves it empty. */ })
+      .catch(() => {
+        // The sky is decoration; an unreachable indexer leaves it empty.
+        if (live) setNames([])
+      })
     return () => { live = false }
   }, [indexerClient])
 
-  return names
+  return indexerClient ? names : []
 }
 
 export function showcase(names: ShowcaseName[], count = 6) {

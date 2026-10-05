@@ -1,0 +1,41 @@
+# Dusk Domains
+
+> Dusk Domains is a name service for the Dusk blockchain. It registers readable .dusk names, such as alice.dusk, that point to Dusk addresses, contracts and other public records.
+
+- A root name has 3 to 63 characters: lowercase letters, digits and hyphens. It is registered for 1 to 10 years at a time, and its yearly price depends on its length.
+- Registration takes two transactions: a commitment that hides the name, then a reveal a short time later.
+- After a name expires, its owner or anyone else can renew it for 30 days, unless it is listed in the market. Then anyone can register it; for the 21 days after that, it may carry a premium that halves every day.
+- Records are public: a Dusk address, a shielded payment endpoint, addresses on other chains (Bitcoin, Ethereum, Solana, EVM), a Dusk contract, a website, an avatar, a content pointer and a description.
+- A primary name is the name an address chooses to be shown as. It counts only while the name's Dusk address record points back to that address.
+- Subnames, such as pay.alice.dusk, are created by the parent's owner or manager. The owner or manager of any name above a subname can reassign or take it back, and a subname expires with its parent or earlier.
+- The market sells names at a fixed price or by auction and takes offers. A listed name is held in escrow.
+
+**What is a .dusk name?** A readable name, such as alice.dusk, registered on the Dusk blockchain. It points to public records its owner sets, such as a Dusk address, so apps can show and use the name instead of a long address.
+
+**How do I register a name?** Search for the name, connect Dusk Wallet and choose a term of 1 to 10 years. Registration takes two transactions a short time apart. The first reserves the name without revealing it, so nobody can see the name and register it first.
+
+**What happens when a name expires?** Its owner, or anyone else, can still renew it for 30 days, unless it is listed in the market, and the new term counts from the old expiry date. After those 30 days anyone can register it, and its records and subnames are cleared. For 21 days after that, registering it may cost an extra premium that halves every day.
+
+**What is a primary name?** The name an address chooses to be shown as. An address can set one of its names as primary, but only while that name's Dusk address record points back to it.
+
+**What are subnames?** Names under a name you own, such as pay.alice.dusk under alice.dusk. You can give them to other addresses. The owner of alice.dusk can reassign or take back its subnames at any time, and a subname expires with its parent or earlier.
+
+**Can I buy and sell names?** Yes. In the market you can sell a name at a fixed price or in an auction, and make offers on names others own. While a name is listed, the market holds it in escrow.
+
+## App
+
+- [Search and register](https://dusk.domains/): search a name, register it with Dusk Wallet, and manage records, subnames and the primary name.
+- [Market](https://dusk.domains/market): names for sale, auctions and offers.
+- [Name pages](https://dusk.domains/name/pie.dusk): every name has a page at https://dusk.domains/name/<name>.
+
+## Developers
+
+- [Read API](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md): the public indexer API at https://dusk.domains/api, for names, records, activity and the market.
+- [SDK](https://github.com/HDauven/dusk-domains-sdk): TypeScript SDK to resolve names, verify primary names and build transactions.
+- [Frontend source](https://github.com/HDauven/dusk-domains-frontend): the code for this site.
+
+## Optional
+
+- [Support](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=support-request.yml)
+- [Report abuse](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml)
+- [Report a vulnerability](https://github.com/HDauven/dusk-domains-frontend/security/advisories/new)

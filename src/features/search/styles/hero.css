@@ -127,6 +127,10 @@
   margin-top: clamp(var(--space-10), 7vh, 72px);
 }
 
+.hero-showcase.pending {
+  visibility: hidden;
+}
+
 .hero-showcase p {
   margin: 0 0 var(--space-3);
   color: var(--muted);

@@ -16,7 +16,7 @@ export function SearchHero({
 }: {
   priceTiers?: { label: string; price: string }[]
   checked: boolean
-  featuredNames?: ShowcaseName[]
+  featuredNames?: ShowcaseName[] | null
   loading: boolean
   onCheckAvailability: () => void
   onOpenName?: (name: string) => void
@@ -70,7 +70,15 @@ export function SearchHero({
 
       {!checked && priceTiers ? <p className="search-prices">{priceTiers.map(tier => <span key={tier.label}>{tier.label}: {tier.price} DUSK / year</span>)}</p> : null}
 
-      {featuredNames.length > 0 ? (
+      {featuredNames === null ? (
+        // While names load, an invisible row holds their place, so nothing below moves.
+        <div className="hero-showcase pending" aria-hidden="true">
+          <p>Already on Dusk</p>
+          <ul>
+            <li><NameChip name="aurora.dusk" /></li>
+          </ul>
+        </div>
+      ) : featuredNames.length > 0 ? (
         <div className="hero-showcase" aria-label="Names already on Dusk">
           <p>Already on Dusk</p>
           <ul>

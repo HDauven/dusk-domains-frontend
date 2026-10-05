@@ -46,17 +46,64 @@
     />
     <meta name="twitter:image" content="https://dusk.domains/og-image.png" />
     <meta name="twitter:image:alt" content="The Dusk Domains sunset mark and name over a planet horizon" />
+    <script>
+      // Until the app starts, #root holds the home page's first render. Elsewhere only its frame
+      // shows, and its search form must not submit and reload the page.
+      if (location.pathname.replace(/\/+$/, '')) document.documentElement.setAttribute('data-deep-link', '')
+      document.addEventListener('submit', (event) => {
+        if (event.target instanceof Element && event.target.closest('#root[data-static-shell]')) event.preventDefault()
+      }, true)
+    </script>
     <title>Dusk Domains | .dusk domains for Dusk</title>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Dusk Domains",
-        "url": "https://dusk.domains/",
-        "applicationCategory": "FinanceApplication",
-        "operatingSystem": "Web",
-        "description": "Search, register and manage .dusk domains for Dusk wallets, contracts and apps.",
-        "image": "https://dusk.domains/og-image.png"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://dusk.domains/#organization",
+            "name": "Dusk Domains",
+            "url": "https://dusk.domains/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://dusk.domains/icon-512.png",
+              "width": 512,
+              "height": 512
+            },
+            "sameAs": [
+              "https://github.com/HDauven/dusk-domains-frontend"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://dusk.domains/#website",
+            "name": "Dusk Domains",
+            "url": "https://dusk.domains/",
+            "publisher": {
+              "@id": "https://dusk.domains/#organization"
+            },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://dusk.domains/name/{search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "Dusk Domains",
+            "url": "https://dusk.domains/",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web",
+            "description": "Search, register and manage .dusk domains for Dusk wallets, contracts and apps.",
+            "image": "https://dusk.domains/og-image.png",
+            "publisher": {
+              "@id": "https://dusk.domains/#organization"
+            }
+          }
+        ]
       }
     </script>
   </head>
