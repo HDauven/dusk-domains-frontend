@@ -21,8 +21,8 @@ function CopyAction({ value, label, disabled }: { value: string, label: string, 
         if (mounted.current) setState('error')
       }
     }}>
-      {state === 'copied' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-      {state === 'copied' ? 'Copied' : state === 'copying' ? 'Copying' : 'Copy'}
+      <span className="copy-icon" data-copied={state === 'copied' || undefined} aria-hidden="true"><Copy size={15} /><Check size={15} /></span>
+      <span className="copy-label" key={state}>{state === 'copied' ? 'Copied' : state === 'copying' ? 'Copying' : 'Copy'}</span>
     </Button>
     <Toast message={state === 'copied' ? `${label} copied.` : state === 'error' ? `Could not copy ${label}. Select the full value and copy it.` : ''}
       tone={state === 'error' ? 'danger' : 'success'} onDismiss={() => setState('idle')} />

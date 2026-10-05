@@ -1,0 +1,118 @@
+/* Motion: feedback, entrances and sliding indicators, on the timing in docs/design.md.
+   With reduced motion, index.css turns every animation and transition off, and nothing
+   here hides content without one. Entrances move and fade only: the name fitter measures
+   with getBoundingClientRect, so a scaled card would keep a name fitted too small. */
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes sun-rise { from { transform: translateY(14px); } }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes ring-in { from { outline-offset: 7px; } }
+
+/* Feedback */
+.button {
+  transition: background var(--motion-feedback) var(--ease), border-color var(--motion-feedback) var(--ease),
+    color var(--motion-feedback) var(--ease), box-shadow var(--motion-hover) var(--ease),
+    transform var(--motion-feedback) var(--ease);
+}
+.button:active:not(:disabled) { transform: scale(0.98); }
+.button-primary:hover:not(:disabled) { box-shadow: 0 6px 24px var(--sunset-glow); }
+:focus-visible { animation: ring-in var(--motion-feedback) var(--ease); }
+
+/* Name cards lift and their sun brightens under a pointer. */
+.name-portrait.button {
+  transition: border-color var(--motion-hover) var(--ease), box-shadow var(--motion-hover) var(--ease),
+    transform var(--motion-hover) var(--ease);
+}
+.name-portrait.button:active:not(:disabled) { transform: translateY(-1px); }
+.name-portrait-art::before { transition: transform var(--motion-hover) var(--ease), filter var(--motion-hover) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .name-portrait.button:hover:not(:disabled) { transform: translateY(-3px); }
+  .name-portrait.button:hover:not(:disabled) .name-portrait-art::before { transform: translateY(-3px); filter: brightness(1.1); }
+  .name-chip.button:hover:not(:disabled) { border-color: var(--control-line); transform: translateY(-1px); }
+}
+
+/* Search: a soft glow while the field has focus. */
+.hero-search-field:focus-within { box-shadow: var(--shadow-lg), 0 0 0 4px var(--sunset-glow); }
+
+/* Copy: the icon turns into a check. */
+.copy-icon { display: inline-grid; }
+.copy-icon > svg {
+  grid-area: 1 / 1;
+  transition: opacity var(--motion-feedback) var(--ease), transform var(--motion-feedback) var(--ease);
+}
+.copy-icon > svg + svg,
+.copy-icon[data-copied] > svg:first-child { opacity: 0; transform: scale(0.6); }
+.copy-icon[data-copied] > svg + svg { opacity: 1; transform: none; }
+
+/* Sliding indicators: the container draws the active pill (useSlidingIndicator places it). */
+.tabs,
+.nav-links {
+  position: relative;
+  isolation: isolate;
+}
+.tabs[data-indicator]::before,
+.nav-links[data-indicator]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: var(--indicator-width);
+  height: var(--indicator-height);
+  transform: translate(var(--indicator-x), var(--indicator-y));
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  pointer-events: none;
+}
+.tabs[data-indicator]::before {
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 -2px var(--peach);
+}
+/* Width and height transition as well as the transform: a fixed-size pill scaled to each item
+   would stretch its rounded ends (a 330 px tab is 3.3 times a 100 px base). The pill is
+   absolutely positioned, so resizing it lays out only itself. */
+.tabs[data-indicator="ready"]::before,
+.nav-links[data-indicator="ready"]::before {
+  transition: transform var(--motion-hover) var(--ease), width var(--motion-hover) var(--ease),
+    height var(--motion-hover) var(--ease);
+}
+.tabs[data-indicator] .button:not(:disabled) { background: transparent; }
+.tabs[data-indicator] .button:not(:disabled):not([aria-selected="true"], [aria-pressed="true"]):hover { background: var(--surface-raised); }
+.tabs[data-indicator] .button:is([aria-selected="true"], [aria-pressed="true"]) { box-shadow: none; }
+.nav-links[data-indicator] a.active { background: transparent; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Each view and result enters once, when it mounts; refreshes keep the same elements. */
+  .page-main > * { animation: enter var(--motion-enter) var(--ease) backwards; }
+  .page-main > .hero-search { animation-delay: calc(var(--motion-stagger) * 2); }
+  .page-main > .search-prices { animation-delay: calc(var(--motion-stagger) * 3); }
+  .page-main > .hero-showcase { animation-delay: calc(var(--motion-stagger) * 4); }
+
+  /* Cards and panels fade in after their view, in turn, capped so long lists do not wait. */
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side) > * {
+    animation: fade var(--motion-enter) var(--ease) backwards;
+    animation-delay: calc(var(--motion-stagger) * 2);
+  }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side) > :nth-child(2) { animation-delay: calc(var(--motion-stagger) * 3); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side) > :nth-child(3) { animation-delay: calc(var(--motion-stagger) * 4); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side) > :nth-child(4) { animation-delay: calc(var(--motion-stagger) * 5); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side) > :nth-child(5) { animation-delay: calc(var(--motion-stagger) * 6); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side) > :nth-child(n + 6) { animation-delay: calc(var(--motion-stagger) * 7); }
+
+  /* The sun on a name page rises behind its horizon once, then keeps breathing. */
+  .name-hero .name-portrait-art::before {
+    animation: sun-rise 1.2s var(--ease) backwards, breathe var(--motion-breathe) ease-in-out infinite alternate;
+  }
+  .name-hero-badges > * { animation: fade var(--motion-hover) var(--ease) backwards; animation-delay: calc(var(--motion-stagger) * 4); }
+
+  .toast:not(:empty) { animation: enter var(--motion-hover) var(--ease) backwards; }
+  .copy-label { animation: fade var(--motion-feedback) var(--ease) backwards; }
+
+  .name-portrait.skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, var(--surface-raised) 50%, transparent 70%);
+    animation: shimmer 1.6s var(--ease) infinite;
+  }
+}

@@ -74,6 +74,7 @@
   --motion-enter: 650ms;
   --motion-breathe: 8s;
   --motion-spin: 900ms;
+  --motion-stagger: 40ms;
 }
 
 @media (max-width: 720px) {

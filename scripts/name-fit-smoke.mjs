@@ -345,17 +345,30 @@ async function checkSharedFitting(page) {
     const fontsLoaded = () => { stats.fontLoads++ }
     document.fonts.addEventListener('loadingdone', fontsLoaded)
     window.nameFitStats = stats
+    // Other components (sliding indicators) have observers of their own; count the ones that
+    // watch a name's box, which the name fitter observes.
     window.ResizeObserver = class extends originalObserver {
       constructor(callback) {
-        const record = { callback, entries: [] }
+        const record = { callback, entries: [], names: false }
         super(entries => { record.entries = entries; callback(entries, this) })
+        this.record = record
         observers.push(record)
       }
+
+      observe(target, options) {
+        if (target instanceof Element && target.querySelector(':scope > .name-signature')) this.record.names = true
+        return super.observe(target, options)
+      }
     }
-    window.requestAnimationFrame = callback => originalFrame.call(window, time => {
-      stats.frames.push(time)
-      callback(time)
-    })
+    // Only the name fitter's frames count; other components (sliding indicators) request
+    // frames of their own. The dev server keeps module paths in stack traces.
+    window.requestAnimationFrame = callback => {
+      const fitter = /nameFitter/.test(new Error().stack ?? '')
+      return originalFrame.call(window, time => {
+        if (fitter) stats.frames.push(time)
+        callback(time)
+      })
+    }
     CSSStyleDeclaration.prototype.setProperty = function (key, ...args) {
       if (key === '--name-fit-size') stats.writes++
       return originalWrite.call(this, key, ...args)
@@ -365,8 +378,9 @@ async function checkSharedFitting(page) {
       return originalMeasure.apply(this, args)
     }
     window.repeatNameResize = () => {
-      for (let i = 0; i < 5; i++) observers.forEach(record => record.callback(record.entries))
-      return observers.length
+      const names = observers.filter(record => record.names)
+      for (let i = 0; i < 5; i++) names.forEach(record => record.callback(record.entries))
+      return names.length
     }
     window.restoreNameFit = () => {
       window.ResizeObserver = originalObserver
