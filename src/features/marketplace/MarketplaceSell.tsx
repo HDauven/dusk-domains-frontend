@@ -1,5 +1,6 @@
 import { NamespaceTransferWarning } from './NamespaceSummary'
 import { Button } from '../../components/ui/Button'
+import { ChoiceRow } from '../../components/ui/ChoiceRow'
 import { Panel } from '../../components/ui/Panel'
 import { Select, Input } from '../../components/ui/Input'
 import { Store } from 'lucide-react'
@@ -32,10 +33,10 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
               <h2 id="sell-domain-heading">Sell a name</h2>
               <p>It moves into escrow until it sells or you cancel.</p>
             </div>
-            <div className="marketplace-mode-control" aria-label="Sale type">
+            <ChoiceRow className="marketplace-mode-control" label="Sale type" value={props.selling.saleMode}>
               <Button aria-pressed={props.selling.saleMode === 'fixed'} type="button" onClick={() => props.selling.onSaleModeChange('fixed')}>Fixed price</Button>
               <Button aria-pressed={props.selling.saleMode === 'auction'} type="button" onClick={() => props.selling.onSaleModeChange('auction')}>Auction</Button>
-            </div>
+            </ChoiceRow>
           </div>
 
           <div className="marketplace-form">

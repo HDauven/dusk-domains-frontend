@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+import { useSlidingIndicator } from '../components/ui/useSlidingIndicator'
 import type { AppMainView } from './AppTypes'
 import { followLink, routePath } from './routes'
 
@@ -18,8 +20,10 @@ export function PrimaryNavigation({
   onSearchHome: () => void
   pendingReservationCount: number
 }) {
+  const nav = useRef<HTMLElement>(null)
+  useSlidingIndicator(nav, 'a.active', mainView)
   return (
-    <nav className="nav-links" aria-label="Primary">
+    <nav ref={nav} className="nav-links" aria-label="Primary">
       {items.map(({ view, label }) => (
         <a
           key={view}

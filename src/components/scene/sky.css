@@ -16,10 +16,49 @@
   mask-image: linear-gradient(180deg, var(--night) 55%, transparent 100%);
 }
 
+.sky-dust svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sky-twinkles,
 .sky-names {
   position: absolute;
   inset: 0;
 }
+
+.sky-twinkles span {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 4px 1px var(--ink);
+  opacity: 0.35;
+}
+
+/* The sky moves slowly enough to be felt rather than seen: two of the dust layers drift apart
+   over minutes, and a few stars twinkle. Each layer moves whole on the compositor, with
+   transform or opacity only, so nothing repaints. The name stars hold still. */
+@media (prefers-reduced-motion: no-preference) {
+  .sky-dust-1 { animation: sky-drift-near 130s ease-in-out -40s infinite alternate; }
+  .sky-dust-2 { animation: sky-drift-far 190s ease-in-out -110s infinite alternate; }
+  .sky-twinkles span { animation: twinkle var(--twinkle-duration) ease-in-out var(--twinkle-delay) infinite; }
+}
+
+@keyframes sky-drift-near {
+  from { transform: translate3d(-14px, -5px, 0); }
+  to { transform: translate3d(16px, 6px, 0); }
+}
+
+@keyframes sky-drift-far {
+  from { transform: translate3d(10px, 4px, 0); }
+  to { transform: translate3d(-12px, -4px, 0); }
+}
+
+@keyframes twinkle { 50% { opacity: 0.8; } }
 
 .sky-name {
   position: absolute;

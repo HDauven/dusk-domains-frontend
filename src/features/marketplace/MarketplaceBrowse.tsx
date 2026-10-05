@@ -3,6 +3,7 @@ import { OwnerLabel } from '../identity/OwnerLabel'
 import { Badge } from '../../components/ui/Badge'
 import { Input, Select } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { ChoiceRow } from '../../components/ui/ChoiceRow'
 import { Panel } from '../../components/ui/Panel'
 import { Clock3, Gavel, Search, Star } from 'lucide-react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
@@ -43,7 +44,7 @@ export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <div className="tabs marketplace-filter-control" aria-label="Marketplace filters">
+        <ChoiceRow className="tabs marketplace-filter-control" label="Marketplace filters" value={filter}>
           {([
             ['all', 'All'],
             ['auction', 'Auctions'],
@@ -52,7 +53,7 @@ export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
           ] as const).map(([id, label]) => (
             <Button aria-pressed={filter === id} className={filter === id ? 'active' : ''} key={id} type="button" onClick={() => setFilter(id)}>{label}</Button>
           ))}
-        </div>
+        </ChoiceRow>
         <label className="marketplace-sort-control">
           <span>Sort</span>
           <Select aria-label="Sort marketplace" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>

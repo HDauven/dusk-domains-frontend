@@ -15,7 +15,7 @@ export function TransactionStatusNotice({
   return (
     <div className={classNames} aria-live="polite" {...txStatusDataAttrs(state)}>
       <div>
-        <strong>{txStatusCopy(state.status, state.message)}</strong>
+        <strong key={state.status}>{txStatusCopy(state.status, state.message)}</strong>
         <span>{state.context.title}</span>
       </div>
       {state.txId ? <details><summary>Details</summary><p>Transaction <code>{state.txId}</code></p></details> : null}

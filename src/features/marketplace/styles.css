@@ -138,11 +138,14 @@
   align-content: start;
   gap: var(--space-3);
   padding: var(--space-5);
+  transition: border-color var(--motion-hover) var(--ease), transform var(--motion-hover) var(--ease);
 }
 
-.marketplace-card:hover {
-  border-color: var(--line);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .marketplace-card:hover {
+    border-color: var(--control-line);
+    transform: translateY(-2px);
+  }
 }
 
 .marketplace-card-topline {

@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { Button } from './Button'
+import { useSlidingIndicator } from './useSlidingIndicator'
 
 export function Tabs<T extends string>({ id, label, items, value, onChange, className = '' }: {
   id: string
@@ -11,8 +12,10 @@ export function Tabs<T extends string>({ id, label, items, value, onChange, clas
 }) {
   const focusId = items.find((item) => item.id === value && !item.disabled && !item.loading)?.id
     ?? items.find((item) => !item.disabled && !item.loading)?.id
+  const list = useRef<HTMLDivElement>(null)
+  useSlidingIndicator(list, '[role="tab"][aria-selected="true"]', value)
   return (
-    <div className={`tabs ${className}`} role="tablist" aria-label={label} onKeyDown={(event) => {
+    <div ref={list} className={`tabs ${className}`} role="tablist" aria-label={label} onKeyDown={(event) => {
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
       const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
       const current = buttons.indexOf(document.activeElement as HTMLButtonElement)

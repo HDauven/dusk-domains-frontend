@@ -38,6 +38,17 @@ over the horizon gradient.
 - Controls sit on solid dark surfaces, not on the gradient.
 - Entrances take about 650 ms, hover feedback 180–350 ms. The card's planet rim
   may breathe slowly.
+- A view or result rises in once, when it mounts; the cards and panels inside fade in
+  40 ms apart. Refreshes keep the same elements, so nothing replays.
+- Tabs, the top navigation and rows of choices such as the term picker share one pill
+  that slides to the active item.
+- A pointer lifts name cards a few pixels and brightens their sun; buttons press in
+  slightly. Nothing that holds a fitted name is scaled.
+- Dialogs and the phone menu ease in and close at once. Messages, errors and new form
+  rows settle in; a status that finishes in place changes colour and fades in its new
+  words.
+- The sky drifts too slowly to notice: two dust layers move apart over minutes and a few
+  stars twinkle. Name stars hold still. Sky motion is transform or opacity only.
 - With reduced motion, nothing animates and nothing starts invisible.
 
 ## Copy

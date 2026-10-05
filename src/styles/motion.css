@@ -1,0 +1,171 @@
+/* Motion: feedback, entrances, sliding indicators and states that finish in place, on the
+   timing in docs/design.md. With reduced motion, index.css turns every animation and
+   transition off, and nothing here hides content without one. Entrances move and fade only:
+   the name fitter measures with getBoundingClientRect, so a scaled card would keep a name
+   fitted too small. */
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes settle { from { opacity: 0; transform: translateY(4px); } }
+@keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes sun-rise { from { transform: translateY(14px); } }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes ring-in { from { outline-offset: 7px; } }
+
+/* Feedback */
+.button {
+  transition: background var(--motion-feedback) var(--ease), border-color var(--motion-feedback) var(--ease),
+    color var(--motion-feedback) var(--ease), box-shadow var(--motion-hover) var(--ease),
+    transform var(--motion-feedback) var(--ease);
+}
+.button:active:not(:disabled) { transform: scale(0.98); }
+.button-primary:hover:not(:disabled) { box-shadow: 0 6px 24px var(--sunset-glow); }
+:focus-visible { animation: ring-in var(--motion-feedback) var(--ease); }
+a { transition: color var(--motion-feedback) var(--ease); }
+
+/* States that finish in place change colour rather than snapping. */
+.tx-status,
+.registration-progress {
+  transition: background-color var(--motion-hover) var(--ease), border-color var(--motion-hover) var(--ease);
+}
+.register-reservation strong { transition: color var(--motion-hover) var(--ease); }
+
+/* Name cards lift and their sun brightens under a pointer. */
+.name-portrait.button {
+  transition: border-color var(--motion-hover) var(--ease), box-shadow var(--motion-hover) var(--ease),
+    transform var(--motion-hover) var(--ease);
+}
+.name-portrait.button:active:not(:disabled) { transform: translateY(-1px); }
+.name-portrait-art::before,
+.name-portrait-glow { transition: transform var(--motion-hover) var(--ease), filter var(--motion-hover) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .name-portrait.button:hover:not(:disabled) { transform: translateY(-3px); }
+  .name-portrait.button:hover:not(:disabled) .name-portrait-art::before,
+  .name-portrait.button:hover:not(:disabled) .name-portrait-glow { transform: translateY(-3px); filter: brightness(1.1); }
+  .name-chip.button:hover:not(:disabled) { border-color: var(--control-line); transform: translateY(-1px); }
+}
+
+/* Search: a soft glow while the field has focus. */
+.hero-search-field:focus-within { box-shadow: var(--shadow-lg), 0 0 0 4px var(--sunset-glow); }
+
+/* Copy: the icon turns into a check. */
+.copy-icon { display: inline-grid; }
+.copy-icon > svg {
+  grid-area: 1 / 1;
+  transition: opacity var(--motion-feedback) var(--ease), transform var(--motion-feedback) var(--ease);
+}
+.copy-icon > svg + svg,
+.copy-icon[data-copied] > svg:first-child { opacity: 0; transform: scale(0.6); }
+.copy-icon[data-copied] > svg + svg { opacity: 1; transform: none; }
+
+/* Sliding indicators: the container draws the active pill (useSlidingIndicator places it).
+   Tabs and the top navigation fill it; choice rows such as the term picker also give it the
+   chosen button's border. */
+.tabs,
+.nav-links,
+.term-picker,
+.marketplace-mode-control {
+  position: relative;
+  isolation: isolate;
+}
+:is(.tabs, .nav-links, .term-picker, .marketplace-mode-control)[data-indicator]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  box-sizing: border-box;
+  width: var(--indicator-width);
+  height: var(--indicator-height);
+  transform: translate(var(--indicator-x), var(--indicator-y));
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  pointer-events: none;
+}
+.tabs[data-indicator]::before {
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 -2px var(--peach);
+}
+:is(.term-picker, .marketplace-mode-control)[data-indicator]::before {
+  border: 1px solid var(--peach);
+  border-radius: var(--radius-sm);
+}
+/* Width and height transition as well as the transform: a fixed-size pill scaled to each item
+   would stretch its rounded ends (a 330 px tab is 3.3 times a 100 px base). The pill is
+   absolutely positioned, so resizing it lays out only itself. */
+:is(.tabs, .nav-links, .term-picker, .marketplace-mode-control)[data-indicator="ready"]::before {
+  transition: transform var(--motion-hover) var(--ease), width var(--motion-hover) var(--ease),
+    height var(--motion-hover) var(--ease);
+}
+:is(.tabs, .term-picker, .marketplace-mode-control)[data-indicator] .button:not(:disabled) { background: transparent; }
+:is(.tabs, .term-picker, .marketplace-mode-control)[data-indicator] .button:not(:disabled):not([aria-selected="true"], [aria-pressed="true"]):hover { background: var(--surface-raised); }
+.tabs[data-indicator] .button:is([aria-selected="true"], [aria-pressed="true"]) { box-shadow: none; }
+:is(.term-picker, .marketplace-mode-control)[data-indicator] .button[aria-pressed="true"]:not(:disabled) { border-color: transparent; }
+.nav-links[data-indicator] a.active { background: transparent; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Each view and result enters once, when it mounts; refreshes keep the same elements. */
+  .page-main > * { animation: enter var(--motion-enter) var(--ease) backwards; }
+  .page-main > .hero-search { animation-delay: calc(var(--motion-stagger) * 2); }
+  .page-main > .search-prices { animation-delay: calc(var(--motion-stagger) * 3); }
+  .page-main > .hero-showcase { animation-delay: calc(var(--motion-stagger) * 4); }
+  /* "Checking the name…" waits a moment, so a quick answer never flashes it. */
+  .page-main > .search-status { animation: fade var(--motion-hover) var(--ease) 200ms backwards; }
+
+  /* Views that replace part of a page: tab content, the claim and success steps, an auction. */
+  [role="tabpanel"] > :not(.profile-grid),
+  .register-card,
+  .register-step,
+  .marketplace-auction-detail { animation: fade var(--motion-hover) var(--ease) backwards; }
+  .claim-success { animation: enter var(--motion-enter) var(--ease) backwards; }
+
+  /* Cards, panels and rows fade in after their view, in turn, capped so long lists do not wait. */
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side, .account-grid, .subname-list, .timeline, .record-list) > * {
+    animation: fade var(--motion-enter) var(--ease) backwards;
+    animation-delay: calc(var(--motion-stagger) * 2);
+  }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side, .account-grid, .subname-list, .timeline, .record-list) > :nth-child(2) { animation-delay: calc(var(--motion-stagger) * 3); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side, .account-grid, .subname-list, .timeline, .record-list) > :nth-child(3) { animation-delay: calc(var(--motion-stagger) * 4); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side, .account-grid, .subname-list, .timeline, .record-list) > :nth-child(4) { animation-delay: calc(var(--motion-stagger) * 5); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side, .account-grid, .subname-list, .timeline, .record-list) > :nth-child(5) { animation-delay: calc(var(--motion-stagger) * 6); }
+  :is(.name-card-grid, .marketplace-card-grid, .marketplace-list, .marketplace-position-list, .profile-grid, .profile-side, .account-grid, .subname-list, .timeline, .record-list) > :nth-child(n + 6) { animation-delay: calc(var(--motion-stagger) * 7); }
+
+  /* A name's sun rises behind its horizon once, on its page and when it is claimed, then keeps
+     breathing. */
+  :is(.name-hero, .claim-success) .name-portrait-art::before { animation: sun-rise 1.2s var(--ease) backwards; }
+  :is(.name-hero, .claim-success) .name-portrait-glow {
+    animation: sun-rise 1.2s var(--ease) backwards, breathe-narrow var(--motion-breathe) ease-in-out infinite alternate;
+  }
+  :is(.name-hero, .claim-success) .name-portrait-glow + .name-portrait-glow {
+    animation-name: sun-rise, breathe-wide;
+  }
+  .name-hero-badges > * { animation: settle var(--motion-hover) var(--ease) backwards; animation-delay: calc(var(--motion-stagger) * 4); }
+  .claim-main .name-portrait .status-badge { animation: settle var(--motion-hover) var(--ease) backwards; animation-delay: calc(var(--motion-stagger) * 3); }
+  /* Keyed by term and price, so a new choice fades in. */
+  .claim-price { animation: fade var(--motion-feedback) var(--ease) backwards; }
+
+  /* Messages, errors and form rows settle in when they appear. */
+  :is(.empty-state, .secure-note.danger, .field-note.danger, .field-note.warning, .field-error, .runtime-notice, .network-notice, .operator-pause-banner, .tx-status, .registration-progress, .marketplace-bidder-banner, .marketplace-personal-status, .record-draft-row, .record-add, .inline-record-editor, .record-draft-review, .subname-editor) {
+    animation: settle var(--motion-hover) var(--ease) backwards;
+  }
+  /* Status lines are keyed by state, so a confirmation finishing in place fades its new words in. */
+  :is(.tx-status, .registration-progress) strong { animation: fade var(--motion-feedback) var(--ease) backwards; }
+  .registration-progress > .button { animation: settle var(--motion-hover) var(--ease) backwards; }
+  details[open] > :not(summary),
+  .address-chip-full:not([hidden]) { animation: settle var(--motion-feedback) var(--ease) backwards; }
+
+  /* Dialogs and the phone menu ease in; they close at once, since a dialog unmounts on close. */
+  .dialog[open] { animation: enter var(--motion-hover) var(--ease); }
+  .dialog[open]::backdrop { animation: fade var(--motion-hover) var(--ease); }
+  .menu-open .topbar-navigation { animation: drop var(--motion-feedback) var(--ease); }
+
+  .toast:not(:empty) { animation: enter var(--motion-hover) var(--ease) backwards; }
+  .copy-label { animation: fade var(--motion-feedback) var(--ease) backwards; }
+
+  .name-portrait.skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, var(--surface-raised) 50%, transparent 70%);
+    animation: shimmer 1.6s var(--ease) infinite;
+  }
+}
