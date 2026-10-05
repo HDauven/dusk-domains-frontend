@@ -24,6 +24,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
   const activityFeed = useActivityFeed({
     indexerClient: appRuntime.indexerClient,
     setError: searchState.setIndexerError,
+    startsLoading: Boolean(searchState.openingRoute.name && appRuntime.indexerClient),
     defaultName: namePreview.displayName,
     defaultNode: namePreview.nodeHex,
   })

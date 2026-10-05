@@ -18,6 +18,7 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
     marketplaceOnChainClient: appRuntime.marketplaceOnChainClient,
     liveWritesAvailable: !appRuntime.writeAccess.readOnly,
     mainView: searchState.mainView,
+    openingRoute: searchState.openingRoute,
     onOpenWalletConnection: () => void walletRuntime.handleOpenWalletConnection(),
     runtimeConfig: appRuntime.runtimeConfig,
     selectedAddress: walletRuntime.selectedAddress,

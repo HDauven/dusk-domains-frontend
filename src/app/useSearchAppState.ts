@@ -3,14 +3,23 @@ import { useScopedState } from '../utils/useScopedState'
 import type { SearchResultView } from '../features/search/SearchWorkspace'
 import { currentUnixSeconds, type NameResult } from '../names/internal'
 import type { AppMainView } from './AppTypes'
+import type { AppRoute } from './routes'
 
-export function useSearchAppState(accountScope: string) {
-  const [query, setQuery] = useState('')
-  const [mainView, setMainView] = useState<AppMainView>('search')
+type Opening = { route: AppRoute, indexed: boolean }
+
+// `opening` gives the route the app starts at. The first render starts in the state that
+// opening the route leaves (the view, or openIndexedName for a name), so a shared link never
+// shows the home page first; useUrlRoute still opens the route to load it. Without a name the
+// search box starts empty, as the static home page shows it.
+export function useSearchAppState(accountScope: string, opening?: () => Opening) {
+  const [start] = useState<Opening>(() => opening?.() ?? { route: { view: 'search' }, indexed: false })
+  const openingName = start.route.name ?? null
+  const [query, setQuery] = useState(openingName ?? '')
+  const [mainView, setMainView] = useState<AppMainView>(start.route.view)
   const [nowSeconds, setNowSeconds] = useState(() => currentUnixSeconds())
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
-  const [checked, setChecked] = useState(false)
-  const [resultView, setResultView] = useState<SearchResultView>('overview')
+  const [checked, setChecked] = useState(openingName !== null)
+  const [resultView, setResultView] = useState<SearchResultView>(openingName !== null && start.indexed ? 'details' : 'overview')
   const [apiSearchResult, setApiSearchResult] = useState<NameResult | null>(null)
   const feedbackScope = `${accountScope}:${mainView}:${resultView}:${query}`
   const [indexerError, setIndexerError] = useScopedState(feedbackScope, '')
@@ -44,6 +53,7 @@ export function useSearchAppState(accountScope: string) {
     indexerError,
     mainView,
     nowSeconds,
+    openingRoute: start.route,
     query,
     resultView,
     setApiSearchResult,

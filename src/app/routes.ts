@@ -35,6 +35,11 @@ function parseDecodedRoute(pathname: string): AppRoute {
   return { view: view ?? 'search' }
 }
 
+/** The route in the address bar as the app starts, so its first render shows that page. */
+export function openingRoute(): AppRoute {
+  return typeof window === 'undefined' ? { view: 'search' } : parseRoute(window.location.pathname)
+}
+
 export function routePath(route: AppRoute) {
   if (route.view === 'marketplace' && route.sellName) return `/market/sell/${encodeURIComponent(route.sellName)}`
   if (route.view === 'marketplace' && route.auctionNode) return `/market/auction/${route.auctionNode}`
