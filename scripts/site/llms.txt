@@ -24,13 +24,13 @@
 
 ## App
 
-- [Search and register](https://dusk.domains/): search a name, register it with Dusk Wallet, and manage records, subnames and the primary name.
-- [Market](https://dusk.domains/market): names for sale, auctions and offers.
-- [Name pages](https://dusk.domains/name/pie.dusk): every name has a page at https://dusk.domains/name/<name>.
+- [Search and register](%DUSK_DOMAINS_SITE_URL%/): search a name, register it with Dusk Wallet, and manage records, subnames and the primary name.
+- [Market](%DUSK_DOMAINS_SITE_URL%/market): names for sale, auctions and offers.
+- [Name pages](%DUSK_DOMAINS_SITE_URL%/name/pie.dusk): every name has a page at %DUSK_DOMAINS_SITE_URL%/name/<name>.
 
 ## Developers
 
-- [Read API](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md): the public indexer API at https://dusk.domains/api, for names, records, activity and the market.
+- [Read API](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md): the public indexer API at %DUSK_DOMAINS_SITE_URL%/api, for names, records, activity and the market.
 - [SDK](https://github.com/HDauven/dusk-domains-sdk): TypeScript SDK to resolve names, verify primary names and build transactions.
 - [Frontend source](https://github.com/HDauven/dusk-domains-frontend): the code for this site.
 

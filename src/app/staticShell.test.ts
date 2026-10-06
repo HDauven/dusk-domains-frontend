@@ -5,11 +5,12 @@ import { StrictMode, act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeAll, expect, it, vi } from 'vitest'
+import { renderStaticShell } from '../../scripts/siteBuild'
 import { watchStaticShell } from './staticShell'
 import { injectStaticShell, staticShellFile } from './staticShellHtml'
 
-// The static shell is the app's own first render of the home page for the dusk.domains
-// deployment. `npm run shell` writes it again after the home page changes.
+// The static shell is the app's own first render, with the network fields templated.
+// `npm run shell` writes it again after the home page changes.
 const contract = (byte: string) => `0x${byte.repeat(32)}`
 const deployment = {
   VITE_DUSK_DOMAINS_NODE_URL: 'https://testnet.nodes.dusk.network',
@@ -50,12 +51,16 @@ const text = (element: Element | null | undefined) => element?.textContent?.repl
 it('is the home page exactly as the app renders it first', async () => {
   // React's server render leads with resource hints that the mounted app does not have.
   const shell = renderToStaticMarkup(createElement(App)).replace(/^(?:<link [^>]*\/>)+/, '')
-  await expect(shell).toMatchFileSnapshot('./static-shell.html')
+  const template = shell.replaceAll('Dusk testnet network', 'Dusk %DUSK_DOMAINS_NETWORK_TONE% network')
+    .replace('network-badge testnet">Testnet</span>', 'network-badge %DUSK_DOMAINS_NETWORK_TONE%">%DUSK_DOMAINS_NETWORK_LABEL%</span>')
+    .replace('</nav></footer>', '%DUSK_DOMAINS_OTHER_NETWORK_LINK%</nav></footer>')
+  await expect(template).toMatchFileSnapshot('./static-shell.html')
+  expect(renderStaticShell(template, deployment)).toBe(shell)
 })
 
 it('hands focus and typed text over to the mounted app, which shows the same hero', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
-  const page = injectStaticShell(readFileSync(resolve('index.html'), 'utf8'), readFileSync(staticShellFile, 'utf8'))
+  const page = injectStaticShell(readFileSync(resolve('index.html'), 'utf8'), renderStaticShell(readFileSync(staticShellFile, 'utf8'), deployment))
   document.body.innerHTML = /<body>([\s\S]*)<\/body>/.exec(page)![1].replace(/<script[\s\S]*?<\/script>/g, '')
   const container = document.getElementById('root')!
   const shellInput = container.querySelector<HTMLInputElement>('#name-search')!
@@ -87,7 +92,7 @@ it('hands focus and typed text over to the mounted app, which shows the same her
 
 function mountShell() {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
-  const page = injectStaticShell(readFileSync(resolve('index.html'), 'utf8'), readFileSync(staticShellFile, 'utf8'))
+  const page = injectStaticShell(readFileSync(resolve('index.html'), 'utf8'), renderStaticShell(readFileSync(staticShellFile, 'utf8'), deployment))
   document.body.innerHTML = /<body>([\s\S]*)<\/body>/.exec(page)![1].replace(/<script[\s\S]*?<\/script>/g, '')
   return document.getElementById('root')!
 }

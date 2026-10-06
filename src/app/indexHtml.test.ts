@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 import { parseRoute } from './routes'
 import { injectStaticShell } from './staticShellHtml'
 
-const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8')
+const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8').replaceAll('%DUSK_DOMAINS_SITE_URL%', 'https://dusk.domains')
 type StructuredNode = {
   '@type': string
   description?: string

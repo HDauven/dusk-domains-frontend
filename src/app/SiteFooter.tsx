@@ -1,6 +1,7 @@
 import type { DuskDomainsRuntimeConfig } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 import { followLink, routePath } from './routes'
+import { otherNetwork } from './otherNetwork'
 
 export function SiteFooter({
   links,
@@ -9,6 +10,7 @@ export function SiteFooter({
   links: DuskDomainsRuntimeConfig['launchLinks']
   onMainViewChange: (view: AppMainView) => void
 }) {
+  const network = otherNetwork(import.meta.env)
   const external = [
     ['Support', links.support],
     ['Report abuse', links.abuse],
@@ -25,6 +27,7 @@ export function SiteFooter({
         {external.map(([label, href]) => (
           <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>
         ))}
+        {network ? <a href={network.href}>{network.label}</a> : null}
       </nav>
     </footer>
   )
