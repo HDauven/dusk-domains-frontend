@@ -35,8 +35,10 @@ DUSK_DOMAINS_E2E_BASE_URL=http://127.0.0.1:5217/ node scripts/ux-regression-smok
 
 ## Deploy
 
-`npm run build` produces static files in `dist/`. Serve driver files as Wasm and
-configure the indexer's allowed browser origin to match the app.
+Use the [mainnet and testnet deployment guide](docs/deploy.md) for env files,
+repeatable deploys and rollback. `npm run build` produces static files in `dist/`.
+Serve driver files as Wasm and configure the indexer's allowed browser origin
+to match the app.
 
 Fall back to `index.html` for app routes. For link previews, Caddy rewrites known
 preview bots visiting `/name/*` to `/api/share/name/*` before that fallback; other

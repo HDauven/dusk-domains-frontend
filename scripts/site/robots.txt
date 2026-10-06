@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: %DUSK_DOMAINS_SITE_URL%/sitemap.xml

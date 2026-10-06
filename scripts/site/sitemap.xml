@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://dusk.domains/sitemap-pages.xml</loc>
+    <loc>%DUSK_DOMAINS_SITE_URL%/sitemap-pages.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://dusk.domains/sitemap-names.xml</loc>
+    <loc>%DUSK_DOMAINS_SITE_URL%/sitemap-names.xml</loc>
   </sitemap>
 </sitemapindex>
