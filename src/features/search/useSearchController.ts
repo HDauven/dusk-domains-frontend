@@ -1,5 +1,3 @@
-import { useEffect, useRef } from 'react'
-import { scheduleSearch } from './debouncedSearch'
 import {
   checkAvailability,
   forgetPendingReservation,
@@ -9,10 +7,10 @@ import {
 import { resetSearchState } from './searchControllerReset'
 import type { UseSearchControllerProps } from './searchControllerTypes'
 
+// Availability is checked on Search or Enter only. Checking while typing swapped the result in
+// and out on every letter, so the page jumped as people typed.
 export function useSearchController(props: UseSearchControllerProps) {
-  const cancelSearch = useRef(() => {})
-  useEffect(() => () => cancelSearch.current(), [])
-  const cancel = () => { cancelSearch.current(); props.beginNameRead() }
+  const cancel = () => props.beginNameRead()
   return {
     forgetPendingReservation: (reservation: Parameters<typeof forgetPendingReservation>[1]) => (
       forgetPendingReservation(props, reservation)
@@ -31,7 +29,6 @@ export function useSearchController(props: UseSearchControllerProps) {
     resetSearch: (nextValue: string) => {
       cancel()
       resetSearchState(props, nextValue)
-      cancelSearch.current = scheduleSearch(nextValue, query => { void checkAvailability({ ...props, query }) })
     },
     // Direct links and saved names open the public profile. Typed searches show availability.
     searchName: (name: string) => {

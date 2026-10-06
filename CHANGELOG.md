@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Check availability when Search or Enter is pressed, not after each typed letter, so the page stays still while typing.
+
 - Apply the SDK gas policy to every wallet write using the connected Moonlight account.
 
 - Bind bids and marketplace lifecycle actions to the reviewed placement, and compare immutable auction terms and sale fees before signing. Show current bidding information without blocking a reviewed bid after an intervening bid.
