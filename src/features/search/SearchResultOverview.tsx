@@ -1,6 +1,6 @@
 import { PremiumNotice } from '../registration/PremiumNotice'
 import { Badge } from '../../components/ui/Badge'
-import { suggestedNames } from './debouncedSearch'
+import { suggestedNames } from './suggestedNames'
 import { NameCard } from '../../components/ui/NameCard'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'

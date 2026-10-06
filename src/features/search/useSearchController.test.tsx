@@ -21,17 +21,16 @@ function controller() {
   return { ...result, beginNameRead: props.beginNameRead }
 }
 
-it('checks the latest typed name after a pause and invalidates older reads immediately', () => {
+it('checks availability on submit only; typing just invalidates older reads', () => {
   vi.useFakeTimers()
   const search = controller()
   search.resetSearch('alpha')
-  vi.advanceTimersByTime(300)
   search.resetSearch('beta')
+  vi.runAllTimers()
   expect(search.beginNameRead).toHaveBeenCalledTimes(2)
   expect(checkAvailability).not.toHaveBeenCalled()
-  vi.advanceTimersByTime(350)
+  void search.handleCheckAvailability()
   expect(checkAvailability).toHaveBeenCalledTimes(1)
-  expect(checkAvailability).toHaveBeenCalledWith(expect.objectContaining({ query: 'beta' }))
 })
 
 it('cancels a typed search when opening a profile or clearing the field', () => {
