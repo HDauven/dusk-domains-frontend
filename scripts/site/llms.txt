@@ -40,6 +40,8 @@
 
 ## Optional
 
+- [Terms of Use](%DUSK_DOMAINS_SITE_URL%/terms)
+- [Privacy Notice](%DUSK_DOMAINS_SITE_URL%/privacy)
 - [Support](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=support-request.yml)
 - [Report abuse](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml)
 - [Report a vulnerability](https://github.com/HDauven/dusk-domains-frontend/security/advisories/new)

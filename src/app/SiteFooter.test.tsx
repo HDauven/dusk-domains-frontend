@@ -15,3 +15,8 @@ it('omits the network link when its URL is unset', () => {
   vi.stubEnv('VITE_DUSK_DOMAINS_OTHER_NETWORK_URL', '')
   expect(render()).not.toMatch(/Mainnet|Testnet/)
 })
+
+it('links to both legal pages', () => {
+  expect(render()).toContain('<a href="/terms">Terms</a>')
+  expect(render()).toContain('<a href="/privacy">Privacy</a>')
+})

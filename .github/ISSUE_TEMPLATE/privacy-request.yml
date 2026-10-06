@@ -1,0 +1,41 @@
+name: Privacy request
+description: Request access, correction or deletion of data, or object to its processing.
+title: "[Privacy]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This request is public. Don't include personal data, private keys or seed phrases. We'll arrange a private channel if needed.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Request type
+      options:
+        - Access
+        - Correction
+        - Deletion
+        - Objection
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: data
+    attributes:
+      label: Which data does this concern?
+      description: Describe the data without including personal details.
+      placeholder: Server logs around a date, or my name's display in the API.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Short description
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I confirm this issue contains no personal data, keys or seed phrases.
+          required: true

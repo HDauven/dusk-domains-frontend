@@ -1,3 +1,4 @@
+import { checkLegalPages } from './legal-pages-smoke.mjs'
 import { checkPremiumConfirmation } from './premium-confirmation-smoke.mjs'
 import { checkNamespaceControls } from './namespace-smoke.mjs'
 import { checkOpenRenewal } from './open-renewal-smoke.mjs'
@@ -25,6 +26,7 @@ for (let attempt = 0; ; attempt++) {
 }
 const browser = await chromium.launch({ headless: true })
 try {
+  await checkLegalPages(browser, baseUrl)
   const context = await browser.newContext()
   const page = await context.newPage()
   const errors = []

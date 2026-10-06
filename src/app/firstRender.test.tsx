@@ -31,6 +31,8 @@ it.each([
   ['/my', '>My names</h1>'],
   ['/referrals', '>Referrals</h1>'],
   ['/treasury', '>Treasury</h1>'],
+  ['/terms', '>Terms of Use</h1>'],
+  ['/privacy', '>Privacy Notice</h1>'],
   [`/market/auction/0x${'ab'.repeat(32)}`, '>Auction</h1>'],
 ])('paints %s as that view', (path, heading) => {
   const main = firstPaint(path)

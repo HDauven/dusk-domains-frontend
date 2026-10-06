@@ -36,3 +36,9 @@ it('round-trips a name selected for sale', () => {
 it.each(['/name/%', '/name/%E0%A4%A', '/market/sell/%FF'])('treats undecodable deep links as unknown routes: %s', path => {
   expect(parseRoute(path)).toEqual(parseRoute('/not-found'))
 })
+
+it.each(['terms', 'privacy'] as const)('round-trips the %s page, including a trailing slash', view => {
+  expect(routePath({ view })).toBe(`/${view}`)
+  expect(parseRoute(`/${view}`)).toEqual({ view })
+  expect(parseRoute(`/${view}/`)).toEqual({ view })
+})

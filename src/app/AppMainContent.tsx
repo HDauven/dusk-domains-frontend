@@ -4,6 +4,7 @@ import { MarketplaceView } from '../features/marketplace/MarketplaceView'
 import { ReferralsView } from '../features/referrals/ReferralsView'
 import { SearchWorkspace } from '../features/search/SearchWorkspace'
 import { TreasuryView } from '../features/treasury/TreasuryView'
+import { LegalPage } from '../legal/LegalPage'
 import type { AppMainView } from './AppTypes'
 import { OwnershipConfirmationNotice } from './OwnershipConfirmationNotice'
 
@@ -26,6 +27,7 @@ export function AppMainContent({
 }) {
   return (
     <>
+      {mainView === 'terms' || mainView === 'privacy' ? <LegalPage page={mainView} /> : null}
       <OwnershipConfirmationNotice {...ownershipConfirmationProps} />
       {mainView === 'search' ? (
         <SearchWorkspace {...searchProps} />
