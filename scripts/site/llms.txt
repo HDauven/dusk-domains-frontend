@@ -12,6 +12,8 @@
 
 **What is a .dusk name?** A readable name, such as alice.dusk, registered on the Dusk blockchain. It points to public records its owner sets, such as a Dusk address, so apps can show and use the name instead of a long address.
 
+**Why use a .dusk name?** To send and receive with a name instead of a long address: apps that integrate Dusk Domains let people pay alice.dusk and show alice.dusk in place of the address. One name can hold addresses on Dusk, Bitcoin, Ethereum, Solana and EVM chains, plus a website, an avatar and a description. Projects can give out subnames, such as pay.project.dusk, to their team, apps or community.
+
 **How do I register a name?** Search for the name, connect Dusk Wallet and choose a term of 1 to 10 years. Registration takes two transactions a short time apart. The first reserves the name without revealing it, so nobody can see the name and register it first.
 
 **What happens when a name expires?** Its owner, or anyone else, can still renew it for 30 days, unless it is listed in the market, and the new term counts from the old expiry date. After those 30 days anyone can register it, and its records and subnames are cleared. For 21 days after that, registering it may cost an extra premium that halves every day.
@@ -22,6 +24,8 @@
 
 **Can I buy and sell names?** Yes. In the market you can sell a name at a fixed price or in an auction, and make offers on names others own. While a name is listed, the market holds it in escrow.
 
+**Where do the fees go?** Registrations, renewals, expiry premiums and the market's fee on sales go to an on-chain protocol treasury; referrers can earn a share of what they bring in. The DUSK the treasury earns is used to provide liquidity in DUSK liquidity pools.
+
 ## App
 
 - [Search and register](%DUSK_DOMAINS_SITE_URL%/): search a name, register it with Dusk Wallet, and manage records, subnames and the primary name.
@@ -31,7 +35,7 @@
 ## Developers
 
 - [Read API](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md): the public indexer API at %DUSK_DOMAINS_SITE_URL%/api, for names, records, activity and the market.
-- [SDK](https://github.com/HDauven/dusk-domains-sdk): TypeScript SDK to resolve names, verify primary names and build transactions.
+- [SDK](https://jsr.io/@duskdomains/sdk): TypeScript SDK on JSR to resolve names, verify primary names and build transactions ([source](https://github.com/HDauven/dusk-domains-sdk)).
 - [Frontend source](https://github.com/HDauven/dusk-domains-frontend): the code for this site.
 
 ## Optional
