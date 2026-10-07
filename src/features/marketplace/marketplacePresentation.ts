@@ -1,11 +1,14 @@
 import { DUSK_APPROX_BLOCK_TIME_SECONDS, type IndexedMarketplaceAuction } from '../../names/internal'
+import { SETTLEMENT_WINDOW_BLOCKS } from '../../names/marketplaceProtocol'
 import { AUCTION_BLOCKS_PER_DAY } from './auctionMath'
 
-export type AuctionStatus = 'waiting' | 'live' | 'ending' | 'ended' | 'expired'
+export type AuctionStatus = 'waiting' | 'live' | 'ending' | 'ended' | 'expired' | 'settlement_expired'
 
 export { sameAuthority } from '../identity/ownerLabel'
 
 export function auctionTimeLabel(auction: IndexedMarketplaceAuction, currentBlockHeight: number | null) {
+  if (auction.returnPending) return 'Return name to finish'
+  if (auctionStatus(auction, currentBlockHeight) === 'settlement_expired') return 'Settlement window closed'
   if (auction.endBlockHeight === null) return 'Starts with first bid'
   if (currentBlockHeight === null) return `Ends at block ${auction.endBlockHeight.toLocaleString()}`
   return blocksTimeLabel(Math.max(0, auction.endBlockHeight - currentBlockHeight), 'Ready to settle')
@@ -35,6 +38,7 @@ export function auctionStatus(auction: IndexedMarketplaceAuction, currentBlockHe
   }
   if (auction.endBlockHeight !== null && currentBlockHeight !== null) {
     const remaining = auction.endBlockHeight - currentBlockHeight
+    if (remaining <= -SETTLEMENT_WINDOW_BLOCKS) return 'settlement_expired'
     if (remaining <= 0) return 'ended'
     if (remaining <= 60) return 'ending'
   }
@@ -45,6 +49,7 @@ export function auctionStatusLabel(status: AuctionStatus) {
   if (status === 'waiting') return 'Waiting for first bid'
   if (status === 'ending') return 'Ending soon'
   if (status === 'ended') return 'Finalization pending'
+  if (status === 'settlement_expired') return 'Settlement window closed'
   if (status === 'expired') return 'Start window closed'
   return 'Live auction'
 }
@@ -54,7 +59,7 @@ export function auctionStatusTone(status: AuctionStatus) {
   if (status === 'live') return 'success'
   if (status === 'ending') return 'warning'
   if (status === 'ended') return 'neutral'
-  if (status === 'expired') return 'danger'
+  if (status === 'expired' || status === 'settlement_expired') return 'danger'
   return 'neutral'
 }
 

@@ -9,7 +9,7 @@ it.each([
 ])('reads the marketplace identity from router config: %j', async response => {
   const read = vi.fn().mockResolvedValue(response)
   expect(await readPoolMarketplace({ read })).toBe(`0x${'ab'.repeat(32)}`)
-  expect(read).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ contract: 'router', functionName: 'config', kind: 'read' }))
+  expect(read).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ contract: 'directory', functionName: 'config', kind: 'read' }))
 })
 
 it.each([null, {}, { marketplace: '' }, { marketplace: Array(31).fill(1) }, { marketplace: Array(32).fill(256) }, { marketplace: Array(32).fill(1.5) }])('leaves malformed config unknown: %j', async response => {

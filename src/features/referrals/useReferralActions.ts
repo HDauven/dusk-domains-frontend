@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
-  treasuryClaimAllReferralRewardsRuntimeCall,
+  vaultClaimAllReferralRewardsRequest,
   userFacingMessageFromText,
   waitForConfirmedIndexerRefresh,
   type DuskDomainTxState,
@@ -39,7 +39,6 @@ export function useReferralActions({
   referralRewardClaimReady,
   runtimeConfig,
   selectedAddress,
-  selectedAuthority,
   setReferralConfirmation,
   setReferralError,
   setReferralTxState,
@@ -67,7 +66,7 @@ export function useReferralActions({
     if (!session()) { setReferralError(new WalletSessionChangedError().message); return }
 
     const beforeClaimableLux = referralAccountState.claimableLux
-    const call = treasuryClaimAllReferralRewardsRuntimeCall({
+    const call = vaultClaimAllReferralRewardsRequest({
       recipient: selectedAddress,
     })
 
@@ -92,7 +91,7 @@ export function useReferralActions({
       attempts: 15,
       delayMs: 1_000,
       check: async () => {
-        const nextReferralState = await indexerClient.getReferralState(selectedAuthority)
+        const nextReferralState = await indexerClient.getReferralState(referralAccountState.referrer || selectedAddress)
         return BigInt(nextReferralState.claimableLux) < BigInt(beforeClaimableLux)
       },
       refresh: () => loadReferralAccount({ fresh: true }),

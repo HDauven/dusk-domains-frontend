@@ -1,3 +1,4 @@
+import { reservation } from '../test/frozenFixtures'
 import { forgetPendingReservation } from '../features/search/actions/forgetPendingReservation'
 import type { ComponentProps } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -61,17 +62,17 @@ it('uses sync timestamps and lag, not the last name event, for freshness', () =>
 it('scopes claim callbacks to the current remembered wallet and network', () => {
   const values = new Map<string,string>()
   vi.stubGlobal('localStorage',{getItem:(key:string)=>values.get(key)??null,setItem:(key:string,value:string)=>values.set(key,value)})
-  const saved: PendingNameReservation = {name:'alpha.dusk',node:'node',controller:'owner',ownerAddress:'address',commitment:'commit',secret:'secret',chainId:'dusk:0',durationYears:1,committedBlockHeight:1,committedTxId:'tx',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}
+  const saved: PendingNameReservation = reservation({name:'alpha.dusk',controller:'0x'+'11'.repeat(32)})
   upsertPendingNameReservation(saved)
   let load!: ReturnType<typeof usePendingReservationList>['loadPendingReservations']
   function Probe({chainId,selectedAuthority}:{chainId:string;selectedAuthority:string}) { load=usePendingReservationList({chainId,selectedAuthority}).loadPendingReservations;return null }
-  renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority="owner" />)
+  renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority={saved.controller} />)
   expect(load()).toEqual([saved])
-  const other = {...saved,name:'beta.dusk',controller:'other',commitment:'other-commit',secret:'other-secret'}
+  const other = reservation({...saved,name:'beta.dusk',controller:'0x'+'22'.repeat(32)})
   upsertPendingNameReservation(other)
-  renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority="other" />)
+  renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority={other.controller} />)
   expect(load()).toEqual([other])
-  let rememberedOwner: string | null = 'other'
+  let rememberedOwner: string | null = other.controller
   vi.stubGlobal('sessionStorage', { getItem: (key: string) => key === 'dusk-domains:last-claim-owner:dusk:0' ? rememberedOwner : null })
   values.set('dusk-domains:last-claim-owner:dusk:0', 'owner')
   renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority="" />)
@@ -84,9 +85,9 @@ it('scopes claim callbacks to the current remembered wallet and network', () => 
   confirm.mockImplementation(() => { ownerChanged = true; return true })
   forgetPendingReservation({ loadPendingReservations: () => ownerChanged ? [] : [other] } as never, other)
   expect(load()).toEqual([other])
-  renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority="owner" />)
+  renderToStaticMarkup(<Probe chainId="dusk:0" selectedAuthority={saved.controller} />)
   expect(load()).toEqual([])
-  rememberedOwner = 'owner'
+  rememberedOwner = saved.controller
   expect(load()).toEqual([saved])
   rememberedOwner = null
   expect(load()).toEqual([])

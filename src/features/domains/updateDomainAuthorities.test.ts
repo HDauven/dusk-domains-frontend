@@ -45,6 +45,8 @@ it('transfers owner and manager together, changes only the manager when requeste
   expect(setManagementError).toHaveBeenLastCalledWith('The recipient changed. Check the address again before confirming.')
   await updateDomainAuthorities({...props,canManageName:false},{kind:'transfer',recipient})
   expect(submitNameWrite).toHaveBeenCalledTimes(2)
+  await updateDomainAuthorities(props, { kind: 'transfer', recipient: { ...recipient, input: 'alice.dusk' } })
+  expect(submitNameWrite.mock.lastCall![1].reviewedRecipient).toEqual({ name: 'alice.dusk', address: recipient.address, kind: 'transfer' })
 })
 
 

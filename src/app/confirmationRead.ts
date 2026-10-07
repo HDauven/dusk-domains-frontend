@@ -33,15 +33,15 @@ export type TransactionReceipt = { status: 'executed' | 'failed'; blockHeight: n
 export async function readTransactionReceipt(nodeUrl: string, txId: string, signal?: AbortSignal): Promise<TransactionReceipt | null> {
   const hash = txId.replace(/^0x/, '').toLowerCase()
   if (!/^[a-f0-9]{64}$/.test(hash)) return null
-  const response = await fetch(new URL('/graphql', nodeUrl), {
+  const response = await fetch(new URL('/on/graphql/query', nodeUrl), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'rusk-version': '1.0.0-rc.0' },
-    body: JSON.stringify({ query: `{ tx(hash: "${hash}") { id err blockHeight } }` }),
+    headers: { 'Content-Type': 'application/graphql' },
+    body: `{ tx(hash: "${hash}") { id err blockHeight } }`,
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000),
   })
   if (!response.ok) return null
   const body = await response.json()
-  const tx = body?.data?.tx
+  const tx = (body?.data ?? body)?.tx
   if (body.errors?.length || !tx || tx.id !== hash || !Number.isSafeInteger(tx.blockHeight) || tx.blockHeight < 0 || !('err' in tx)) return null
   if (tx.err !== null && typeof tx.err !== 'string') return null
   return { status: tx.err ? 'failed' : 'executed', blockHeight: tx.blockHeight, message: tx.err || undefined }

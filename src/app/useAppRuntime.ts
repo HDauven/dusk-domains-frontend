@@ -22,11 +22,11 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
   // renders; keyed on identity, every render rebuilt the app and read the router again.
   const envKey = JSON.stringify(env)
   const runtimeConfig = useMemo(() => createDuskDomainsRuntimeConfig(JSON.parse(envKey) as DuskDomainsRuntimeEnv), [envKey])
-  const recordSourceContractId = runtimeConfig.contracts.core.contractId
+  const recordSourceContractId = runtimeConfig.contracts.resolver.contractId
   const indexerClient = useMemo(() => (
     runtimeConfig.indexerUrl ? createHealthyIndexerClient(runtimeConfig.indexerUrl) : null
   ), [runtimeConfig.indexerUrl])
-  const pause = useOperatorPause(indexerClient, `${runtimeConfig.chainId}:${runtimeConfig.contracts.router.contractId}`)
+  const pause = useOperatorPause(indexerClient, `${runtimeConfig.chainId}:${runtimeConfig.contracts.directory.contractId}`)
   const getCurrentBlockHeight = useMemo(() => (
     createDuskNodeBlockHeightReader(runtimeConfig.nodeUrl)
   ), [runtimeConfig.nodeUrl])

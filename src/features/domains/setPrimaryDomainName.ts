@@ -1,5 +1,5 @@
 import {
-  coreSetPrimaryNameRuntimeCall,
+  storeSetPrimaryNameRequest,
   userFacingErrorMessage,
 } from '../../names/internal'
 import { guardDomainActionPrerequisite } from './domainActionGuards'
@@ -42,7 +42,7 @@ export async function setPrimaryDomainName({
   if (!workspace()) return
 
   try {
-    const call = coreSetPrimaryNameRuntimeCall({
+    const call = storeSetPrimaryNameRequest({
       endpointType: 'moonlight_address',
       endpointValue: primaryEndpoint,
       node: nodeHex,

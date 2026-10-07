@@ -19,7 +19,7 @@ it('renews a contract-owned name from a third-party wallet and preserves its sta
     submitNameWrite, ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
     shouldApplyPreviewWriteFallback: async () => true,
   } as never)
-  expect(submitNameWrite).toHaveBeenCalledWith('alice.dusk', expect.objectContaining({ functionName: 'renew_runtime', args: { node: 'node', durationYears: 1, feeLux: 10_000_000_000 } }), expect.anything())
+  expect(submitNameWrite).toHaveBeenCalledWith('alice.dusk', expect.objectContaining({ functionName: 'renew', args: { node: 'node', durationYears: 1, feeLux: 10_000_000_000 } }), expect.anything())
   expect(setManagedName.mock.calls[0][0](managedName)).toMatchObject({ owner, manager: 'manager', resolver: 'resolver', expiresAt: 3_153_800 })
   expect(appendActivity).toHaveBeenCalledWith(expect.objectContaining({ actor: payer, eventType: 'renewal' }))
   expect(setRenewalError).toHaveBeenCalledExactlyOnceWith('')

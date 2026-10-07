@@ -6,9 +6,29 @@ directories and indexer instances on the server. Each site's `/api` must route t
 its own indexer, whose allowed browser origin matches that site.
 
 Copy `.env.mainnet.example` to `.env.mainnet.local`, and `.env.testnet.example` to
-`.env.testnet.local`. Replace each contract ID and driver URL with that network's
-deployment values. Driver URLs identify hash-versioned files under
-`/contracts/deployments/`. Env files contain public build configuration; keep
+`.env.testnet.local`. Merge that network's deploy bundle `frontend.env` into its local env file. It supplies
+`VITE_DUSK_DOMAINS_{DIRECTORY,POLICY,STORE,VAULT,RESOLVER,MARKETPLACE}_{CONTRACT_ID,DRIVER_URL}`.
+Copy the bundle's `contracts/` contents to `public/contracts/`; immutable filenames are
+`dusk-domains-<role>.<sha256>.data-driver.wasm`, with `frozen-resolver` and `marketplace-v1`
+for the resolver and marketplace. Validation checks IDs, emitted filenames and SHA-256.
+Set the frontend's indexer URL for this site (for example `/api`); the local-chain handoff
+may leave it empty, which deliberately keeps the app in preview mode.
+
+If using `VITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json`, host the bundle's `manifest.json`
+at the site root with `contracts/` beneath it. For a versioned URL such as
+`/releases/v1/manifest.json`, host its drivers beneath `/releases/v1/contracts/`.
+Driver paths are relative to the manifest directory. The app explicitly adapts the
+`dusk-domains/frozen-release/v1` handoff (`contracts[].id` and `artifacts[role].driver`)
+to SDK `contractId`/`dataDriver` entries. It validates the configured chain and each role's
+ID, and the SDK verifies driver hashes and schemas before using them. SDK-format manifests
+are also accepted for reviewed releases containing multiple admitted implementations.
+The manifest must list every admitted store/resolver/market implementation the client
+may follow. Publish its reviewed update before enabling a shard destination; SDK reads
+verify admission, binding, driver checksum and monotone forwarding. New name actions resolve
+the current home; saved reservations retain their original commitment store. Existing marketplace
+orders retain their marketplace, order ID and original store, including cancellation, expiry and returns.
+The separate `indexer.env` belongs to a fresh frozen indexer database, replayed from its
+first deployment block with the emitted event schema version. Env files contain public build configuration; keep
 filled copies out of git. Never put credentials in a `VITE_` variable.
 
 `VITE_DUSK_DOMAINS_SITE_URL` is an HTTP(S) origin (default `https://dusk.domains`).
@@ -71,3 +91,9 @@ scripts/deploy.sh --rollback
 This atomically exchanges the current release with the newest previous release,
 retains the displaced release as a new backup, and verifies the restored commit
 using its manifest. It does not rebuild or need the original env file.
+
+## SDK dependency
+
+The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.3.0`,
+through the `@jsr` registry mapping in `.npmrc`. It never imports the removed
+`/internal` or `/writes` entry points. UI presentation helpers live in `src/names/ui`.

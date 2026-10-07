@@ -1,7 +1,7 @@
 import { resolveRecipient, type ResolvedRecipient } from '../identity/resolveRecipient'
 import { sameAuthority } from '../identity/ownerLabel'
 import {
-  coreUpdateAuthoritiesRuntimeCall,
+  storeUpdateAuthoritiesRequest,
   userFacingErrorMessage,
   userFacingMessageFromText,
 } from '../../names/internal'
@@ -58,12 +58,15 @@ export async function updateDomainAuthorities({
       return
     }
 
-    const call = coreUpdateAuthoritiesRuntimeCall({
+    const call = storeUpdateAuthoritiesRequest({
       node: nodeHex,
       owner: nextOwner,
       manager: nextManager,
       clearRecords: change.kind === 'transfer' && (change.clearRecords ?? true),
     })
+    if (/\.dusk$/i.test(change.recipient.input.trim())) {
+      call.reviewedRecipient = { name: change.recipient.input, address: change.recipient.address, kind: change.kind }
+    }
     const finalState = await submitNameWrite(displayName, call, {
       ownershipChange: change.kind,
       workspace,

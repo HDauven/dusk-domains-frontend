@@ -1,65 +1,107 @@
-import { createDuskApp } from '@dusk/connect'
-import type { DuskApp, DuskWallet } from '@dusk/connect'
+import { createClientFromManifest, contractId } from '@duskdomains/sdk'
+import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
+import type { DuskWallet } from '@dusk/connect'
 import { createSessionWriteWallet } from '../features/wallet/sessionWriteWallet'
 import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
-import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
+import { roles } from '../names/config'
+import { configuredReleaseManifest } from '../names/releaseManifest'
+import { prepareFrozenCall } from '../names/prepareFrozenCall'
+import { frozenPayload } from '../names/transactions'
 import {
   isPlaceholderContractId,
   type DuskConnectAppLike,
   type DuskDomainsRuntimeConfig,
 } from '../names/internal'
-
-type DuskDomainsLiveAppOptions = {
+export function canUseLiveDuskDomainsWrites(config: DuskDomainsRuntimeConfig): boolean {
+  return (
+    config.liveWritesEnabled &&
+    config.mode === 'live_ready' &&
+    roles.every((role) => !isPlaceholderContractId(config.contracts[role]!.contractId))
+  )
+}
+export function createDuskDomainsLiveApp(options: {
   runtimeConfig: DuskDomainsRuntimeConfig
   wallet: DuskWallet
   session: Pick<DuskWalletLike, 'state'>
   autoConnect?: boolean
-}
-
-type DuskDomainsLiveApp = {
-  dusk: DuskApp
-  names: DuskConnectAppLike
-}
-
-export function canUseLiveDuskDomainsWrites(config: DuskDomainsRuntimeConfig): boolean {
-  return (
-    config.liveWritesEnabled
-    && !isPlaceholderContractId(config.contracts.router.contractId)
-    && !isPlaceholderContractId(config.contracts.core.contractId)
-    && !isPlaceholderContractId(config.contracts.treasury.contractId)
-  )
-}
-
-export function createDuskDomainsLiveApp(options: DuskDomainsLiveAppOptions): DuskDomainsLiveApp {
-  if (!canUseLiveDuskDomainsWrites(options.runtimeConfig)) {
+}) {
+  if (!canUseLiveDuskDomainsWrites(options.runtimeConfig))
     throw new Error('Dusk Domains live writes require configured contract IDs and live writes enabled.')
-  }
-
-  const createApp = (wallet: DuskWallet) => createDuskApp({
-    wallet,
-    nodeUrl: options.runtimeConfig.nodeUrl,
-    chain: options.runtimeConfig.chainId === 'dusk:0'
-      ? { nodeUrl: options.runtimeConfig.nodeUrl }
-      : { chainId: options.runtimeConfig.chainId },
-    autoConnect: options.autoConnect ?? true,
-    contracts: options.runtimeConfig.contracts,
-  })
-  const dusk = createApp(options.wallet)
-  const names = createDuskDomainsConnectApp(dusk)
-
-  return {
-    dusk,
-    names: {
-      ...names,
-      get chainId() { return names.chainId },
-      async writeContract(params) {
-        const wallet = createSessionWriteWallet(options.wallet, options.session, options.runtimeConfig.chainId, options.runtimeConfig.nodeUrl)
-        try {
-          return await createDuskDomainsConnectApp(createApp(wallet)).writeContract(params)
-        } finally {
-          wallet.destroy()
-        }
-      },
+  const config = options.runtimeConfig,
+    origin = globalThis.location?.origin ?? 'http://localhost'
+  let pending: ReturnType<typeof createClientFromManifest> | undefined
+  const client = () =>
+    (pending ??= configuredReleaseManifest(config, origin)
+      .then((manifest) =>
+        createClientFromManifest(manifest, {
+          artifactBaseUrl: origin + '/',
+          nodeUrl: config.nodeUrl,
+          indexerUrl: new URL(config.indexerUrl!, origin).href,
+          resolveContract: async (role, id) => {
+            if (!config.manifestUrl)
+              throw new Error('This shard requires the updated deployment manifest.')
+            const manifest = await configuredReleaseManifest(config, origin)
+            const artifact = manifest.contracts.find((c) => c.contractId === id)
+            if (!artifact || artifact.role !== role)
+              throw new Error('The deployment manifest does not include this admitted contract.')
+            return artifact
+          },
+        }),
+      )
+      .then((client) => {
+        if (
+          client.release.manifest.chainId !== config.chainId ||
+          roles.some(
+            (role) =>
+              client.release.contracts.get(contractId(config.contracts[role]!.contractId))?.role !==
+              role,
+          )
+        )
+          throw new Error('Deployment manifest does not match the configured network and contracts.')
+        return client
+      })
+      .catch((e) => {
+        pending = undefined
+        throw e
+      }))
+  const names: DuskConnectAppLike = {
+    get chainId() {
+      return options.wallet.state.chainId ?? undefined
+    },
+    get client() {
+      return client()
+    },
+    async readContract(params) {
+      const c = await client()
+      if (params.functionName === 'config') {
+        const config = await c.directory.config()
+        return { ...config, marketplace: config.preferred_marketplace }
+      }
+      throw new Error('Use FrozenClient for canonical reads')
+    },
+    async prepareIntent(request, name) {
+      const account = options.session.state.selectedProfile?.account
+      if (!account) throw new Error('Connect your wallet')
+      return prepareFrozenCall(await client(), request, name, account)
+    },
+    async prepareContractCall(params) {
+      const c = await client()
+      return createDuskDomainsConnectApp(options.wallet, c.release).prepare(frozenPayload(params.args))
+    },
+    async writeContract(params) {
+      const wallet = createSessionWriteWallet(
+        options.wallet,
+        options.session,
+        config.chainId,
+        config.nodeUrl,
+      )
+      try {
+        const c = await client()
+        return await createDuskDomainsConnectApp(wallet, c.release).submit(frozenPayload(params.args))
+      } finally {
+        wallet.destroy()
+      }
     },
   }
+  return { names }
 }

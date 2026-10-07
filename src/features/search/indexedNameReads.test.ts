@@ -1,7 +1,8 @@
+import { fromHex, decodeBase58 } from '@duskdomains/sdk'
 import { expect, it, vi } from 'vitest'
 import {
-  createDuskDomainsOnChainClient, createDuskDomainsOnChainReadTransport, DUSK_DOMAINS_CONTRACTS,
-  decodeBase58, namehashHex, type DuskConnectAppLike, type DuskDomainsIndexerClient, type NameResult,
+  createDuskDomainsOnChainClient,
+  namehashHex, type DuskDomainsIndexerClient, type NameResult,
 } from '../../names/internal'
 import { deriveAppDerivedState } from '../../app/derived/deriveAppDerivedState'
 import { readIndexedName } from './indexedNameReads'
@@ -9,7 +10,7 @@ import { readIndexedName } from './indexedNameReads'
 const address = '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r'
 const node = namehashHex('alice.dusk')
 const registry = `0x${'ab'.repeat(32)}`
-const contracts = { ...DUSK_DOMAINS_CONTRACTS, router: { ...DUSK_DOMAINS_CONTRACTS.router, contractId: `0x${'cd'.repeat(32)}` } }
+
 const endpoint = { kind: 'MoonlightAddress', value: Array.from(decodeBase58(address)!) }
 const record = { name: 'alice.dusk', node: Array.from({ length: 32 }, (_, i) => parseInt(node.slice(2 + i * 2, 4 + i * 2), 16)), updated_at: 90 }
 const searchResult = { canonical: 'alice.dusk' } as NameResult
@@ -21,32 +22,19 @@ function setup(primary: string | null = null, payload: unknown = { endpoint, rec
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
     getPrimaryName: vi.fn(async () => primary),
   }
-  const readContract = vi.fn(async ({ contract, functionName }: Parameters<DuskConnectAppLike['readContract']>[0]) => {
-    if (functionName === 'locate_primary') {
-      expect(contract.contractId).toBe(contracts.router.contractId)
-      return { fnName: functionName, output: registry }
-    }
-    expect(functionName).toBe('read_primary_name')
-    expect(contract.contractId).toBe(registry)
-    return { fnName: functionName, output: payload }
-  })
-  const onChainClient = createDuskDomainsOnChainClient({
-    read: createDuskDomainsOnChainReadTransport({ readContract } as DuskConnectAppLike, contracts), currentBlockHeight: 300,
-  })
+  const readContract = vi.fn(async () => payload && (payload as {record:unknown}).record ? {spelling:'alice.dusk',primary:{name:{key:{node:fromHex(node,32)}},updated_at:90n}} : null)
+  const onChainClient = createDuskDomainsOnChainClient({read:{read:async()=>null,client:Promise.resolve({discover:async()=>({stores:[{id:fromHex(registry,32)}]}),store:()=>({read_primary:readContract})} as never)}})
   return { client: client as unknown as DuskDomainsIndexerClient, readContract, onChainClient }
 }
 
-it('recovers a primary hidden after grace through locate_primary and read_primary_name so its endpoint can clear it', async () => {
+it('recovers a primary hidden after grace through frozen store discovery and read_primary so its endpoint can clear it', async () => {
   const { client, onChainClient, readContract } = setup()
   const reads = await readIndexedName(client, searchResult, address, onChainClient)
   expect(reads?.primaryName).toBeNull()
   expect(reads?.connectedPrimaryName).toBe('alice.dusk')
   expect(reads?.primaryEndpoint).toBe(address)
   expect(reads?.readErrors).toEqual([])
-  expect(readContract.mock.calls.map(([call]) => [call.contract.contractId, call.functionName, call.args])).toEqual([
-    [contracts.router.contractId, 'locate_primary', { endpoint }],
-    [registry, 'read_primary_name', { endpoint }],
-  ])
+  expect(readContract).toHaveBeenCalledWith({endpoint:Array.from(decodeBase58(address)!)})
   const state = deriveAppDerivedState({
     walletSigningReady: true, selectedAddress: address, selectedAuthority: 'alice', nodeHex: node, displayName: 'alice.dusk',
     managedName: { node, owner: 'alice', manager: 'alice', expiresAt: 100, graceEndsAt: 200 }, currentBlockHeight: 300, nowSeconds: 0,
@@ -124,4 +112,13 @@ it.each(['expired', 'unverified', 'unhealthy', 'missing', 'missing resolver', 'm
   expect(visitor?.connectedPrimaryName).toBeNull()
   expect(client.getPrimaryName).not.toHaveBeenCalled()
   expect(readContract).not.toHaveBeenCalled()
+})
+
+it('keeps custom canonical resolver records without applying editor validation or inventing dates', async () => {
+  const { client, onChainClient } = setup()
+  vi.mocked(client.resolveForward).mockResolvedValue({ records: [], verificationStatus: 'unverified' } as never)
+  vi.spyOn(onChainClient, 'getName').mockResolvedValue({ ok: true, value: { record: { owner: 'alice', manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } } } as never)
+  vi.spyOn(onChainClient, 'getRecords').mockResolvedValue({ ok: true, value: [{ key: 'custom.binary', value: '0xff00', visibility: 'public', ttlSeconds: 60, updatedAtBlock: 90 }] } as never)
+  const result = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
+  expect(result?.forwardRead.value?.records).toEqual([{ key: 'custom.binary', value: '0xff00', visibility: 'public', ttlSeconds: 60, updatedAt: '' }])
 })

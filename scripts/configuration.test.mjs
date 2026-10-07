@@ -21,9 +21,9 @@ it.each(['mainnet', 'testnet'])('documents every production setting for %s', (ne
     VITE_DUSK_DOMAINS_SECURITY_URL: 'https://github.com/HDauven/dusk-domains-frontend/security/advisories/new',
     VITE_DUSK_DOMAINS_STATUS_URL: '',
   })
-  for (const role of ['ROUTER', 'CORE', 'TREASURY', 'MARKETPLACE']) {
+  for (const role of ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE']) {
     expect(env[`VITE_DUSK_DOMAINS_${role}_CONTRACT_ID`]).toMatch(/^<.+>$/)
-    expect(env[`VITE_DUSK_DOMAINS_${role}_DRIVER_URL`]).toContain('/contracts/deployments/<')
+    expect(env[`VITE_DUSK_DOMAINS_${role}_DRIVER_URL`]).toBe(`/contracts/dusk-domains-${role.toLowerCase()}.<sha256>.data-driver.wasm`)
   }
 })
 

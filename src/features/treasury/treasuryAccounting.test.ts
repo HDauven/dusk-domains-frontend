@@ -8,7 +8,7 @@ import { useReferralActions } from '../referrals/useReferralActions'
 
 vi.mock('../../names/internal', async importOriginal => ({
   ...await importOriginal<typeof import('../../names/internal')>(),
-  treasuryClaimAllReferralRewardsRuntimeCall: () => ({}),
+  vaultClaimAllReferralRewardsRequest: () => ({}),
   waitForConfirmedIndexerRefresh: async ({ check, refresh }: { check: () => Promise<boolean>; refresh: () => Promise<boolean> }) => {
     const confirmed = await check()
     return { confirmed, refreshed: confirmed && await refresh() }

@@ -1,4 +1,4 @@
 export type ReservationWindow = {
-  status: 'missing' | 'waiting' | 'ready' | 'stale'
+  status: 'missing' | 'future' | 'waiting' | 'ready' | 'stale'
   waitBlocks: number
 }

@@ -1,6 +1,6 @@
 import { canManageActiveName, canControlThroughAncestor } from '../../app/derived/managementCapabilities'
 import { contractPrincipalInput } from '../../app/principalInput'
-import { coreReassignSubnameRuntimeCall, coreRemoveSubnameRuntimeCall, userFacingErrorMessage, type SubnameState } from '../../names/internal'
+import { storeReassignSubnameRequest, storeRemoveSubnameRequest, userFacingErrorMessage, type SubnameState } from '../../names/internal'
 import type { UseSubdomainActionsProps } from './subdomainActionTypes'
 
 export type NamespaceTarget = Pick<SubnameState, 'node' | 'name' | 'parentNode'>
@@ -35,9 +35,9 @@ export async function writeSubnameAuthority(props: UseSubdomainActionsProps, sub
       owner: authorities === 'take_back' ? props.selectedAuthority : contractPrincipalInput(authorities.owner, 'Owner'),
       manager: authorities === 'take_back' ? props.selectedAuthority : contractPrincipalInput(authorities.manager, 'Manager'),
     } : null
-    const call = reassignment ? coreReassignSubnameRuntimeCall(reassignment)
-      : coreRemoveSubnameRuntimeCall({ node: subname.node })
-    const result = await props.submitNameWrite(props.displayName, call, {
+    const call = reassignment ? storeReassignSubnameRequest(reassignment)
+      : storeRemoveSubnameRequest({ node: subname.node })
+    const result = await props.submitNameWrite(subname.name, call, {
       workspace, contracts: props.runtimeConfig.contracts, onUpdate: props.setSubnameTxState,
     })
     if (!workspace() || result.status !== 'executed') return

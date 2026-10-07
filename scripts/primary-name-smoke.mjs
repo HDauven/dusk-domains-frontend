@@ -127,7 +127,7 @@ export async function checkPrimaryNameSwitches(page) {
   const clearCalls = await page.evaluate(() => window.primaryClearCalls)
   assert.equal(clearCalls.length, 4)
   for (const call of clearCalls) {
-    assert.equal(call.functionName, 'clear_primary_name_runtime')
+    assert.equal(call.functionName, 'clear_primary_name')
     assert.deepEqual(Object.keys(call.args).sort(), ['endpointType', 'endpointValue'])
   }
 

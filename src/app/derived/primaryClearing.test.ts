@@ -30,7 +30,7 @@ it.each(['transfer', 'take-back', 'missing name'])('clears the connected address
     shouldApplyPreviewWriteFallback: async () => true,
   } as never)
   expect(submitNameWrite).toHaveBeenCalledWith('alice.dusk', expect.objectContaining({
-    functionName: 'clear_primary_name_runtime', args: { endpointType: 'moonlight_address', endpointValue: address },
+    functionName: 'clear_primary_name', args: { endpointType: 'moonlight_address', endpointValue: address },
   }), expect.anything())
   expect(setConnectedPrimaryName).toHaveBeenCalledWith(null)
   if (reason === 'transfer') expect(setPrimaryName).toHaveBeenCalledWith(null)

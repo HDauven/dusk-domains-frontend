@@ -45,10 +45,22 @@ export async function readIndexedName(
     indexerRead(client.getAllSubnames(node)),
     isSubname(canonicalName) ? indexerRead(client.getSubname(node)) : rootName,
   ])
+  if (onChainClient && searchResult.status === 'registered') {
+    const [name, records] = await Promise.all([onChainClient.getName(canonicalName), onChainClient.getRecords(canonicalName)])
+    if (!name.ok || !records.ok) throw new Error(!name.ok ? name.error.message : !records.ok ? records.error.message : 'Name data unavailable')
+    if (!name.value.record) throw new Error('Name state changed. Search again.')
+    if (forwardRead.value) forwardRead.value.records = records.value.map(r => ({ key: r.key, value: r.value, visibility: r.visibility, ttlSeconds: r.ttlSeconds, updatedAt: '' }))
+    if (stateRead.value) {
+      stateRead.value.owner=name.value.record.owner
+      stateRead.value.manager=name.value.record.manager
+      stateRead.value.expiresAtBlockHeight=name.value.record.lifecycle.expiresAtBlock
+      stateRead.value.graceEndsAtBlockHeight=name.value.record.lifecycle.graceEndsAtBlock
+    }
+  }
   const forwardAddress = forwardRead.value?.records.find(record => record.key === 'moonlight_address')?.value || ''
   const forwardVerified = forwardRead.value?.verificationStatus === 'forward_resolved'
     && forwardRead.value.expiry?.status === 'active' && forwardRead.value.resolver?.health === 'ok'
-  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
+  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(onChainClient ? onChainClient.getPrimaryName({type:'moonlight_address',value:forwardAddress}).then(r=>r.ok?r.value:null) : client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
   const [primaryRead, connectedPrimaryRead] = await Promise.all([
     primaryReadPromise,
     selectedAddress === forwardAddress && primaryReadPromise ? primaryReadPromise

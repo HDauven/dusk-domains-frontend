@@ -34,7 +34,7 @@ it('submits removal through the name writer and confirms disappearance', async (
     setSubnameError:vi.fn(),setSubnameTxState:vi.fn(),ensureContractAuthorityForLiveWrite:()=>true,
     ensurePublicBalanceForLiveWrite:async()=>true,runtimeConfig:{contracts:{}} } as unknown as UseSubdomainActionsProps
   await writeSubnameAuthority(props, leaf)
-  expect(submitNameWrite).toHaveBeenCalledWith('alice.dusk', expect.objectContaining({functionName:'remove_subname_runtime',args:{node:'leaf'}}), expect.anything())
+  expect(submitNameWrite).toHaveBeenCalledWith(leaf.name, expect.objectContaining({functionName:'remove_subname',args:{node:'leaf'}}), expect.anything())
   expect(confirmation).toHaveBeenCalledOnce()
 })
 
@@ -54,7 +54,7 @@ it('submits reassignments with the chosen owner and manager and checks projected
     setSubnameError:vi.fn(),setSubnameTxState:vi.fn(),ensureContractAuthorityForLiveWrite:()=>true,
     ensurePublicBalanceForLiveWrite:async()=>true,runtimeConfig:{contracts:{}} } as unknown as UseSubdomainActionsProps
   await writeSubnameAuthority(props, leaf, {owner:`contract:${owner}`,manager:`contract:${manager}`})
-  expect(submitNameWrite).toHaveBeenCalledWith('alice.dusk',expect.objectContaining({functionName:'update_authorities_runtime',args:{node:'leaf',owner,manager,clearRecords:true}}),expect.anything())
+  expect(submitNameWrite).toHaveBeenCalledWith(leaf.name,expect.objectContaining({functionName:'update_authorities',args:{node:'leaf',owner,manager,clearRecords:true}}),expect.anything())
   expect(confirmation).toHaveBeenCalledOnce()
 })
 
@@ -74,7 +74,7 @@ it('allows take-back on the displayed subname without granting record management
     ensureContractAuthorityForLiveWrite:()=>true,ensurePublicBalanceForLiveWrite:async()=>true,runtimeConfig:{contracts:{}}} as unknown as UseSubdomainActionsProps
   expect(canControlSubname(props, leaf)).toBe(true)
   await writeSubnameAuthority(props, leaf, 'take_back')
-  expect(submitNameWrite).toHaveBeenCalledWith(leaf.name, expect.objectContaining({functionName:'update_authorities_runtime',args:{node:leaf.node,owner:authority,manager:authority,clearRecords:true}}), expect.anything())
+  expect(submitNameWrite).toHaveBeenCalledWith(leaf.name, expect.objectContaining({functionName:'update_authorities',args:{node:leaf.node,owner:authority,manager:authority,clearRecords:true}}), expect.anything())
   expect(confirmation).toHaveBeenCalledOnce()
   await writeSubnameAuthority({...props,selectedAuthority:'stranger'}, leaf, 'take_back')
   expect(submitNameWrite).toHaveBeenCalledOnce()
@@ -91,7 +91,7 @@ it.each(['reassign', 'take_back'] as const)('resets identity on %s when the call
     runtimeConfig: {contracts:{}} } as unknown as UseSubdomainActionsProps
   await writeSubnameAuthority(props, subname, action === 'take_back' ? action : {owner:`contract:${bob}`,manager:`contract:${bob}`})
   const recipient = action === 'take_back' ? alice : bob
-  expect(submitNameWrite).toHaveBeenCalledWith('alice.dusk', expect.objectContaining({
-    functionName: 'update_authorities_runtime', args: {node:subname.node,owner:recipient,manager:recipient,clearRecords:true},
+  expect(submitNameWrite).toHaveBeenCalledWith(leaf.name, expect.objectContaining({
+    functionName: 'update_authorities', args: {node:subname.node,owner:recipient,manager:recipient,clearRecords:true},
   }), expect.anything())
 })

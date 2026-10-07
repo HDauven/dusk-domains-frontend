@@ -1,10 +1,11 @@
+import { stringifyJson, type NameRef } from '@duskdomains/sdk'
 import { marketplaceAmountRow } from './marketplaceAmounts'
 import { useCallback, useState } from 'react'
 import {
-  coreAcceptMarketplaceOfferRuntimeCall,
-  marketplaceCancelOfferRuntimeCall,
-  marketplaceExpireOfferRuntimeCall,
-  marketplacePlaceOfferRuntimeCall,
+  storeAcceptMarketplaceOfferRequest,
+  marketplaceCancelOfferRequest,
+  marketplaceExpireOfferRequest,
+  marketplacePlaceOfferRequest,
   namehashHex,
   normalizeNameInput,
   userFacingErrorMessage,
@@ -50,7 +51,7 @@ export function useOffers({
   const [offerAmountDusk, setOfferAmountDusk] = useState('25')
   const [offerDurationDays, setOfferDurationDays] = useState('7')
 
-  const placeOffer = useCallback(async function placeOffer(reviewed = false) {
+  const placeOffer = useCallback(async function placeOffer(reviewed = false, reviewedRef?: NameRef) {
     const validation = validateName(offerName)
     if (!validation.ok) {
       setError(validation.issues.find((issue) => issue.tone === 'danger')?.text ?? 'Enter a valid name.')
@@ -74,8 +75,11 @@ export function useOffers({
     const node = namehashHex(canonicalName)
     if (!marketplaceOnChainClient || !duskDomainsOnChainClient) return
     let canonicalHeight: number
+    let currentRef: NameRef | undefined
     try {
       const target = await canonicalOfferTarget(duskDomainsOnChainClient, canonicalName, node, selectedAuthority)
+      currentRef = target.ref ?? undefined
+      if (reviewedRef && stringifyJson(reviewedRef) !== stringifyJson(currentRef)) throw new Error('Name incarnation changed. Review the offer again.')
       canonicalHeight = target.currentBlockHeight
       await canonicalOfferAbsent(marketplaceOnChainClient, node, selectedAuthority)
     } catch (readError) {
@@ -85,28 +89,29 @@ export function useOffers({
     if (!reviewed) {
       writes.requestReview({
         title: `Offer on ${canonicalName}`,
+        createsOrder: true,
         rows: [
           marketplaceAmountRow('Your wallet → marketplace escrow', amountLux),
           { label: 'If accepted, name moves to', value: selectedAddress, address: true },
           { label: 'Valid for', value: `${days} ${days === 1 ? 'day' : 'days'}` },
         ],
         note: 'The owner can accept while this offer is open. To get your funds back, cancel the offer (or close it after expiry), then withdraw the refund under Yours.',
-      }, () => placeOffer(true))
+      }, () => placeOffer(true, currentRef))
       return
     }
     await writes.submit(
       'placing this offer',
       canonicalName,
-      marketplacePlaceOfferRuntimeCall({
+      { ...marketplacePlaceOfferRequest({
         node,
         amountLux: Number(amountLux),
         expiresAt: canonicalHeight + durationBlocks(days),
         buyerManager: selectedAuthority || null,
-      }),
+      }), contractId: marketplaceContractId, nameRef: currentRef },
       amountLux,
       `Offer placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
-  }, [duskDomainsOnChainClient, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
+  }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
 
   const acceptOffer = useCallback(async function acceptOffer(offer: IndexedMarketplaceOffer, reviewed?: DuskDomainsOnChainOffer) {
     if (!marketplaceOnChainClient || !duskDomainsOnChainClient) return
@@ -145,16 +150,16 @@ export function useOffers({
     await writes.submit(
       'accepting this offer',
       offer.name,
-      coreAcceptMarketplaceOfferRuntimeCall({
+      { ...storeAcceptMarketplaceOfferRequest({
         node: offer.node,
-        marketplaceContract: marketplaceContractId,
+        marketplaceContract: offer.marketplaceContractId ?? marketplaceContractId,
         buyerAuthority: offer.buyerAuthority,
         // Bind the placement and financial terms captured by the review.
         expectedAmountLux: Number(reviewed.amountLux),
         expectedOfferId: reviewed.offerId,
         expectedFeeBps: reviewed.feeBps,
         sellerRecipient: selectedAddress,
-      }),
+      }), reviewedOrder: reviewed.order, contractId: offer.marketplaceContractId ?? marketplaceContractId },
       0n,
       `Offer accepted. ${formatLuxAsDusk(BigInt(offer.amountLux))} DUSK paid from escrow.`,
     )
@@ -162,18 +167,20 @@ export function useOffers({
 
   const cancelOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
     let offerId = 0
-    if (!await writes.guardCanonicalRead(async (client) => { offerId = (await canonicalOffer(client, offer)).offerId })) return
-    await writes.submit('cancelling this offer', offer.name, marketplaceCancelOfferRuntimeCall({ node: offer.node, expectedOfferId: offerId }), 0n,
+    let reviewedOrder: DuskDomainsOnChainOffer['order']
+    if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order })) return
+    await writes.submit('cancelling this offer', offer.name, { ...marketplaceCancelOfferRequest({ node: offer.node, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId }, 0n,
       'Offer canceled. Claim the refund when ready.')
-  }, [writes])
+  }, [marketplaceContractId, writes])
 
   const expireOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
     let offerId = 0
-    if (!await writes.guardCanonicalRead(async (client) => { offerId = (await canonicalOffer(client, offer)).offerId })) return
+    let reviewedOrder: DuskDomainsOnChainOffer['order']
+    if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order })) return
     await writes.submit('closing this expired offer', offer.name,
-      marketplaceExpireOfferRuntimeCall({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), 0n,
+      { ...marketplaceExpireOfferRequest({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId }, 0n,
       'Offer closed. The buyer can claim the refund.')
-  }, [writes])
+  }, [marketplaceContractId, writes])
 
   return {
     acceptOffer,

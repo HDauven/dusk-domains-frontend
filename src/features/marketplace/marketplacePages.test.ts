@@ -32,3 +32,15 @@ it('refreshes loaded pages together without keeping removed orders', async () =>
   expect(client.getMarketplaceAuctionsPage).toHaveBeenCalledTimes(1)
   expect(window.cursors.fixedSales).toBeNull()
 })
+
+it('retains old-shard orders alongside new orders for the same name and buyer', async () => {
+  const old = { node: 'name', buyerAuthority: 'buyer', marketplaceContractId: 'market', order: { terms: { id: 1n, store: [1] } } }
+  const current = { ...old, order: { terms: { id: 2n, store: [2] } } }
+  const client = {
+    getMarketplaceFixedSalesPage: vi.fn(async () => ({ fixedSales: [], nextCursor: null })),
+    getMarketplaceAuctionsPage: vi.fn(async () => ({ auctions: [], nextCursor: null })),
+    getMarketplaceOffersPage: vi.fn(async ({ cursor }) => ({ offers: [cursor ? current : old], nextCursor: cursor ? null : 'more' })),
+  }
+  const result = await readMarketplaceWindow(client as never, 2)
+  expect(result.offers).toEqual([old, current])
+})

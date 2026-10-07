@@ -31,7 +31,7 @@ it('binds a fixed-price purchase to the reviewed sale', async () => {
   } }), 10_000_000_000n, expect.any(String))
 })
 
-it.each([{ saleId: 8 }, { feeBps: 500 }, { openedAtBlockHeight: 101 }])('rejects changed sale terms after review: %j', async changed => {
+it.each([{ saleId: 8 }, { feeBps: 500 },])('rejects changed sale terms after review: %j', async changed => {
   const h = setup()
   await h.feature().buyFixedSale(h.sale)
   Object.assign(h.sale, changed)

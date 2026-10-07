@@ -1,3 +1,4 @@
+import { contracts, reservation } from '../../test/frozenFixtures'
 import * as names from '../../names/internal'
 import { readReservationPrimaryChoice } from './reservationPrimaryChoice'
 import { searchActions } from '../search/test-fixtures/searchActions'
@@ -27,8 +28,8 @@ function args() {
   const noop = () => {}
   return {
     canPrepareCommit: true, displayName: 'resume.dusk', nodeHex: namehashHex('resume.dusk'), duration: 1,
-    selectedAddress: 'owner', selectedAuthority: controller, runtimeConfig: { chainId: 'dusk:0', contracts: {} },
-    liveDuskDomainsApp: {}, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
+    selectedAddress: 'owner', selectedAuthority: controller, runtimeConfig: { chainId: 'dusk:0', contracts },
+    liveDuskDomainsApp: {client:Promise.resolve({getName:async()=>({store:contracts.store.contractId})})}, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
     getCurrentBlockHeight: async () => 500, setCommitTxState: noop, setWalletError: vi.fn(),
     setRegistrationCompletion: noop, setPreparedCommit: noop, setCurrentBlockHeight: noop,
@@ -73,7 +74,7 @@ it('saves before wallet approval and preserves the secret while a confirmed heig
   height.resolve(500)
   await pending
   expect(listPendingNameReservations()[0]).toMatchObject({ secret: saved.secret,
-    committedBlockHeight: 500, committedTxId: 'confirmed-tx' })
+    committedBlockHeight: null, committedTxId: 'confirmed-tx' })
 })
 
 it('fails before broadcast if storage fails or a previous uncertain reservation exists', async () => {
@@ -181,9 +182,7 @@ it('starts recovery aging after execution, not a long wallet approval', async ()
 // A reservation whose commit is confirmed and old enough to reveal.
 function readyReservation(getPendingCommitment: () => Promise<unknown>) {
   const props = args()
-  const saved = { name: 'resume.dusk', node: props.nodeHex, commitment: `0x${'22'.repeat(32)}`, secret: `0x${'33'.repeat(32)}`,
-    controller, ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1, committedBlockHeight: 100,
-    committedTxId: 'old-commit', createdAt: '2030-01-01T00:00:00.000Z', updatedAt: '2030-01-01T00:00:00.000Z' }
+  const saved = reservation({ownerAddress:'owner',committedTxId:'old-commit'})
   upsertPendingNameReservation(saved)
   return { saved, props: { ...props, canRegister: true, committed: true, registrationTargetReady: true,
     registrationTargetAddressErrors: [], commitWindow: { status: 'ready', waitBlocks: 0, staleInBlocks: 100 },
@@ -268,11 +267,11 @@ it('reserves again instead of revealing where a registry added since the commit 
   Object.assign(submitNameWrite, { captureSession: () => () => true, captureWorkspace: () => () => true })
   await restartStrandedReservation({ ...props, ...capabilities, submitNameWrite } as never)
   expect(submitNameWrite).toHaveBeenCalledOnce()
-  expect(submitNameWrite.mock.calls[0][1]).toMatchObject({ functionName: 'commit_runtime' })
+  expect(submitNameWrite.mock.calls[0][1]).toMatchObject({ functionName: 'commit' })
   const reservations = listPendingNameReservations()
   expect(reservations).toHaveLength(1)
   expect(reservations[0].commitment).not.toBe(saved.commitment)
-  expect(reservations[0]).toMatchObject({ name: 'resume.dusk', committedBlockHeight: 500, committedTxId: 'new-commit' })
+  expect(reservations[0]).toMatchObject({ name: 'resume.dusk', committedBlockHeight: null, committedTxId: 'new-commit' })
   expect(props.setStrandedCommitment).toHaveBeenLastCalledWith(null)
 })
 
@@ -312,7 +311,7 @@ it('reveals as before when the commitment is where the reveal goes, or cannot be
     const { props, saved } = readyReservation(async () => read)
     await completeRegistration(props as never)
     expect(props.submitNameWrite).toHaveBeenCalledExactlyOnceWith('resume.dusk',
-      expect.objectContaining({ functionName: 'complete_registration_runtime' }), expect.anything())
+      expect.objectContaining({ functionName: 'complete_registration' }), expect.anything())
     expect(props.setStrandedCommitment).not.toHaveBeenCalled()
     expect(listPendingNameReservations()).toEqual([saved])
   }

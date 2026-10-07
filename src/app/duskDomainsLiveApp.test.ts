@@ -1,7 +1,9 @@
-import { readFileSync } from 'node:fs'
+import { config, contracts } from '../test/frozenFixtures'
+import { createClientFromManifest, storeCommitCall } from '@duskdomains/sdk'
+vi.mock('@duskdomains/sdk', async original => ({...await original<typeof import('@duskdomains/sdk')>(),createClientFromManifest:vi.fn()}))
 import { afterEach, expect, it, vi } from 'vitest'
 import { announceDuskProvider, DuskWallet, type DuskProvider } from '@dusk/connect'
-import { DUSK_DOMAINS_CONTRACTS, type DuskDomainGas, type DuskDomainsRuntimeConfig } from '../names/internal'
+import { type DuskDomainsRuntimeConfig } from '../names/internal'
 import { createWalletSession } from '../features/wallet/walletSession'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 
@@ -10,8 +12,8 @@ afterEach(() => { cleanups.splice(0).forEach(cleanup => cleanup()); vi.unstubAll
 
 async function fixture(chainId = 'dusk:2') {
   vi.stubGlobal('window', new EventTarget())
-  const driver = readFileSync('public/contracts/dusk-domains-core.data-driver.wasm')
-  vi.stubGlobal('fetch', vi.fn(async () => new Response(driver)))
+  const release = {manifest:{chainId},contracts:new Map(Object.entries(contracts).map(([role,c])=>[c.contractId,{role}])),drivers:new Map([[contracts.store.contractId,{encodeInput:()=>new Uint8Array([1,2,3])}]])}
+  vi.mocked(createClientFromManifest).mockResolvedValue({release} as never)
   const listeners = new Map<string, Set<(value: unknown) => void>>()
   const provider = {
     isDusk: true, isAuthorized: true, chainId, profiles: [{ account: 'A', profileId: 'primary' }],
@@ -21,6 +23,8 @@ async function fixture(chainId = 'dusk:2') {
     },
     off(event: string, callback: (value: unknown) => void) { listeners.get(event)?.delete(callback) },
     request: vi.fn(async ({ method }: { method: string }): Promise<unknown> => {
+      if (method === 'dusk_getPublicBalance') return {value:'1000000000000000'}
+      if (method === 'dusk_estimateGas') return {median:'1'}
       if (method === 'dusk_profiles') return provider.profiles
       if (method === 'dusk_chainId') return provider.chainId
       if (method === 'dusk_disconnect') throw new Error('Revocation unavailable')
@@ -36,12 +40,11 @@ async function fixture(chainId = 'dusk:2') {
   emit('duskNodeChanged', { chainId, nodeUrl: 'http://127.0.0.1:18181/' })
   await session.ready()
   await session.refresh()
-  const contracts = Object.fromEntries(Object.entries(DUSK_DOMAINS_CONTRACTS).map(([key, value]) => [key, { ...value, contractId: `0x${'11'.repeat(32)}` }]))
-  const runtimeConfig = { liveWritesEnabled: true, contracts, chainId, nodeUrl: 'http://127.0.0.1:18181/' } as DuskDomainsRuntimeConfig
+  const runtimeConfig = { ...config, chainId, nodeUrl: 'http://127.0.0.1:18181/' } as DuskDomainsRuntimeConfig
   const { names } = createDuskDomainsLiveApp({ runtimeConfig, wallet: base, session, autoConnect: false })
-  const write = (gas?: DuskDomainGas) => names.writeContract({ contract: contracts.core, functionName: 'commit_runtime', args: { commitment: Array(32).fill(1) }, ...(gas ? { gas } : {}) })
+  const write = () => names.writeContract({ contract: contracts.store, functionName: 'commit', args: storeCommitCall(contracts.store.contractId,{hash:Array(32).fill(1)}) })
   provider.request.mockClear()
-  return { provider, session, emit, write, info, names }
+  return { provider, session, emit, write, info, names, release }
 }
 
 it('keeps the wallet chain live through the app wrapper', async () => {
@@ -57,7 +60,7 @@ it.each(['dusk:0', 'dusk:2'])('sends an unchanged %s session through installed c
   await expect(write()).resolves.toMatchObject({ hash: 'ab'.repeat(32) })
   const sends = provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')
   expect(sends).toHaveLength(1)
-  expect(sends[0][0]).toMatchObject({ params: { kind: 'contract_call', fnName: 'commit_runtime', fnArgs: expect.any(String) } })
+  expect(sends[0][0]).toMatchObject({ params: { kind: 'contract_call', fnName: 'commit', fnArgs: expect.any(String) } })
   expect(provider.request.mock.calls.some(([args]) => args.method === 'dusk_switchNetwork')).toBe(false)
 })
 
@@ -72,27 +75,26 @@ it.each([
   provider.request.mockImplementation(args => args.method === 'dusk_estimateGas'
     ? Promise.resolve({ average: '8', max: '20', median, min: '2' })
     : request(args))
-  await write({ limit: 10_000_000n })
+  await write()
   expect(provider.request).toHaveBeenCalledWith({ method: 'dusk_estimateGas', params: {} })
-  expect(provider.request).toHaveBeenCalledWith(expect.objectContaining({ method: 'dusk_sendTransaction', params: expect.objectContaining({ gas: { limit: '10000000', price } }) }))
+  expect(provider.request).toHaveBeenCalledWith(expect.objectContaining({ method: 'dusk_sendTransaction', params: expect.objectContaining({ gas: { limit: storeCommitCall(contracts.store.contractId,{hash:Array(32).fill(1)}).gasLimit.toString(), price } }) }))
 })
 
 it.each(['lock', 'disconnect', 'network', 'account', 'profile', 'authorization', 'node', 'encoding', 'announcement'])('refuses %s during installed connect preparation at the provider boundary', async change => {
-  const { provider, session, emit, write, info } = await fixture(change === 'node' ? 'dusk:0' : 'dusk:2')
+  const { provider, session, emit, write, info, release } = await fixture(change === 'node' ? 'dusk:0' : 'dusk:2')
   const delayed = Promise.withResolvers<unknown>()
   const request = provider.request.getMockImplementation()!
   let waiting = false
-  let chainReads = 0
-  if (change === 'encoding') vi.mocked(fetch).mockImplementationOnce(() => { waiting = true; return delayed.promise as Promise<Response> })
+  if (change === 'encoding') vi.mocked(createClientFromManifest).mockImplementationOnce(() => { waiting = true; return delayed.promise as never })
   else provider.request.mockImplementation(args => {
     // Network: delay the second chain read, after ensureChain's refresh.
-    if (!waiting && (change === 'network' ? args.method === 'dusk_chainId' && ++chainReads === 2 : args.method === 'dusk_profiles')) {
+    if (!waiting && args.method === 'dusk_estimateGas') {
       waiting = true
       return delayed.promise
     }
     return request(args)
   })
-  const result = expect(write()).rejects.toThrow('wallet session changed')
+  const result = expect(write()).rejects.toThrow(change === 'network' ? 'Wallet must be connected' : 'wallet session changed')
   await vi.waitFor(() => expect(waiting).toBe(true))
   if (change === 'disconnect') await expect(session.disconnect()).rejects.toThrow('Revocation unavailable')
   else if (change === 'network') { provider.chainId = 'dusk:1'; emit('chainChanged', provider.chainId) }
@@ -105,20 +107,20 @@ it.each(['lock', 'disconnect', 'network', 'account', 'profile', 'authorization',
     emit(change === 'lock' ? 'lock' : 'profilesChanged', provider.profiles)
   }
   await session.refresh()
-  if (change === 'encoding') delayed.resolve(new Response(readFileSync('public/contracts/dusk-domains-core.data-driver.wasm')))
-  else delayed.resolve(change === 'network' ? 'dusk:2' : [{ account: 'A', profileId: 'primary' }])
+  if (change === 'encoding') delayed.resolve({release})
+  else delayed.resolve({median:'1'})
   await result
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
 })
 
 it.each(['profiles', 'encoding'])('rejects a return to the same account during installed connect %s preparation', async stage => {
-  const { provider, session, emit, write } = await fixture()
+  const { provider, session, emit, write, release } = await fixture()
   const delayed = Promise.withResolvers<unknown>()
   const request = provider.request.getMockImplementation()!
   let waiting = false
-  if (stage === 'encoding') vi.mocked(fetch).mockImplementationOnce(() => { waiting = true; return delayed.promise as Promise<Response> })
+  if (stage === 'encoding') vi.mocked(createClientFromManifest).mockImplementationOnce(() => { waiting = true; return delayed.promise as never })
   else provider.request.mockImplementation(args => {
-    if (!waiting && args.method === 'dusk_profiles') { waiting = true; return delayed.promise }
+    if (!waiting && args.method === 'dusk_estimateGas') { waiting = true; return delayed.promise }
     return request(args)
   })
   const outcome = write().then(() => 'sent', error => error.message)
@@ -128,7 +130,7 @@ it.each(['profiles', 'encoding'])('rejects a return to the same account during i
     emit('profilesChanged', provider.profiles)
     await session.refresh()
   }
-  delayed.resolve(stage === 'encoding' ? new Response(readFileSync('public/contracts/dusk-domains-core.data-driver.wasm')) : provider.profiles)
+  delayed.resolve(stage === 'encoding' ? {release} : {median:'1'})
   expect(await outcome).toContain('wallet session changed')
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
 })

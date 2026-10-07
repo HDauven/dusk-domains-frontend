@@ -6,5 +6,5 @@ export function createWriteAccess(config: Pick<DuskDomainsRuntimeConfig, 'mode' 
   const reason = (call: Pick<DuskDomainCallMetadata, 'contract' | 'functionName'>) => readOnly
     ? 'Preview is read only. No transaction was sent.'
     : pauseReason(call, pause)
-  return { readOnly, reason, canRegister: !reason({ contract: 'core', functionName: 'commit_runtime' }) }
+  return { readOnly, reason, canRegister: !reason({ contract: 'store', functionName: 'commit' }) }
 }

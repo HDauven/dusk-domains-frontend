@@ -8,6 +8,7 @@ export type { PreparedRegistrationCommit } from './pendingReservationTypes'
 export function usePendingReservations({
   explicitlyDisconnected,
   chainId,
+  directory,
   currentCommitment,
   getCurrentBlockHeight,
   indexerClient,
@@ -21,6 +22,7 @@ export function usePendingReservations({
     loadPendingReservations,
     pendingReservations,
   } = usePendingReservationList({
+    directory,
     explicitlyDisconnected,
     chainId,
     selectedAuthority,

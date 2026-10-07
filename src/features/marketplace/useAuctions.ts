@@ -1,10 +1,11 @@
+import { matchesAuctionSelection, auctionSelection } from './orderIdentity'
 import { appendPage } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  marketplaceCancelAuctionRuntimeCall,
-  marketplaceExpireAuctionRuntimeCall,
-  marketplacePlaceBidRuntimeCall,
-  marketplaceSettleAuctionRuntimeCall,
+  marketplaceCancelAuctionRequest,
+  marketplaceExpireAuctionRequest,
+  marketplacePlaceBidRequest,
+  marketplaceSettleAuctionRequest,
   userFacingErrorMessage,
   type ActivityEntry,
   type DuskDomainCallMetadata,
@@ -87,11 +88,12 @@ export function useAuctions({
     }
   }, [indexerClient, setError])
 
-  const selectedBidCount = auctions.find((auction) => auction.node === selectedAuctionNode)?.bidCount
+  const selectedBidCount = auctions.find((auction) => matchesAuctionSelection(auction, selectedAuctionNode))?.bidCount
+  const activityNode = auctionSelection(selectedAuctionNode).node
   useEffect(() => {
     if (!selectedAuctionNode) return
-    queueMicrotask(() => void loadAuctionActivity(selectedAuctionNode))
-  }, [loadAuctionActivity, selectedAuctionNode, selectedBidCount])
+    queueMicrotask(() => void loadAuctionActivity(activityNode))
+  }, [loadAuctionActivity, activityNode, selectedAuctionNode, selectedBidCount])
 
   // The contract's current auction, or null after reporting why it could not be read.
   const readCanonicalAuction = useCallback(async (auction: IndexedMarketplaceAuction) => {
@@ -124,6 +126,7 @@ export function useAuctions({
       amountDusk: formatLuxAsDusk(amountLux), amountLux, minimumBidLux: minimumBid,
       auction: {
         ...auction,
+        order:current.order,
         startBlockHeight: current.startBlock,
         endBlockHeight: current.endBlock,
         bidCount: current.bidCount,
@@ -145,16 +148,17 @@ export function useAuctions({
     }
     auction = reviewed.auction
     const amountLux = reviewed.amountLux
-    if (!await readCanonicalAuction(auction)) return
+    const canonical = await readCanonicalAuction(auction)
+    if (!canonical) return
     const result = await writes.submit(
       'placing this bid',
       auction.name,
-      marketplacePlaceBidRuntimeCall({
+      { ...marketplacePlaceBidRequest({
         node: auction.node,
         expectedAuctionId: auction.auctionId,
         amountLux: Number(amountLux),
         bidderManager: selectedAuthority || null,
-      }),
+      }), reviewedOrder: canonical.order,contractId:auction.marketplaceContractId ?? undefined },
       amountLux,
       `Bid placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
@@ -170,8 +174,8 @@ export function useAuctions({
     call: DuskDomainCallMetadata,
     successMessage: string,
   ) => {
-    if (!await writes.guardCanonicalRead((client) => canonicalAuction(client, auction))) return
-    await writes.submit(actionName, auction.name, call, 0n, successMessage)
+    if (!await writes.guardCanonicalRead(async client => { call = {...call, contractId:auction.marketplaceContractId ?? undefined, reviewedOrder: (await canonicalAuction(client, auction)).order} })) return
+    await writes.submit(actionName, auction.name, call, 0n, auction.returnPending ? 'Name returned.' : `${successMessage} If return is pending, use Return name to finish.`)
   }, [writes])
 
   const openAuction = useCallback((node: string) => {
@@ -193,7 +197,7 @@ export function useAuctions({
     auctionActivity,
     auctionActivityLoading,
     hasMoreActivity: Boolean(activityCursor),
-    loadMoreActivity: () => activityCursor && void loadAuctionActivity(selectedAuctionNode, activityCursor),
+    loadMoreActivity: () => activityCursor && void loadAuctionActivity(activityNode, activityCursor),
     bidDrafts,
     bidReview,
     closeAuction,
@@ -205,10 +209,10 @@ export function useAuctions({
     setBidReview,
     setSelectedAuctionNode,
     cancelAuction: (auction: IndexedMarketplaceAuction) => lifecycleAction(
-      auction, 'cancelling this auction', marketplaceCancelAuctionRuntimeCall({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction canceled.'),
+      auction, 'cancelling this auction', marketplaceCancelAuctionRequest({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction canceled.'),
     expireAuction: (auction: IndexedMarketplaceAuction) => lifecycleAction(
-      auction, 'closing this dormant auction', marketplaceExpireAuctionRuntimeCall({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction closed.'),
+      auction, 'closing this expired auction', marketplaceExpireAuctionRequest({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction closed.'),
     settleAuction: (auction: IndexedMarketplaceAuction) => lifecycleAction(
-      auction, 'settling this auction', marketplaceSettleAuctionRuntimeCall({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction settled.'),
+      auction, 'settling this auction', marketplaceSettleAuctionRequest({ node: auction.node, expectedAuctionId: auction.auctionId }), 'Auction settled.'),
   }
 }

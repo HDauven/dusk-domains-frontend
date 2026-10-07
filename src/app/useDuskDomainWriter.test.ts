@@ -43,10 +43,10 @@ it('rejects paused writes before the wallet and still submits exempt writes', as
     return null
   }
   renderToStaticMarkup(createElement(Probe))
-  await expect(submit('name.dusk', { contract: 'core', functionName: 'commit_runtime' } as never)).rejects.toThrow('Registrations are paused')
-  await expect(submit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' } as never)).rejects.toThrow('Marketplace trading is paused')
+  await expect(submit('name.dusk', { contract: 'store', functionName: 'commit' } as never)).rejects.toThrow('Registrations are paused')
+  await expect(submit('name.dusk', { contract: 'marketplace', functionName: 'place_offer' } as never)).rejects.toThrow('New marketplace orders are paused')
   expect(submitDuskDomainWrite).not.toHaveBeenCalled()
-  await submit('name.dusk', { contract: 'marketplace', functionName: 'claim_refund_runtime' } as never)
+  await submit('name.dusk', { contract: 'marketplace', functionName: 'claim_refund' } as never)
   expect(submitDuskDomainWrite).toHaveBeenCalledOnce()
 })
 

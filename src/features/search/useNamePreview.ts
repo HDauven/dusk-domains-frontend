@@ -1,3 +1,5 @@
+import { useLiveQuotes } from './useLiveQuotes'
+import { safeNumber } from '../../names/numbers'
 import { useMemo } from 'react'
 import {
   analyzeName,
@@ -15,6 +17,8 @@ import {
 } from '../domains/domainFormat'
 
 export type UseNamePreviewArgs = {
+  onChainClient?: import('../../names/internal').DuskDomainsOnChainClient | null
+  selectedAuthority?: string
   apiSearchResult: NameResult | null
   currentBlockHeight: number | null
   duration: number
@@ -26,6 +30,7 @@ export type UseNamePreviewArgs = {
 }
 
 export function useNamePreview({
+  onChainClient, selectedAuthority = '',
   apiSearchResult,
   currentBlockHeight,
   duration,
@@ -37,7 +42,8 @@ export function useNamePreview({
 }: UseNamePreviewArgs) {
   const localSearchResult = useMemo(() => analyzeName(query, feeConfig), [feeConfig, query])
   const searchResult = apiSearchResult ?? localSearchResult
-  const result = useMemo(() => {
+  const quotes = useLiveQuotes(onChainClient, apiSearchResult, duration, renewalYears, selectedAuthority, currentBlockHeight)
+  const estimate = useMemo(() => {
     if (searchResult.status !== 'available' || isSubname(searchResult.canonical)
       || searchResult.graceEndsAtBlockHeight == null || currentBlockHeight == null) return searchResult
     const premium = registrationPremiumSchedule({
@@ -50,11 +56,12 @@ export function useNamePreview({
       premiumEndsAtBlockHeight: premium.premiumEndsAtBlockHeight,
       premiumNextStepAt: premium.nextStepAt, premiumNextStepBlockHeight: premium.nextStepBlockHeight }
   }, [searchResult, feeConfig.premiumStartLux, currentBlockHeight, nowSeconds])
-  const canRegister = result.status === 'available' && !isSubname(result.canonical)
+  const result: NameResult = quotes?.registration ? {...estimate, policyQuote: quotes.registration, quotedYears: duration, totalFeeLux: safeNumber(quotes.registration.total_lux), premiumLux: safeNumber(quotes.registration.quote.premium_lux)} : estimate
+  const canRegister = (!onChainClient || Boolean(quotes?.registration?.quote.registration_open && quotes.registration.quote.label_status === 'Public')) && !result.transactionBlocked && result.status === 'available' && !isSubname(result.canonical)
   const displayName = result.canonical || 'name.dusk'
   const nodeHex = useMemo(() => safeNamehashHex(displayName), [displayName])
-  const registrationFee = canRegister ? registrationPrice(result.label, duration, feeConfig, result.premiumLux ?? 0) : 0
-  const renewalFee = nodeHex ? registrationPrice(result.label, renewalYears, feeConfig) : 0
+  const registrationFee = result.status === 'available' ? (result.totalFeeLux !== undefined ? result.totalFeeLux / 1e9 : registrationPrice(result.label, duration, feeConfig, result.premiumLux ?? 0)) : 0
+  const renewalFee = quotes?.renewal ? safeNumber(quotes.renewal.total_lux) / 1e9 : nodeHex ? registrationPrice(result.label, renewalYears, feeConfig) : 0
   const lifecycleBaseBlockHeight = currentBlockHeight ?? 0
   const registrationLifecycle = useMemo(() => createRegistrationLifecycle({
     startsAt: lifecycleBaseBlockHeight,
@@ -77,6 +84,10 @@ export function useNamePreview({
     registrationFee,
     registrationLifecycle,
     renewalFee,
+    renewalQuote: quotes?.renewal,
+    renewalNameRef: quotes?.ref,
+    quoteError: quotes?.error ?? '',
+    quoteLoading: Boolean(onChainClient && !quotes),
     renewalPreviewLifecycle,
     result,
   }

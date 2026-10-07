@@ -6,9 +6,11 @@ import {
 
 export function usePendingReservationList({
   chainId,
+  directory,
   explicitlyDisconnected = false,
   selectedAuthority,
 }: {
+  directory?: string
   chainId: string
   explicitlyDisconnected?: boolean
   selectedAuthority: string
@@ -20,9 +22,9 @@ export function usePendingReservationList({
   }
   const [pendingReservations, setPendingReservations] = useState<PendingNameReservation[]>([])
 
-  const scope = useRef({ chainId, owner })
+  const scope = useRef({ chainId, directory, owner })
   const loadPendingReservations = useCallback(() => {
-    const { chainId } = scope.current
+    const { chainId, directory } = scope.current
     let { owner } = scope.current
     // Provider events clear storage before React commits the new session.
     try {
@@ -31,6 +33,7 @@ export function usePendingReservationList({
     } catch { /* Keep connected claims available without storage. */ }
     const nextReservations = owner ? listPendingNameReservations({
       chainId,
+      directory,
       controller: owner,
     }) : []
     setPendingReservations(nextReservations)
@@ -38,7 +41,7 @@ export function usePendingReservationList({
   }, [])
 
   useLayoutEffect(() => {
-    scope.current = { chainId, owner }
+    scope.current = { chainId, directory, owner }
     let cancelled = false
     globalThis.queueMicrotask(() => {
       if (!cancelled) loadPendingReservations()
@@ -46,10 +49,11 @@ export function usePendingReservationList({
     return () => {
       cancelled = true
     }
-  }, [chainId, owner, loadPendingReservations])
+  }, [chainId, directory, owner, loadPendingReservations])
 
   const scopedReservations = useMemo(() => pendingReservations.filter(reservation => reservation.chainId === chainId
-    && reservation.controller.toLowerCase() === owner.toLowerCase()), [chainId, owner, pendingReservations])
+    && (!directory || reservation.directory.replace(/^0x/, '') === directory.replace(/^0x/, ''))
+    && reservation.controller.toLowerCase() === owner.toLowerCase()), [chainId, directory, owner, pendingReservations])
 
   return {
     loadPendingReservations,

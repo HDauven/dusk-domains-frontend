@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { StrictMode, act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, beforeAll, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, expect, it, vi } from 'vitest'
 import { renderStaticShell } from '../../scripts/siteBuild'
 import { watchStaticShell } from './staticShell'
 import { injectStaticShell, staticShellFile } from './staticShellHtml'
@@ -13,6 +13,9 @@ import { injectStaticShell, staticShellFile } from './staticShellHtml'
 // `npm run shell` writes it again after the home page changes.
 const contract = (byte: string) => `0x${byte.repeat(32)}`
 const deployment = {
+  VITE_DUSK_DOMAINS_POLICY_CONTRACT_ID: contract('66'),
+  VITE_DUSK_DOMAINS_POLICY_DRIVER_URL: `/contracts/dusk-domains-policy.${'ab'.repeat(32)}.data-driver.wasm`,
+  VITE_DUSK_DOMAINS_RESOLVER_DRIVER_URL: `/contracts/dusk-domains-resolver.${'ab'.repeat(32)}.data-driver.wasm`,
   VITE_DUSK_DOMAINS_NODE_URL: 'https://testnet.nodes.dusk.network',
   VITE_DUSK_DOMAINS_CHAIN_ID: 'dusk:2',
   VITE_DUSK_DOMAINS_INDEXER_URL: '/api',
@@ -20,15 +23,15 @@ const deployment = {
   VITE_DUSK_DOMAINS_ENABLE_MARKETPLACE: 'true',
   VITE_DUSK_DOMAINS_ENABLE_REFERRAL_ATTRIBUTION: 'true',
   VITE_DUSK_DOMAINS_ENABLE_REFERRAL_CLAIMS: 'true',
-  VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID: contract('11'),
-  VITE_DUSK_DOMAINS_CORE_CONTRACT_ID: contract('22'),
-  VITE_DUSK_DOMAINS_TREASURY_CONTRACT_ID: contract('33'),
+  VITE_DUSK_DOMAINS_DIRECTORY_CONTRACT_ID: contract('11'),
+  VITE_DUSK_DOMAINS_STORE_CONTRACT_ID: contract('22'),
+  VITE_DUSK_DOMAINS_VAULT_CONTRACT_ID: contract('33'),
   VITE_DUSK_DOMAINS_RESOLVER_CONTRACT_ID: contract('44'),
   VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID: contract('55'),
-  VITE_DUSK_DOMAINS_ROUTER_DRIVER_URL: '/contracts/dusk-domains-router.data-driver.wasm',
-  VITE_DUSK_DOMAINS_CORE_DRIVER_URL: '/contracts/dusk-domains-core.data-driver.wasm',
-  VITE_DUSK_DOMAINS_TREASURY_DRIVER_URL: '/contracts/dusk-domains-treasury.data-driver.wasm',
-  VITE_DUSK_DOMAINS_MARKETPLACE_DRIVER_URL: '/contracts/dusk-domains-marketplace.data-driver.wasm',
+  VITE_DUSK_DOMAINS_DIRECTORY_DRIVER_URL: `/contracts/dusk-domains-directory.${'ab'.repeat(32)}.data-driver.wasm`,
+  VITE_DUSK_DOMAINS_STORE_DRIVER_URL: `/contracts/dusk-domains-store.${'ab'.repeat(32)}.data-driver.wasm`,
+  VITE_DUSK_DOMAINS_VAULT_DRIVER_URL: `/contracts/dusk-domains-vault.${'ab'.repeat(32)}.data-driver.wasm`,
+  VITE_DUSK_DOMAINS_MARKETPLACE_DRIVER_URL: `/contracts/dusk-domains-marketplace.${'ab'.repeat(32)}.data-driver.wasm`,
   VITE_DUSK_DOMAINS_SUPPORT_URL: 'https://github.com/HDauven/dusk-domains-frontend/issues/new?template=support-request.yml',
   VITE_DUSK_DOMAINS_ABUSE_URL: 'https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml',
   VITE_DUSK_DOMAINS_SECURITY_URL: 'https://github.com/HDauven/dusk-domains-frontend/security/advisories/new',
@@ -36,11 +39,20 @@ const deployment = {
 
 let App: typeof import('../App').default
 beforeAll(async () => {
+  // Keep provider-discovery timers inside this test's DOM lifetime.
+  vi.useFakeTimers()
   for (const [key, value] of Object.entries(deployment)) vi.stubEnv(key, value)
   // Nothing the first render shows comes from the network.
   vi.stubGlobal('fetch', () => new Promise(() => {}))
   App = (await import('../App')).default
 }, 120_000)
+
+afterAll(() => {
+  vi.clearAllTimers()
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -146,7 +158,7 @@ it('keeps a selection made in the search box before the app mounted', async () =
   const root = createRoot(container)
   try {
     await act(async () => { root.render(createElement(StrictMode, null, createElement(App))) })
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)) })
+    await act(async () => { await vi.advanceTimersByTimeAsync(50) })
     const input = container.querySelector<HTMLInputElement>('#name-search')!
     expect(input.value).toBe('pie')
     expect([input.selectionStart, input.selectionEnd]).toEqual([0, 2])

@@ -1,3 +1,4 @@
+import { marketplaceOrderKey } from './orderIdentity'
 import { Button } from '../../components/ui/Button'
 import { Panel } from '../../components/ui/Panel'
 import { Eye, Gavel, HandCoins, Tag, Trophy, WalletCards } from 'lucide-react'
@@ -10,7 +11,8 @@ import type { MarketplaceActivityProps } from './marketplaceTypes'
 export function MarketplaceActivity(props: MarketplaceActivityProps) {
   const topBidder = props.listings.auctions.filter((auction) => sameAuthority(auction.highestBid?.bidderAuthority, props.wallet.selectedAuthority))
   const won = topBidder.filter((auction) => auctionStatus(auction, props.market.currentBlockHeight) === 'ended')
-  const leading = topBidder.filter((auction) => auctionStatus(auction, props.market.currentBlockHeight) !== 'ended')
+  const expired = topBidder.filter((auction) => auctionStatus(auction, props.market.currentBlockHeight) === 'settlement_expired')
+  const leading = topBidder.filter((auction) => ['waiting', 'live', 'ending'].includes(auctionStatus(auction, props.market.currentBlockHeight)))
   const sellingAuctions = props.listings.auctions.filter((auction) => sameAuthority(auction.sellerAuthority, props.wallet.selectedAuthority))
   const sellingFixed = props.listings.fixedSales.filter((sale) => sameAuthority(sale.sellerAuthority, props.wallet.selectedAuthority))
   const sentOffers = props.offers.offers.filter((offer) => sameAuthority(offer.buyerAuthority, props.wallet.selectedAuthority))
@@ -18,7 +20,7 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
     ...props.listings.auctions.filter((auction) => props.watchlist.watchedNodes.includes(auction.node)),
     ...props.listings.fixedSales.filter((sale) => props.watchlist.watchedNodes.includes(sale.node)),
   ]
-  const hasActivity = leading.length || won.length || sellingAuctions.length || sellingFixed.length || sentOffers.length || props.withdrawal.refund || watchedOrders.length
+  const hasActivity = leading.length || won.length || expired.length || sellingAuctions.length || sellingFixed.length || sentOffers.length || props.withdrawal.refund || watchedOrders.length
 
   if (!props.wallet.selectedAddress) {
     return (
@@ -57,12 +59,22 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
           {won.map((auction) => (
             <PositionRow
               action="View result"
-              key={auction.node}
+              key={marketplaceOrderKey(auction)}
               label={auction.name}
               meta="Auction ended"
               value={<MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} />}
-              onOpen={() => props.auction.onOpenAuction(auction.node)}
+              onOpen={() => props.auction.onOpenAuction(marketplaceOrderKey(auction))}
             />
+          ))}
+        </PositionSection>
+      ) : null}
+
+      {expired.length ? (
+        <PositionSection count={expired.length} description="Close these auctions to unlock your bid refunds, then withdraw them under Yours." heading="Settlement expired" icon={<Gavel size={17} />}>
+          {expired.map((auction) => (
+            <PositionRow action="Close auction" key={marketplaceOrderKey(auction)} label={auction.name}
+              meta="Settlement window closed" value={<MarketplaceAmount lux={auction.highestBid!.amountLux} />}
+              onOpen={() => props.auction.onOpenAuction(marketplaceOrderKey(auction))} />
           ))}
         </PositionSection>
       ) : null}
@@ -72,11 +84,11 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
           {leading.map((auction) => (
             <PositionRow
               action="View auction"
-              key={auction.node}
+              key={marketplaceOrderKey(auction)}
               label={auction.name}
               meta={auctionTimeLabel(auction, props.market.currentBlockHeight)}
               value={<MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} />}
-              onOpen={() => props.auction.onOpenAuction(auction.node)}
+              onOpen={() => props.auction.onOpenAuction(marketplaceOrderKey(auction))}
             />
           ))}
         </PositionSection>
@@ -87,17 +99,17 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
           {sellingAuctions.map((auction) => (
             <PositionRow
               action="Manage auction"
-              key={auction.node}
+              key={marketplaceOrderKey(auction)}
               label={auction.name}
               meta={auctionTimeLabel(auction, props.market.currentBlockHeight)}
               value={auction.highestBid ? <MarketplaceAmount lux={auction.highestBid.amountLux} /> : <>Reserve <MarketplaceAmount lux={auction.reservePriceLux} /></>}
-              onOpen={() => props.auction.onOpenAuction(auction.node)}
+              onOpen={() => props.auction.onOpenAuction(marketplaceOrderKey(auction))}
             />
           ))}
           {sellingFixed.map((sale) => (
             <PositionRow
               action="View listing"
-              key={sale.node}
+              key={marketplaceOrderKey(sale)}
               label={sale.name}
               meta={`Expires ${expiryTimeLabel(sale.expiresAtBlockHeight, props.market.currentBlockHeight)}`}
               value={<MarketplaceAmount lux={sale.priceLux} />}
@@ -112,7 +124,7 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
           {sentOffers.map((offer) => (
             <PositionRow
               action="Manage offers"
-              key={`${offer.node}:${offer.buyerAuthority}`}
+              key={marketplaceOrderKey(offer)}
               label={offer.name}
               meta={`Expires ${expiryTimeLabel(offer.expiresAtBlockHeight, props.market.currentBlockHeight)}`}
               value={<MarketplaceAmount lux={offer.amountLux} />}

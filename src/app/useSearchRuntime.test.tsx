@@ -110,7 +110,7 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
 })
 
 it.each([true, false])('restores saved reservation primary choice %s and its bounded term through search', async primary => {
-  const reservation: PendingNameReservation = {
+  const reservation: PendingNameReservation = { directory:'01'.repeat(32), commitmentStore:'03'.repeat(32),
     name: 'alpha.dusk', node: namehashHex('alpha.dusk'), commitment: 'commit', secret: 'secret', controller: 'owner',
     ownerAddress: 'wallet', chainId: 'dusk:0', durationYears: 20, committedBlockHeight: null, committedTxId: null,
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),

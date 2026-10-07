@@ -7,7 +7,6 @@ import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
 import { walletConnectionStatus } from '../features/wallet/walletStatus'
 import type { createWriteAccess } from './writeAccess'
 import {
-  duskDomainCallGasLimit,
   submitDuskDomainWrite as submitDuskDomainWriteCall,
   type DuskConnectAppLike,
   type DuskDomainsIndexerClient,
@@ -71,10 +70,11 @@ export function useDuskDomainWriter({
       workspace?: () => boolean
       session?: () => boolean
       beforeSign?: () => void
+      onBroadcast?: (state:DuskDomainTxState) => void
       onNotBroadcast?: () => void
     } = {},
   ): Promise<DuskDomainTxState & { ownershipConfirmed?: boolean }> => {
-    const { ownershipChange, workspace, session: expectedSession, beforeSign, onNotBroadcast, ...writeOptions } = options
+    const { ownershipChange, workspace, session: expectedSession, beforeSign, onNotBroadcast, onBroadcast, ...writeOptions } = options
     const currentWorkspace = workspace ?? (() => true)
     if (!currentWorkspace()) return { status: 'rejected', context: { title: name } } as DuskDomainTxState
     const unavailable = accessRef.current.reason(call)
@@ -127,6 +127,7 @@ export function useDuskDomainWriter({
     }
     const onUpdate = (state: DuskDomainTxState) => {
       latest = state
+      if (state.txId) onBroadcast?.(state)
       if (state.txId && !stillConfirming) stillConfirming = setTimeout(() => {
         if (latest && ['submitted', 'executing'].includes(latest.status)) update({ ...latest, status: 'executing', message: 'Still confirming…' })
       }, 20_000)
@@ -136,13 +137,13 @@ export function useDuskDomainWriter({
     try {
       let state = await submitDuskDomainWriteCall(app, call, {
         contracts,
+        name,
         ...writeOptions,
-        gas: { limit: duskDomainCallGasLimit(call, { senderAddress: profile?.account }) },
         onUpdate,
         allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,
       })
       clearTimeout(stillConfirming)
-      if (nodeUrl && state.txId && (state.status === 'executed' || state.status === 'timeout')) {
+      if (nodeUrl && state.txId && (['executed', 'timeout', 'submitted', 'executing'].includes(state.status))) {
         const submitted = state
         const receipt = await waitForConfirmation(async () => {
           const receipt = await readTransactionReceipt(nodeUrl, submitted.txId!, controller.signal)
@@ -154,7 +155,7 @@ export function useDuskDomainWriter({
           return receipt
         }, retryConfirmation => update({ ...submitted, status: 'executing', message: 'Still confirming…', retryConfirmation }),
         () => update({ ...submitted, status: 'executing', message: 'Still confirming…' }), controller.signal)
-        state = { ...submitted, status: receipt.status, message: receipt.message }
+        state = { ...submitted, status: receipt.status, message: receipt.message, blockHeight: receipt.blockHeight }
         update(state)
       }
       if (state.status === 'executed') {

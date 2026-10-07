@@ -5,8 +5,8 @@ import type { ManagedNameState } from './managedNameState'
 
 export type PendingOwnership = { node: string; name: string; message: string; checking: boolean }
 
-const coreChanges = new Set(['update_authorities_runtime', 'escrow_fixed_sale_runtime', 'escrow_auction_runtime', 'accept_marketplace_offer_runtime'])
-const marketplaceChanges = new Set(['buy_fixed_sale_runtime', 'cancel_fixed_sale_runtime', 'expire_fixed_sale_runtime', 'cancel_auction_runtime', 'expire_auction_runtime', 'settle_auction_runtime'])
+const coreChanges = new Set(['update_authorities', 'escrow_fixed_sale', 'escrow_auction', 'accept_marketplace_offer'])
+const marketplaceChanges = new Set(['buy_fixed_sale', 'cancel_fixed_sale', 'expire_fixed_sale', 'cancel_auction', 'expire_auction', 'settle_auction'])
 
 export function createOwnershipConfirmation({ indexerClient, onChainClient, setManagedName, setPending }: {
   indexerClient: DuskDomainsIndexerClient | null
@@ -82,7 +82,7 @@ export function createOwnershipConfirmation({ indexerClient, onChainClient, setM
       })
     },
     afterWrite: (name: string, call: DuskDomainCallMetadata, kind?: 'transfer' | 'manager'): Promise<boolean> | undefined => {
-      if (!(call.contract === 'core' && coreChanges.has(call.functionName))
+      if (!(call.contract === 'store' && coreChanges.has(call.functionName))
         && !(call.contract === 'marketplace' && marketplaceChanges.has(call.functionName))) return
       const node = (call.args as { node: string }).node
       pending.set(node, { node, name, checking: true, message: kind === 'manager' ? 'Manager change sent. Confirming…' : 'Transfer sent. Confirming…' })

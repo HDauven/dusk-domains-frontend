@@ -120,6 +120,16 @@ describe.each(['cancel', 'expire'] as const)('%s offer', action => {
     const h = setup()
     await h[action]()
     expect(h.setError).not.toHaveBeenCalled()
-    expect(h.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), 'example.dusk', expect.objectContaining({ functionName: `${action}_offer_runtime`, args: expect.objectContaining({ node, expectedOfferId: 7 }) }), 0n, expect.any(String))
+    expect(h.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), 'example.dusk', expect.objectContaining({ functionName: `${action}_offer`, args: expect.objectContaining({ node, expectedOfferId: 7 }) }), 0n, expect.any(String))
   })
+})
+
+it('keeps the recorded marketplace on cleanup even when the current owner no longer has the name', async () => {
+  const marketplaceContractId = `0x${'55'.repeat(32)}`
+  const h = setup({ ...indexed, marketplaceContractId }, { node: 'another-node', canonicalName: 'another.dusk' } as IndexedNameSummary)
+  await h.cancel()
+  await h.expire()
+  expect(h.submit).toHaveBeenCalledTimes(2)
+  expect(h.submit).toHaveBeenCalledWith('cancelling this offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), 0n, expect.any(String))
+  expect(h.submit).toHaveBeenCalledWith('closing this expired offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), 0n, expect.any(String))
 })

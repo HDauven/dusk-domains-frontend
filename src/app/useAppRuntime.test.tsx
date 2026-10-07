@@ -9,7 +9,7 @@ it('keeps one runtime config when the env object is rebuilt with the same values
   const configs = new Set<unknown>()
   function Probe({ tick }: { tick: number }) {
     // As in a production build, where import.meta.env is a new object at each use.
-    configs.add(useAppRuntime({ VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID: `0x${'11'.repeat(32)}` }).runtimeConfig)
+    configs.add(useAppRuntime({ VITE_DUSK_DOMAINS_DIRECTORY_CONTRACT_ID: `0x${'11'.repeat(32)}` }).runtimeConfig)
     return <span>{tick}</span>
   }
   const container = document.createElement('div')

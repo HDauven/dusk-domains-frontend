@@ -1,7 +1,7 @@
 import { contractPrincipalInput } from '../../app/principalInput'
 import { blockHeightFromDateInput } from './domainFormat'
 import {
-  coreCreateSubnameRuntimeCall,
+  storeCreateSubnameRequest,
   createSubnameState,
   currentUnixSeconds,
   userFacingErrorMessage,
@@ -54,7 +54,7 @@ export async function createSubdomain({
     const requestedExpiresAt = subnameExpiryPolicy === 'fixed_before_parent'
       ? blockHeightFromDateInput(subnameExpiryDate, currentBlockHeight, nowSeconds)
       : null
-    const manager = contractPrincipalInput(subnameManager.trim() || selectedAuthority, 'Subname manager')
+    const manager = subnameManager.trim() ? contractPrincipalInput(subnameManager.trim(), 'Subname manager') : selectedAuthority
     const subname = createSubnameState({
       parentName: displayName,
       label: subnameLabel,
@@ -65,7 +65,7 @@ export async function createSubdomain({
       requestedExpiresAt,
       createdAt: currentUnixSeconds(),
     })
-    const call = coreCreateSubnameRuntimeCall({
+    const call = storeCreateSubnameRequest({
       parentNode: subname.parentNode,
       node: subname.node,
       parentName: subname.parentName,

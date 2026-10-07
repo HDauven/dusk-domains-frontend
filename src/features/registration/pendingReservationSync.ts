@@ -19,8 +19,10 @@ export async function indexedOwnCommitment(
   indexerClient: DuskDomainsIndexerClient,
   commitment: string,
   controller: string,
+  commitmentStore?: string,
 ) {
   const indexed = await indexerClient.getCommitment(commitment, isBytes32Hex(controller) ? controller : undefined)
+  if (indexed?.commitmentStore && commitmentStore && authorityKey(indexed.commitmentStore) !== authorityKey(commitmentStore)) return null
   if (!indexed || !controller) return indexed
   return authorityKey(indexed.controller) === authorityKey(controller) ? indexed : null
 }
@@ -56,7 +58,7 @@ export async function refreshCommitBlockStateFromIndexer({
 }: RefreshCommitBlockStateArgs) {
   const [health, indexedCommit] = await Promise.all([
     indexerClient.getHealth(),
-    indexedOwnCommitment(indexerClient, commitment, selectedAuthority),
+    indexedOwnCommitment(indexerClient, commitment, selectedAuthority, loadPendingReservations().find(r => r.commitment === commitment)?.commitmentStore),
   ])
   const nextBlockHeight = currentBlockHeightFromHealth(health) ?? await getCurrentBlockHeight()
   setCurrentBlockHeight(nextBlockHeight)
@@ -146,7 +148,7 @@ export async function refreshPendingReservationsFromIndexer({
 
   const indexedReservations = await Promise.all(pendingReservations.map(async (reservation) => {
     const [commit, name] = await Promise.allSettled([
-      indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
+      indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller, reservation.commitmentStore),
       indexerClient.searchName(reservation.name),
     ])
     return {

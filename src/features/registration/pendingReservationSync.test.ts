@@ -1,3 +1,4 @@
+import { reservation } from '../../test/frozenFixtures'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { listPendingNameReservations, upsertPendingNameReservation, type DuskDomainsIndexerClient } from '../../names/internal'
 import { indexedOwnCommitment, refreshCommitBlockStateFromIndexer, refreshPendingReservationsFromIndexer } from './pendingReservationSync'
@@ -8,9 +9,7 @@ it('removes completed saved claims while preserving available names and uncertai
   const data = new Map<string, string>()
   vi.stubGlobal('localStorage', { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => data.set(key, value) })
   for (const name of ['registered', 'available', 'offline']) {
-    upsertPendingNameReservation({ name: `${name}.dusk`, node: name, commitment: name, secret: 'secret',
-      controller: 'owner', ownerAddress: 'address', chainId: 'local', durationYears: 1,
-      committedBlockHeight: 100, committedTxId: 'tx', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' })
+    upsertPendingNameReservation(reservation({name:`${name}.dusk`}))
   }
   await refreshPendingReservationsFromIndexer({
     indexerClient: {
@@ -62,7 +61,7 @@ describe('pending reservation block sync', () => {
     expect(preparedCommit?.committedBlockHeight).toBe(100)
   })
 
-  it('recovers old saved reservations that have a tx id but no indexed block', async () => {
+  it('does not infer inclusion from a transaction ID and wall clock', async () => {
     let currentBlockHeight: number | null = null
     let preparedCommit: PreparedRegistrationCommit | null = {
       controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0',
@@ -111,7 +110,7 @@ describe('pending reservation block sync', () => {
     expect(indexed).toBe(false)
     expect(currentBlockHeight).toBe(120)
     expect(preparedCommit).toMatchObject({
-      committedBlockHeight: 115,
+      committedBlockHeight: null,
       committedTxId: '0xtx',
     })
   })

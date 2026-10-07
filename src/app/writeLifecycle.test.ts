@@ -1,9 +1,11 @@
+import { contracts } from '../test/frozenFixtures'
+import { storeCommitCall } from '@duskdomains/sdk'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
 import { DuskWalletUserRejectedError } from '@dusk/connect'
 import { WalletSessionChangedError } from '../features/wallet/sessionWriteWallet'
-import { coreCommitRuntimeCall, DUSK_DOMAINS_CONTRACTS, listPendingNameReservations, namehashHex } from '../names/internal'
+import { storeCommitRequest, listPendingNameReservations, namehashHex } from '../names/internal'
 import { prepareRegistrationCommit } from '../features/registration/prepareRegistrationCommit'
 import { saveDomainRecords } from '../features/domains/saveDomainRecords'
 import { createWriteAccess } from './writeAccess'
@@ -12,7 +14,7 @@ import { useDuskDomainWriter } from './useDuskDomainWriter'
 
 const wallet = { state: { installed: true, authorized: true, chainId: 'dusk:0', profiles: [{ account: 'owner', profileId: 'primary' }], selectedProfile: { account: 'owner', profileId: 'primary' } } as import('@dusk/connect').DuskWalletState }
 
-const contracts = { ...DUSK_DOMAINS_CONTRACTS, core: { ...DUSK_DOMAINS_CONTRACTS.core, contractId: `0x${'11'.repeat(32)}` } }
+
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -23,8 +25,9 @@ function fixture(session = wallet, nodeUrl?: string) {
   let visit = { name: 'alpha.dusk' }
   const app = {
     get chainId() { return session.state.chainId ?? undefined },
+    prepareIntent: async () => storeCommitCall(contracts.store.contractId,{hash:Array(32).fill(1)}),
     readContract: vi.fn(async () => null), prepareContractCall: vi.fn(async (): Promise<unknown> => ({})),
-    writeContract: vi.fn(async (): Promise<unknown> => ({ status: 'executed' })),
+    writeContract: vi.fn(async (): Promise<unknown> => ({ id: 'ab'.repeat(32), status: 'executed' })),
   }
   const onPendingConfirmation = vi.fn()
   let submit!: ReturnType<typeof useDuskDomainWriter>
@@ -112,7 +115,7 @@ it('removes write-ahead data if saving fails before the request, independently o
   const h = fixture()
   const cleanup = vi.fn()
   const beforeSign = () => { h.visit('beta.dusk'); throw new Error('Storage unavailable') }
-  await h.submit('alpha.dusk', coreCommitRuntimeCall({ commitment: `0x${'22'.repeat(32)}` }), {
+  await h.submit('alpha.dusk', storeCommitRequest({ commitment: `0x${'22'.repeat(32)}` }), {
     workspace: h.submit.captureWorkspace('alpha.dusk'), beforeSign, onNotBroadcast: cleanup,
   })
   expect(h.app.writeContract).not.toHaveBeenCalled()
@@ -171,7 +174,7 @@ it.each(['lock', 'disconnect', 'authorization', 'network', 'account', 'profile',
   await pending
   expect(h.app.writeContract).not.toHaveBeenCalled()
   expect(listPendingNameReservations()).toEqual([])
-  const message = ['network', 'unknown chain'].includes(change) ? 'chain changed during preparation' : 'wallet session changed'
+  const message = ['network', 'unknown chain'].includes(change) ? 'wallet session changed' : 'wallet session changed'
   expect(h.props.setCommitTxState).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed', message: expect.stringContaining(message) }))
 })
 

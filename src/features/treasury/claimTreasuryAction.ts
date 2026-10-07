@@ -1,6 +1,6 @@
 import {
-  treasuryClaimAllRuntimeCall,
-  treasuryClaimRuntimeCall,
+  vaultClaimAllRequest,
+  vaultClaimRequest,
   userFacingMessageFromText,
   waitForConfirmedIndexerRefresh,
 } from '../../names/internal'
@@ -59,9 +59,9 @@ export async function claimTreasury(
 
   const beforeAvailableLux = treasuryState.availableLux
   const call = mode === 'partial'
-    ? treasuryClaimRuntimeCall({ amountLux: Number(amountLux) })
-    : treasuryClaimAllRuntimeCall()
-  const finalState = await submitNameWrite('treasury.dusk', call, {
+    ? vaultClaimRequest({ amountLux: Number(amountLux) })
+    : vaultClaimAllRequest()
+  const finalState = await submitNameWrite('treasury.dusk', {...call,expectedRecipient:treasuryState.operatorRecipient ?? undefined}, {
     contracts: runtimeConfig.contracts,
     onUpdate: setTreasuryTxState,
   })

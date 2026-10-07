@@ -90,17 +90,17 @@ function expectControls(managedName: ManagedNameState, allowed: boolean) {
 }
 
 it.each([
-  ['core','update_authorities_runtime','transfer'],
-  ['core','update_authorities_runtime','manager'],
-  ['core','escrow_fixed_sale_runtime','sale'],
-  ['core','escrow_auction_runtime','auction'],
-  ['core','accept_marketplace_offer_runtime','offer'],
-  ['marketplace','buy_fixed_sale_runtime','purchase'],
-  ['marketplace','cancel_fixed_sale_runtime','cancel sale'],
-  ['marketplace','expire_fixed_sale_runtime','expire sale'],
-  ['marketplace','cancel_auction_runtime','cancel auction'],
-  ['marketplace','expire_auction_runtime','expire auction'],
-  ['marketplace','settle_auction_runtime','settlement'],
+  ['store','update_authorities','transfer'],
+  ['store','update_authorities','manager'],
+  ['store','escrow_fixed_sale','sale'],
+  ['store','escrow_auction','auction'],
+  ['store','accept_marketplace_offer','offer'],
+  ['marketplace','buy_fixed_sale','purchase'],
+  ['marketplace','cancel_fixed_sale','cancel sale'],
+  ['marketplace','expire_fixed_sale','expire sale'],
+  ['marketplace','cancel_auction','cancel auction'],
+  ['marketplace','expire_auction','expire auction'],
+  ['marketplace','settle_auction','settlement'],
 ])('invalidates immediately after %s.%s (%s), fails closed for 15 reads, and retries without signing', async (contract,functionName,kind) => {
   vi.useFakeTimers()
   const h = harness(kind === 'manager' ? 'viewer' : 'recipient')
@@ -134,7 +134,7 @@ it.each(['lagging','unhealthy','old authorities','wrong node','chain unavailable
   if (outcome === 'lagging') h.indexerClient.getHealth.mockResolvedValue({ok:true,finalizedBlockHeight:99})
   if (outcome === 'unhealthy') h.indexerClient.getHealth.mockResolvedValue({ok:false,finalizedBlockHeight:100})
   if (outcome === 'chain unavailable') h.onChainClient.getCurrentBlockHeight.mockRejectedValue(new Error('offline'))
-  const write = h.submit('alpha.dusk',{contract:'core',functionName:'update_authorities_runtime',args:{node}} as never)
+  const write = h.submit('alpha.dusk',{contract:'store',functionName:'update_authorities',args:{node}} as never)
   await vi.runAllTimersAsync()
   expect(await write).toMatchObject({ownershipConfirmed:false})
   expectControls(h.managedName,false)
@@ -144,8 +144,8 @@ it.each(['lagging','unhealthy','old authorities','wrong node','chain unavailable
 it('does not invalidate for a rejected transaction or a record write', async () => {
   const h = harness()
   vi.mocked(submitDuskDomainWrite).mockResolvedValueOnce({status:'rejected'} as never)
-  await h.submit('alpha.dusk',{contract:'core',functionName:'update_authorities_runtime',args:{node}} as never)
-  await h.submit('alpha.dusk',{contract:'core',functionName:'mutate_records_sender_runtime',args:{node}} as never)
+  await h.submit('alpha.dusk',{contract:'store',functionName:'update_authorities',args:{node}} as never)
+  await h.submit('alpha.dusk',{contract:'store',functionName:'mutate_records_sender',args:{node}} as never)
   expectControls(h.managedName,true)
   expect(h.pending).toEqual([])
   expect(h.indexerClient.getNameState).not.toHaveBeenCalled()
@@ -167,7 +167,7 @@ it('ignores hydration started before a transfer even if it arrives after confirm
   const read = hydration.hydrateNameFromIndexer(staleClient as never,{canonical:'alpha.dusk'} as never)
   await Promise.resolve()
   h.indexerClient.getNameState.mockResolvedValue(h.state)
-  await h.submit('alpha.dusk',{contract:'core',functionName:'update_authorities_runtime',args:{node}} as never)
+  await h.submit('alpha.dusk',{contract:'store',functionName:'update_authorities',args:{node}} as never)
   expect(h.managedName.owner).toBe('recipient')
   finishRead(original)
   await read
@@ -178,7 +178,7 @@ it('ignores hydration started before a transfer even if it arrives after confirm
 it('keeps invalidation per node when navigating away and back, without replacing another name on retry', async () => {
   vi.useFakeTimers()
   const h = harness()
-  const write = h.submit('alpha.dusk',{contract:'core',functionName:'escrow_fixed_sale_runtime',args:{node}} as never)
+  const write = h.submit('alpha.dusk',{contract:'store',functionName:'escrow_fixed_sale',args:{node}} as never)
   await vi.runAllTimersAsync()
   await write
   const other = {...original,node:'other',owner:'other owner'}
@@ -195,7 +195,7 @@ it('keeps invalidation per node when navigating away and back, without replacing
 it('does not let an older retry confirm a subsequent ownership transaction', async () => {
   vi.useFakeTimers()
   const h = harness()
-  const call = {contract:'core',functionName:'update_authorities_runtime',args:{node}} as DuskDomainCallMetadata
+  const call = {contract:'store',functionName:'update_authorities',args:{node}} as DuskDomainCallMetadata
   const first = h.ownership.afterWrite('alpha.dusk',call)
   await vi.runAllTimersAsync()
   expect(await first).toBe(false)
@@ -228,7 +228,7 @@ it('keeps marketplace confirmation in the shared retry notice until ownership is
     return null
   }
   renderToStaticMarkup(<Probe />)
-  const write = writes.submit('listing','alpha.dusk',{contract:'core',functionName:'escrow_fixed_sale_runtime',args:{node}} as never)
+  const write = writes.submit('listing','alpha.dusk',{contract:'store',functionName:'escrow_fixed_sale',args:{node}} as never)
   await vi.runAllTimersAsync()
   await write
   expect(setConfirmation).toHaveBeenCalledExactlyOnceWith('')
@@ -243,7 +243,7 @@ it('keeps marketplace confirmation in the shared retry notice until ownership is
 it('restores fresh ownership and lifecycle after a pending name is reopened with failed hydration', async () => {
   vi.useFakeTimers()
   const h = harness('viewer')
-  const write = h.submit('alpha.dusk',{contract:'core',functionName:'update_authorities_runtime',args:{node}} as never,{ownershipChange:'manager'})
+  const write = h.submit('alpha.dusk',{contract:'store',functionName:'update_authorities',args:{node}} as never,{ownershipChange:'manager'})
   await vi.runAllTimersAsync()
   await write
   h.ownership.setManagedName(createManagedNameState('resolver'))

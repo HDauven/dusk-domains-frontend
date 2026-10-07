@@ -24,7 +24,7 @@ for (let attempt = 0; ; attempt++) {
   assert.ok(attempt < 60, 'Start the Vite development server before this check')
   await new Promise(resolve => setTimeout(resolve, 250))
 }
-const browser = await chromium.launch({ headless: true })
+const browser = await chromium.launch({ headless: true, executablePath: process.env.DUSK_DOMAINS_E2E_CHROMIUM_PATH })
 try {
   await checkLegalPages(browser, baseUrl)
   const context = await browser.newContext()
@@ -85,20 +85,20 @@ try {
     const { React, root } = window
     const { useRegistrationRuntime } = await import('/src/app/useRegistrationRuntime.ts')
     const { upsertPendingNameReservation } = await import('/src/names/internal.ts')
-    sessionStorage.setItem('dusk-domains:last-claim-owner:dusk:0', 'controller')
-    upsertPendingNameReservation({ name: 'resume.dusk', node: 'node', commitment: 'commit', secret: 'local-test',
-      controller: 'controller', ownerAddress: 'owner', chainId: 'dusk:0', durationYears: 1,
-      committedBlockHeight: null, committedTxId: 'tx', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+    const { reservation } = await import('/src/test/frozenFixtures.ts')
+    const saved = reservation({committedBlockHeight:null,committedTxId:'tx'})
+    sessionStorage.setItem('dusk-domains:last-claim-owner:dusk:0', saved.controller)
+    upsertPendingNameReservation(saved)
     const indexerClient = { getHealth: async () => ({ currentBlockHeight: 200 }),
       searchName: async () => ({ status: 'available' }),
-      getCommitment: async () => ({ controller: 'controller', committedBlockHeight: 100, committedTxId: 'tx' }) }
+      getCommitment: async () => ({ controller: saved.controller, committedBlockHeight: 100, committedTxId: 'tx' }) }
     const getCurrentBlockHeight = async () => 200
     function SavedReservation() {
       const [height, setCurrentBlockHeight] = React.useState(null)
       const [, setNowSeconds] = React.useState(0)
       const [preparedCommit, setPreparedCommit] = React.useState(null)
       const { pendingReservations } = useRegistrationRuntime({ mainView: 'search', chainId: 'dusk:0',
-        selectedAuthority: 'controller', selectedAddress: 'controller', indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
+        selectedAuthority: saved.controller, selectedAddress: saved.ownerAddress, indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
         setCurrentBlockHeight, setNowSeconds })
       return React.createElement('output', { id: 'saved-reservation' }, `${height}:${pendingReservations[0]?.committedBlockHeight}`)
     }
@@ -213,7 +213,7 @@ try {
     const args = { mainView: 'search', indexerClient: null, liveWritesAvailable: true,
       selectedAddress: 'buyer', selectedAuthority: `0x${'33'.repeat(32)}`,
       runtimeConfig: { chainId: 'dusk:0', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: `0x${'55'.repeat(32)}` } } },
-      duskDomainsOnChainClient: createDuskDomainsOnChainClient({ read: { read: async () => null }, currentBlockHeight }),
+      duskDomainsOnChainClient: createDuskDomainsOnChainClient({ read: { read: async () => null, client: Promise.resolve({transport:{currentBlockHeight:async()=>{const height=await currentBlockHeight();if(height===null)throw new Error('Height unavailable');return BigInt(height)}}}) } }),
       marketplaceOnChainClient: { getAuction: async () => ({ ok: true, value: { ...auction,
             reservePriceLux: 5000000000n, startBlock: null, endBlock: null } }) },
       ensurePublicBalanceForLiveWrite: async () => true, onOpenWalletConnection: () => {},
@@ -439,14 +439,7 @@ try {
     assert.ok(await selected.evaluate(element => element === document.activeElement))
     assert.equal(await page.locator('[role="tab"][tabindex="0"]').count(), 1)
   }
-  let releaseBls
-  const blsGate = new Promise(resolve => { releaseBls = resolve })
-  let blsRequested = false
-  await page.route(/bls12-381/, async route => {
-    blsRequested = true
-    await blsGate
-    await route.continue()
-  })
+  // SDK 0.3 validates Moonlight points synchronously; validation is already bundled.
   await page.evaluate(async () => {
     const { React, root } = window
     const { useReferralControls } = await import('/src/features/referrals/useReferralControls.ts')
@@ -464,17 +457,13 @@ try {
     window.openReferralLink('')
   })
   await page.locator('#referral-probe').waitFor()
-  assert.equal(blsRequested, false, 'Empty attribution must not load BLS')
+  assert.equal(await page.evaluate(() => window.referralControls.referralState.valid), false)
   const moonlight = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
   await page.evaluate(input => window.openReferralLink(input), moonlight)
   await page.waitForFunction(input => window.referralControls.referralState.input === input, moonlight)
-  assert.equal(await page.evaluate(() => window.referralControls.referralState.valid), false)
-  assert.equal(await page.evaluate(() => window.referralControls.referralState.principal), null)
-  const blsRequest = await page.waitForRequest(/bls12-381/, { timeout: 1000 }).catch(() => null)
-  assert.ok(blsRequested || blsRequest, 'Moonlight attribution must load BLS')
+  await page.waitForFunction(() => window.referralControls.referralState.valid)
   await page.evaluate(() => window.referralControls.clearReferral())
   await page.waitForFunction(() => window.referralControls.referralState.input === '')
-  releaseBls()
   await page.evaluate(async input => {
     const { referralStateFromInput } = await import('/src/features/referrals/referralState.ts')
     await referralStateFromInput(input)
@@ -512,7 +501,7 @@ try {
     root.render(React.createElement(PauseProbe))
   })
   await page.getByText('Registrations paused.', { exact: false }).waitFor()
-  await page.getByText('Marketplace trading paused.', { exact: false }).waitFor()
+  await page.getByText('New marketplace orders and bids paused.', { exact: false }).waitFor()
   await page.evaluate(() => { window.pauseHealth = { ok: false, pause: { registrationsPaused: false, tradingPaused: false } } })
   await page.clock.runFor(10_000)
   assert.match(await page.locator('#pause-probe').textContent(), /Registrations paused/)
@@ -538,9 +527,9 @@ try {
   await page.waitForFunction(() => window.writerPause?.tradingPaused === false)
   await page.evaluate(() => window.renderWriter({ registrationsPaused: false, tradingPaused: true }))
   await page.waitForFunction(() => window.writerPause?.tradingPaused === true)
-  const staleSubmit = await page.evaluate(() => window.firstSubmit('name.dusk', { contract: 'marketplace', functionName: 'buy_fixed_sale_runtime' })
+  const staleSubmit = await page.evaluate(() => window.firstSubmit('name.dusk', { contract: 'marketplace', functionName: 'place_offer' })
     .then(() => 'submitted', (error) => error.message))
-  assert.match(staleSubmit, /Marketplace trading is paused/)
+  assert.match(staleSubmit, /New marketplace orders are paused/)
   await checkPremiumConfirmation(page)
   await checkAuctionRoute(page)
   await checkListingFeeReview(page)

@@ -8,7 +8,7 @@ const purchased = { node:'root', owner:'buyer', namespacePurchase:{seller:'selle
   subnames:[{node:'child',owner:'seller'},{node:'leaf',owner:'seller'},{node:'third-party',owner:'other'}],
 } } as IndexedNameSummary
 it('takes back all seller-held descendants in one call and excludes other holders', () => {
-  expect(purchaseTakeBackCall(purchased, 'buyer')).toMatchObject({ functionName:'take_back_subnames_runtime', args:{node:'root',nodes:['child','leaf'],owner:'buyer',manager:'buyer'} })
+  expect(purchaseTakeBackCall(purchased, 'buyer')).toMatchObject({ functionName:'take_back_subnames', args:{node:'root',nodes:['child','leaf'],owner:'buyer',manager:'buyer'} })
   expect(sellerHeldSubnames(purchased, 'stranger')).toEqual([])
   expect(sellerHeldSubnames({...purchased,owner:'next'}, 'buyer')).toEqual([])
 })

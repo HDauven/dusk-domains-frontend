@@ -1,5 +1,5 @@
 import {
-  coreClearPrimaryNameRuntimeCall,
+  storeClearPrimaryNameRequest,
   userFacingErrorMessage,
 } from '../../names/internal'
 import { guardDomainActionPrerequisite } from './domainActionGuards'
@@ -39,7 +39,7 @@ export async function clearPrimaryDomainName({
   if (!workspace()) return
 
   try {
-    const call = coreClearPrimaryNameRuntimeCall({
+    const call = storeClearPrimaryNameRequest({
       endpointType: 'moonlight_address',
       endpointValue: primaryEndpoint,
     })

@@ -1,7 +1,7 @@
 import { pluralize } from '../../utils/format'
 import {
   applyRecordMutations,
-  coreMutateRecordsSenderRuntimeCall,
+  storeMutateRecordsSenderRequest,
   userFacingErrorMessage,
 } from '../../names/internal'
 import { guardDomainActionPrerequisite } from './domainActionGuards'
@@ -56,7 +56,7 @@ export async function saveDomainRecords({
     if (!target) throw new Error('Choose a valid record target.')
 
     const mutations = recordDraftMutations
-    const call = coreMutateRecordsSenderRuntimeCall({
+    const call = storeMutateRecordsSenderRequest({
       node: target.node,
       mutations,
     })

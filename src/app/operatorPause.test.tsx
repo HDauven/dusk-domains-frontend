@@ -8,9 +8,9 @@ it('shows calm independent banners only for paused services', () => {
   expect(renderToStaticMarkup(<OperatorPauseBanner pause={unpaused} />)).toBe('')
   const registration = renderToStaticMarkup(<OperatorPauseBanner pause={{ ...unpaused, registrationsPaused: true }} />)
   expect(registration).toContain('Registrations paused')
-  expect(registration).not.toContain('Marketplace trading paused')
+  expect(registration).not.toContain('New marketplace orders and bids paused')
   const marketplace = renderToStaticMarkup(<OperatorPauseBanner pause={{ ...unpaused, tradingPaused: true }} />)
-  expect(marketplace).toContain('Marketplace trading paused')
+  expect(marketplace).toContain('New marketplace orders and bids paused')
   expect(marketplace).toContain('withdraw refunds')
   expect(marketplace).not.toContain('Registrations paused')
 })
@@ -30,14 +30,14 @@ it('blocks both registration stages but preserves the existing commitment window
 
 it('guards exactly the paused write calls and leaves exempt calls alone', () => {
   const pause = { registrationsPaused: true, tradingPaused: true }
-  for (const [contract, names] of Object.entries({ core: ['commit_runtime', 'complete_registration_runtime', 'escrow_fixed_sale_runtime', 'escrow_auction_runtime', 'accept_marketplace_offer_runtime'], marketplace: ['place_bid_runtime', 'place_offer_runtime', 'buy_fixed_sale_runtime'] })) {
+  for (const [contract, names] of Object.entries({ store: ['commit', 'complete_registration', 'escrow_fixed_sale', 'escrow_auction'], marketplace: ['place_offer', 'place_bid'] })) {
     for (const functionName of names) {
       const call = { contract, functionName } as Parameters<typeof pauseReason>[0]
       expect(pauseReason(call, pause)).toContain('paused')
       expect(pauseReason(call, unpaused)).toBeNull()
     }
   }
-  for (const [contract, names] of Object.entries({ core: ['renew_runtime', 'set_record_sender_runtime', 'clear_record_sender_runtime', 'set_primary_name_runtime', 'clear_primary_name_runtime', 'update_authorities_runtime', 'create_subname_runtime'], marketplace: ['cancel_fixed_sale_runtime', 'expire_fixed_sale_runtime', 'cancel_auction_runtime', 'expire_auction_runtime', 'settle_auction_runtime', 'cancel_offer_runtime', 'expire_offer_runtime', 'claim_refund_runtime'], treasury: ['claim_runtime', 'claim_all_runtime', 'claim_referral_reward_runtime', 'claim_all_referral_rewards_runtime'], router: ['issue_reserved_name_runtime', 'propose_operator_runtime', 'accept_operator_runtime', 'cancel_operator_runtime'] })) {
+  for (const [contract, names] of Object.entries({ store: ['accept_marketplace_offer', 'renew', 'set_record_sender', 'clear_record_sender', 'set_primary_name', 'clear_primary_name', 'update_authorities', 'create_subname'], marketplace: ['buy_fixed_sale', 'cancel_fixed_sale', 'expire_fixed_sale', 'cancel_auction', 'expire_auction', 'settle_auction', 'cancel_offer', 'expire_offer', 'claim_refund'], vault: ['claim', 'claim_all', 'claim_referral_reward', 'claim_all_referral_rewards'], directory: ['issue_reserved_name', 'propose_operator', 'accept_operator', 'cancel_operator'] })) {
     for (const functionName of names) expect(pauseReason({ contract, functionName } as Parameters<typeof pauseReason>[0], pause)).toBeNull()
   }
 })

@@ -1,3 +1,4 @@
+import { contracts } from '../../test/frozenFixtures'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
 import { listPendingNameReservations, namehashHex, type DuskDomainTxState } from '../../names/internal'
@@ -29,7 +30,7 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
   const props = new Proxy({ registerSetsPrimary, setRegisterSetsPrimary, setPreparedCommit, setCommitTxState, submitNameWrite,
     displayName: 'approval.dusk', nodeHex: namehashHex('approval.dusk'), duration: 1,
     selectedAuthority: `0x${'11'.repeat(32)}`, selectedAddress: 'wallet', canPrepareCommit: true,
-    runtimeConfig: { chainId: 'dusk:0', contracts: {} }, liveDuskDomainsApp: null, preparedCommit: null as PreparedRegistrationCommit | null,
+    runtimeConfig: { chainId: 'dusk:0', contracts }, liveDuskDomainsApp: null, preparedCommit: null as PreparedRegistrationCommit | null,
     commitBusy: false, txBusy: false, registrationCompletion: null, resultIssues: [], registrationStep: 'review',
     registrationTargetAddress: 'wallet', registrationTargetAddressErrors: [], registrationFee: 10,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: () => balance.promise,
