@@ -1,3 +1,4 @@
+import { contracts } from '../test/frozenFixtures'
 // @vitest-environment happy-dom
 import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -46,7 +47,7 @@ function Probe({ session }: { session: Session }) {
   })
   const common = new Proxy({
     displayName, nodeHex, result: analyzeName(displayName), canRegister: true,
-    runtimeConfig: { chainId: session.chainId, contracts: {} }, indexerClient: null,
+    runtimeConfig: { chainId: session.chainId, contracts }, indexerClient: null,
     liveDuskDomainsApp: null, duskDomainsOnChainClient: null, getCurrentBlockHeight,
     lifecycleBaseBlockHeight: search.currentBlockHeight ?? 100, feeConfig: DEFAULT_FEE_CONFIG,
     selectedAuthority: session.controller, selectedAddress: session.address, walletSetupState: session.status,

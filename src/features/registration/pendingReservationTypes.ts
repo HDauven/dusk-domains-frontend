@@ -3,6 +3,8 @@ import type { DuskDomainsIndexerClient } from '../../names/internal'
 import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 
 export type PreparedRegistrationCommit = {
+  directory?: string
+  commitmentStore?: string
   controller: string
   ownerAddress: string
   chainId: string
@@ -20,6 +22,7 @@ export type StrandedCommitment = {
 
 export type UsePendingReservationsArgs = {
   explicitlyDisconnected?: boolean
+  directory?: string
   chainId: string
   currentCommitment: string
   getCurrentBlockHeight: CurrentBlockHeightReader

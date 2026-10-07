@@ -8,7 +8,6 @@ import {
   isDuskDomainTxBusy,
 } from '../../names/internal'
 import {
-  feeConfigValuesMatch,
   parseDuskAmountToLux,
   parseFeeConfigForm,
   type FeeConfigFormState,
@@ -28,7 +27,6 @@ type UseTreasuryViewModelArgs = {
 }
 
 export function useTreasuryViewModel({
-  feeConfig,
   feeConfigForm,
   feeConfigTxState,
   liveWritesAvailable,
@@ -52,14 +50,9 @@ export function useTreasuryViewModel({
   const feeConfigBusy = isDuskDomainTxBusy(feeConfigTxState)
   const parsedFeeConfigForm = useMemo(() => parseFeeConfigForm(feeConfigForm), [feeConfigForm])
   const feeConfigFormError = parsedFeeConfigForm.ok ? '' : parsedFeeConfigForm.error
-  const feeConfigChanged = parsedFeeConfigForm.ok ? !feeConfigValuesMatch(feeConfig, parsedFeeConfigForm.config) : false
-  const canUpdateFeeConfig = Boolean(
-    connectedAsTreasuryOperator
-    && liveWritesAvailable
-    && !feeConfigBusy
-    && parsedFeeConfigForm.ok
-    && feeConfigChanged,
-  )
+  // Frozen policies are immutable. Changes use directory governance outside this claim UI.
+  const canUpdateFeeConfig = false
+
   const treasuryClaimAmountLuxBigInt = useMemo(() => parseDuskAmountToLux(treasuryClaimAmount), [treasuryClaimAmount])
   const treasuryClaimAmountLux = treasuryClaimAmountLuxBigInt === null || treasuryClaimAmountLuxBigInt > BigInt(Number.MAX_SAFE_INTEGER)
     ? null

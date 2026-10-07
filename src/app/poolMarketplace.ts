@@ -1,8 +1,8 @@
-import { contractIdFromOutput, routerConfigCall, type DuskDomainsOnChainReadTransport } from '../names/internal'
+import { contractIdFromOutput, directoryConfigRequest, type DuskDomainsOnChainReadTransport } from '../names/internal'
 
 export async function readPoolMarketplace(read: DuskDomainsOnChainReadTransport): Promise<string | null> {
   try {
-    const response = await read.read(routerConfigCall())
+    const response = await read.read(directoryConfigRequest())
     const config = response && typeof response === 'object' && 'output' in response ? response.output : response
     if (!config || typeof config !== 'object' || !('marketplace' in config)) return null
     return contractIdFromOutput(config.marketplace)

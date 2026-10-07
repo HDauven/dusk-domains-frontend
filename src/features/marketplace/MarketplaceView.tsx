@@ -1,3 +1,4 @@
+import { matchesAuctionSelection } from './orderIdentity'
 import { useContext } from 'react'
 import { NetworkFreshnessContext } from '../../app/networkFreshness'
 import { MarketplaceFreshness } from './MarketplaceFreshness'
@@ -33,7 +34,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
   const { wallet: { actionsAvailable }, feedback: { confirmation, error, txState }, market: { loading, marketplaceEnabled }, navigation: { onTabChange, tab }, withdrawal: { refund } } = props
   const networkNotice = useContext(NetworkFreshnessContext)
   const syncing = error === MARKETPLACE_SYNC_MESSAGE
-  const selectedAuction = props.listings.auctions.find((auction) => auction.node === props.auction.selectedAuctionNode) ?? null
+  const selectedAuction = props.listings.auctions.find((auction) => matchesAuctionSelection(auction, props.auction.selectedAuctionNode)) ?? null
 
   return (
     <AccountPanel className="marketplace-panel" labelledBy="marketplace-heading" panelId="marketplace">
@@ -91,7 +92,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         ) : null}
       </TabPanel>}
       <MarketplaceBidReview {...props} />
-      <MarketplaceReview review={props.feedback.review ?? null} disabled={Boolean(props.wallet.tradingPaused) || !actionsAvailable} onClose={() => props.feedback.onCancelReview?.()} onConfirm={() => props.feedback.onConfirmReview?.()} />
+      <MarketplaceReview review={props.feedback.review ?? null} disabled={Boolean(props.wallet.tradingPaused && props.feedback.review?.createsOrder) || !actionsAvailable} onClose={() => props.feedback.onCancelReview?.()} onConfirm={() => props.feedback.onConfirmReview?.()} />
     </AccountPanel>
   )
 }

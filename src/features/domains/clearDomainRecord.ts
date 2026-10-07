@@ -1,6 +1,6 @@
 import {
   applyRecordMutations,
-  coreMutateRecordsSenderRuntimeCall,
+  storeMutateRecordsSenderRequest,
   getRecordDefinition,
   userFacingErrorMessage,
   type CoreRecordMutationInput,
@@ -45,7 +45,7 @@ export async function clearDomainRecord({
 
   try {
     const mutation = { action: 'clear', key: record.key } satisfies CoreRecordMutationInput
-    const call = coreMutateRecordsSenderRuntimeCall({
+    const call = storeMutateRecordsSenderRequest({
       node: target.node,
       mutations: [mutation],
     })

@@ -1,4 +1,4 @@
-import { coreTakeBackSubnamesRuntimeCall, type IndexedNameSummary } from '../../names/internal'
+import { storeTakeBackSubnamesRequest, type IndexedNameSummary } from '../../names/internal'
 import { sameAuthority } from '../identity/ownerLabel'
 
 export function sellerHeldSubnames(name: IndexedNameSummary, authority: string) {
@@ -10,5 +10,5 @@ export function sellerHeldSubnames(name: IndexedNameSummary, authority: string) 
 export function purchaseTakeBackCall(name: IndexedNameSummary, authority: string) {
   const subnames = sellerHeldSubnames(name, authority)
   if (!subnames.length) throw new Error('The seller no longer holds any subnames.')
-  return coreTakeBackSubnamesRuntimeCall({ node: name.node, nodes: subnames.map(subname => subname.node), owner: authority, manager: authority })
+  return storeTakeBackSubnamesRequest({ node: name.node, nodes: subnames.map(subname => subname.node), owner: authority, manager: authority })
 }

@@ -1,7 +1,7 @@
 import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import { waitForCommitmentBlock } from '../../app/commitmentBlocks'
 import {
-  coreCommitRuntimeCall,
+  storeCommitRequest,
   createRegistrationSecret,
   currentUnixSeconds,
   listPendingNameReservations,
@@ -61,7 +61,7 @@ export async function prepareRegistrationCommit({
     checkSession()
     // Resolve routing before generating recovery material, then recheck the initiating session.
     const registry = liveDuskDomainsApp
-      ? await registrationRegistry(liveDuskDomainsApp, runtimeConfig.contracts, nodeHex)
+      ? await registrationRegistry(liveDuskDomainsApp, runtimeConfig.contracts, displayName)
       : null
     if (!workspace()) return
     checkSession()
@@ -77,17 +77,18 @@ export async function prepareRegistrationCommit({
       name: displayName, node: nodeHex, commitment, secret,
       controller: selectedAuthority, ownerAddress: selectedAddress,
       chainId: runtimeConfig.chainId, durationYears: duration,
+      directory: runtimeConfig.contracts.directory.contractId, commitmentStore: registry ?? runtimeConfig.contracts.store.contractId,
       committedBlockHeight: null, committedTxId: null,
       createdAt: reservationTimestamp, updatedAt: reservationTimestamp,
     }
-    const call = { ...coreCommitRuntimeCall({ commitment }), ...(registry ? { contractId: registry } : {}) }
+    const call = { ...storeCommitRequest({ commitment }), ...(registry ? { contractId: registry } : {}) }
     const finalState = await submitNameWrite(displayName, call, {
       workspace,
       session,
       contracts: runtimeConfig.contracts,
       beforeSign: () => {
         checkSession()
-        if (listPendingNameReservations({ chainId: runtimeConfig.chainId, controller: selectedAuthority }).some(saved => saved.node === nodeHex)) {
+        if (listPendingNameReservations({ chainId: runtimeConfig.chainId, directory: runtimeConfig.contracts.directory.contractId, controller: selectedAuthority }).some(saved => saved.node === nodeHex)) {
           throw new Error('Open the saved reservation in My names to check its status before trying again.')
         }
         const saved = upsertPendingNameReservation(reservation)
@@ -102,13 +103,14 @@ export async function prepareRegistrationCommit({
         clearReservationPrimaryChoice(reservation)
         loadPendingReservations()
       },
+      onBroadcast: state => {
+        if (state.txId) upsertPendingNameReservation({...reservation, committedTxId:state.txId, committedBlockHeight:state.blockHeight ?? null, updatedAt:new Date().toISOString()})
+      },
       onUpdate: setCommitTxState,
     })
     if (finalState.status !== 'executed') return
 
-    const liveBlockHeight = liveDuskDomainsApp ? await getCurrentBlockHeight() : null
-    const initialBlockHeight = liveDuskDomainsApp ? liveBlockHeight : 0
-    const initialCurrentBlockHeight = liveDuskDomainsApp ? liveBlockHeight : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
+    const initialBlockHeight = liveDuskDomainsApp ? finalState.blockHeight ?? null : 0
     upsertPendingNameReservation({
       ...reservation,
       updatedAt: new Date().toISOString(),
@@ -116,8 +118,12 @@ export async function prepareRegistrationCommit({
       committedTxId: finalState.txId ?? null,
     })
     loadPendingReservations()
+    const liveBlockHeight = liveDuskDomainsApp ? await getCurrentBlockHeight() : null
+    const initialCurrentBlockHeight = liveDuskDomainsApp ? liveBlockHeight : REGISTRATION_MIN_REVEAL_WAIT_BLOCKS
     if (!workspace() || !session()) return
     setPreparedCommit({
+      directory: reservation.directory,
+      commitmentStore: reservation.commitmentStore,
       controller: selectedAuthority,
       ownerAddress: selectedAddress,
       chainId: runtimeConfig.chainId,

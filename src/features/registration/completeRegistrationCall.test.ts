@@ -19,7 +19,7 @@ it.each<DuskPrincipal | null>([null, { kind: 'Contract', bytes: Array(32).fill(9
   })
   expect(request).not.toBeInstanceOf(Promise)
   expect(request.call).toMatchObject({
-    contract: 'core', functionName: 'complete_registration_runtime', kind: 'write',
+    contract: 'store', functionName: 'complete_registration', kind: 'write',
     args: { referrer: principal, feeLux: request.feeLux, records: [request.initialMoonlightRecord] },
   })
 })

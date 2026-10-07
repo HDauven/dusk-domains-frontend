@@ -30,7 +30,7 @@ it.each([
     getPrimaryName: vi.fn(async ({ value }: { value: string }) => value === bobAddress ? name : indexedPrimary),
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
   }
-  const onChainClient = { readPrimaryName: vi.fn(async () => ({ ok: true, value: { name: 'alice.dusk' } })) }
+  const onChainClient = { getPrimaryName:vi.fn(async()=>({ok:true,value:name})), readPrimaryName: vi.fn(async () => ({ ok: true, value: { name: 'alice.dusk' } })) }
   const props = {
     ...searchActions({
     records: { hydrate: (node, records) => { recordSets = { ...recordSets, [node]: records ?? [] } } },
@@ -82,8 +82,8 @@ it.each([
   expect(state.canClearPrimary).toBe(selectedAddress === bobAddress)
   expect(primaryName).toBe(name)
   expect(connectedPrimaryName).toBe(selectedAddress ? indexedPrimary ?? 'alice.dusk' : null)
-  expect(indexerClient.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: bobAddress })
-  expect(indexerClient.getPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress ? 2 : 1)
+  expect(onChainClient.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: bobAddress })
+  expect(indexerClient.getPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress ? 1 : 0)
   expect(onChainClient.readPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress && !indexedPrimary ? 1 : 0)
 })
 

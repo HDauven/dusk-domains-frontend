@@ -31,7 +31,7 @@ export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }:
   const leading = sameAuthority(auction.highestBid?.bidderAuthority, props.wallet.selectedAuthority)
   const watched = props.watchlist.watchedNodes.includes(auction.node)
   const minimum = minimumBidDusk(auction)
-  const marketplaceActivity = props.auction.auctionActivity.filter((entry) => entry.eventType === 'domain_bid_placed' && (entry.blockHeight === null || entry.blockHeight >= auction.createdAtBlockHeight))
+  const marketplaceActivity = props.auction.auctionActivity.filter((entry) => (entry.eventType === 'domain_bid_placed' || entry.marketplaceAction === 'bid') && (entry.marketplaceOrderId === undefined || entry.marketplaceOrderId === String(auction.auctionId)) && (entry.blockHeight === null || entry.blockHeight >= auction.createdAtBlockHeight))
 
   return (
     <div className="marketplace-auction-detail">
@@ -97,7 +97,7 @@ export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }:
         </div>
 
         <Panel as="aside" className="marketplace-bid-panel" aria-label={`Bid on ${auction.name}`}>
-          {leading ? <p className="marketplace-bidder-banner leading">{status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
+          {leading ? <p className="marketplace-bidder-banner leading">{status === 'settlement_expired' ? 'Settlement expired — refund available after closing' : status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
           {ownAuction ? <><p className="marketplace-bidder-banner selling">You’re selling this name</p><p>Renewal is available after the listing closes.</p></> : null}
           <div className="marketplace-bid-price">
             <span>{auction.highestBid ? 'Current bid' : 'Minimum bid'}</span>
@@ -107,7 +107,7 @@ export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }:
           </div>
           <div className="marketplace-bid-timer">
             <span>{auction.endBlockHeight === null ? 'Starts with first bid' : 'Time remaining'}</span>
-            <strong>{auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : <AuctionCountdown endBlock={auction.endBlockHeight} currentBlock={props.market.currentBlockHeight} />}</strong>
+            <strong>{status === 'settlement_expired' ? 'Settlement window closed' : auction.endBlockHeight === null ? auctionDurationLabel(auction.durationBlocks) : <AuctionCountdown endBlock={auction.endBlockHeight} currentBlock={props.market.currentBlockHeight} />}</strong>
             <small>{auction.endBlockHeight === null ? `Start window: ${auctionStartWindowLabel(auction, props.market.currentBlockHeight)}` : 'Estimated from chain time.'} Bids in the last 10 minutes extend it to 10 minutes remaining.</small>
           </div>
 
@@ -131,6 +131,7 @@ function AuctionAction({
   props: MarketplaceAuctionDetailProps
   status: ReturnType<typeof auctionStatus>
 }) {
+  if (auction.returnPending) return <div className="marketplace-auction-action-stack"><p>This auction is closed. Return the name from custody to finish.</p><Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onCancelAuction(auction)}>Return name</Button></div>
   if (status === 'ended') {
     return (
       <div className="marketplace-auction-action-stack">
@@ -139,10 +140,12 @@ function AuctionAction({
       </div>
     )
   }
-  if (status === 'expired') {
+  if (status === 'expired' || status === 'settlement_expired') {
     return (
       <div className="marketplace-auction-action-stack">
-        <p>No bid started this auction before its deadline.</p>
+        <p>{status === 'settlement_expired'
+          ? 'The settlement window closed. Close the auction to unlock the winning bid’s refund, then return the seller’s name. The bidder can withdraw the refund under Yours.'
+          : 'No bid started this auction before its deadline.'}</p>
         <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onExpireAuction(auction)}>Close auction</Button>
       </div>
     )

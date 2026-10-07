@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -13,21 +14,24 @@ function fixture() {
   const root = mkdtempSync(resolve('node_modules/.cache/deploy-test-'))
   roots.push(root)
   const repo = `${root}/repo`
-  for (const path of ['repo/scripts', 'repo/public/contracts', 'bin', 'server', 'tmp', 'drivers/deployments/abcdef123456']) mkdirSync(`${root}/${path}`, { recursive: true })
+  for (const path of ['repo/scripts', 'repo/public/contracts', 'bin', 'server', 'tmp', 'drivers']) mkdirSync(`${root}/${path}`, { recursive: true })
   for (const file of ['deploy.sh', 'deploy-release.py', 'validate-deploy.mjs']) {
     if (existsSync(`scripts/${file}`)) cpSync(`scripts/${file}`, `${repo}/scripts/${file}`)
   }
   writeFileSync(`${repo}/public/contracts/.keep`, '')
   writeFileSync(`${repo}/release`, 'initial')
-  writeFileSync(`${root}/drivers/deployments/abcdef123456/driver.data-driver.wasm`, '\0asm')
-  const driver = '/contracts/deployments/abcdef123456/driver.data-driver.wasm'
+  const roles = ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE']
+  const hash = createHash('sha256').update('\0asm').digest('hex')
+  const driverPath = role => `/contracts/dusk-domains-${({ RESOLVER: 'frozen-resolver', MARKETPLACE: 'marketplace-v1' })[role] ?? role.toLowerCase()}.${hash}.data-driver.wasm`
+  for (const role of roles) writeFileSync(`${root}/drivers/${driverPath(role).split('/').at(-1)}`, '\0asm')
+  const driver = driverPath('STORE')
   const envFile = `${root}/network.env`
   writeFileSync(envFile, [
     'VITE_DUSK_DOMAINS_SITE_URL=https://site.example',
     'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2',
-    ...['ROUTER', 'CORE', 'TREASURY', 'MARKETPLACE'].flatMap(role => [
+    ...roles.flatMap(role => [
       `VITE_DUSK_DOMAINS_${role}_CONTRACT_ID=0x${'11'.repeat(32)}`,
-      `VITE_DUSK_DOMAINS_${role}_DRIVER_URL=${driver}`,
+      `VITE_DUSK_DOMAINS_${role}_DRIVER_URL=${driverPath(role)}`,
     ]),
   ].join('\n'))
   const script = (name, source) => writeFileSync(`${root}/bin/${name}`, source, { mode: 0o755 })

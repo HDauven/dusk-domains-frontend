@@ -46,7 +46,7 @@ it('signs the identity and amount captured at review', async () => {
   } }), 25_000_000_000n, expect.any(String))
 })
 
-it.each([{ auctionId: 8 }, { durationBlocks: 259200 }, { sellerAuthority: 'another-seller' }, { reservePriceLux: 11_000_000_000n }, { startDeadlineBlockHeight: 2000 }, { createdAtBlockHeight: 101 }, { feeBps: 500 }])('rejects changed reviewed auction terms: %o', async changed => {
+it.each([{ auctionId: 8 }, { durationBlocks: 259200 }, { sellerAuthority: 'another-seller' }, { reservePriceLux: 11_000_000_000n }, { startDeadlineBlockHeight: 2000 }, { feeBps: 500 }])('rejects changed reviewed auction terms: %o', async changed => {
   const h = await setup()
   await act(async () => { await h.feature().reviewBid(h.auction) })
   Object.assign(h.auction, changed)

@@ -61,3 +61,10 @@ it('clears a syncing notice after a successful refresh while keeping action erro
   expect(marketplaceErrorAfterRefresh(MARKETPLACE_SYNC_MESSAGE)).toBe('')
   expect(marketplaceErrorAfterRefresh('Bid at least 25 DUSK.')).toBe('Bid at least 25 DUSK.')
 })
+
+it('closes the settlement window at exactly end plus 8640 blocks', () => {
+  const auction = fixtureAuction({ startBlockHeight: 100, endBlockHeight: 200 })
+  expect(auctionStatus(auction, 8839)).toBe('ended')
+  expect(auctionStatus(auction, 8840)).toBe('settlement_expired')
+  expect(auctionStatus(auction, 8841)).toBe('settlement_expired')
+})

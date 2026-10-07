@@ -1,3 +1,4 @@
+import { stringifyJson, type Order } from '@duskdomains/sdk'
 import { namehashHex, validateName } from '../../names/internal'
 import type {
   DuskDomainsMarketplaceOnChainClient,
@@ -64,11 +65,11 @@ export async function canonicalFixedSale(
   client: DuskDomainsMarketplaceOnChainClient,
   indexed: IndexedMarketplaceFixedSale,
 ): Promise<DuskDomainsOnChainFixedSale> {
-  const sale = await required(client.getFixedSale(indexed.node))
+  const sale = await required(client.getFixedSale(indexed.node, orderIdentity(indexed)))
   if (!sale
+    || !sameOrder(indexed.order, sale.order)
     || sale.saleId !== indexed.saleId
     || sale.feeBps !== indexed.feeBps
-    || sale.openedAtBlockHeight !== indexed.openedAtBlockHeight
     || sale.node !== indexed.node
     || sale.name !== indexed.name
     || normalizedAuthority(sale.sellerAuthority) !== normalizedAuthority(indexed.sellerAuthority)
@@ -82,12 +83,12 @@ export async function canonicalAuction(
   client: DuskDomainsMarketplaceOnChainClient,
   indexed: IndexedMarketplaceAuction,
 ): Promise<DuskDomainsOnChainAuction> {
-  const auction = await required(client.getAuction(indexed.node))
+  const auction = await required(client.getAuction(indexed.node, orderIdentity(indexed)))
   if (!auction
+    || !sameOrder(indexed.order, auction.order)
     || auction.auctionId !== indexed.auctionId
     || auction.durationBlocks !== indexed.durationBlocks
     || auction.startDeadlineBlockHeight !== indexed.startDeadlineBlockHeight
-    || auction.createdAtBlockHeight !== indexed.createdAtBlockHeight
     || auction.feeBps !== indexed.feeBps
     || auction.node !== indexed.node
     || auction.name !== indexed.name
@@ -105,8 +106,9 @@ export async function canonicalOffer(
   if (!validateName(indexed.name).ok || namehashHex(indexed.name) !== indexed.node.toLowerCase()) {
     throw new Error('This offer does not match the displayed name. Refresh the offers before trying again.')
   }
-  const offer = await required(client.getOffer(indexed.node, indexed.buyerAuthority))
+  const offer = await required(client.getOffer(indexed.node, indexed.buyerAuthority, orderIdentity(indexed)))
   if (!offer
+    || !sameOrder(indexed.order, offer.order)
     || offer.node !== indexed.node
     || normalizedAuthority(offer.buyerAuthority) !== normalizedAuthority(indexed.buyerAuthority)
     || offer.amountLux !== BigInt(indexed.amountLux)
@@ -128,7 +130,7 @@ export async function canonicalRefund(
   client: DuskDomainsMarketplaceOnChainClient,
   indexed: IndexedMarketplaceRefund,
 ): Promise<DuskDomainsOnChainRefund> {
-  const refund = await required(client.getRefund(indexed.authority))
+  const refund = await required(client.getRefund(indexed.authority, indexed.marketplaceContractId ?? undefined))
   if (!refund
     || normalizedAuthority(refund.authority) !== normalizedAuthority(indexed.authority)
     || refund.amountLux !== BigInt(indexed.amountLux)) throw new Error(changedMessage)
@@ -153,4 +155,14 @@ function normalizedAuthority(value: string) {
 
 function normalizedOptionalAuthority(value: string | null) {
   return value == null ? null : normalizedAuthority(value)
+}
+
+function sameOrder(indexed?: Order, canonical?: Order) {
+ return !indexed || Boolean(canonical && stringifyJson(indexed.terms) === stringifyJson(canonical.terms) && indexed.nonce === canonical.nonce && indexed.status === canonical.status)
+}
+
+function orderIdentity(indexed: { name: string; marketplaceContractId?: string | null; order?: Order }) {
+  if (!indexed.order) return undefined
+  if (!indexed.marketplaceContractId) throw new Error('The recorded marketplace is missing. Refresh before trying again.')
+  return { marketplaceContractId: indexed.marketplaceContractId, name: indexed.name, order: indexed.order }
 }

@@ -20,7 +20,7 @@ export function TreasuryHeader({
           ariaLabel="Treasury summary"
           items={[
             { label: 'available', value: formatLuxNumberAsDusk(treasuryState.availableLux) },
-            { label: 'received', value: formatLuxNumberAsDusk(treasuryState.totalReceivedLux) },
+            treasuryState.source === 'vault' ? { label: 'referral liabilities', value: formatLuxNumberAsDusk(treasuryState.referralClaimableLux) } : { label: 'received', value: formatLuxNumberAsDusk(treasuryState.totalReceivedLux) },
             { label: 'recent operator claims', value: formatLuxNumberAsDusk(claimedLux) },
           ]}
         />

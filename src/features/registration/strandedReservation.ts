@@ -7,14 +7,11 @@ import type { UseRegistrationActionsProps } from './registrationActionTypes'
 // to judge or replace: its commitment is under that account on chain, and so is its secret here.
 function ownSavedReservation({ preparedCommit, runtimeConfig, selectedAuthority }: UseRegistrationActionsProps) {
   if (!preparedCommit || !selectedAuthority) return null
-  return listPendingNameReservations({ chainId: runtimeConfig.chainId, controller: selectedAuthority })
+  return listPendingNameReservations({ chainId: runtimeConfig.chainId, directory: runtimeConfig.contracts.directory.contractId, controller: selectedAuthority })
     .find((reservation) => reservation.commitment === preparedCommit.commitment) ?? null
 }
 
-// The reveal goes to the registry that holds the name, else the router's newest one. A registry
-// added after the commit leaves the commitment in the old one, where the reveal no longer looks.
-// Given the name, the on-chain read asks the registry the reveal will use. A failed read proves
-// nothing, so it does not hold the reveal back.
+// Recovery queries the persisted original commitment store, including after forwarding.
 export async function revealCommitmentMissing(props: UseRegistrationActionsProps) {
   const { displayName, duskDomainsOnChainClient, selectedAuthority } = props
   const reservation = ownSavedReservation(props)

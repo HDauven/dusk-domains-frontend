@@ -3,6 +3,7 @@ import type { PendingNameReservation } from '../../names/internal'
 import { inferredCommittedBlockHeightFromReservation } from './pendingReservationBlockRecovery'
 
 const oldReservation: PendingNameReservation = {
+  directory:'01'.repeat(32),commitmentStore:'03'.repeat(32),
   name: 'aurora.dusk',
   node: '0xnode',
   commitment: '0xcommit',
@@ -18,12 +19,12 @@ const oldReservation: PendingNameReservation = {
 }
 
 describe('pending reservation block recovery', () => {
-  it('infers a conservative committed block for old confirmed reservations', () => {
+  it('never infers inclusion from elapsed time', () => {
     expect(inferredCommittedBlockHeightFromReservation(
       oldReservation,
       3718500,
       Date.parse('2026-07-05T22:02:00.000Z'),
-    )).toBe(3718495)
+    )).toBeNull()
   })
 
   it('does not infer immediately after a reserve transaction', () => {

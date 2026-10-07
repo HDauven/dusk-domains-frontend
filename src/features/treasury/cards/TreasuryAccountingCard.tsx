@@ -6,6 +6,12 @@ import type { TreasuryAccountingCardProps } from './types'
 export function TreasuryAccountingCard({
   treasuryState,
 }: TreasuryAccountingCardProps) {
+  if (treasuryState.source === 'vault') return <AccountCard heading="Fees" title="Vault accounting"><AccountDetailList>
+    <AccountDetailItem label="Protocol claimable" value={formatLuxNumberAsDusk(treasuryState.availableLux)} />
+    <AccountDetailItem label="Referral liabilities" value={formatLuxNumberAsDusk(treasuryState.referralClaimableLux)} />
+    <AccountDetailItem label="Accounted balance" value={formatLuxNumberAsDusk(treasuryState.accountedLux ?? '0')} />
+    <AccountDetailItem label="Actual balance and surplus" value="Unknown from domain events" />
+  </AccountDetailList></AccountCard>
   const referralTotalLux = referralAllocatedLux(treasuryState)
   const recentClaimsLux = recentOperatorClaimsLux(treasuryState)
 

@@ -18,7 +18,7 @@ export async function fetchDuskNodeCurrentBlockHeight(
 
   let endpoint: URL
   try {
-    endpoint = new URL('/graphql', baseUrl)
+    endpoint = new URL('/on/graphql/query', baseUrl)
   } catch {
     return null
   }
@@ -29,10 +29,9 @@ export async function fetchDuskNodeCurrentBlockHeight(
       signal: AbortSignal.timeout(10_000),
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
-        'rusk-version': '1.0.0-rc.0',
+        'Content-Type': 'application/graphql',
       },
-      body: JSON.stringify({ query: latestBlockHeightQuery }),
+      body: latestBlockHeightQuery,
     })
     if (!response.ok) return null
 
@@ -52,7 +51,7 @@ export function blockHeightFromGraphqlResponse(body: unknown): number | null {
         }
       }
     }
-  })?.data?.block?.header?.height
+  })?.data?.block?.header?.height ?? (body as {block?:{header?:{height?:unknown}}})?.block?.header?.height
 
   const numericHeight = typeof height === 'number'
     ? height

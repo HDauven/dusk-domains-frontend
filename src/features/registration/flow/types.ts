@@ -6,7 +6,7 @@ import type { RegistrationCompletionState } from '../registrationCompletionState
 import type { RegistrationStepId } from '../registrationSteps'
 
 export type CommitWindow = {
-  status: 'missing' | 'waiting' | 'ready' | 'stale'
+  status: 'missing' | 'future' | 'waiting' | 'ready' | 'stale'
   staleInBlocks: number
   waitBlocks: number
 }

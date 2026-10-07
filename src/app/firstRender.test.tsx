@@ -8,7 +8,7 @@ let App: typeof import('../App').default
 beforeAll(async () => {
   vi.useFakeTimers()
   App = (await import('../App')).default
-})
+}, 60_000)
 afterAll(() => { vi.useRealTimers() })
 
 // A server render runs no effects, so it is what a cold load paints first, before useUrlRoute

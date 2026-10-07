@@ -21,6 +21,8 @@ export type AppendDomainSettingsActivity = (input: {
 }) => void
 
 export type UseDomainSettingsActionsProps = {
+  renewalQuote?: import('@duskdomains/sdk').RenewalQuote
+  renewalNameRef?: import('@duskdomains/sdk').NameRef
   indexerClient: DuskDomainsIndexerClient | null
   appendActivity: AppendDomainSettingsActivity
   canManageName: boolean

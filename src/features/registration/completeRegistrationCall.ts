@@ -1,7 +1,7 @@
 import { registrationCommitMatchesSession } from './pendingReservationTypes'
 import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import {
-  coreCompleteRegistrationRuntimeCall,
+  storeCompleteRegistrationRequest,
   createRegistrationLifecycle,
   createResolverRecord,
   namehashHex,
@@ -40,13 +40,17 @@ export function createCompleteRegistrationRequest({
   preparedCommit: PreparedRegistrationCommit
 }) {
   if (!registrationCommitMatchesSession(preparedCommit, selectedAuthority, selectedAddress, runtimeConfig.chainId)) throw new WalletSessionChangedError()
-  const feeLux = registrationFeeLux(result.label, duration, feeConfig, result.premiumLux ?? 0)
+  const feeLux = result.quotedYears === duration && result.totalFeeLux !== undefined ? result.totalFeeLux : registrationFeeLux(result.label, duration, feeConfig, result.premiumLux ?? 0)
   const lifecycle = createRegistrationLifecycle({
     startsAt: lifecycleBaseBlockHeight,
     years: duration,
   })
   const initialMoonlightRecord = createResolverRecord('moonlight_address', registrationTargetAddress)
-  const call = coreCompleteRegistrationRuntimeCall({
+  const call = storeCompleteRegistrationRequest({
+    directory: preparedCommit.directory,
+    commitmentStore: preparedCommit.commitmentStore,
+    commitHeight: preparedCommit.committedBlockHeight ?? undefined,
+    actor: selectedAuthority,
     commitment: preparedCommit.commitment,
     secret: preparedCommit.secret,
     node: namehashHex(displayName),
@@ -64,7 +68,7 @@ export function createCompleteRegistrationRequest({
   })
 
   return {
-    call,
+    call: { ...call, quote: result.policyQuote },
     feeLux,
     initialMoonlightRecord,
     lifecycle,

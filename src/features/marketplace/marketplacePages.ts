@@ -1,3 +1,4 @@
+import { marketplaceOrderKey } from './orderIdentity'
 import type { DuskDomainsIndexerClient } from '../../names/internal'
 
 export type MarketplaceCursors = { fixedSales: string | null; auctions: string | null; offers: string | null }
@@ -23,9 +24,9 @@ export async function readMarketplaceWindow(client: DuskDomainsIndexerClient, pa
   const result = await readMarketplacePage(client)
   for (let page = 1; page < pages && Object.values(result.cursors).some(Boolean); page++) {
     const next = await readMarketplacePage(client, result.cursors)
-    result.fixedSales = appendPage(result.fixedSales, next.fixedSales, (item) => item.node)
-    result.auctions = appendPage(result.auctions, next.auctions, (item) => item.node)
-    result.offers = appendPage(result.offers, next.offers, (item) => `${item.node}:${item.buyerAuthority}`)
+    result.fixedSales = appendPage(result.fixedSales, next.fixedSales, marketplaceOrderKey)
+    result.auctions = appendPage(result.auctions, next.auctions, marketplaceOrderKey)
+    result.offers = appendPage(result.offers, next.offers, marketplaceOrderKey)
     result.cursors = next.cursors
   }
   return result

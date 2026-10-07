@@ -1,8 +1,9 @@
+import { account } from '../../test/frozenFixtures'
 import { expect, it } from 'vitest'
-import { contractPrincipalFromWalletAccount, encodeBase58 } from '../../names/internal'
+import { contractPrincipalFromWalletAccount } from '../../names/internal'
 import { ownerAddressCandidates, ownerLabel, sameAuthority } from './ownerLabel'
 
-const address = encodeBase58(Uint8Array.from({ length: 96 }, (_, i) => i + 1))
+const address = account
 const parsed = contractPrincipalFromWalletAccount(address)
 if (!parsed.ok) throw new Error('Invalid fixture')
 const authority = parsed.principal

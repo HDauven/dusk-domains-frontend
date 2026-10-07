@@ -16,12 +16,12 @@ export async function checkOpenRenewal(page) {
     const { deriveAppDerivedState } = await import('/src/app/derived/deriveAppDerivedState.ts')
     const { renewDomainName } = await import('/src/features/domains/renewDomainName.ts')
     const config = createDuskDomainsRuntimeConfig({ VITE_DUSK_DOMAINS_ENABLE_MARKETPLACE: 'false',
-      VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID: `0x${'11'.repeat(32)}`,
+      VITE_DUSK_DOMAINS_DIRECTORY_CONTRACT_ID: `0x${'11'.repeat(32)}`,
       VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID: `0x${marketplace}` })
     window.renewalMarketplaceUiEnabled = config.capabilities.marketplace
     const poolConfig = new Promise(resolve => { window.resolveRenewalPool = () => resolve({ marketplace: Array(32).fill(0xcc) }) })
     const read = createDuskDomainsOnChainReadTransport({ readContract: async ({ contract: target, functionName }) => {
-        if (target !== config.contracts.router || functionName !== 'config') throw new Error('Expected router config read')
+        if (target !== config.contracts.directory || functionName !== 'config') throw new Error('Expected router config read')
         return { output: await poolConfig, fnName: 'config' }
       } }, config.contracts)
     function Probe() {

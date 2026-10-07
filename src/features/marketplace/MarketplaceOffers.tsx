@@ -1,3 +1,4 @@
+import { marketplaceOrderKey } from './orderIdentity'
 import { useState } from 'react'
 import { OwnerLabel } from '../identity/OwnerLabel'
 import { Panel } from '../../components/ui/Panel'
@@ -71,7 +72,7 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
           <PanelMessage icon={<HandCoins size={18} />} tone="subtle">{props.offers.offers.length ? 'No matching offers. Change your search or filters.' : 'No offers yet. Make an offer on a registered name.'}</PanelMessage>
         ) : (
           <div className="marketplace-list">
-            {offers.map((offer) => <OfferRow incoming={ownedNodes.has(offer.node)} key={`${offer.node}:${offer.buyerAuthority}`} offer={offer} props={props} />)}
+            {offers.map((offer) => <OfferRow incoming={ownedNodes.has(offer.node)} key={marketplaceOrderKey(offer)} offer={offer} props={props} />)}
           </div>
         )}
       </section>
@@ -91,7 +92,7 @@ function OfferRow({ incoming, offer, props }: { incoming: boolean; offer: Indexe
         {expired ? (
           <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onExpireOffer(offer)}>Close</Button>
         ) : incoming && !ownOffer ? (
-          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onAcceptOffer(offer)}>Accept</Button>
+          <Button variant="primary" className="compact" disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onAcceptOffer(offer)}>Accept</Button>
         ) : ownOffer ? (
           <Button disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onCancelOffer(offer)}>Cancel</Button>
         ) : null}

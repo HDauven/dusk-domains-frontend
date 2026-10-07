@@ -54,7 +54,7 @@ describe('dusk node block height', () => {
       .resolves
       .toBe(3718430)
 
-    expect(fetchImpl).toHaveBeenCalledWith(new URL('https://testnet.nodes.dusk.network/graphql'), expect.objectContaining({
+    expect(fetchImpl).toHaveBeenCalledWith(new URL('https://testnet.nodes.dusk.network/on/graphql/query'), expect.objectContaining({
       method: 'POST',
       body: expect.stringContaining('block(height: -1)'),
     }))

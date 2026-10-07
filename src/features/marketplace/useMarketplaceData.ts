@@ -1,3 +1,4 @@
+import { marketplaceOrderKey, matchesAuctionSelection, auctionSelection } from './orderIdentity'
 import { appendPage, readMarketplacePage, readMarketplaceWindow, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -99,8 +100,9 @@ export function useMarketplaceData({
       if (!shouldApply()) return
 
       const selectedNode = selectedAuctionRef.current
-      if (selectedNode && !page.auctions.some((auction) => auction.node === selectedNode)) {
-        const selected = await indexerClient.getMarketplaceAuction(selectedNode)
+      if (selectedNode && !page.auctions.some((auction) => matchesAuctionSelection(auction, selectedNode))) {
+        const { node, ...identity } = auctionSelection(selectedNode)
+        const selected = await indexerClient.getMarketplaceAuction(node, identity)
         if (!shouldApply()) return
         if (selected) page.auctions = [...page.auctions, selected]
       }
@@ -132,9 +134,9 @@ export function useMarketplaceData({
     try {
       const page = await readMarketplacePage(indexerClient, cursors)
       if (currentRequest !== requestId.current) return
-      setFixedSales((current) => appendPage(current, page.fixedSales, (item) => item.node))
-      setAuctions((current) => appendPage(current, page.auctions, (item) => item.node))
-      setOffers((current) => appendPage(current, page.offers, (item) => `${item.node}:${item.buyerAuthority}`))
+      setFixedSales((current) => appendPage(current, page.fixedSales, marketplaceOrderKey))
+      setAuctions((current) => appendPage(current, page.auctions, marketplaceOrderKey))
+      setOffers((current) => appendPage(current, page.offers, marketplaceOrderKey))
       setCursors(page.cursors)
       loadedPages.current += 1
     } catch (error) {

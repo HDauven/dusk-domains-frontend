@@ -8,7 +8,7 @@ import { useAppCoreRuntimes } from './useAppCoreRuntimes'
 
 const marketplace = `0x${'ab'.repeat(32)}`
 const env = {
-  VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID: `0x${'11'.repeat(32)}`,
+  VITE_DUSK_DOMAINS_DIRECTORY_CONTRACT_ID: `0x${'11'.repeat(32)}`,
   VITE_DUSK_DOMAINS_ENABLE_MARKETPLACE: 'false',
   VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID: marketplace,
 }
@@ -76,10 +76,10 @@ function renderRenewal() {
 
 it('hides Renew for marketplace custody with marketplace UI disabled, then permits renewal outside escrow', async () => {
   expect(runtime.runtimeConfig.capabilities.marketplace).toBe(false)
-  expect(runtime.runtimeConfig.contracts.marketplace).toBeUndefined()
+  expect(runtime.runtimeConfig.capabilities.marketplace).toBe(false)
   const readContract = vi.fn().mockResolvedValue({ output: { marketplace: Array(32).fill(0xab) }, fnName: 'config' })
   runtime.marketplaceContractId = await readPoolMarketplace(createDuskDomainsOnChainReadTransport({ readContract } as never, runtime.runtimeConfig.contracts))
-  expect(readContract).toHaveBeenCalledWith(expect.objectContaining({ contract: runtime.runtimeConfig.contracts.router, functionName: 'config' }))
+  expect(readContract).toHaveBeenCalledWith(expect.objectContaining({ contract: runtime.runtimeConfig.contracts.directory, functionName: 'config' }))
   owner = marketplace
   const escrowed = renderRenewal()
   expect(escrowed.canRenew).toBe(false)

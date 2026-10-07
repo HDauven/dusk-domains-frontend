@@ -12,6 +12,8 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
   const { appRuntime, domainState, economicsRuntime, registrationState, searchState, walletRuntime } = core
 
   const namePreview = useNamePreview({
+    onChainClient: appRuntime.duskDomainsOnChainClient,
+    selectedAuthority: walletRuntime.selectedAuthority,
     apiSearchResult: searchState.apiSearchResult,
     currentBlockHeight: searchState.currentBlockHeight,
     duration: registrationState.duration,
@@ -29,6 +31,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     defaultNode: namePreview.nodeHex,
   })
   const registrationRuntime = useRegistrationRuntime({
+    directory: appRuntime.runtimeConfig.contracts.directory.contractId,
     explicitlyDisconnected: walletRuntime.walletState.explicitlyDisconnected,
     chainId: appRuntime.runtimeConfig.chainId,
     getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,

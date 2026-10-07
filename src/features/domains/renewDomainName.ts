@@ -1,9 +1,10 @@
+import { safeNumber } from '../../names/numbers'
 import {
   formatLifecycleDay,
   lifecycleHeightFromIndexed,
 } from './domainFormat'
 import {
-  coreRenewRuntimeCall,
+  storeRenewRequest,
   registrationFeeLux,
   renewRegistrationLifecycle,
   userFacingErrorMessage,
@@ -13,6 +14,7 @@ import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { UseDomainSettingsActionsProps } from './domainSettingsActionTypes'
 
 export async function renewDomainName({
+  renewalQuote, renewalNameRef,
   appendActivity,
   canRenewName,
   currentBlockHeight,
@@ -56,7 +58,7 @@ export async function renewDomainName({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('renew this name', setRenewalError)) return
-  const feeLux = registrationFeeLux(resultLabel, renewalYears, feeConfig)
+  const feeLux = renewalQuote ? safeNumber(renewalQuote.total_lux) : registrationFeeLux(resultLabel, renewalYears, feeConfig)
   if (!(await ensurePublicBalanceForLiveWrite(
     'renewing this name',
     message => { if (workspace()) setRenewalError(message) },
@@ -67,17 +69,17 @@ export async function renewDomainName({
   if (!workspace()) return
 
   try {
-    const lifecycle = renewRegistrationLifecycle({
+    const lifecycle = renewalQuote ? {expiresAt:safeNumber(renewalQuote.new_expiry), graceEndsAt:safeNumber(renewalQuote.new_grace_end)} : renewRegistrationLifecycle({
       currentExpiresAt: managedName.expiresAt,
       now: lifecycleBaseBlockHeight,
       years: renewalYears,
     })
-    const call = coreRenewRuntimeCall({
+    const call = storeRenewRequest({
       node: nodeHex,
       durationYears: renewalYears,
       feeLux,
     })
-    const finalState = await submitNameWrite(displayName, call, {
+    const finalState = await submitNameWrite(displayName, {...call, nameRef: renewalNameRef,expectedScheduleVersion:renewalQuote?.schedule_version}, {
       workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setRenewalTxState,

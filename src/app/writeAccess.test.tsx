@@ -12,9 +12,9 @@ vi.mock('../names/internal', async original => ({ ...await original<typeof impor
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks() })
 
 const env = {
-  VITE_DUSK_DOMAINS_ROUTER_CONTRACT_ID: `0x${'78'.repeat(32)}`,
-  VITE_DUSK_DOMAINS_CORE_CONTRACT_ID: `0x${'77'.repeat(32)}`,
-  VITE_DUSK_DOMAINS_TREASURY_CONTRACT_ID: `0x${'66'.repeat(32)}`,
+  VITE_DUSK_DOMAINS_DIRECTORY_CONTRACT_ID: `0x${'78'.repeat(32)}`,
+  VITE_DUSK_DOMAINS_STORE_CONTRACT_ID: `0x${'77'.repeat(32)}`,
+  VITE_DUSK_DOMAINS_VAULT_CONTRACT_ID: `0x${'66'.repeat(32)}`,
   VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES: 'true',
   VITE_DUSK_DOMAINS_INDEXER_URL: '',
 }
@@ -40,7 +40,7 @@ it('rejects preview submissions even when a transaction-capable app exists', asy
     return null
   }
   renderToStaticMarkup(<Probe />)
-  await expect(submit('example.dusk', {contract:'core',functionName:'commit_runtime'} as never)).rejects.toThrow('read only')
+  await expect(submit('example.dusk', {contract:'store',functionName:'commit'} as never)).rejects.toThrow('read only')
   expect(submitDuskDomainWrite).not.toHaveBeenCalled()
 })
 
@@ -48,6 +48,6 @@ it('uses the same action pause for registration eligibility and the writer', () 
   const access = createWriteAccess({mode:'live_ready',liveWritesEnabled:true}, {} as never, {...unpaused,registrationsPaused:true})
   expect(access.readOnly).toBe(false)
   expect(access.canRegister).toBe(false)
-  expect(access.reason({contract:'core',functionName:'complete_registration_runtime'})).toContain('paused')
-  expect(access.reason({contract:'marketplace',functionName:'claim_refund_runtime'})).toBeNull()
+  expect(access.reason({contract:'store',functionName:'complete_registration'})).toContain('paused')
+  expect(access.reason({contract:'marketplace',functionName:'claim_refund'})).toBeNull()
 })

@@ -21,6 +21,7 @@ export function premiumConfirmationQuote(result: NameResult, years: number, conf
   const nextStepAt = height != null && nextHeight != null
     ? new Date(Date.now() + (nextHeight - height) * 10_000).toISOString()
     : result.premiumNextStepAt!
-  return { totalLux: registrationFeeLux(result.label, years, config, result.premiumLux ?? 0),
-    nextTotalLux: registrationFeeLux(result.label, years, config, nextPremium), nextStepAt }
+  const totalLux = result.quotedYears === years && result.totalFeeLux !== undefined
+    ? result.totalFeeLux : registrationFeeLux(result.label, years, config, result.premiumLux ?? 0)
+  return { totalLux, nextTotalLux: totalLux - (result.premiumLux ?? 0) + nextPremium, nextStepAt }
 }

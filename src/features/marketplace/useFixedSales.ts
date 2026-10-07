@@ -1,9 +1,9 @@
 import { marketplaceAmountRow } from './marketplaceAmounts'
 import { useCallback } from 'react'
 import {
-  marketplaceBuyFixedSaleRuntimeCall,
-  marketplaceCancelFixedSaleRuntimeCall,
-  marketplaceExpireFixedSaleRuntimeCall,
+  marketplaceBuyFixedSaleRequest,
+  marketplaceCancelFixedSaleRequest,
+  marketplaceExpireFixedSaleRequest,
   userFacingErrorMessage,
   type DuskDomainsMarketplaceOnChainClient,
   type IndexedMarketplaceFixedSale,
@@ -30,10 +30,11 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
       return
     }
     if (!reviewed) {
-      const reviewedSale = { ...sale }
+      const reviewedSale = { ...sale, order: canonical.order }
       const { proceedsLux, feeLux } = marketplaceProceeds(canonical.priceLux, sale.feeBps)
       writes.requestReview({
         title: `Buy ${sale.name}`,
+        namespace:sale.namespace,transfersNamespace:true,
         rows: [
           {
             ...marketplaceAmountRow('You pay', canonical.priceLux),
@@ -48,12 +49,12 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
     await writes.submit(
       'buying this name',
       sale.name,
-      marketplaceBuyFixedSaleRuntimeCall({
+      { ...marketplaceBuyFixedSaleRequest({
         node: sale.node,
         expectedSaleId: sale.saleId,
         priceLux: Number(canonical.priceLux),
         buyerManager: selectedAuthority || null,
-      }),
+      }), reviewedOrder: canonical.order, contractId:sale.marketplaceContractId ?? undefined },
       canonical.priceLux,
       `${sale.name} purchased. ${formatLuxAsDusk(canonical.priceLux)} DUSK paid.`,
     )
@@ -63,11 +64,12 @@ export function useFixedSales({ marketplaceOnChainClient, selectedAddress, selec
     sale: IndexedMarketplaceFixedSale,
     kind: 'cancel' | 'expire',
   ) => {
-    if (!await writes.guardCanonicalRead((client) => canonicalFixedSale(client, sale))) return
+    let canonical: Awaited<ReturnType<typeof canonicalFixedSale>> | undefined
+    if (!await writes.guardCanonicalRead(async client => { canonical = await canonicalFixedSale(client, sale) })) return
     if (kind === 'cancel') {
-      await writes.submit('cancelling this sale', sale.name, marketplaceCancelFixedSaleRuntimeCall({ node: sale.node, expectedSaleId: sale.saleId }), 0n, 'Sale canceled.')
+      await writes.submit('cancelling this sale', sale.name, { ...marketplaceCancelFixedSaleRequest({ node: sale.node, expectedSaleId: sale.saleId }), reviewedOrder: canonical?.order, contractId:sale.marketplaceContractId ?? undefined }, 0n, sale.returnPending ? 'Name returned.' : 'Sale canceled. Return the name to finish.')
     } else {
-      await writes.submit('closing this expired sale', sale.name, marketplaceExpireFixedSaleRuntimeCall({ node: sale.node, expectedSaleId: sale.saleId }), 0n, 'Sale closed.')
+      await writes.submit('closing this expired sale', sale.name, { ...marketplaceExpireFixedSaleRequest({ node: sale.node, expectedSaleId: sale.saleId }), reviewedOrder: canonical?.order, contractId:sale.marketplaceContractId ?? undefined }, 0n, sale.returnPending ? 'Name returned.' : 'Sale closed. Return the name to finish.')
     }
   }, [writes])
 

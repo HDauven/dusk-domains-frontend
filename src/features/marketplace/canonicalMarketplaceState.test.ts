@@ -56,7 +56,7 @@ describe('canonical marketplace signing state', () => {
     expect(minimumCanonicalBidLux({ reservePriceLux: 10n, highestBid: { amountLux: 101n } } as never)).toBe(107n)
   })
 
-  it.each([{ durationBlocks: 259_200 }, { startDeadlineBlockHeight: 900 }, { createdAtBlockHeight: 400 }, { auctionId: 2 }, { feeBps: 500 }])('rejects changed auction identity and terms: %j', async changed => {
+  it.each([{ durationBlocks: 259_200 }, { startDeadlineBlockHeight: 900 }, { auctionId: 2 }, { feeBps: 500 }])('rejects changed auction identity and terms: %j', async changed => {
     const indexed = {
       node,
       name: 'example.dusk',

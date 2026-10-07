@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { emptyTreasuryState } from '@duskdomains/sdk/projection'
+import { emptyTreasuryUiState as emptyTreasuryState } from '../treasury/treasuryState'
 import { TreasuryAccountingCard } from '../treasury/cards/TreasuryAccountingCard'
 import { TreasuryPricingCard } from '../treasury/cards/TreasuryPricingCard'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -166,4 +166,10 @@ it.each([0, 1, 20])('quotes the legacy date-only next price exactly on day %s', 
   const quote = premiumConfirmationQuote({ ...result, premiumLux, graceEndsAtBlockHeight: null,
     premiumNextStepBlockHeight: null, premiumNextStepAt: new Date(Date.now() + 300_000).toISOString() }, 2, DEFAULT_FEE_CONFIG, null)
   expect(quote).toMatchObject({ totalLux: 20_000_000_000 + premiumLux, nextTotalLux: 20_000_000_000 + nextPremium })
+})
+
+it('uses the policy total in the premium confirmation when the local hint differs', () => {
+  const config = { ...DEFAULT_FEE_CONFIG, premiumStartLux: 2_000_000_000 }
+  const quote = premiumConfirmationQuote({ ...result, premiumLux: 1_999_999_047, quotedYears: 2, totalFeeLux: 41_999_999_047 }, 2, config, boundary - 30)
+  expect(quote).toMatchObject({ totalLux: 41_999_999_047, nextTotalLux: 40_999_999_047 })
 })

@@ -33,7 +33,7 @@ export async function referralStateFromInput(input: string): Promise<ReferralSta
   // A claimable Moonlight key is 96 bytes (at most 132 Base58 characters); contract IDs are shorter.
   if (trimmed.length > 132) return { input: trimmed, principal: null, valid: false, reason: 'Referral ignored: this address cannot claim rewards.' }
   const result = typedPrincipalFromWalletAccount(trimmed)
-  if (!result.ok) return { input: trimmed, principal: null, valid: false, reason: result.reason }
+  if (!result.ok) return { input: trimmed, principal: null, valid: false, reason: 'Referral ignored: this address cannot claim rewards.' }
   if (!await isClaimableReferrer(result.principal)) {
     return { input: trimmed, principal: null, valid: false, reason: 'Referral ignored: this address cannot claim rewards.' }
   }

@@ -1,6 +1,7 @@
+import { account } from '../../test/frozenFixtures'
 import { NetworkFreshnessContext } from '../../app/networkFreshness'
 import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
-import { contractPrincipalFromWalletAccount, encodeBase58 } from '../../names/internal'
+import { contractPrincipalFromWalletAccount } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
@@ -333,20 +334,20 @@ function ownedName(): IndexedNameSummary {
   }
 }
 
-it('disables only new trades while paused and keeps custody release and refunds enabled', () => {
+it('disables only new orders while paused and keeps custody release and refunds enabled', () => {
   const paused = { wallet: { tradingPaused: true } }
   const button = (html: string, label: string) => {
     const match = html.match(new RegExp(`<button[^>]*>${label}</button>`))
     expect(match, label).not.toBeNull()
     return match![0]
   }
-  expect(button(render({ ...paused, listings: { fixedSales: [fixedSale()] } }), 'Buy for 25 DUSK')).toContain('disabled')
+  expect(button(render({ ...paused, listings: { fixedSales: [fixedSale()] } }), 'Buy for 25 DUSK')).not.toContain('disabled')
   expect(button(render({ ...paused, listings: { fixedSales: [fixedSale()] }, wallet: { ...paused.wallet, selectedAuthority: seller } }), 'Cancel listing')).not.toContain('disabled')
   expect(button(render({ ...paused, listings: { fixedSales: [fixedSale({ expiresAtBlockHeight: 1000 })] } }), 'Close listing')).not.toContain('disabled')
   for (const saleMode of ['fixed', 'auction'] as const) {
     expect(button(render({ ...paused, navigation: { tab: 'sell' }, selling: { sellableNames: [ownedName()], saleMode }, wallet: { ...paused.wallet, selectedAuthority: seller } }), saleMode === 'fixed' ? 'List for sale' : 'Start auction')).toContain('disabled')
   }
-  expect(button(render({ ...paused, navigation: { tab: 'offers' }, offers: { offers: [offer()] }, selling: { sellableNames: [ownedName()] }, wallet: { ...paused.wallet, selectedAuthority: seller } }), 'Accept')).toContain('disabled')
+  expect(button(render({ ...paused, navigation: { tab: 'offers' }, offers: { offers: [offer()] }, selling: { sellableNames: [ownedName()] }, wallet: { ...paused.wallet, selectedAuthority: seller } }), 'Accept')).not.toContain('disabled')
   expect(button(render({ ...paused, navigation: { tab: 'offers' }, offers: { offers: [offer()] } }), 'Cancel')).not.toContain('disabled')
   expect(button(render({ ...paused, navigation: { tab: 'offers' }, offers: { offers: [offer({ expiresAtBlockHeight: 1000 })] } }), 'Close')).not.toContain('disabled')
   expect(button(render({ ...paused, navigation: { tab: 'offers' } }), 'Review offer')).toContain('disabled')
@@ -404,7 +405,7 @@ it('collapses raising a winning bid and labels the seller as You', () => {
   expect(render({ listings: { auctions: [current] }, auction: { selectedAuctionNode: current.node }, wallet: { selectedAuthority: seller } })).toContain('<span>You</span>')
 })
 it('shows a successful transaction once with its reference behind Details', () => {
-  const html = render({ feedback: { confirmation: 'Bid placed.', txState: { status: 'executed', txId: 'reference', context: { title: 'Bid', fields: [] }, call: { contract: 'marketplace', functionName: 'place_bid_runtime' } } as unknown as MarketplaceViewProps['feedback']['txState'] } })
+  const html = render({ feedback: { confirmation: 'Bid placed.', txState: { status: 'executed', txId: 'reference', context: { title: 'Bid', fields: [] }, call: { contract: 'marketplace', functionName: 'place_bid' } } as unknown as MarketplaceViewProps['feedback']['txState'] } })
   expect(html).toContain('Bid placed.')
   expect(html).not.toContain('Transaction confirmed')
   expect(html).toContain('<summary>Details</summary>')
@@ -495,7 +496,7 @@ it('uses shared owner labels for sellers, bidders and offers, including explanat
 })
 
 it('keeps seller labels compact on both browse cards and copy on the auction page', () => {
-  const address = encodeBase58(Uint8Array.from({ length: 96 }, (_, i) => i + 1))
+  const address = account
   const parsed = contractPrincipalFromWalletAccount(address)
   if (!parsed.ok) throw new Error('Invalid seller fixture')
   const current = auction({ sellerAuthority: parsed.principal })
@@ -546,4 +547,24 @@ it('offers one post-purchase action for seller-held subnames', () => {
   const html = render({takeBackOffers:[{name:'alice.dusk',count:2,takeBack:vi.fn()}]})
   expect(html).toContain('Take back 2 subnames')
   expect(html).toContain('Taking them back clears their records and primary names.')
+})
+
+it('offers close and then return after the auction settlement window expires', () => {
+  const selected = auction({ startBlockHeight: 100, endBlockHeight: 200, highestBid: { bidderAuthority: buyer, amountLux: 50e9, placedAtBlockHeight: 100 }, bidCount: 1 })
+  const props = { listings: { auctions: [selected] }, market: { currentBlockHeight: 8840 }, auction: { selectedAuctionNode: selected.node }, wallet: { selectedAuthority: outsider } }
+  const html = render(props)
+  expect(html).toContain('>Close auction</button>')
+  expect(html).toContain('refund')
+  expect(html).not.toContain('>Finalize auction</button>')
+  expect(html).not.toContain('>Review bid</button>')
+  expect(render({ ...props, listings: { auctions: [{ ...selected, returnPending: true }] } })).toContain('>Return name</button>')
+})
+
+it('opens the selected order when two auctions share a name', () => {
+  const older = auction({ auctionId: 1, returnPending: true })
+  const newer = auction({ auctionId: 2 })
+  const selection = `${older.node}:${older.marketplaceContractId}:1`
+  const html = render({ listings: { auctions: [newer, older] }, auction: { selectedAuctionNode: selection } })
+  expect(html).toContain('>Return name</button>')
+  expect(html).not.toContain('>Review bid</button>')
 })

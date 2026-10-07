@@ -11,7 +11,7 @@ export async function checkPremiumConfirmation(page) {
     const feeConfig = { ...DEFAULT_FEE_CONFIG, premiumStartLux: 2_000_000_000 }
     function Probe({ height }) {
       const premium = registrationPremiumSchedule({ premiumStartLux: feeConfig.premiumStartLux,
-        graceEndsAtBlockHeight: 10_000, currentBlockHeight: height, nowSeconds: Date.now() / 1000 })
+        graceEndsAtBlockHeight: 10_000, currentBlockHeight: height, nowSeconds: Math.floor(Date.now() / 1000) })
       const result = { ...analyzeName('aurora'), graceEndsAtBlockHeight: 10_000,
         premiumLux: premium.premiumLux, premiumNextStepBlockHeight: premium.nextStepBlockHeight,
         premiumNextStepAt: premium.nextStepAt, premiumEndsAt: premium.premiumEndsAt }

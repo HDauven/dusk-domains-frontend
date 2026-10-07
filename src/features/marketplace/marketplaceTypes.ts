@@ -20,6 +20,7 @@ export type MarketplaceBidReview = {
 }
 
 export type MarketplaceReviewDetails = {
+  createsOrder?: boolean
   namespace?: NamespaceSummary
   transfersNamespace?: boolean
   title: string
