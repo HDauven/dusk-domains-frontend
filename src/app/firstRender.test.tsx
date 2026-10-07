@@ -1,7 +1,15 @@
 // @vitest-environment happy-dom
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import App from '../App'
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest'
+
+// Importing the app starts Dusk Connect's provider discovery, whose timers can outlive this
+// file's DOM and then throw. Under fake timers they never run here.
+let App: typeof import('../App').default
+beforeAll(async () => {
+  vi.useFakeTimers()
+  App = (await import('../App')).default
+})
+afterAll(() => { vi.useRealTimers() })
 
 // A server render runs no effects, so it is what a cold load paints first, before useUrlRoute
 // opens the route.
