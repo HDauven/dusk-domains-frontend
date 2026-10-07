@@ -18,6 +18,7 @@ import { SearchResultOverview } from './SearchResultOverview'
 import { namePageAccess, nameSections } from './namePageAccess'
 import { useNamePageMetadata } from './namePageMetadata'
 import { NameShare } from './NameShare'
+import { NightCard } from './NightCard'
 
 export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'subnames' | 'activity'
 
@@ -70,7 +71,10 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
   </>
   return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
     {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} /> : null}
-    {headerProps.status !== 'invalid' ? <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} /> : null}
+    {headerProps.status !== 'invalid' ? <>
+      <NightCard name={headerProps.displayName} />
+      <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} />
+    </> : null}
     {parent && !sameAuthority(parent.owner, managedName?.owner) ? <p className="field-note">The owner of {parent.name} can take this name back, and it expires with {parent.name}.</p> : null}
     {ancestorControl && namespaceTarget ? <>
       <SubnameAuthorityControls key={namespaceTarget.node} name={namespaceTarget.name}
