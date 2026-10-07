@@ -1,4 +1,4 @@
-import { createClientFromManifest, contractId } from '@duskdomains/sdk'
+import { createClientFromManifest, contractId, WriteBalanceError } from '@duskdomains/sdk'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import type { DuskWallet } from '@dusk/connect'
 import { createSessionWriteWallet } from '../features/wallet/sessionWriteWallet'
@@ -6,7 +6,7 @@ import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
 import { roles } from '../names/config'
 import { configuredReleaseManifest } from '../names/releaseManifest'
 import { prepareFrozenCall } from '../names/prepareFrozenCall'
-import { frozenPayload } from '../names/transactions'
+import { checkPublicBalanceForWrite, frozenPayload } from '../names/transactions'
 import {
   isPlaceholderContractId,
   type DuskConnectAppLike,
@@ -86,7 +86,11 @@ export function createDuskDomainsLiveApp(options: {
     },
     async prepareContractCall(params) {
       const c = await client()
-      return createDuskDomainsConnectApp(options.wallet, c.release).prepare(frozenPayload(params.args))
+      const prepared = await createDuskDomainsConnectApp(options.wallet, c.release).prepare(frozenPayload(params.args))
+      const balance = await options.wallet.getPublicBalance()
+      const funds = checkPublicBalanceForWrite({ balanceLux: balance?.value, prepared, action: params.functionName })
+      if (!funds.ok) throw new WriteBalanceError(funds)
+      return prepared
     },
     async writeContract(params) {
       const wallet = createSessionWriteWallet(
@@ -97,7 +101,9 @@ export function createDuskDomainsLiveApp(options: {
       )
       try {
         const c = await client()
-        return await createDuskDomainsConnectApp(wallet, c.release).submit(frozenPayload(params.args))
+        return await createDuskDomainsConnectApp(wallet, c.release, {
+          gasPrice: params.gas?.price === undefined ? undefined : BigInt(params.gas.price),
+        }).submit(frozenPayload(params.args))
       } finally {
         wallet.destroy()
       }

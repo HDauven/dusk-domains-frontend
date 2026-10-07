@@ -11,6 +11,7 @@ export function userFacingMessageFromText(
 ): string {
   const trimmed = String(message ?? '').trim()
   if (!trimmed) return ''
+  if (trimmed.startsWith('Insufficient public DUSK for ')) return trimmed
   const frozenMessages: Record<string, string> = {
     QuoteChanged: 'The price or policy changed. Refresh and review the latest price.',
     FeeMismatch: 'The fee changed. Refresh and review the latest price.',

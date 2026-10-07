@@ -51,6 +51,7 @@ export async function clearDomainRecord({
     })
     const finalState = await submitNameWrite(target.name, call, {
       workspace,
+      balanceAction: 'removing this record',
       contracts: runtimeConfig.contracts,
       onUpdate: setRecordTxState,
     })

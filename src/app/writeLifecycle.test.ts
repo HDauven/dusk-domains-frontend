@@ -1,5 +1,5 @@
 import { contracts } from '../test/frozenFixtures'
-import { storeCommitCall } from '@duskdomains/sdk'
+import { storeCommitCall, WriteBalanceError } from '@duskdomains/sdk'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -92,8 +92,9 @@ it('saves the secret before the wallet request and retains it after navigation t
   expect(h.onPendingConfirmation).toHaveBeenLastCalledWith(null)
 })
 
-it.each(['reject', 'session', 'transport', 'preparation', 'storage', 'existing'])('handles %s without losing an uncertain reservation', async outcome => {
+it.each(['reject', 'session', 'balance', 'transport', 'preparation', 'storage', 'existing'])('handles %s without losing an uncertain reservation', async outcome => {
   const h = fixture()
+  if (outcome === 'balance') h.app.writeContract.mockRejectedValueOnce(new WriteBalanceError({ ok: false, code: 'insufficient_balance', availableLux: 0n, requiredLux: 1n }))
   if (outcome === 'session') h.app.writeContract.mockRejectedValueOnce(new WalletSessionChangedError())
   if (outcome === 'reject') h.app.writeContract.mockRejectedValueOnce(new DuskWalletUserRejectedError())
   if (outcome === 'transport') h.app.writeContract.mockRejectedValueOnce(new Error('Transport cancelled after broadcast'))

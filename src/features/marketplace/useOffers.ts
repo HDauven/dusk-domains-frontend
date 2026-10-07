@@ -108,7 +108,6 @@ export function useOffers({
         expiresAt: canonicalHeight + durationBlocks(days),
         buyerManager: selectedAuthority || null,
       }), contractId: marketplaceContractId, nameRef: currentRef },
-      amountLux,
       `Offer placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
   }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
@@ -160,7 +159,6 @@ export function useOffers({
         expectedFeeBps: reviewed.feeBps,
         sellerRecipient: selectedAddress,
       }), reviewedOrder: reviewed.order, contractId: offer.marketplaceContractId ?? marketplaceContractId },
-      0n,
       `Offer accepted. ${formatLuxAsDusk(BigInt(offer.amountLux))} DUSK paid from escrow.`,
     )
   }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes])
@@ -169,7 +167,7 @@ export function useOffers({
     let offerId = 0
     let reviewedOrder: DuskDomainsOnChainOffer['order']
     if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order })) return
-    await writes.submit('cancelling this offer', offer.name, { ...marketplaceCancelOfferRequest({ node: offer.node, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId }, 0n,
+    await writes.submit('cancelling this offer', offer.name, { ...marketplaceCancelOfferRequest({ node: offer.node, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId },
       'Offer canceled. Claim the refund when ready.')
   }, [marketplaceContractId, writes])
 
@@ -178,7 +176,7 @@ export function useOffers({
     let reviewedOrder: DuskDomainsOnChainOffer['order']
     if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order })) return
     await writes.submit('closing this expired offer', offer.name,
-      { ...marketplaceExpireOfferRequest({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId }, 0n,
+      { ...marketplaceExpireOfferRequest({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId },
       'Offer closed. The buyer can claim the refund.')
   }, [marketplaceContractId, writes])
 

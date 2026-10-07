@@ -197,7 +197,7 @@ describe('live write preflight locked-wallet recovery', () => {
     expect(connectKit.open).not.toHaveBeenCalled()
   })
 
-  it('keeps the action blocked after unlock when the public balance is insufficient', async () => {
+  it('defers affordability to the prepared call after unlocking a low-balance wallet', async () => {
     const errors: string[] = []
     const getPublicBalance = vi.fn()
       .mockRejectedValueOnce(new Error('Dusk Wallet is locked'))
@@ -214,12 +214,11 @@ describe('live write preflight locked-wallet recovery', () => {
         connect: vi.fn().mockResolvedValue([{ account: 'dusk1user', profileId: 'primary' }]),
         getPublicBalance,
       },
-    })).resolves.toBe(false)
+    })).resolves.toBe(true)
 
     expect(errors).toEqual([
       'Unlock your wallet to continue reserving this name.',
       '',
-      'Insufficient public DUSK for reserving this name. Available: 0.199999999 DUSK. Required: 0.2 DUSK.',
     ])
     expect(getPublicBalance).toHaveBeenCalledTimes(2)
   })

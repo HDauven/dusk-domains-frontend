@@ -116,7 +116,6 @@ export function useSellForm({
           durationBlocks: durationBlocks(days),
           sellerRecipient: selectedAddress,
         }), expectedFeeBps: feeBps, nameRef: currentRef },
-        0n,
         'Auction created. The first bid starts the timer.',
       )
       return
@@ -178,7 +177,6 @@ export function useSellForm({
         expiresAt: canonicalHeight + durationBlocks(days),
         sellerRecipient: selectedAddress,
       }), expectedFeeBps: feeBps, nameRef: currentRef },
-      0n,
       'Name listed for sale.',
     )
   }, [
