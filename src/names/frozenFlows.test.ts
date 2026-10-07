@@ -5,6 +5,7 @@ import { handoffDrivers } from '../test/handoffFixtures'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import { account, reservation } from '../test/frozenFixtures'
 import { prepareFrozenCall } from './prepareFrozenCall'
+import { submitDuskDomainWrite } from './transactions'
 import * as intent from './commands'
 import { namehashHex } from './hash'
 import { endpointBytes, recordView, createDuskDomainsOnChainClient } from './reads'
@@ -535,6 +536,35 @@ it('edits records, sets primary and creates subnames at the forwarded home', asy
     functionName: 'create_subname',
     args: { parent: { incarnation: { generation: 7n, serial: 1n } }, expiry_policy: 'InheritsParent' },
   })
+})
+it.each([
+  { edits: 8, extraByte: false, error: null },
+  { edits: 8, extraByte: true, error: 'shorten values by at least 1 byte' },
+  { edits: 9, extraByte: false, error: 'Remove 1 change before saving' },
+])('guards the whole batch at call preparation: $edits edits, extra byte $extraByte', async ({ edits, extraByte, error }) => {
+  const h = fixture()
+  const mutations = Array.from({ length: edits }, (_, i) => ({
+    action: 'set' as const, key: `text.k${i}`, value: 'é'.repeat(252) + 'a' + (extraByte && i === 0 ? 'b' : ''), ttlSeconds: 3600,
+  }))
+  const request = intent.storeMutateRecordsSenderRequest({ node, mutations })
+  const prepareContractCall = vi.fn(async () => ({ gas: { limit: '39000000', price: '1' } }))
+  const writeContract = vi.fn<intent.DuskConnectAppLike['writeContract']>(async () => ({ hash: 'ab'.repeat(32), status: 'executed' }))
+  const state = await submitDuskDomainWrite({
+    prepareIntent: (request, name) => prepareFrozenCall(h.client, request, name, account),
+    readContract: vi.fn(), prepareContractCall, writeContract,
+  }, request, { name: 'example.dusk', contracts: { store: { contractId: id(7) } } as never })
+  if (error) {
+    expect(state.status).toBe('failed')
+    expect(state.message).toContain(error)
+    expect(prepareContractCall).not.toHaveBeenCalled()
+    expect(writeContract).not.toHaveBeenCalled()
+  } else {
+    expect(state.status).toBe('executed')
+    expect(writeContract).toHaveBeenCalledOnce()
+    const frozen = writeContract.mock.calls[0][0].args as sdk.FrozenCall<'store', 'mutate_records'>
+    expect(frozen.args.mutations).toHaveLength(8)
+    expect(frozen.args.mutations.every(m => m.action === 'Set' && m.value.length === 505)).toBe(true)
+  }
 })
 it('decodes the lossless indexer order and retains its complete identity for review', () => {
   const h = fixture(),

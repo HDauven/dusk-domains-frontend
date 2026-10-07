@@ -62,8 +62,6 @@ export async function renewDomainName({
   if (!(await ensurePublicBalanceForLiveWrite(
     'renewing this name',
     message => { if (workspace()) setRenewalError(message) },
-    1,
-    BigInt(feeLux),
   ))) return
 
   if (!workspace()) return

@@ -159,7 +159,6 @@ export function useAuctions({
         amountLux: Number(amountLux),
         bidderManager: selectedAuthority || null,
       }), reviewedOrder: canonical.order,contractId:auction.marketplaceContractId ?? undefined },
-      amountLux,
       `Bid placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
     if (result?.status === 'executed') {
@@ -175,7 +174,7 @@ export function useAuctions({
     successMessage: string,
   ) => {
     if (!await writes.guardCanonicalRead(async client => { call = {...call, contractId:auction.marketplaceContractId ?? undefined, reviewedOrder: (await canonicalAuction(client, auction)).order} })) return
-    await writes.submit(actionName, auction.name, call, 0n, auction.returnPending ? 'Name returned.' : `${successMessage} If return is pending, use Return name to finish.`)
+    await writes.submit(actionName, auction.name, call, auction.returnPending ? 'Name returned.' : `${successMessage} If return is pending, use Return name to finish.`)
   }, [writes])
 
   const openAuction = useCallback((node: string) => {

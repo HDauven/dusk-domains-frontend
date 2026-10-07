@@ -68,7 +68,7 @@ describe('offer acceptance review', () => {
     expect(h.requestReview).toHaveBeenCalledOnce()
     expect(h.submit).not.toHaveBeenCalled()
     await h.confirm()
-    expect(h.submit).toHaveBeenCalledWith('accepting this offer', 'example.dusk', expect.objectContaining({ args: expect.objectContaining({ expectedOfferId: 7, expectedFeeBps: 250, expectedAmountLux: 10_000_000_000 }) }), 0n, expect.any(String))
+    expect(h.submit).toHaveBeenCalledWith('accepting this offer', 'example.dusk', expect.objectContaining({ args: expect.objectContaining({ expectedOfferId: 7, expectedFeeBps: 250, expectedAmountLux: 10_000_000_000 }) }), expect.any(String))
   })
 
   it.each([{ offerId: 8 }, { feeBps: 1_000 }, { amountLux: 9_000_000_000n }])('blocks changed terms after review: %s', async (terms) => {
@@ -120,7 +120,7 @@ describe.each(['cancel', 'expire'] as const)('%s offer', action => {
     const h = setup()
     await h[action]()
     expect(h.setError).not.toHaveBeenCalled()
-    expect(h.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), 'example.dusk', expect.objectContaining({ functionName: `${action}_offer`, args: expect.objectContaining({ node, expectedOfferId: 7 }) }), 0n, expect.any(String))
+    expect(h.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), 'example.dusk', expect.objectContaining({ functionName: `${action}_offer`, args: expect.objectContaining({ node, expectedOfferId: 7 }) }), expect.any(String))
   })
 })
 
@@ -130,6 +130,6 @@ it('keeps the recorded marketplace on cleanup even when the current owner no lon
   await h.cancel()
   await h.expire()
   expect(h.submit).toHaveBeenCalledTimes(2)
-  expect(h.submit).toHaveBeenCalledWith('cancelling this offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), 0n, expect.any(String))
-  expect(h.submit).toHaveBeenCalledWith('closing this expired offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), 0n, expect.any(String))
+  expect(h.submit).toHaveBeenCalledWith('cancelling this offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), expect.any(String))
+  expect(h.submit).toHaveBeenCalledWith('closing this expired offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), expect.any(String))
 })

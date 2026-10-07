@@ -68,7 +68,6 @@ export function useMarketplaceWrites({
     actionName: string,
     name: string,
     call: DuskDomainCallMetadata,
-    depositLux = 0n,
     successMessage = 'Marketplace updated.',
   ) => {
     setError('')
@@ -84,11 +83,12 @@ export function useMarketplaceWrites({
       setError('Connect your wallet to continue.')
       return null
     }
-    if (!await ensurePublicBalanceForLiveWrite(actionName, setError, 1, depositLux)) return null
+    if (!await ensurePublicBalanceForLiveWrite(actionName, setError)) return null
 
     try {
       const finalState = await submitNameWrite(name, call, {
         contracts: runtimeConfig.contracts,
+        balanceAction: actionName,
         onUpdate: setTxState,
       })
       setTxState(finalState)

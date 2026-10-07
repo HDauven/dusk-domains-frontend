@@ -94,6 +94,6 @@ using its manifest. It does not rebuild or need the original env file.
 
 ## SDK dependency
 
-The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.3.0`,
+The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.3.1`,
 through the `@jsr` registry mapping in `.npmrc`. It never imports the removed
 `/internal` or `/writes` entry points. UI presentation helpers live in `src/names/ui`.

@@ -43,7 +43,7 @@ it('signs the identity and amount captured at review', async () => {
   await act(async () => { await h.feature().placeBid({ ...h.auction, auctionId: 99 }) })
   expect(h.submit).toHaveBeenCalledWith('placing this bid', 'example.dusk', expect.objectContaining({ args: {
     node: 'node', expectedAuctionId: 7, amountLux: 25_000_000_000, bidderManager: 'bidder',
-  } }), 25_000_000_000n, expect.any(String))
+  } }), expect.any(String))
 })
 
 it.each([{ auctionId: 8 }, { durationBlocks: 259200 }, { sellerAuthority: 'another-seller' }, { reservePriceLux: 11_000_000_000n }, { startDeadlineBlockHeight: 2000 }, { feeBps: 500 }])('rejects changed reviewed auction terms: %o', async changed => {
@@ -66,7 +66,7 @@ it('requires a review before placing a bid', async () => {
 it.each(['cancelAuction', 'expireAuction', 'settleAuction'] as const)('binds %s to the reviewed auction', async action => {
   const h = await setup()
   await act(async () => { await h.feature()[action](h.auction) })
-  expect(h.submit).toHaveBeenCalledWith(expect.any(String), 'example.dusk', expect.objectContaining({ args: { node: 'node', expectedAuctionId: 7 } }), 0n, expect.any(String))
+  expect(h.submit).toHaveBeenCalledWith(expect.any(String), 'example.dusk', expect.objectContaining({ args: { node: 'node', expectedAuctionId: 7 } }), expect.any(String))
 })
 
 it.each([20_000_000_000n, 30_000_000_000n])('submits the chosen amount after an intervening bid of %s and leaves the minimum to the contract', async amountLux => {
@@ -79,7 +79,7 @@ it.each([20_000_000_000n, 30_000_000_000n])('submits the chosen amount after an 
   await act(async () => { await h.feature().placeBid(h.auction) })
   expect(h.submit).toHaveBeenCalledWith('placing this bid', 'example.dusk', expect.objectContaining({ args: {
     node: 'node', expectedAuctionId: 7, amountLux: 25_000_000_000, bidderManager: 'bidder',
-  } }), 25_000_000_000n, expect.any(String))
+  } }), expect.any(String))
   expect(h.setError).not.toHaveBeenCalledWith(expect.stringContaining('changed on-chain'))
 })
 

@@ -4,6 +4,7 @@ import type * as T from './commandTypes'
 import { endpointBytes, local, registrationQuote, requireName } from './reads'
 import { createDuskDomainsIndexerClient } from './http/client'
 import { namehashHex } from './hash'
+import { prepareRecordMutations } from './recordMutations'
 const bytes = (v: string) => sdk.fromHex(v, 32)
 const changed = () =>
   new Error('On-chain terms changed. Refresh and review the latest terms before signing.')
@@ -262,11 +263,7 @@ export async function prepareFrozenCall(
       const a = request.args as T.CoreMutateRecordsSenderRuntimeArgs
       return sdk.storeMutateRecordsCall(n.store, {
         name: n.ref,
-        mutations: a.mutations.map((m) =>
-          m.action === 'clear'
-            ? { action: 'Clear', key: m.key, value: [], ttl_seconds: 0n }
-            : { action: 'Set', ...sdk.createRecordInput(m.key, m.value, BigInt(m.ttlSeconds)) },
-        ),
+        mutations: prepareRecordMutations(a.mutations),
       })
     }
     case 'set_primary_name':

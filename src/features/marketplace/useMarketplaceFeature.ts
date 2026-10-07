@@ -121,7 +121,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       const fresh = await indexerClient.getNameState(name.node)
       if (!fresh) throw new Error('Name data is still syncing.')
       const call = purchaseTakeBackCall({ ...name, ...fresh }, selectedAuthority)
-      await writes.submit('taking back subnames', name.canonicalName, call, 0n, 'Subnames taken back. Their previous records and primary names were cleared.')
+      await writes.submit('taking back subnames', name.canonicalName, call, 'Subnames taken back. Their previous records and primary names were cleared.')
     } catch (error) { setError(userFacingErrorMessage(error)) }
   }
 

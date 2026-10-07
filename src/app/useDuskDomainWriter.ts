@@ -1,5 +1,6 @@
 import { captureWalletSession } from '../features/wallet/captureWalletSession'
 import { DuskWalletUserRejectedError } from '@dusk/connect'
+import { WriteBalanceError } from '@duskdomains/sdk'
 import { WalletSessionChangedError } from '../features/wallet/sessionWriteWallet'
 import { readTransactionReceipt, waitForConfirmation, type ConfirmationState, type PendingConfirmation } from './confirmationRead'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
@@ -107,6 +108,7 @@ export function useDuskDomainWriter({
         } catch (error) {
           // Transport failures can hide a broadcast; a local refusal or wallet rejection cannot.
           walletRejected = error instanceof DuskWalletUserRejectedError
+            || error instanceof WriteBalanceError
             || error instanceof WalletSessionChangedError
             || (typeof error === 'object' && error !== null && 'code' in error && error.code === 4001)
           throw error

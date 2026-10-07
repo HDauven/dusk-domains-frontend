@@ -65,8 +65,6 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
     if (!(await ensurePublicBalanceForLiveWrite(
       'registering this name',
       message => { if (workspace()) setWalletError(message) },
-      1,
-      BigInt(request.feeLux),
     ))) return
     if (!workspace()) return
     checkSession()

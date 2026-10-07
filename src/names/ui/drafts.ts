@@ -1,5 +1,6 @@
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
 import { type CoreRecordMutationInput } from '../commands'
+import { prepareRecordMutations } from '../recordMutations'
 import {
   createResolverRecord,
   getRecordDefinition,
@@ -61,6 +62,13 @@ export function recordMutationPlan(
     })
   }
 
+  if (mutations.length > 0) {
+    try {
+      prepareRecordMutations(mutations)
+    } catch (error) {
+      errors.push((error as Error).message)
+    }
+  }
   return { mutations, errors }
 }
 

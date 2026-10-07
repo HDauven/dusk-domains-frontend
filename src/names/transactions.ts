@@ -2,10 +2,13 @@ import {
   formatLuxAsDusk,
   submitDuskDomainWrite as submitFrozen,
   checkPublicBalanceForWrite as checkBalance,
+  WriteBalanceError,
+  type BalancePreflightResult,
   type DuskDomainTxState as FrozenState,
   type FrozenCall,
   type DuskDomainTxStatus,
 } from '@duskdomains/sdk'
+import type { PreparedCall } from '@duskdomains/sdk/connect-app'
 import type {
   DuskConnectAppLike,
   DuskDomainCallMetadata,
@@ -33,11 +36,28 @@ export type DuskDomainTxState = {
 }
 export type SubmitDuskDomainWriteOptions = {
   name?: string
+  balanceAction?: string
   gas?: DuskDomainGas
   onUpdate?: (state: DuskDomainTxState) => void
   timeoutMs?: number
   contracts?: DuskDomainContractMap
   allowUnsafePreviewCall?: boolean
+}
+const balanceActions: Record<string, string> = {
+  commit: 'reserving this name',
+  complete_registration: 'registering this name',
+  renew: 'renewing this name',
+  update_authorities: 'updating ownership',
+  mutate_records_sender: 'saving these records',
+  set_primary_name: 'setting the primary name',
+  clear_primary_name: 'clearing the primary name',
+  create_subname: 'creating this subname',
+  remove_subname: 'managing this subname',
+  take_back_subnames: 'taking back subnames',
+  claim: 'claiming treasury funds',
+  claim_all: 'claiming treasury funds',
+  claim_referral_reward: 'claiming referral rewards',
+  claim_all_referral_rewards: 'claiming referral rewards',
 }
 export const isDuskDomainTxBusy = (s: DuskDomainTxState | null | undefined) =>
   !!s && ['preparing', 'awaiting_approval', 'submitted', 'executing'].includes(s.status)
@@ -46,6 +66,10 @@ export async function submitDuskDomainWrite(
   request: DuskDomainCallMetadata,
   options: SubmitDuskDomainWriteOptions = {},
 ): Promise<DuskDomainTxState> {
+  const balanceAction = options.balanceAction ?? balanceActions[request.functionName] ?? request.functionName.replaceAll('_', ' ')
+  const errorMessage = (error: unknown) => error instanceof WriteBalanceError
+    ? balanceErrorMessage(error.details, balanceAction)
+    : userFacingErrorMessage(error)
   const context = {
       title: options.name ?? request.functionName,
       description: 'Confirm this action in your wallet.',
@@ -56,7 +80,7 @@ export async function submitDuskDomainWrite(
     ...s,
     context,
     call,
-    message: s.error ? userFacingErrorMessage(s.error) : undefined,
+    message: s.error ? errorMessage(s.error) : undefined,
   })
   try {
     options.onUpdate?.({ status: 'preparing', context, call })
@@ -65,11 +89,15 @@ export async function submitDuskDomainWrite(
     const contract = options.contracts?.[request.contract]
     if (!contract) throw new Error('Contract configuration unavailable')
     const params = { contract, functionName: frozen.functionName, args: frozen, deposit: frozen.deposit }
+    let prepared: PreparedCall
     const state = await submitFrozen(
       {
-        prepare: async () =>
-          app.prepareContractCall(params) as Promise<import('@duskdomains/sdk/connect-app').PreparedCall>,
-        submit: () => app.writeContract(params),
+        prepare: async () => {
+          prepared = await app.prepareContractCall(params) as PreparedCall
+          return prepared
+        },
+        // Keep the reviewed price through submission; the SDK still rebuilds the call and checks funds again.
+        submit: () => app.writeContract({ ...params, gas: prepared.gas }),
       },
       frozen as FrozenCall,
       { timeoutMs: options.timeoutMs, onUpdate: (s) => options.onUpdate?.(update(s)) },
@@ -80,32 +108,33 @@ export async function submitDuskDomainWrite(
       status: 'failed',
       context,
       call,
-      message: userFacingErrorMessage(error),
+      message: errorMessage(error),
     }
     options.onUpdate?.(state)
     return state
   }
 }
 export function checkPublicBalanceForWrite(a: {
-  balanceLux: string
+  balanceLux: unknown
   action: string
-  transactionCount?: number
-  extraRequiredLux?: bigint
+  prepared: Pick<PreparedCall, 'deposit' | 'gas'>
 }) {
   const result = checkBalance({
     balanceLux: a.balanceLux,
-    depositLux: String(a.extraRequiredLux ?? 0n),
-    gasLimit: 200_000_000n * BigInt(a.transactionCount ?? 1),
-    gasPrice: 1n,
+    depositLux: a.prepared.deposit,
+    gasLimit: BigInt(a.prepared.gas.limit),
+    gasPrice: BigInt(a.prepared.gas.price),
   })
   return result.ok
     ? result
     : {
         ...result,
-        message:
-          result.code === 'balance_unavailable'
-            ? 'Could not read the wallet public balance.'
-            : `Insufficient public DUSK for ${a.action}. Available: ${formatLuxAsDusk(BigInt(a.balanceLux))}. Required: ${formatLuxAsDusk(200_000_000n * BigInt(a.transactionCount ?? 1) + (a.extraRequiredLux ?? 0n))}.`,
+        message: balanceErrorMessage(result, a.action),
       }
+}
+function balanceErrorMessage(result: Extract<BalancePreflightResult, { ok: false }>, action: string) {
+  return result.code === 'balance_unavailable'
+    ? 'Could not read the wallet public balance.'
+    : `Insufficient public DUSK for ${action}. Available: ${formatLuxAsDusk(result.availableLux!)}. Required: ${formatLuxAsDusk(result.requiredLux)}.`
 }
 export const frozenPayload = (value: unknown) => value as FrozenCall

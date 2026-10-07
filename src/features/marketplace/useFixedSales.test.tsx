@@ -28,7 +28,7 @@ it('binds a fixed-price purchase to the reviewed sale', async () => {
   await h.confirm()
   expect(h.submit).toHaveBeenCalledWith('buying this name', 'example.dusk', expect.objectContaining({ args: {
     node: 'node', expectedSaleId: 7, priceLux: 10_000_000_000, buyerManager: 'buyer',
-  } }), 10_000_000_000n, expect.any(String))
+  } }), expect.any(String))
 })
 
 it.each([{ saleId: 8 }, { feeBps: 500 },])('rejects changed sale terms after review: %j', async changed => {
@@ -44,5 +44,5 @@ it.each([{ saleId: 8 }, { feeBps: 500 },])('rejects changed sale terms after rev
 it.each(['cancelFixedSale', 'expireFixedSale'] as const)('binds %s to the reviewed sale', async action => {
   const h = setup()
   await h.feature()[action](h.sale)
-  expect(h.submit).toHaveBeenCalledWith(expect.any(String), 'example.dusk', expect.objectContaining({ args: { node: 'node', expectedSaleId: 7 } }), 0n, expect.any(String))
+  expect(h.submit).toHaveBeenCalledWith(expect.any(String), 'example.dusk', expect.objectContaining({ args: { node: 'node', expectedSaleId: 7 } }), expect.any(String))
 })

@@ -37,20 +37,16 @@ export function useLiveWritePreflight({
   const ensurePublicBalanceForLiveWrite = useCallback(async (
     action: string,
     setError: (message: string) => void,
-    transactionCount = 1,
-    extraRequiredLux = 0n,
   ) => {
     return ensurePublicBalanceForLiveWriteRequest({
       action,
       connectKit,
       connectOptions,
       expectedNodeUrl,
-      extraRequiredLux,
       liveWritesEnabled,
       refreshWalletConnectionState,
       refreshWalletSessionState,
       setError,
-      transactionCount,
       wallet,
     })
   }, [connectKit, connectOptions, expectedNodeUrl, liveWritesEnabled, refreshWalletConnectionState, refreshWalletSessionState, wallet])
