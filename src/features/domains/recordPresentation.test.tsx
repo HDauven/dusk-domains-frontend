@@ -80,9 +80,9 @@ describe('record presentation', () => {
   it('shows a supplied description in the registered name header only', () => {
     const props = { displayName: 'aurora.dusk', lifecycleLabel: null, primaryVerified: false, reserved: false }
     const header = (status: 'registered' | 'available', values: ResolverRecord[]) => renderToStaticMarkup(<NameHeader {...props} status={status} records={values} />)
-    expect(header('registered', records)).toContain('<span class="name-portrait-description">Building tools for Dusk.</span>')
-    expect(header('registered', [])).not.toContain('name-portrait-description')
-    expect(header('available', records)).not.toContain('name-portrait-description')
+    expect(header('registered', records)).toContain('<p class="name-hero-description">Building tools for Dusk.</p>')
+    expect(header('registered', [])).not.toContain('name-hero-description')
+    expect(header('available', records)).not.toContain('name-hero-description')
   })
 
   it('keeps record labels and prose consistent in the list', () => {
