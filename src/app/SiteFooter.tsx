@@ -24,6 +24,8 @@ export function SiteFooter({
       <nav aria-label="Footer">
         <a href={routePath({ view: 'referrals' })} onClick={(event) => followLink(event, () => onMainViewChange('referrals'))}>Referrals</a>
         <a href={routePath({ view: 'treasury' })} onClick={(event) => followLink(event, () => onMainViewChange('treasury'))}>Treasury</a>
+        <a href={routePath({ view: 'terms' })} onClick={(event) => followLink(event, () => onMainViewChange('terms'))}>Terms</a>
+        <a href={routePath({ view: 'privacy' })} onClick={(event) => followLink(event, () => onMainViewChange('privacy'))}>Privacy</a>
         {external.map(([label, href]) => (
           <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>
         ))}

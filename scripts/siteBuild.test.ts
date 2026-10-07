@@ -63,6 +63,9 @@ it.each([
   const llms = output.read('llms.txt')
   expect(llms).toContain(`[Search and register](${origin}/)`)
   expect(llms).toContain(`${origin}/api`)
+  const optional = llms.split('## Optional')[1]
+  expect(optional).toContain(`[Terms of Use](${origin}/terms)`)
+  expect(optional).toContain(`[Privacy Notice](${origin}/privacy)`)
   expect(llms).not.toContain('https://dusk.domains')
   if (noindex) {
     expect(output.read('robots.txt')).toBe('User-agent: *\nDisallow: /\n')
@@ -74,6 +77,8 @@ it.each([
     expect(output.read('sitemap.xml')).toContain(`<loc>${origin}/sitemap-pages.xml</loc>`)
     expect(output.read('sitemap.xml')).toContain(`<loc>${origin}/sitemap-names.xml</loc>`)
     expect(output.read('sitemap-pages.xml')).toContain(`<loc>${origin}/market</loc>`)
+    expect(output.read('sitemap-pages.xml')).toContain(`<loc>${origin}/terms</loc>`)
+    expect(output.read('sitemap-pages.xml')).toContain(`<loc>${origin}/privacy</loc>`)
     expect(llms).not.toContain('names have no value')
   }
   const version = JSON.parse(output.read('version.json'))

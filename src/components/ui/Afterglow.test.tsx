@@ -61,7 +61,7 @@ describe('Afterglow names and copy', () => {
     expect(home).toContain('Find your .dusk name')
     expect(home).toContain('One readable name for your Dusk address.')
     expect(home).not.toContain('Claim it once')
-    expect(text(renderToStaticMarkup(<SiteFooter links={{ support: '', abuse: '', security: '', status: '' }} onMainViewChange={vi.fn()} />))).toBe('Dusk DomainsReferralsTreasury')
+    expect(text(renderToStaticMarkup(<SiteFooter links={{ support: '', abuse: '', security: '', status: '' }} onMainViewChange={vi.fn()} />))).toBe('Dusk DomainsReferralsTreasuryTermsPrivacy')
   })
 
   it('says what is missing and what to do in My names', () => {

@@ -9,6 +9,8 @@ const viewPaths: Record<AppMainView, string> = {
   marketplace: '/market',
   referrals: '/referrals',
   treasury: '/treasury',
+  terms: '/terms',
+  privacy: '/privacy',
 }
 
 export function parseRoute(pathname: string): AppRoute {
