@@ -41,7 +41,7 @@ export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }:
 
       <div className="marketplace-auction-hero">
         <div>
-          <ListingName id="marketplace-heading" heading="h1" name={auction.name} size={64} />
+          <ListingName id="marketplace-heading" heading="h1" name={auction.name} verification={auction.verification} size={64} />
       <NamespaceSummary namespace={auction.namespace} />
           <p>{auction.startBlockHeight === null
             ? `Starts when someone bids, then runs ${auctionDurationLabel(auction.durationBlocks)}.`

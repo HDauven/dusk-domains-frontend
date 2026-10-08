@@ -12,6 +12,7 @@ import { checkNameManagement } from './name-management-smoke.mjs'
 import { checkPrimaryNameSwitches } from './primary-name-smoke.mjs'
 import { checkUiSystem } from './ui-system-smoke.mjs'
 import { checkNameFit } from './name-fit-smoke.mjs'
+import { checkBrandNotices } from './brand-notice-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
 import { checkInitialHydration, checkSelectedAuction } from './indexer-review-smoke.mjs'
@@ -28,6 +29,8 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 try {
   await checkLegalPages(browser, baseUrl)
   const context = await browser.newContext()
+  const origin = new URL(baseUrl).origin
+  await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort())
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', error => { errors.push(error.message); console.error(error.message) })
@@ -542,6 +545,7 @@ try {
   await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)
   await checkNameFit(page)
+  await checkBrandNotices(page)
   await checkPricingDraft(page)
   await checkLockedClaims(page)
   await checkRefreshOrdering(page)

@@ -99,7 +99,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
           <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={17} />
         </Button>
       </div>
-      <ListingName name={auction.name} />
+      <ListingName name={auction.name} verification={auction.verification} />
       <NamespaceSummary namespace={auction.namespace} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} compact /></div>
       {leading ? <p className="marketplace-personal-status leading">{status === 'settlement_expired' ? 'Close auction for refund' : status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
@@ -137,7 +137,7 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps
           <Star aria-hidden="true" fill={watched ? 'currentColor' : 'none'} size={17} />
         </Button>
       </div>
-      <ListingName name={sale.name} />
+      <ListingName name={sale.name} verification={sale.verification} />
       <NamespaceSummary namespace={sale.namespace} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={sale.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} compact /></div>
       {ownSale ? <><p className="marketplace-personal-status selling">Your listing</p><p>Renewal is available after the listing closes.</p></> : null}

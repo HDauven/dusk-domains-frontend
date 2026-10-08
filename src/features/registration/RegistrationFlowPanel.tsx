@@ -1,3 +1,4 @@
+import { BrandClaimNotice } from '../search/BrandClaimNotice'
 import { NameSignature } from '../../components/ui/NameChip'
 import { Panel } from '../../components/ui/Panel'
 import { RegistrationStepPanel } from './flow/RegistrationStepPanel'
@@ -16,6 +17,7 @@ export function RegistrationFlowPanel({ navigation, resultIssues, status, step, 
           <p className="register-stage">{wizard.registrationStep === 'purchase' ? '2 of 2 · Register' : '1 of 2 · Reserve'}</p>
           <h1 id="register-heading" aria-label={wizard.displayName}><NameSignature name={wizard.displayName} fit /></h1>
         </header>
+        <BrandClaimNotice name={wizard.displayName} />
         <RegistrationStepPanel {...step} />
         <RegistrationPolicyNotes issues={resultIssues} />
         <RegistrationFlowStatus {...status} walletError={step.purchase.registrationCompletion ? '' : status.walletError} />

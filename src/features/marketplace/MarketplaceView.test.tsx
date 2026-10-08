@@ -581,3 +581,13 @@ it('opens the selected order when two auctions share a name', () => {
   expect(html).toContain('>Return name</button>')
   expect(html).not.toContain('>Review bid</button>')
 })
+
+it.each(['fixed sale', 'auction listing', 'auction detail'])('shows unverified brands on a %s using the API status', kind => {
+  for (const verification of [undefined, null, { status: 'pending' }, { status: 'verified' }]) {
+    const selected = auction({ name: 'google.dusk', verification })
+    const listings = kind === 'fixed sale' ? { fixedSales: [fixedSale({ name: 'google.dusk', verification })] } : { auctions: [selected] }
+    const html = render({ listings, auction: { selectedAuctionNode: kind === 'auction detail' ? selected.node : '' } })
+    expect(html.includes('>Unverified</span>')).toBe(verification?.status !== 'verified')
+    expect(html.includes('Not verified by google. Check before trusting it.')).toBe(verification?.status !== 'verified')
+  }
+})

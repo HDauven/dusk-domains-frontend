@@ -28,6 +28,7 @@ export type SearchIssue = {
 }
 
 export type NameResult = {
+  verification?: import('../verification').NameVerification | null
   policyQuote?: import('@duskdomains/sdk').RegistrationQuote
   totalFeeLux?: number
   quotedYears?: number
