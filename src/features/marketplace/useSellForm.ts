@@ -42,6 +42,13 @@ export function useSellForm({
   const [privateBuyer, setPrivateBuyer] = useState('')
   const [reserveDusk, setReserveDusk] = useState('25')
   const [durationDays, setDurationDays] = useState('7')
+  // The next name in the list takes over the form after a listing. It needs its own price,
+  // or one more click would list it at the last name's price.
+  const clearAfterListing = useCallback(() => {
+    setFixedPriceDusk('')
+    setReserveDusk('')
+    setPrivateBuyer('')
+  }, [])
 
   const createListing = useCallback(async function createListing(reviewed = false, reviewedRef?: NameRef) {
     if (feeBps === null) { setError('The marketplace fee is still loading. Try again shortly.'); return }
@@ -105,7 +112,7 @@ export function useSellForm({
         }, () => createListing(true, currentRef))
         return
       }
-      await writes.submit(
+      const auctioned = await writes.submit(
         'creating this auction',
         selectedName.canonicalName,
         { ...storeEscrowAuctionRequest({
@@ -118,6 +125,7 @@ export function useSellForm({
         }), expectedFeeBps: feeBps, nameRef: currentRef },
         'Auction created. The first bid starts the timer.',
       )
+      if (auctioned?.status === 'executed') clearAfterListing()
       return
     }
 
@@ -165,7 +173,7 @@ export function useSellForm({
       }, () => createListing(true, currentRef))
       return
     }
-    await writes.submit(
+    const listed = await writes.submit(
       'listing this name',
       selectedName.canonicalName,
       { ...storeEscrowFixedSaleRequest({
@@ -179,7 +187,9 @@ export function useSellForm({
       }), expectedFeeBps: feeBps, nameRef: currentRef },
       'Name listed for sale.',
     )
+    if (listed?.status === 'executed') clearAfterListing()
   }, [
+    clearAfterListing,
     feeBps,
     duskDomainsOnChainClient,
     durationDays,

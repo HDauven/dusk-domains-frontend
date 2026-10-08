@@ -30,7 +30,7 @@ export function useDuskDomainsAppModel() {
   const { handleOpenWalletConnection, selectedAddress, walletSetupState, walletState } = walletRuntime
   const { handleMainViewChange } = mainViewRuntime
   const { handleSearchHome, searchName } = searchRuntime
-  useAutoRefresh(searchRuntime.refreshCurrentNameFromIndexer, mainView === 'search' && searchState.checked && ['overview', 'details', 'activity', 'subnames'].includes(searchState.resultView))
+  useAutoRefresh(searchRuntime.refreshCurrentNameFromIndexer, mainView === 'search' && searchState.checked && ['overview', 'details', 'activity', 'subnames'].includes(searchState.resultView), undefined, core.walletRuntime.selectedAddress)
   const skyNames = useSkyNames(appRuntime.indexerClient)
   const openName = (name: string) => void searchName(name)
   const openView = (view: AppMainView) => {

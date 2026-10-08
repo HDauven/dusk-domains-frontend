@@ -41,7 +41,7 @@ export function ActivityHistoryView({
         </div>
       </div>
 
-      <RecentWarningStack warnings={paymentWarnings(recentWarnings, viewerAuthority)} />
+      <RecentWarningStack warnings={paymentWarnings(recentWarnings, viewerAuthority, activityEntries)} />
 
       {loading ? (
         <EmptyState loading icon={<Clock size={18} />}>Loading activity</EmptyState>
