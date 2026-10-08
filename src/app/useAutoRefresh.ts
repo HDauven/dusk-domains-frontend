@@ -2,9 +2,18 @@ import type { RefreshOptions } from './singleFlight'
 import { useEffect, useRef } from 'react'
 
 // Loaders own request ordering across navigation, writes and background refresh.
-export function useAutoRefresh(refresh: (options?: RefreshOptions) => unknown, enabled = true, intervalMs = 30_000) {
+// A new scope (such as the wallet address once a session restores) makes reads that were in
+// flight stale: they are dropped, so read again at once instead of waiting for the next tick.
+export function useAutoRefresh(refresh: (options?: RefreshOptions) => unknown, enabled = true, intervalMs = 30_000, scope?: unknown) {
   const current = useRef(refresh)
   useEffect(() => { current.current = refresh })
+  const seenScope = useRef(scope)
+  useEffect(() => {
+    if (Object.is(seenScope.current, scope)) return
+    seenScope.current = scope
+    if (!enabled || document.visibilityState === 'hidden') return
+    Promise.resolve().then(() => current.current()).catch(() => { /* The reader owns its error state. */ })
+  }, [enabled, scope])
   useEffect(() => {
     if (!enabled) return
     let disposed = false
