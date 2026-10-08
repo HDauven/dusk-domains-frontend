@@ -122,3 +122,18 @@ it('keeps custom canonical resolver records without applying editor validation o
   const result = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
   expect(result?.forwardRead.value?.records).toEqual([{ key: 'custom.binary', value: '0xff00', visibility: 'public', ttlSeconds: 60, updatedAt: '' }])
 })
+
+it.each(['owner', 'website', 'unchanged'])('keeps website verification bound when chain %s is read', async change => {
+  const { client, onChainClient } = setup()
+  const verification = { domain: 'harbourline.com', status: 'verified', checkedAt: new Date().toISOString(), dnssec: false }
+  const website = { key: 'website', value: 'https://harbourline.com' }
+  vi.mocked(client.resolveForward).mockResolvedValue({ records: [website], verification } as never)
+  vi.mocked(client.getNameState).mockResolvedValue({ owner: 'alice', verification } as never)
+  vi.spyOn(onChainClient, 'getName').mockResolvedValue({ ok: true, value: { record: {
+    owner: change === 'owner' ? 'bob' : 'alice', manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 },
+  } } } as never)
+  vi.spyOn(onChainClient, 'getRecords').mockResolvedValue({ ok: true, value: [{ ...website, value: change === 'website' ? website.value + '/changed' : website.value }] } as never)
+  const reads = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
+  expect(reads?.forwardRead.value?.verification).toEqual(change === 'unchanged' ? verification : undefined)
+  expect(reads?.stateRead.value?.verification).toEqual(change === 'unchanged' ? verification : undefined)
+})

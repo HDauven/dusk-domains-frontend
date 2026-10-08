@@ -357,3 +357,20 @@ textarea.input { min-height: 96px; resize: vertical; }
 .term-picker .button[aria-pressed="true"], .marketplace-mode-control .button[aria-pressed="true"] { border-color: var(--peach); background: var(--surface-hover); }
 
 .field-note > span { display: block; }
+
+.website-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--mint);
+  font-size: var(--text-xs);
+}
+
+.verified-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.website-badge svg { flex-shrink: 0; }

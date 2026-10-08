@@ -9,6 +9,7 @@ export const fallbackOwner = 'dusk1owner-preview'
 export const fallbackManager = 'dusk1manager-preview'
 
 export type ManagedNameState = {
+  websiteVerification?: import('../names/http/verification').BoundWebsiteVerification
   ancestors?: import('../names/internal').NamespaceAncestor[]
   node: string
   owner: string

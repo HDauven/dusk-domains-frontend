@@ -1,8 +1,11 @@
+import { WebsiteBadge } from './WebsiteBadge'
+import type { WebsiteVerification } from '../../names/internal'
 import { useId, useState, type ReactNode } from 'react'
 import { Button } from './Button'
 import { NameSignature } from './NameChip'
 
-export function NameCard({ name, avatar, description, children, onOpen, loading, disabled, className = '' }: {
+export function NameCard({ name, verification, avatar, description, children, onOpen, loading, disabled, className = '' }: {
+  verification?: WebsiteVerification
   name: string
   avatar?: string | null
   description?: string | null
@@ -25,7 +28,7 @@ export function NameCard({ name, avatar, description, children, onOpen, loading,
     </span>
     <span className="name-portrait-content" id={detailsId}>
       {showAvatar ? <img src={avatar} alt="" className="name-avatar" width={48} height={48} referrerPolicy="no-referrer" loading="lazy" onError={() => setFailedAvatar(avatar)} /> : null}
-      <NameSignature name={name} fit />
+      <span className="verified-name"><NameSignature name={name} fit /><WebsiteBadge verification={verification} compact /></span>
       {description ? <span className="name-portrait-description">{description}</span> : null}
       {children}
     </span>

@@ -101,3 +101,10 @@
 .recipient-form .address-chip { overflow-wrap: anywhere; }
 .recipient-settings > a { justify-self: start; }
 @media (max-width: 600px) { .manager-summary { flex-wrap: wrap; } }
+
+.verification-record { margin: 0; }
+.verification-record > div { margin-top: var(--space-3); }
+.verification-record dt { color: var(--muted); font-size: var(--text-sm); }
+.verification-record dd { margin: var(--space-1) 0 0; display: flex; align-items: center; gap: var(--space-2); }
+.verification-record code { overflow-wrap: anywhere; min-width: 0; }
+.verification-record .copy-control { flex-shrink: 0; white-space: nowrap; }

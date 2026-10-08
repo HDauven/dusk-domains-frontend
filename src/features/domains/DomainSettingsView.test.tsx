@@ -153,3 +153,8 @@ it('hides renewal controls in open settings until contract custody is known', ()
   expect(html).not.toContain('>Renew</')
   expect(html).toContain('Renewal is unavailable until marketplace custody can be checked.')
 })
+
+it('shows website verification setup only to the owner', () => {
+  expect(settings({})).toContain('Verify your website')
+  expect(settings({ isOwner: false })).not.toContain('Verify your website')
+})

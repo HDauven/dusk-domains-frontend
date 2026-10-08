@@ -31,7 +31,7 @@ export function NameCard({
   const life = nameCardLifecycle(name, currentBlockHeight)
 
   return (
-    <NamePortrait name={name.canonicalName} avatar={avatar} description={description} onOpen={() => onOpen(name.canonicalName)}>
+    <NamePortrait verification={name.verification} name={name.canonicalName} avatar={avatar} description={description} onOpen={() => onOpen(name.canonicalName)}>
       <span className={`name-card-life ${life.tone}`}>{life.copy}</span>
       <span className="name-card-tags">
         {isOwnPrimary(primary, paysElsewhere) ? <Badge tone="success">Primary name</Badge> : null}

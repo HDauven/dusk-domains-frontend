@@ -49,6 +49,12 @@ export async function readIndexedName(
     const [name, records] = await Promise.all([onChainClient.getName(canonicalName), onChainClient.getRecords(canonicalName)])
     if (!name.ok || !records.ok) throw new Error(!name.ok ? name.error.message : !records.ok ? records.error.message : 'Name data unavailable')
     if (!name.value.record) throw new Error('Name state changed. Search again.')
+    const indexedWebsite = forwardRead.value?.records.find(record => record.key === 'website')?.value
+    const chainWebsite = records.value.find(record => record.key === 'website')?.value
+    if (stateRead.value?.owner !== name.value.record.owner || indexedWebsite !== chainWebsite) {
+      if (stateRead.value) stateRead.value.verification = undefined
+      if (forwardRead.value) forwardRead.value.verification = undefined
+    }
     if (forwardRead.value) forwardRead.value.records = records.value.map(r => ({ key: r.key, value: r.value, visibility: r.visibility, ttlSeconds: r.ttlSeconds, updatedAt: '' }))
     if (stateRead.value) {
       stateRead.value.owner=name.value.record.owner

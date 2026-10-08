@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { useAppRuntime } from './useAppRuntime'
 
 export type ShowcaseName = {
+  verification?: import('../names/internal').WebsiteVerification
   name: string
   node: string
   avatar: string | null
@@ -23,6 +24,7 @@ export function useSkyNames(indexerClient: ReturnType<typeof useAppRuntime>['ind
         setNames(list
           .filter((entry) => entry.status === 'active')
           .map((entry) => ({
+            verification: entry.verification,
             name: entry.canonicalName,
             node: entry.node,
             avatar: entry.records.find((record) => record.key === 'avatar')?.value ?? null,

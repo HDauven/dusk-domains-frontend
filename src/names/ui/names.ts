@@ -1,3 +1,4 @@
+import type { WebsiteVerification } from '../http/verification'
 import {
   validateName as validate,
   analyzeName as analyze,
@@ -28,7 +29,7 @@ export type SearchIssue = {
 }
 
 export type NameResult = {
-  verification?: import('../verification').NameVerification | null
+  verification?: WebsiteVerification
   policyQuote?: import('@duskdomains/sdk').RegistrationQuote
   totalFeeLux?: number
   quotedYears?: number

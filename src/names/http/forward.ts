@@ -1,3 +1,4 @@
+import type { WebsiteVerification } from './verification'
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
 import type { ActivityEntry } from '../ui/activity'
 import type { ResolverRecord } from '../ui/records'
@@ -34,6 +35,7 @@ export type NameExpiry = {
 }
 
 export type ForwardResolutionResponse = {
+  verification?: WebsiteVerification
   canonicalName: string
   node: string
   records: ResolverRecord[]

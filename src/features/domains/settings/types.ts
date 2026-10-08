@@ -5,6 +5,7 @@ import type { ManagedNameState } from '../../../app/managedNameState'
 export type { ManagedNameState } from '../../../app/managedNameState'
 
 export type DomainSettingsViewProps = {
+  websiteVerification?: Omit<import('./WebsiteVerificationPanel').WebsiteVerificationPanelProps, 'name' | 'owner'>
   isOwner?: boolean
   displayName: string
   managedName: ManagedNameState

@@ -1,3 +1,4 @@
+import { WebsiteBadge } from '../../components/ui/WebsiteBadge'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { Search, X } from 'lucide-react'
@@ -84,7 +85,7 @@ export function SearchHero({
           <ul>
             {featuredNames.map((entry) => (
               <li key={entry.name}>
-                <NameChip name={entry.name} onClick={() => onOpenName?.(entry.name)} />
+                <NameChip name={entry.name} onClick={() => onOpenName?.(entry.name)} /><WebsiteBadge verification={entry.verification} compact />
               </li>
             ))}
           </ul>

@@ -1,3 +1,4 @@
+import { WebsiteVerificationPanel } from './settings/WebsiteVerificationPanel'
 import { Panel } from '../../components/ui/Panel'
 import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import { PanelHeader } from '../../components/ui/PanelHeader'
@@ -7,7 +8,7 @@ import { RenewalPanel } from './settings/RenewalPanel'
 import { SubnameExpiryPanel } from './settings/SubnameExpiryPanel'
 import type { DomainSettingsViewProps } from './settings/types'
 
-export function DomainSettingsView({ isOwner = true, displayName, managedName, ownership, renewal, clock }: DomainSettingsViewProps) {
+export function DomainSettingsView({ isOwner = true, displayName, managedName, ownership, renewal, clock, websiteVerification }: DomainSettingsViewProps) {
   return (
     <Panel className="management-panel" id="my-names" aria-labelledby="management-heading">
       <PanelHeader
@@ -17,6 +18,8 @@ export function DomainSettingsView({ isOwner = true, displayName, managedName, o
       />
 
       {isOwner ? <RecipientSettingsPanel displayName={displayName} managedName={managedName} ownership={ownership} /> : null}
+
+      {isOwner ? <WebsiteVerificationPanel name={displayName} owner={managedName.owner} website="" {...websiteVerification} /> : null}
 
       {isSubname(displayName) ? (
         <SubnameExpiryPanel displayName={displayName} managedName={managedName} clock={clock} />

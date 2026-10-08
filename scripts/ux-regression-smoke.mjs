@@ -1,4 +1,5 @@
 import { checkPollingBudget } from './polling-smoke.mjs'
+import { checkWebsiteVerification } from './website-verification-smoke.mjs'
 import { checkLegalPages } from './legal-pages-smoke.mjs'
 import { checkPremiumConfirmation } from './premium-confirmation-smoke.mjs'
 import { checkNamespaceControls } from './namespace-smoke.mjs'
@@ -553,6 +554,7 @@ try {
   await checkRefreshOrdering(page)
   await checkAppShell(page)
   await checkPollingBudget(page)
+  await checkWebsiteVerification(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')

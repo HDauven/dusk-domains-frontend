@@ -1,3 +1,4 @@
+import { isWebsiteVerification, type WebsiteVerification } from './verification'
 import { principalKey, typedPrincipalFromWalletAccount } from '@duskdomains/sdk'
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
 import { namehash } from '../hash'
@@ -55,6 +56,7 @@ export type DuskDomainsIndexerClientOptions = {
 }
 
 export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
+  verifyWebsite: (canonicalName: string) => Promise<WebsiteVerification>
   getNamesPage: (
     params?: { owner?: string } & IndexerPageParams,
   ) => Promise<IndexerPage<IndexedNameSummary, 'names'>>
@@ -267,6 +269,23 @@ export function createDuskDomainsIndexerClient(
       'forward-resolution',
     )
     return payload
+  }
+
+  async function verifyWebsite(canonicalName: string) {
+    canonicalName = namehash(canonicalName).canonicalName
+    const response = await fetcher(endpointUrl(baseUrl, 'verify', { name: canonicalName }), {
+      method: 'POST', cache: 'no-store', headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000),
+    })
+    if (response.status === 429) {
+      const retry = Number(response.headers.get('retry-after'))
+      throw new Error(`Please wait ${Number.isFinite(retry) && retry > 0 ? Math.ceil(retry) : 60} seconds before checking again.`)
+    }
+    if (!response.ok) throw new Error('Could not check DNS. Try again in a moment.')
+    const payload: unknown = await response.json()
+    if (!isRecord(payload) || payload.canonicalName !== canonicalName || !isWebsiteVerification(payload.verification)) {
+      throw new Error('The indexer returned an invalid website verification response.')
+    }
+    return payload.verification
   }
 
   async function getRecords(canonicalName: string) {
@@ -554,6 +573,7 @@ export function createDuskDomainsIndexerClient(
     searchName,
     getCommitment,
     resolveForward,
+    verifyWebsite,
     getRecords,
     getNodeRecords,
     getNodeRecordsPage,

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show DNS website verification from the current owner and website binding, with recoverable pending checks.
+
 - Check availability when Search or Enter is pressed, not after each typed letter, so the page stays still while typing.
 
 - Apply the SDK gas policy to every wallet write using the connected Moonlight account.
