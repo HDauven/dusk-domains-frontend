@@ -28,3 +28,11 @@
   font-family: var(--font-display);
   line-height: 1;
 }
+
+/* The name's Night Card animal, low on its own horizon glow. */
+.name-avatar.animal {
+  background:
+    var(--animal) center / cover no-repeat,
+    radial-gradient(circle at 50% 125%, color-mix(in srgb, var(--sunset) 55%, transparent), transparent 62%),
+    linear-gradient(var(--portrait-sky), var(--night));
+}
