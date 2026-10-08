@@ -276,13 +276,13 @@ export async function checkMarketplaceBrowse(page) {
   assert.equal(await page.locator('.marketplace-card').count(), 0)
 
   await page.evaluate(() => window.renderMarketOffers())
-  await page.getByLabel('Filter offers').selectOption('sent')
+  await page.getByLabel('Show offers').selectOption('sent')
   assert.equal(await page.locator('.marketplace-offer-row').count(), 1)
   assert.match(await page.locator('.marketplace-offer-row').textContent(), /Buyer You/)
-  await page.getByLabel('Filter offers').selectOption('all')
+  await page.getByLabel('Show offers').selectOption('all')
   await page.getByLabel('Sort offers').selectOption('price-high')
   assert.match(await page.locator('.marketplace-offer-row').first().textContent(), /two.dusk/)
-  await page.getByRole('searchbox', { name: 'Search offers' }).fill('one')
+  await page.getByRole('searchbox', { name: 'Filter offers by name' }).fill('one')
   assert.equal(await page.locator('.marketplace-offer-row').count(), 1)
 
   await page.evaluate(() => window.renderMarketAuction())

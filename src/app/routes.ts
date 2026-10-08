@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import type { AppMainView } from './AppTypes'
 
-export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string, sellName?: string }
+export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string, sellName?: string, offerName?: string }
 
 const viewPaths: Record<AppMainView, string> = {
   search: '/',
@@ -26,15 +26,19 @@ function parseDecodedRoute(pathname: string): AppRoute {
   const path = pathname.replace(/\/+$/, '') || '/'
   const sell = /^\/market\/sell\/([^/]+)$/.exec(path)
   if (sell) return { view: 'marketplace', sellName: decodeURIComponent(sell[1]).toLowerCase() }
+  const offer = /^\/market\/offer\/([^/]+)$/.exec(path)
+  if (offer) return { view: 'marketplace', offerName: dotDusk(decodeURIComponent(offer[1])) }
   const auction = /^\/market\/auction\/(0x[0-9a-f]{64})$/i.exec(path)
   if (auction) return { view: 'marketplace', auctionNode: auction[1].toLowerCase() }
   const name = /^\/name\/([^/]+)$/.exec(path)
-  if (name) {
-    const decoded = decodeURIComponent(name[1]).trim().toLowerCase()
-    return { view: 'search', name: decoded.endsWith('.dusk') ? decoded : `${decoded}.dusk` }
-  }
+  if (name) return { view: 'search', name: dotDusk(decodeURIComponent(name[1])) }
   const view = (Object.keys(viewPaths) as AppMainView[]).find((key) => viewPaths[key] === path)
   return { view: view ?? 'search' }
+}
+
+function dotDusk(input: string) {
+  const name = input.trim().toLowerCase()
+  return name.endsWith('.dusk') ? name : `${name}.dusk`
 }
 
 /** The route in the address bar as the app starts, so its first render shows that page. */
@@ -44,8 +48,15 @@ export function openingRoute(): AppRoute {
 
 export function routePath(route: AppRoute) {
   if (route.view === 'marketplace' && route.sellName) return `/market/sell/${encodeURIComponent(route.sellName)}`
+  if (route.view === 'marketplace' && route.offerName) return `/market/offer/${encodeURIComponent(route.offerName)}`
   if (route.view === 'marketplace' && route.auctionNode) return `/market/auction/${route.auctionNode}`
   return route.name ? `/name/${encodeURIComponent(route.name)}` : viewPaths[route.view]
+}
+
+/** Opens a route in place. useUrlRoute applies it as it does a back or forward step. */
+export function navigateTo(route: AppRoute) {
+  window.history.pushState(null, '', routePath(route))
+  window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
 // Links stay real links, so a middle click or a copied address opens the same view.

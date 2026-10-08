@@ -33,7 +33,7 @@ it('round-trips a name selected for sale', () => {
   expect(parseRoute(routePath(route))).toEqual(route)
 })
 
-it.each(['/name/%', '/name/%E0%A4%A', '/market/sell/%FF'])('treats undecodable deep links as unknown routes: %s', path => {
+it.each(['/name/%', '/name/%E0%A4%A', '/market/sell/%FF', '/market/offer/%FF'])('treats undecodable deep links as unknown routes: %s', path => {
   expect(parseRoute(path)).toEqual(parseRoute('/not-found'))
 })
 
@@ -41,4 +41,11 @@ it.each(['terms', 'privacy'] as const)('round-trips the %s page, including a tra
   expect(routePath({ view })).toBe(`/${view}`)
   expect(parseRoute(`/${view}`)).toEqual({ view })
   expect(parseRoute(`/${view}/`)).toEqual({ view })
+})
+
+it('round-trips a name to make an offer on, with or without the .dusk suffix', () => {
+  const route = { view: 'marketplace' as const, offerName: 'aurora.dusk' }
+  expect(routePath(route)).toBe('/market/offer/aurora.dusk')
+  expect(parseRoute(routePath(route))).toEqual(route)
+  expect(parseRoute('/market/offer/Aurora')).toEqual(route)
 })

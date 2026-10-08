@@ -43,6 +43,8 @@ export function useDuskDomainsAppModel() {
   useUrlRoute({
     sellName: marketplace.sellName,
     onOpenSell: marketplace.openSell,
+    offerName: marketplace.offerName,
+    onOpenOffer: marketplace.openOffer,
     selectedAuctionNode: marketplace.marketplaceProps.auction.selectedAuctionNode,
     onOpenAuction: marketplace.marketplaceProps.auction.onOpenAuction,
     checked: searchState.checked,

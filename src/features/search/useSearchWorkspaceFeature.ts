@@ -2,6 +2,7 @@ import { ownerAddressCandidates } from '../identity/ownerLabel'
 import type { ComponentProps } from 'react'
 import type { SearchWorkspace } from './SearchWorkspace'
 import { formatActivityTime } from '../domains/domainFormat'
+import { canOfferOn } from './namePageAccess'
 
 type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['result']['resultView']
@@ -15,6 +16,8 @@ type UseSearchWorkspaceFeatureProps = {
   onLoadMoreActivity?: () => void
   activityLoading: boolean
   canRegister: boolean
+  /** The market takes offers on this network. */
+  marketplaceOffers?: boolean
   checked: SearchWorkspaceProps['search']['checked']
   currentBlockHeight: number | null
   displayName: string
@@ -60,6 +63,7 @@ export function useSearchWorkspaceFeature({
   hasMoreActivity,
   onLoadMoreActivity,
   canRegister,
+  marketplaceOffers = false,
   checked,
   currentBlockHeight,
   displayName,
@@ -96,6 +100,10 @@ export function useSearchWorkspaceFeature({
   viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
   const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
+  const managedName = settingsProps.managedName
+  const owner = nodeHex && managedName.node === nodeHex ? managedName.owner : null
+  const canMakeOffer = marketplaceOffers && canOfferOn({ name: displayName, status: resultStatus, owner, ownerIsContract: managedName.ownerIsContract,
+    expiresAt: managedName.expiresAt, currentBlockHeight, viewer: viewerAuthority })
   const searchProps: SearchWorkspaceProps = {
     search: {
       priceTiers,
@@ -141,7 +149,8 @@ export function useSearchWorkspaceFeature({
         displayName,
         lifecycleLabel,
         primaryVerified: primaryProps.primaryVerification.verified,
-        owner: nodeHex && settingsProps.managedName.node === nodeHex ? settingsProps.managedName.owner : null,
+        owner,
+        canMakeOffer,
         records: resultStatus === 'registered' ? parentResolverRecords : [],
         reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
         status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { marketOpening } from '../features/marketplace/useMarketplaceFeature'
 import type { NameResult } from '../names/internal'
 import type { AppMainView } from './AppTypes'
-import { openingRoute } from './routes'
+import { navigateTo, openingRoute } from './routes'
 import { useSearchAppState } from './useSearchAppState'
 import { useUrlRoute } from './useUrlRoute'
 
@@ -18,7 +18,7 @@ let controls: {
   openAuction: (node: string) => void
   openView: (view: AppMainView) => void
   resolveName: (canonical: string) => void
-  state: () => { view: AppMainView, auction: string, sell: string }
+  state: () => { view: AppMainView, auction: string, sell: string, offer: string }
 }
 let root: Root
 
@@ -27,6 +27,7 @@ function RoutedApp() {
   const [market] = useState(() => marketOpening(search.openingRoute))
   const [tab, setTab] = useState(market.tab)
   const [sellName, setSellName] = useState(market.sellName)
+  const [offerName, setOfferName] = useState(market.offerName)
   const [selectedAuction, setSelectedAuction] = useState(market.auctionNode)
   // As openIndexedName: the name opens at once, and the indexer answers with its canonical form.
   const openName = (name: string) => {
@@ -44,7 +45,7 @@ function RoutedApp() {
       openAuction,
       openView,
       resolveName: (canonical) => search.setApiSearchResult({ canonical } as NameResult),
-      state: () => ({ view: search.mainView, auction: selectedAuction, sell: tab === 'sell' ? sellName : '' }),
+      state: () => ({ view: search.mainView, auction: selectedAuction, sell: tab === 'sell' ? sellName : '', offer: tab === 'offers' ? offerName : '' }),
     }
   })
   useUrlRoute({
@@ -57,6 +58,8 @@ function RoutedApp() {
     onOpenView: openView,
     onOpenAuction: openAuction,
     onOpenSell: (name) => { setSellName(name); setSelectedAuction(''); setTab('sell') },
+    offerName: tab === 'offers' ? offerName : '',
+    onOpenOffer: (name) => { setOfferName(name); setSelectedAuction(''); setTab('offers') },
   })
   return null
 }
@@ -139,4 +142,23 @@ it('keeps back and forward through in-app navigation from an untidy opening addr
   await travel(2)
   expect(address()).toBe(`/market/auction/${later}`)
   expect(controls.state()).toMatchObject({ view: 'marketplace', auction: later })
+})
+
+it('opens an offer link on the Offers tab with its name', async () => {
+  await land('/market/offer/Pie')
+  expect(address()).toBe('/market/offer/pie.dusk')
+  expect(controls.state()).toMatchObject({ view: 'marketplace', offer: 'pie.dusk' })
+})
+
+it('opens the Offers tab from a name page in place, and back returns to the name', async () => {
+  await land('/name/pie.dusk')
+  await run(() => controls.resolveName('pie.dusk'))
+  const entries = window.history.length
+  await run(() => navigateTo({ view: 'marketplace', offerName: 'pie.dusk' }))
+  expect(address()).toBe('/market/offer/pie.dusk')
+  expect(controls.state()).toMatchObject({ view: 'marketplace', offer: 'pie.dusk' })
+  expect(window.history.length).toBe(entries + 1)
+  await travel(-1)
+  expect(address()).toBe('/name/pie.dusk')
+  expect(controls.state()).toMatchObject({ view: 'search' })
 })

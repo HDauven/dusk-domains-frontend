@@ -82,6 +82,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     activityEntries,
     activityLoading,
     canRegister,
+    marketplaceOffers: Boolean(appRuntime.runtimeConfig.capabilities.marketplace && appRuntime.runtimeConfig.contracts.marketplace),
     checked,
     currentBlockHeight: searchState.currentBlockHeight,
     displayName,

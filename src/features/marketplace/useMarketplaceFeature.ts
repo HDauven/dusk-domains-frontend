@@ -44,10 +44,15 @@ type UseMarketplaceFeatureArgs = {
   submitNameWrite: SubmitNameWrite
 }
 
-/** The market a route opens: a sell link's Sell tab, or a linked auction. */
-export function marketOpening(route?: AppRoute): { tab: MarketplaceTab, sellName: string, auctionNode: string } {
+/** The market a route opens: a sell link's Sell tab, an offer link's Offers tab, or a linked auction. */
+export function marketOpening(route?: AppRoute): { tab: MarketplaceTab, sellName: string, offerName: string, auctionNode: string } {
   const market = route?.view === 'marketplace' ? route : null
-  return { tab: market?.sellName ? 'sell' : 'browse', sellName: market?.sellName ?? '', auctionNode: market?.auctionNode ?? '' }
+  return {
+    tab: market?.sellName ? 'sell' : market?.offerName ? 'offers' : 'browse',
+    sellName: market?.sellName ?? '',
+    offerName: market?.offerName ?? '',
+    auctionNode: market?.auctionNode ?? '',
+  }
 }
 
 // The market: data and writes are shared, and each tab's state lives in its own hook.
@@ -67,6 +72,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const accountScope = `${marketScope}:${selectedAuthority}`
   const [opening] = useState(() => marketOpening(args.openingRoute))
   const [sellName, setSellName] = useState(opening.sellName)
+  // The name an offer link asked for. The form's name field starts from it.
+  const [offerName, setOfferName] = useState(opening.offerName)
   const [tab, setTab] = useState<MarketplaceTab>(opening.tab)
   // Auction selection belongs to the market, so wallet restoration keeps the detail open.
   const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, opening.auctionNode)
@@ -107,7 +114,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     accountScope, auctions, indexerClient, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
   })
   const offerState = useOffers({
-    duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,
+    duskDomainsOnChainClient, initialOfferName: opening.offerName, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,
   })
 
   const fixedSaleState = useFixedSales({ marketplaceOnChainClient, selectedAddress, selectedAuthority, setError, writes })
@@ -226,7 +233,14 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       },
     }
 
-    return { loadMarketplace, marketplaceProps, sellName: tab === 'sell' ? sellName : '', openSell: (name: string) => { setSellName(name); setSelectedNode(''); setSelectedAuctionNode(''); setTab('sell') } }
+    return {
+      loadMarketplace,
+      marketplaceProps,
+      sellName: tab === 'sell' ? sellName : '',
+      openSell: (name: string) => { setSellName(name); setSelectedNode(''); setSelectedAuctionNode(''); setTab('sell') },
+      offerName: tab === 'offers' ? offerName : '',
+      openOffer: (name: string) => { setOfferName(name); offerState.setOfferName(name); setSelectedAuctionNode(''); setTab('offers') },
+    }
   }
 
 export type MarketplaceFeature = ReturnType<typeof useMarketplaceFeature>
