@@ -162,8 +162,10 @@ export async function checkMarketplaceReviews(page) {
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Confirm in wallet' }).click()
   await page.waitForFunction(() => window.reviewCalls.length === 3)
-  await page.evaluate(() => window.marketProbe.sell.setSaleMode('auction'))
-  await page.waitForFunction(() => window.marketProbe.sell.saleMode === 'auction')
+  // A listing clears the form's prices, so the auction needs its own reserve.
+  await page.waitForFunction(() => window.marketProbe.sell.reserveDusk === '' && window.marketProbe.sell.fixedPriceDusk === '')
+  await page.evaluate(() => { window.marketProbe.sell.setSaleMode('auction'); window.marketProbe.sell.setReserveDusk('25') })
+  await page.waitForFunction(() => window.marketProbe.sell.saleMode === 'auction' && window.marketProbe.sell.reserveDusk === '25')
   await page.evaluate(() => window.marketProbe.sell.createListing())
   await page.getByRole('dialog').waitFor()
   assert.match(await page.getByRole('dialog').textContent(), /before the first bid/)
