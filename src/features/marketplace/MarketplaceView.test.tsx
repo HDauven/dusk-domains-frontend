@@ -146,6 +146,19 @@ describe('MarketplaceView actions', () => {
     expect(html).not.toContain('>Accept</button>')
   })
 
+  it('lets visitors fill in an offer or a bid, and asks for a wallet only to review it', () => {
+    const visitor = { selectedAddress: '', selectedAuthority: '' }
+    const offerHtml = render({ navigation: { tab: 'offers' }, offers: { offerName: 'aurora.dusk' }, wallet: visitor })
+    expect(offerHtml).toContain('value="aurora.dusk"')
+    expect(offerHtml).toContain('>Connect wallet to offer</button>')
+    expect(offerHtml).not.toContain('Review offer')
+
+    const bidHtml = render({ listings: { auctions: [auction()] }, auction: { selectedAuctionNode: auction().node }, wallet: visitor })
+    expect(bidHtml).toMatch(/<input(?![^>]*disabled)[^>]*aria-label="Bid on aurora.dusk"/)
+    expect(bidHtml).toContain('>Connect wallet to bid</button>')
+    expect(bidHtml).not.toContain('Review bid')
+  })
+
   it('shows accept, cancel and expiry actions for the right offer state', () => {
     const incomingHtml = render({ navigation: { tab: 'offers' }, offers: { offers: [offer()] }, selling: { sellableNames: [ownedName()] }, wallet: { selectedAuthority: seller } })
     const outgoingHtml = render({ navigation: { tab: 'offers' }, offers: { offers: [offer()] }, wallet: { selectedAuthority: buyer } })

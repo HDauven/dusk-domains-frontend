@@ -4,9 +4,11 @@ import { parseRoute, routePath, type AppRoute } from './routes'
 
 // Keeps the address bar and the app in step: every view and every searched name has a URL,
 // the back button works, and a refresh or a shared link opens the same place.
-export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searchedName, selectedAuctionNode, onOpenAuction, sellName, onOpenSell }: {
+export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searchedName, selectedAuctionNode, onOpenAuction, sellName, onOpenSell, offerName, onOpenOffer }: {
   sellName?: string
   onOpenSell?: (name: string) => void
+  offerName?: string
+  onOpenOffer?: (name: string) => void
   selectedAuctionNode?: string
   onOpenAuction?: (node: string) => void
   checked: boolean
@@ -18,16 +20,17 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
   const current: AppRoute = mainView === 'search' && checked && searchedName
     ? { view: 'search', name: searchedName }
     : mainView === 'marketplace' && sellName ? { view: mainView, sellName }
+    : mainView === 'marketplace' && offerName ? { view: mainView, offerName }
     : mainView === 'marketplace' && selectedAuctionNode ? { view: mainView, auctionNode: selectedAuctionNode } : { view: mainView }
   const path = routePath(current)
 
   // The route taken from the address bar that the app is still catching up to. It is fresh until
   // the app has rendered once after applying it, since that render still shows the old state.
   const pending = useRef<{ route: AppRoute, fresh: boolean } | null>(null)
-  const open = useRef({ onOpenName, onOpenView, onOpenAuction, onOpenSell })
+  const open = useRef({ onOpenName, onOpenView, onOpenAuction, onOpenSell, onOpenOffer })
   const shown = useRef(path)
   useEffect(() => {
-    open.current = { onOpenName, onOpenView, onOpenAuction, onOpenSell }
+    open.current = { onOpenName, onOpenView, onOpenAuction, onOpenSell, onOpenOffer }
     shown.current = path
   })
 
@@ -47,6 +50,7 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
       else {
         open.current.onOpenView(route.view)
         if (route.sellName) open.current.onOpenSell?.(route.sellName)
+        else if (route.offerName) open.current.onOpenOffer?.(route.offerName)
         else open.current.onOpenAuction?.(route.auctionNode ?? '')
       }
     }

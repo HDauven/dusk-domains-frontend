@@ -30,6 +30,7 @@ import type { MarketplaceWrites } from './useMarketplaceWrites'
 // The Offers tab: make an offer on any name, and answer offers on the wallet's own names.
 export function useOffers({
   duskDomainsOnChainClient,
+  initialOfferName = '',
   marketplaceContractId,
   marketplaceOnChainClient,
   ownedNames,
@@ -39,6 +40,7 @@ export function useOffers({
   writes,
 }: {
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
+  initialOfferName?: string
   marketplaceContractId: string
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
   ownedNames: IndexedNameSummary[]
@@ -47,7 +49,7 @@ export function useOffers({
   setError: (message: string) => void
   writes: MarketplaceWrites
 }) {
-  const [offerName, setOfferName] = useState('')
+  const [offerName, setOfferName] = useState(initialOfferName)
   const [offerAmountDusk, setOfferAmountDusk] = useState('25')
   const [offerDurationDays, setOfferDurationDays] = useState('7')
 

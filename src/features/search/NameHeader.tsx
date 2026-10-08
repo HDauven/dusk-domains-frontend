@@ -4,8 +4,12 @@ import { NameSignature } from '../../components/ui/NameChip'
 import { OwnerLabel } from '../identity/OwnerLabel'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
+import { followLink, navigateTo, routePath } from '../../app/routes'
 
-export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
+const offerRoute = (offerName: string) => ({ view: 'marketplace' as const, offerName })
+
+export function NameHeader({ canMakeOffer = false, displayName, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
+  canMakeOffer?: boolean
   displayName: string
   lifecycleLabel: string | null
   primaryVerified: boolean
@@ -32,6 +36,8 @@ export function NameHeader({ displayName, lifecycleLabel, primaryVerified, owner
         {registered && primaryVerified ? <Badge tone="success">Primary name</Badge> : null}
         {registered && lifecycleLabel ? <Badge>{lifecycleLabel}</Badge> : null}
       </div>
+      {canMakeOffer ? <a className="button button-secondary compact name-hero-offer" href={routePath(offerRoute(displayName))}
+        onClick={event => followLink(event, () => navigateTo(offerRoute(displayName)))}>Make an offer</a> : null}
     </div>
   </header>
 }
