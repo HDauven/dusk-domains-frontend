@@ -1,7 +1,6 @@
 import { PremiumNotice } from '../registration/PremiumNotice'
 import { Badge } from '../../components/ui/Badge'
 import { suggestedNames } from './suggestedNames'
-import { NameCard } from '../../components/ui/NameCard'
 import { Panel } from '../../components/ui/Panel'
 import { Button } from '../../components/ui/Button'
 import { ArrowRight, Clock } from 'lucide-react'
@@ -104,7 +103,7 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
   return (
     <Panel className="claim-card" aria-labelledby="overview-heading">
       <div className="claim-main">
-        <NameCard name={displayName}><Badge status="available">{readOnly ? 'Example name' : 'Available'}</Badge></NameCard>
+        <Badge status="available">{readOnly ? 'Example name' : 'Available'}</Badge>
         <h2 id="overview-heading">Registration term</h2>
         <TermPicker label="Registration term" max={maxDurationYears} min={minDurationYears} value={duration} onChange={onDurationChange} />
         <p>{readOnly ? 'Preview only. Availability has not been checked on the network.' : 'Your wallet will own the name. Network fees are shown before signing.'}</p>

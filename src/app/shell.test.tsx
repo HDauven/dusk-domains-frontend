@@ -47,6 +47,8 @@ it('marks preview read-only, exposes configuration details and disables claiming
   expect(card).toContain('Example name')
   expect(card).toMatch(/<button[^>]*disabled=""[^>]*>Registration unavailable<\/button>/)
   expect(card).not.toContain('>Available<')
+  // The name page's Night Card, above the panel, is the name's only picture.
+  expect(card).not.toContain('name-portrait')
 })
 it('uses sync timestamps and lag, not the last name event, for freshness', () => {
   const now = Date.parse('2026-10-01T12:00:00Z')

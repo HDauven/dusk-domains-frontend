@@ -37,7 +37,9 @@ it('replaces the flow with one claim moment and two next actions', () => {
   expect(html.replace(/<[^>]*>/g, '')).toContain('alpha.dusk is yours')
   expect(html).toContain('>Open</button>')
   expect(html).toContain('>Add records</button>')
-  expect(html).toContain('Download card')
+  // The name page's share row, right above, offers the card.
+  expect(html).not.toContain('Download card')
+  expect(html).not.toContain('name-portrait')
   expect(html).not.toContain('Registration complete')
   expect(html).not.toContain('register-stage')
 })
