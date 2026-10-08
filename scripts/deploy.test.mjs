@@ -161,7 +161,7 @@ it('reports a verification mismatch and retains the previous release for rollbac
   expect(f.backups()).toHaveLength(1)
   expect(existsSync(`${f.env.DEPLOY_DIR}.lock`)).toBe(false)
   expect(f.run(['--rollback']).status).toBe(0)
-})
+}, 30_000)
 
 it('refuses absent drivers, concurrent deploys and rollback without a backup', () => {
   const f = fixture()

@@ -22,7 +22,7 @@ export function SubnameAuthorityControls({ name, onReassign, onTakeBack, onRemov
     <Button disabled={busy} onClick={() => void run(onTakeBack)}>Take back</Button>
     <Button disabled={busy} onClick={() => setMode('remove')}>Remove</Button>
     {mode === 'reassign' ? <form onSubmit={event => { event.preventDefault(); void run(() => onReassign(owner, manager || owner)) }}>
-      <label>New owner<Input required value={owner} onChange={event => setOwner(event.target.value)} placeholder="Dusk public address or contract:0x…" /></label>
+      <label>New owner<Input required value={owner} onChange={event => setOwner(event.target.value)} placeholder="Dusk address, .dusk name or contract:0x…" /></label>
       <label>New manager<Input value={manager} onChange={event => setManager(event.target.value)} placeholder="Same as new owner" /></label>
       <Button type="submit" disabled={busy || !owner.trim()}>Save authorities</Button>
       <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>

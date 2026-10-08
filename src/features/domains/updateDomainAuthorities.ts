@@ -64,8 +64,8 @@ export async function updateDomainAuthorities({
       manager: nextManager,
       clearRecords: change.kind === 'transfer' && (change.clearRecords ?? true),
     })
-    if (/\.dusk$/i.test(change.recipient.input.trim())) {
-      call.reviewedRecipient = { name: change.recipient.input, address: change.recipient.address, kind: change.kind }
+    call.reviewedRecipient = { address: checked.address, kind: change.kind,
+      ...(/\.dusk$/i.test(checked.input) ? { name: checked.input } : {}),
     }
     const finalState = await submitNameWrite(displayName, call, {
       ownershipChange: change.kind,

@@ -18,6 +18,7 @@ import type {
 } from './commands'
 import { userFacingErrorMessage } from './ui/errors'
 export type WalletFrozenCall = {
+  readonly display?: import('./walletCallDetails').WalletCallDetails
   readonly role: import('@duskdomains/sdk').ContractRole
   readonly contractId: string
   readonly functionName: string
@@ -88,7 +89,7 @@ export async function submitDuskDomainWrite(
     const frozen = await app.prepareIntent(request, options.name ?? '')
     const contract = options.contracts?.[request.contract]
     if (!contract) throw new Error('Contract configuration unavailable')
-    const params = { contract, functionName: frozen.functionName, args: frozen, deposit: frozen.deposit }
+    const params = { contract, functionName: frozen.functionName, args: frozen, deposit: frozen.deposit, display: frozen.display }
     let prepared: PreparedCall
     const state = await submitFrozen(
       {

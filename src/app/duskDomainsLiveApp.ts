@@ -98,6 +98,7 @@ export function createDuskDomainsLiveApp(options: {
         options.session,
         config.chainId,
         config.nodeUrl,
+        params.display,
       )
       try {
         const c = await client()

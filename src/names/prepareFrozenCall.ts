@@ -5,9 +5,29 @@ import { endpointBytes, local, registrationQuote, requireName } from './reads'
 import { createDuskDomainsIndexerClient } from './http/client'
 import { namehashHex } from './hash'
 import { prepareRecordMutations } from './recordMutations'
+import { walletExpiry, walletSaleAmounts, withWalletDetails, type WalletCallDetails } from './walletCallDetails'
+import type { WalletFrozenCall } from './transactions'
 const bytes = (v: string) => sdk.fromHex(v, 32)
 const changed = () =>
   new Error('On-chain terms changed. Refresh and review the latest terms before signing.')
+
+async function walletRecipient(client: sdk.FrozenClient, authority: string, reviewed?: T.ReviewedAuthorityRecipient) {
+  if (!reviewed) return `Authority ID: ${authority}`
+  const mismatch = () => new Error('The recipient changed on chain. Check the address again before confirming.')
+  const parsed = sdk.contractPrincipalFromWalletAccount(reviewed.address)
+  if (!parsed.ok || sdk.hex(bytes(parsed.principal)) !== sdk.hex(bytes(authority))) throw mismatch()
+  if (reviewed.name) {
+    const recipientName = sdk.normalizeNameInput(reviewed.name)
+    const destination = await requireName(client, recipientName)
+    const resolved = await client.locate<sdk.RecordValue | null>(
+      destination.store, sdk.nameKey(recipientName).root, 'resolve_record',
+      { key: sdk.nameKey(recipientName), record_key: 'moonlight_address' },
+    )
+    const record = local(resolved.value)
+    if (!record || !sdk.isMoonlightEndpoint(record.value) || sdk.hex(record.value) !== sdk.hex(endpointBytes(reviewed.address))) throw mismatch()
+  }
+  return reviewed.name ? `${reviewed.name} (${reviewed.address})` : reviewed.address
+}
 /** Name edits resolve the current home; existing orders retain their recorded target. */
 export async function prepareFrozenCall(
   client: sdk.FrozenClient,
@@ -20,11 +40,16 @@ export async function prepareFrozenCall(
   const height = await client.transport.currentBlockHeight(),
     deadline = height + 120n
   const op = request.functionName
+  const describe = (call: WalletFrozenCall, summary: string, fields: WalletCallDetails = {}) =>
+    withWalletDetails(call, summary, { Name: spelling, ...fields })
+  const money = sdk.formatLuxAsDusk
+  const expiry = (heightValue: bigint) => walletExpiry(heightValue, height)
+  const years = (count: number) => `${count} ${count === 1 ? 'year' : 'years'}`
   if (op === 'commit') {
     if (!request.contractId) throw new Error('Original commitment store is required')
-    return sdk.storeCommitCall(request.contractId, {
+    return describe(sdk.storeCommitCall(request.contractId, {
       hash: bytes((request.args as T.CoreCommitRuntimeArgs).commitment),
-    })
+    }), `Reserve ${spelling} for registration`, { Price: '0 DUSK', 'Next step': 'Register and pay the registration price in a separate transaction' })
   }
   if (op === 'complete_registration') {
     const a = request.args as T.CoreCompleteRegistrationRuntimeArgs
@@ -48,7 +73,7 @@ export async function prepareFrozenCall(
       )
         throw changed()
     }
-    return sdk.registrationCalls(priced.store, {
+    const call = sdk.registrationCalls(priced.store, {
       actor,
       label: a.label,
       years: a.durationYears,
@@ -60,13 +85,22 @@ export async function prepareFrozenCall(
       records: a.records.map((r) => sdk.createRecordInput(r.key, r.value, BigInt(r.ttlSeconds))),
       primary: a.primaryEndpoint ? endpointBytes(a.primaryEndpoint.endpointValue) : null,
     }).reveal
+    return describe(call, `Register ${spelling} for ${years(a.durationYears)}: ${money(call.deposit)}`, {
+      Duration: years(a.durationYears), Price: money(call.deposit),
+      Records: a.records.map(record => record.key).join(', ') || 'None',
+      'Primary name': a.primaryEndpoint ? spelling : 'Unchanged',
+    })
   }
   if (request.contract === 'vault') {
     if (op === 'claim_all_referral_rewards' || op === 'claim_referral_reward') {
       const a = request.args as T.TreasuryClaimReferralRewardRuntimeArgs
-      return sdk.vaultClaimReferralCall(client.vaultId, {
+      const all = op === 'claim_all_referral_rewards'
+      const amount = all ? (await client.vault.read_referral({ beneficiary: { kind: 'Moonlight', bytes: sender } }))?.claimable_lux ?? '0' : String(a.amountLux)
+      return withWalletDetails(sdk.vaultClaimReferralCall(client.vaultId, {
         amount: op === 'claim_all_referral_rewards' ? 'All' : { Exact: String(a.amountLux) },
         recipient: endpointBytes(a.recipient),
+      }), all ? `Claim all Dusk Domains referral rewards: currently ${money(amount)}` : `Claim ${money(amount)} in Dusk Domains referral rewards`, {
+        Rewards: money(amount), Recipient: a.recipient, ...(all ? { Amount: 'All available rewards at execution' } : {}),
       })
     }
     if (op === 'claim_all' || op === 'claim') {
@@ -76,12 +110,17 @@ export async function prepareFrozenCall(
         sdk.hex(config.operator.recipient) !== sdk.hex(endpointBytes(request.expectedRecipient))
       )
         throw changed()
-      return sdk.vaultClaimProtocolCall(client.vaultId, {
+      const all = op === 'claim_all'
+      const amount = all ? (await client.vault.read_state()).protocol_lux : String((request.args as T.TreasuryClaimRuntimeArgs).amountLux)
+      return withWalletDetails(sdk.vaultClaimProtocolCall(client.vaultId, {
         amount:
           op === 'claim_all'
             ? 'All'
             : { Exact: String((request.args as T.TreasuryClaimRuntimeArgs).amountLux) },
         expected_operator_epoch: config.operator_epoch,
+      }), all ? `Withdraw all treasury funds: currently ${money(amount)}` : `Withdraw ${money(amount)} from the Dusk Domains treasury`, {
+        Withdrawal: money(amount), Recipient: sdk.encodeBase58(Uint8Array.from(config.operator.recipient)),
+        ...(all ? { Amount: 'All available treasury funds at execution' } : {}),
       })
     }
     throw new Error('Operator changes require a directory governance proposal.')
@@ -96,7 +135,8 @@ export async function prepareFrozenCall(
       const store = sdk.contractId(s.id),
         p = await client.store(store).read_primary({ endpoint })
       if (p)
-        return sdk.storeClearPrimaryCall(store, { endpoint, expected_mapping_id: p.primary.mapping_id })
+        return withWalletDetails(sdk.storeClearPrimaryCall(store, { endpoint, expected_mapping_id: p.primary.mapping_id }),
+          `Clear ${p.spelling} as your primary name`, { Name: p.spelling, 'Dusk address': a.endpointValue })
     }
     throw new Error('Primary name is already cleared.')
   }
@@ -105,9 +145,13 @@ export async function prepareFrozenCall(
     const target = request.contractId ?? config.preferred_marketplace
     if (!target) throw new Error('Marketplace unavailable')
     await client.verifyContract('marketplace', sdk.contractId(target))
-    return sdk.marketplaceClaimRefundCall(sdk.contractId(target), {
+    const refund = await client.marketplace(sdk.contractId(target)).read_refund({ authority: actor })
+    return withWalletDetails(sdk.marketplaceClaimRefundCall(sdk.contractId(target), {
       amount: 'All',
       recipient: sender,
+    }), `Withdraw ${money(refund.amount_lux)} in marketplace refunds for all names`, {
+      Names: 'All names in this marketplace', Refund: money(refund.amount_lux), Recipient: account,
+      Amount: 'All available refunds at execution; the balance may change before approval',
     })
   }
   const node = (request.args as { node?: string }).node
@@ -166,37 +210,64 @@ export async function prepareFrozenCall(
         throw new Error(
           'This offer pays a different seller address. Review that address before accepting.',
         )
-      return calls.acceptOffer(current, n.view.counters!.next_custody, deadline)
+      return describe(calls.acceptOffer(current, n.view.counters!.next_custody, deadline),
+        `Accept the offer for ${spelling}: ${money(current.terms.amount_lux)}`, {
+          ...walletSaleAmounts(current.terms.amount_lux, current.terms.fee_bps),
+          Ownership: 'Transfers to the buyer', Records: 'Clear records and primary name',
+        })
     }
     if (op === 'buy_fixed_sale') {
       const a = request.args as T.MarketplaceBuyFixedSaleRuntimeArgs
-      return calls.buy(current, bytes(a.buyerManager || '0x' + sdk.hex(actor)), deadline)
+      return describe(calls.buy(current, bytes(a.buyerManager || '0x' + sdk.hex(actor)), deadline),
+        `Buy ${spelling} for ${money(current.terms.amount_lux)}`, {
+          ...walletSaleAmounts(current.terms.amount_lux, current.terms.fee_bps),
+          Refund: 'No refund after a successful purchase',
+        })
     }
     if (op === 'place_bid') {
       const a = request.args as T.MarketplacePlaceBidRuntimeArgs
-      return calls.bid(
+      return describe(calls.bid(
         current,
         String(a.amountLux),
         bytes(a.bidderManager || '0x' + sdk.hex(actor)),
         deadline,
-      )
+      ), `Bid ${money(String(a.amountLux))} on ${spelling}`, {
+        'Held in escrow (refundable)': money(String(a.amountLux)),
+        Refund: 'If outbid (including raising your own bid), withdraw the previous bid separately. If the auction expires without settlement, close it then withdraw. Winning bids pay for the name; bids cannot be canceled.',
+        ...(current.highest ? { 'Previous bid': money(current.highest.amount_lux) } : {}),
+        ...(current.end !== null ? { 'Auction end (estimated)': expiry(current.end) } : { Duration: `${Number(current.terms.duration_blocks) / 8640} days after the first bid (estimated)` }),
+      })
     }
-    if (current.status === 'ReturnPending') return calls.retryReturn(current)
-    if (op.startsWith('cancel_')) return calls.cancel(current)
-    if (op.startsWith('expire_')) return calls.expire(current)
+    if (current.status === 'ReturnPending') return describe(calls.retryReturn(current),
+      `Return ${spelling} from marketplace escrow`, { Refund: 'No additional refund; withdraw any available balance separately' })
+    if (op.startsWith('cancel_') || op.startsWith('expire_')) {
+      const kind = current.terms.kind === 'Fixed' ? 'listing' : current.terms.kind === 'Auction' ? 'auction' : 'offer'
+      const refund = current.terms.kind === 'Offer' ? current.terms.amount_lux : current.highest?.amount_lux ?? '0'
+      const cancel = op.startsWith('cancel_')
+      return describe(cancel ? calls.cancel(current) : calls.expire(current),
+        `${cancel ? 'Cancel the' : 'Close the expired'} ${kind} for ${spelling}${BigInt(refund) > 0n ? `: refund ${money(refund)}` : ''}`, {
+          [current.terms.kind === 'Auction' ? 'Minimum bid' : 'Price']: money(current.terms.amount_lux),
+          Refund: money(refund),
+          ...(BigInt(refund) > 0n ? { 'Refund availability': `The ${kind === 'offer' ? 'offer maker' : 'bidder'} withdraws separately after this transaction` } : {}),
+          ...(kind !== 'offer' ? { Ownership: 'Return the name separately if return is pending' } : {}),
+        })
+    }
     if (op === 'settle_auction') {
       if (current.end !== null && height >= current.end + BigInt(SETTLEMENT_WINDOW_BLOCKS))
         throw new Error(
           'The settlement window closed. Close the auction to unlock the refund and return the name.',
         )
-      return calls.settle(current)
+      return describe(calls.settle(current), `Settle the auction for ${spelling}`, {
+        ...walletSaleAmounts(current.highest?.amount_lux ?? current.terms.amount_lux, current.terms.fee_bps, !current.highest),
+        Payment: 'Uses the winning bid already held in escrow', Refund: 'No refund of the winning bid after successful settlement',
+      })
     }
   }
   // Creating a child targets the parent's home and incarnation.
   if (op === 'create_subname') {
     const a = request.args as T.CoreCreateSubnameRuntimeArgs,
       n = await requireName(client, a.parentName)
-    return sdk.storeCreateSubnameCall(n.store, {
+    return describe(sdk.storeCreateSubnameCall(n.store, {
       parent: n.ref,
       node: bytes(a.node),
       label: a.label,
@@ -204,6 +275,10 @@ export async function prepareFrozenCall(
       manager: bytes(a.manager),
       expires_at: BigInt(a.expiresAt),
       expiry_policy: a.expiryPolicy === 'inherits_parent' ? 'InheritsParent' : 'FixedBeforeParent',
+    }), `Create ${a.name}`, {
+      Name: a.name, Subdomain: a.name, Parent: a.parentName,
+      'Expiry (estimated)': expiry(BigInt(a.expiresAt)),
+      'Expiry policy': a.expiryPolicy === 'inherits_parent' ? 'Expires with its parent' : 'Fixed date', Records: 'None; add records separately',
     })
   }
   const n = await requireName(client, spelling)
@@ -220,77 +295,79 @@ export async function prepareFrozenCall(
           request.expectedScheduleVersion !== v.schedule_version)
       )
         throw changed()
-      return sdk.storeRenewCall(q.store, {
+      return describe(sdk.storeRenewCall(q.store, {
         name: n.ref,
         years: a.durationYears,
         expected_schedule_version: v.schedule_version,
         expected_fee_lux: v.total_lux,
         valid_until: deadline,
+      }), `Renew ${spelling} for ${years(a.durationYears)}: ${money(v.total_lux)}`, {
+        Duration: years(a.durationYears), Price: money(v.total_lux), 'New expiry (estimated)': expiry(v.new_expiry),
       })
     }
     case 'update_authorities': {
       const a = request.args as T.CoreUpdateAuthoritiesRuntimeArgs
-      if (request.reviewedRecipient) {
-        const reviewed = request.reviewedRecipient
-        const recipientName = sdk.normalizeNameInput(reviewed.name)
-        const destination = await requireName(client, recipientName)
-        const resolved = await client.locate<sdk.RecordValue | null>(
-          destination.store,
-          sdk.nameKey(recipientName).root,
-          'resolve_record',
-          { key: sdk.nameKey(recipientName), record_key: 'moonlight_address' },
-        )
-        const record = local(resolved.value)
-        const endpoint = endpointBytes(reviewed.address)
-        const authority = sdk.hex(sdk.authority({ kind: 'Moonlight', bytes: endpoint }))
-        if (
-          !record ||
-          !sdk.isMoonlightEndpoint(record.value) ||
-          sdk.hex(record.value) !== sdk.hex(endpoint) ||
-          sdk.hex(bytes(a.manager)) !== authority ||
-          (reviewed.kind === 'transfer' && sdk.hex(bytes(a.owner)) !== authority)
-        )
-          throw new Error('The recipient changed on chain. Check the address again before confirming.')
-      }
-      return sdk.transferCall(n.store, {
+      const reviewed = request.reviewedRecipient
+      if (reviewed?.kind === 'transfer' && sdk.hex(bytes(a.owner)) !== sdk.hex(bytes(a.manager)))
+        throw new Error('The recipient changed on chain. Check the address again before confirming.')
+      const recipients = request.reviewedAuthorities
+      const destinations: WalletCallDetails = recipients || request.authorityAction
+        ? { 'New owner': await walletRecipient(client, a.owner, recipients?.owner),
+          'New manager': await walletRecipient(client, a.manager, recipients?.manager) }
+        : { Recipient: await walletRecipient(client, a.manager, reviewed) }
+      const summary = request.authorityAction === 'take_back' ? `Take back ${spelling}`
+        : request.authorityAction === 'reassign' ? `Reassign ${spelling}`
+        : sdk.hex(bytes(a.owner)) === sdk.hex(n.view.name.owner) ? `Change the manager of ${spelling}`
+        : `Transfer ${spelling} to a new owner`
+      return describe(sdk.transferCall(n.store, {
         name: n.ref,
         owner: bytes(a.owner),
         manager: bytes(a.manager),
         clear_records: a.clearRecords ?? false,
+      }), summary, {
+        Records: a.clearRecords ? 'Clear records and primary name' : 'Keep existing records',
+        ...destinations,
       })
     }
     case 'mutate_records_sender': {
       const a = request.args as T.CoreMutateRecordsSenderRuntimeArgs
-      return sdk.storeMutateRecordsCall(n.store, {
+      return describe(sdk.storeMutateRecordsCall(n.store, {
         name: n.ref,
         mutations: prepareRecordMutations(a.mutations),
+      }), `Update records for ${spelling}`, {
+        Records: a.mutations.map(mutation => `${mutation.action === 'set' ? 'Set' : 'Clear'} ${mutation.key}`).join('; '),
       })
     }
     case 'set_primary_name':
-      return sdk.storeSetPrimaryCall(n.store, {
+      return describe(sdk.storeSetPrimaryCall(n.store, {
         name: n.ref,
         endpoint: endpointBytes((request.args as T.CoreSetPrimaryNameRuntimeArgs).endpointValue),
-      })
+      }), `Set ${spelling} as your primary name`, { 'Dusk address': (request.args as T.CoreSetPrimaryNameRuntimeArgs).endpointValue })
     case 'remove_subname':
-      return sdk.storeRemoveSubnameCall(n.store, { name: n.ref })
+      return describe(sdk.storeRemoveSubnameCall(n.store, { name: n.ref }), `Remove ${spelling} and all its descendants`, {
+        Records: 'Clear records and primary names of this name and every subname beneath it',
+        ...(request.knownDescendants?.length ? { 'Known descendants': request.knownDescendants.join(', ') } : {}),
+      })
     case 'take_back_subnames': {
       const a = request.args as T.CoreTakeBackSubnamesRuntimeArgs,
         indexer = createDuskDomainsIndexerClient({ baseUrl: client.release.manifest.indexerUrl })
+      const subnames: string[] = []
       const targets = await Promise.all(
         a.nodes.map(async (node) => {
           const v = await indexer.getNameState(node)
           if (!v?.canonicalName || namehashHex(v.canonicalName) !== node.toLowerCase()) throw changed()
           const t = await requireName(client, v.canonicalName)
           if (t.store !== n.store) throw changed()
+          subnames.push(v.canonicalName)
           return t.ref
         }),
       )
-      return sdk.storeTakeBackSubnamesCall(n.store, {
+      return describe(sdk.storeTakeBackSubnamesCall(n.store, {
         ancestor: n.ref,
         targets,
         owner: bytes(a.owner),
         manager: bytes(a.manager),
-      })
+      }), `Take back subnames of ${spelling}`, { Subdomains: subnames.sort().join(', '), Records: 'Clear records and primary names of these subnames' })
     }
   }
   if (!config.preferred_marketplace) throw new Error('Marketplace unavailable')
@@ -346,9 +423,20 @@ export async function prepareFrozenCall(
       duration_blocks: kind === 'Auction' ? BigInt(a.durationBlocks) : 0n,
       referral: null,
     }
-    if (kind === 'Offer') return calls.offer(terms, deadline)
+    if (kind === 'Offer') return describe(calls.offer(terms, deadline), `Offer ${money(terms.amount_lux)} for ${spelling}`, {
+      'Held in escrow (refundable)': money(terms.amount_lux), 'Expiry (estimated)': expiry(terms.deadline),
+      Refund: 'Cancel before acceptance, or close after expiry, then withdraw separately. No refund after acceptance.',
+    })
     const intent = { terms, nonce: n.view.counters!.next_custody, valid_until: deadline }
-    return kind === 'Fixed' ? calls.listFixed(intent) : calls.auction(intent)
+    return describe(kind === 'Fixed' ? calls.listFixed(intent) : calls.auction(intent),
+      kind === 'Fixed' ? `List ${spelling} for ${money(terms.amount_lux)}` : `Auction ${spelling} with a minimum bid of ${money(terms.amount_lux)}`, {
+        ...walletSaleAmounts(terms.amount_lux, terms.fee_bps, kind === 'Auction'),
+        'Fee payment': 'Deducted from the sale price only if sold',
+        ...(kind === 'Fixed' ? { 'Expiry (estimated)': expiry(terms.deadline) } : {
+          'Start by (estimated)': expiry(terms.deadline), Duration: `${Number(terms.duration_blocks) / 8640} days after the first bid (estimated; late bids can extend it)`,
+        }),
+        Ownership: 'Held in marketplace escrow until sold or returned',
+      })
   }
   throw new Error(`Unsupported application action: ${op}`)
 }

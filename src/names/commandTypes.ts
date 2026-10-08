@@ -17,9 +17,16 @@ export type DuskDomainContractMap = Record<DuskDomainRequiredContractKey, DuskDo
 
 export type DuskDomainCallKind = 'read' | 'write'
 
+export type ReviewedAuthorityRecipient = { name?: string; address: string }
+
 export type DuskDomainCallMetadata<TArgs = unknown> = {
-  /** Address and name captured in the recipient review; re-resolved on chain before signing. */
-  reviewedRecipient?: { name: string; address: string; kind: 'transfer' | 'manager' }
+  /** Presentation only; reassignment and take-back use the same contract call. */
+  authorityAction?: 'reassign' | 'take_back'
+  /** Addresses are checked against the signed authorities; names are also re-resolved on chain. */
+  reviewedRecipient?: ReviewedAuthorityRecipient & { kind: 'transfer' | 'manager' }
+  reviewedAuthorities?: { owner: ReviewedAuthorityRecipient; manager: ReviewedAuthorityRecipient }
+  /** Display only; removal always includes every descendant, even if not listed here. */
+  knownDescendants?: string[]
   reviewedOrder?: import('@duskdomains/sdk').Order
   quote?: import('@duskdomains/sdk').RegistrationQuote
   nameRef?: import('@duskdomains/sdk').NameRef
@@ -70,6 +77,7 @@ export type DuskConnectAppLike = {
     decodedContext?: DuskDomainDecodedContext
   }) => Promise<unknown>
   writeContract: (params: {
+    display?: import('./walletCallDetails').WalletCallDetails
     contract: DuskDomainContractPreset
     functionName: string
     args?: unknown
