@@ -254,3 +254,17 @@ it.each(['profiles', 'encoding'])('rejects a return to the same account during i
   expect(await outcome).toContain('wallet session changed')
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
 })
+
+
+it.each(balanceCases)('replaces only site details for $label at the provider boundary', async ({ call, intent }) => {
+  const { provider, names } = await fixture()
+  const request = { contract: call.role, functionName: intent, kind: 'write' as const, args: {} }
+  const submit = (display?: Record<string, string>) => submitDuskDomainWrite({ ...names, prepareIntent: async () => ({ ...call, display }) }, request, { name: 'example.dusk', contracts })
+  await submit()
+  const original = provider.request.mock.calls.find(([args]) => args.method === 'dusk_sendTransaction')![0]
+  provider.request.mockClear()
+  const display = { Summary: 'Update example.dusk', Name: 'example.dusk', Price: '10 DUSK' }
+  await submit(display)
+  const sent = provider.request.mock.calls.find(([args]) => args.method === 'dusk_sendTransaction')![0]
+  expect(sent).toEqual({ ...original, params: { ...(original as { params: object }).params, display } })
+})

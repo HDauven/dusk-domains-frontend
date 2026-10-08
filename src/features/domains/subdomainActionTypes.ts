@@ -22,6 +22,7 @@ export type AppendSubdomainActivity = (input: {
 }) => void
 
 export type UseSubdomainActionsProps = {
+  indexerClient?: import('../../names/internal').DuskDomainsIndexerClient | null
   managedName?: import('../../app/managedNameState').ManagedNameState
   subnames?: SubnameState[]
   appendActivity: AppendSubdomainActivity

@@ -1,6 +1,7 @@
 import { DuskWallet, type DuskProvider } from '@dusk/connect'
 import type { DuskWalletLike } from './walletSessionTypes'
 import { walletConnectionStatus } from './walletStatus'
+import type { WalletCallDetails } from '../../names/walletCallDetails'
 
 export class WalletSessionChangedError extends Error {
   constructor() {
@@ -8,7 +9,7 @@ export class WalletSessionChangedError extends Error {
   }
 }
 
-export function createSessionWriteWallet(wallet: DuskWallet, session: Pick<DuskWalletLike, 'state'>, chainId: string, nodeUrl: string) {
+export function createSessionWriteWallet(wallet: DuskWallet, session: Pick<DuskWalletLike, 'state'>, chainId: string, nodeUrl: string, display?: WalletCallDetails) {
   const provider = wallet.provider
   const profile = session.state.selectedProfile
   const generation = session.state.generation
@@ -28,7 +29,11 @@ export function createSessionWriteWallet(wallet: DuskWallet, session: Pick<DuskW
       const target = provider!
       if (key === 'request') {
         const request: DuskProvider['request'] = args => {
-          if (args.method === 'dusk_sendTransaction') checkSession()
+          if (args.method === 'dusk_sendTransaction') {
+            checkSession()
+            // Site details are unverified presentation; preserve every SDK-built signing field.
+            if (display) return target.request({ ...args, params: { ...args.params as object, display } })
+          }
           return target.request(args)
         }
         return request

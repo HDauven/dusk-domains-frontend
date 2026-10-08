@@ -1,5 +1,6 @@
 import { canManageActiveName, canControlThroughAncestor } from '../../app/derived/managementCapabilities'
 import { contractPrincipalInput } from '../../app/principalInput'
+import { resolveRecipient } from '../identity/resolveRecipient'
 import { storeReassignSubnameRequest, storeRemoveSubnameRequest, userFacingErrorMessage, type SubnameState } from '../../names/internal'
 import type { UseSubdomainActionsProps } from './subdomainActionTypes'
 
@@ -30,13 +31,27 @@ export async function writeSubnameAuthority(props: UseSubdomainActionsProps, sub
   if (!await props.ensurePublicBalanceForLiveWrite('managing this subname', message => { if (workspace()) props.setSubnameError(message) })) return
   if (!workspace()) return
   try {
+    const resolve = async (input: string) => {
+      const value = input.trim()
+      if (/\.dusk$/i.test(value)) {
+        const recipient = await resolveRecipient(value, props.indexerClient ?? null)
+        return { authority: recipient.authority, reviewed: { name: recipient.input, address: recipient.address } }
+      }
+      return { authority: contractPrincipalInput(value, 'Recipient'), reviewed: { address: value } }
+    }
+    const recipients = authorities && authorities !== 'take_back'
+      ? { owner: await resolve(authorities.owner), manager: await resolve(authorities.manager) } : null
+    if (!workspace()) return
     const reassignment = authorities ? { node: subname.node,
       clearRecords: true,
-      owner: authorities === 'take_back' ? props.selectedAuthority : contractPrincipalInput(authorities.owner, 'Owner'),
-      manager: authorities === 'take_back' ? props.selectedAuthority : contractPrincipalInput(authorities.manager, 'Manager'),
+      owner: recipients ? recipients.owner.authority : props.selectedAuthority,
+      manager: recipients ? recipients.manager.authority : props.selectedAuthority,
     } : null
     const call = reassignment ? storeReassignSubnameRequest(reassignment)
       : storeRemoveSubnameRequest({ node: subname.node })
+    if (reassignment) call.authorityAction = authorities === 'take_back' ? 'take_back' : 'reassign'
+    if (recipients) call.reviewedAuthorities = { owner: recipients.owner.reviewed, manager: recipients.manager.reviewed }
+    if (!reassignment) call.knownDescendants = props.subnames?.filter(name => name.name.endsWith(`.${subname.name}`)).map(name => name.name)
     const result = await props.submitNameWrite(subname.name, call, {
       workspace, contracts: props.runtimeConfig.contracts, onUpdate: props.setSubnameTxState,
     })

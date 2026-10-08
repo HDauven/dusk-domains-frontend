@@ -91,6 +91,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
     }),
     ...useSubdomainActions({
       ...writes,
+      indexerClient: appRuntime.indexerClient,
       managedName: domainState.managedName,
       subnames: domainState.subnames,
       canCreateSubname: derivedState.canCreateSubname,

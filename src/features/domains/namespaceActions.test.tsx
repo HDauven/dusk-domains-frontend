@@ -4,6 +4,7 @@ import { canControlSubname, writeSubnameAuthority } from './namespaceActions'
 import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubnameState } from '../../names/internal'
 import type { UseSubdomainActionsProps } from './subdomainActionTypes'
+import { account } from '../../test/frozenFixtures'
 
 const leaf: SubnameState = { node: 'leaf', parentNode: 'child', parentName: 'docs.alice.dusk', label: 'api', name: 'api.docs.alice.dusk', owner: 'holder', manager: 'holder', expiresAt: 200, parentExpiresAt: 200, expiryPolicy: 'inherits_parent', createdAt: 0, status: 'active', resolver: '' }
 const child = { ...leaf, node: 'child', parentNode: 'root', owner: 'parent-owner', manager: 'parent-manager' }
@@ -40,6 +41,37 @@ it('submits removal through the name writer and confirms disappearance', async (
 
 it('does not authorize names outside the displayed namespace', () => {
   expect(canControlSubname(base, { ...leaf, parentNode: 'unrelated' })).toBe(false)
+})
+
+it('passes all known descendants of a removed subname to the wallet details', async () => {
+  const subname = { ...child, name: 'docs.alice.dusk' }
+  const deep = { ...leaf, node: 'deep', parentNode: leaf.node, name: 'v1.api.docs.alice.dusk' }
+  const unrelated = { ...leaf, node: 'unrelated', parentNode: 'root', name: 'api.other.alice.dusk' }
+  const submitNameWrite = Object.assign(vi.fn(async () => ({status:'executed'})), { captureWorkspace: () => () => true })
+  const props = { ...base, subnames: [subname, leaf, deep, unrelated], displayName:'alice.dusk', submitNameWrite,
+    shouldApplyPreviewWriteFallback:async()=>false,setSubnameError:vi.fn(),setSubnameTxState:vi.fn(),
+    ensureContractAuthorityForLiveWrite:()=>true,ensurePublicBalanceForLiveWrite:async()=>true,runtimeConfig:{contracts:{}} } as unknown as UseSubdomainActionsProps
+  await writeSubnameAuthority(props, subname)
+  expect(submitNameWrite).toHaveBeenCalledWith(subname.name, expect.objectContaining({
+    functionName:'remove_subname', args:{node:'child'}, knownDescendants:[leaf.name, deep.name],
+  }), expect.anything())
+})
+
+it.each(['address', 'name', 'contract'] as const)('preserves %s destinations for both subname roles', async input => {
+  const owner = input === 'name' ? 'recipient.dusk' : input === 'contract' ? `contract:0x${'11'.repeat(32)}` : account
+  const manager = `contract:0x${'22'.repeat(32)}`
+  const submitNameWrite = Object.assign(vi.fn(async () => ({status:'executed'})), { captureWorkspace: () => () => true })
+  const props = { ...base, displayName:'alice.dusk', submitNameWrite,
+    indexerClient: { getHealth:async()=>({ok:true}), resolveForward:async()=>({canonicalName:'recipient.dusk',verificationStatus:'forward_resolved',errors:[],
+      expiry:{status:'active',expiresAt:'2099-01-01T00:00:00Z'},resolver:{health:'ok'},cache:{staleAt:'2099-01-01T00:00:00Z'},records:[{key:'moonlight_address',value:account}]}) },
+    shouldApplyPreviewWriteFallback:async()=>false,setSubnameError:vi.fn(),setSubnameTxState:vi.fn(),
+    ensureContractAuthorityForLiveWrite:()=>true,ensurePublicBalanceForLiveWrite:async()=>true,runtimeConfig:{contracts:{}} } as unknown as UseSubdomainActionsProps
+  await writeSubnameAuthority(props, leaf, { owner, manager })
+  expect(submitNameWrite).toHaveBeenCalledWith(leaf.name, expect.objectContaining({
+    functionName:'update_authorities', authorityAction:'reassign', reviewedAuthorities: {
+      owner: input === 'name' ? {name:owner,address:account} : {address:owner}, manager:{address:manager},
+    },
+  }), expect.anything())
 })
 
 it('submits reassignments with the chosen owner and manager and checks projected authorities', async () => {
@@ -92,6 +124,6 @@ it.each(['reassign', 'take_back'] as const)('resets identity on %s when the call
   await writeSubnameAuthority(props, subname, action === 'take_back' ? action : {owner:`contract:${bob}`,manager:`contract:${bob}`})
   const recipient = action === 'take_back' ? alice : bob
   expect(submitNameWrite).toHaveBeenCalledWith(leaf.name, expect.objectContaining({
-    functionName: 'update_authorities', args: {node:subname.node,owner:recipient,manager:recipient,clearRecords:true},
+    functionName: 'update_authorities', authorityAction: action, args: {node:subname.node,owner:recipient,manager:recipient,clearRecords:true},
   }), expect.anything())
 })

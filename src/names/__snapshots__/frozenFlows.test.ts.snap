@@ -1,0 +1,67 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`round-trips the wallet signing bytes for accept through the real handoff drivers 1`] = `"09bd71a34f91015c11863ffce2a67bf8f11ebef084ee162bc9a278a459ad4599"`;
+
+exports[`round-trips the wallet signing bytes for auction through the real handoff drivers 1`] = `"fb9e444790645649ca9e192b540fcf451775864d10494ab1ab39c67466bcd063"`;
+
+exports[`round-trips the wallet signing bytes for bid through the real handoff drivers 1`] = `"84720c14a779d7afb035c9210edbf7082245d7fdee758cceb0fac78436b50806"`;
+
+exports[`round-trips the wallet signing bytes for buy through the real handoff drivers 1`] = `"b547fa18400756f16ba6cc064350f2def1eeb02dfe2e3b4792e71eb4de73c44c"`;
+
+exports[`round-trips the wallet signing bytes for cancel_auction through the real handoff drivers 1`] = `"fe3eebe0d64e48c6eee276cca99b747d8ae328242c96355a49bf12ea9d8c5034"`;
+
+exports[`round-trips the wallet signing bytes for cancel_fixed through the real handoff drivers 1`] = `"c2573c0a50813f470ab10d71ffc31de031a3638c0198dad69cd1a7a87e569ea3"`;
+
+exports[`round-trips the wallet signing bytes for cancel_offer through the real handoff drivers 1`] = `"0ce1e90fe1e10757462a5442618918bed90982929b75a268bdb13bbd781987d5"`;
+
+exports[`round-trips the wallet signing bytes for clear_primary through the real handoff drivers 1`] = `"9d4f8d2937dc81b387d3abdfe681203b4db2053a978e67b39d1cc8bfae75446c"`;
+
+exports[`round-trips the wallet signing bytes for clear_record through the real handoff drivers 1`] = `"735c49aba0ba60c92b334a50d0e167fee408f113ff64c8cef872e6598c57fb3a"`;
+
+exports[`round-trips the wallet signing bytes for commit through the real handoff drivers 1`] = `"591e0b25e414ceb2f0fca40e2eb82b3908191724561a5f6840997aff6f2d373c"`;
+
+exports[`round-trips the wallet signing bytes for create_subname through the real handoff drivers 1`] = `"e002d4077ba941e5ce599dd83b368119dd29dfcdf90dd25f41dc6068afb29c22"`;
+
+exports[`round-trips the wallet signing bytes for expire_auction through the real handoff drivers 1`] = `"cf9200919bd7f2373b3cc2238e649e96d3374a32620422724f1c898a780e389b"`;
+
+exports[`round-trips the wallet signing bytes for expire_fixed through the real handoff drivers 1`] = `"e1c9f0a9226ffdfa715b134fa62130980d519f023af74f3aaa69f92a0fe73587"`;
+
+exports[`round-trips the wallet signing bytes for expire_offer through the real handoff drivers 1`] = `"16b93ec4fdddce442f1254a9ec708cf5890e01bbdc15b68c94ee823be5335a99"`;
+
+exports[`round-trips the wallet signing bytes for fixed through the real handoff drivers 1`] = `"8436443e2b2e8724159989789f56f4fb9709f86b8838dacc92a3d714ad009865"`;
+
+exports[`round-trips the wallet signing bytes for manager through the real handoff drivers 1`] = `"a0afae3e236a95936da41037d29adb10dbdab6d1d2eb812ed0ed31368566513a"`;
+
+exports[`round-trips the wallet signing bytes for offer through the real handoff drivers 1`] = `"2b91e1eff042f43900bdcb20ea3203f5c190b4c050d9740c9161dafe6736aedc"`;
+
+exports[`round-trips the wallet signing bytes for protocol_all through the real handoff drivers 1`] = `"81bf226593ad1f7424e5ab1a6f1c3f44e86e67c2d2914ec2f850c31ac097c8e3"`;
+
+exports[`round-trips the wallet signing bytes for protocol_exact through the real handoff drivers 1`] = `"b551c41fdc001a836cdcb16ac0a9459dbee200920e7ebbb581ec76954f47d508"`;
+
+exports[`round-trips the wallet signing bytes for reassign through the real handoff drivers 1`] = `"e40cafa05d8317324fe4b7b87cb9787a474a38dfde1f4a33e1125b848f275489"`;
+
+exports[`round-trips the wallet signing bytes for records through the real handoff drivers 1`] = `"2f59b680ebad038b2f86729a67e05f958939e13fea004d3eeedea145289aabc9"`;
+
+exports[`round-trips the wallet signing bytes for referral_all through the real handoff drivers 1`] = `"c4adaceed3e565b64612db0114e8200265af221c791aa26bce09854ddce79cca"`;
+
+exports[`round-trips the wallet signing bytes for referral_exact through the real handoff drivers 1`] = `"b6c0e928becaecc511914044b90eb175a63a697c4f1f9debe8feb4f870e1a063"`;
+
+exports[`round-trips the wallet signing bytes for refund through the real handoff drivers 1`] = `"e48aec77f4b71aa168c8034f36f11d06e61ceb1f2cd751436b1b3f26a4a9e8cb"`;
+
+exports[`round-trips the wallet signing bytes for register through the real handoff drivers 1`] = `"5bdb22fd306dd1824e3d8027c818509c077c104af5e3159e191655dfaa59c191"`;
+
+exports[`round-trips the wallet signing bytes for remove_subname through the real handoff drivers 1`] = `"6617204d6ccd785489f7dbbad5575bdb8ed56a08984cb155db90d00a7a4a062d"`;
+
+exports[`round-trips the wallet signing bytes for renew through the real handoff drivers 1`] = `"19ae707b2babe6d0f98628a9ca79641f73d2a370b43691e833e0efc08804bff9"`;
+
+exports[`round-trips the wallet signing bytes for return through the real handoff drivers 1`] = `"8405fef48606a0f222ace1cc1594ffd36dd5e0bd38bbeb7e017edb428bf82f68"`;
+
+exports[`round-trips the wallet signing bytes for set_primary through the real handoff drivers 1`] = `"f8aaed7d9a5af6a1e5fbf99ec8b4f4b2cc1a9a632bc3f459c543852c1c6549c6"`;
+
+exports[`round-trips the wallet signing bytes for settle through the real handoff drivers 1`] = `"193a0e4205581209fe1fae348c886eb60809be0f138c8478ec5e5cdae1fcd0f4"`;
+
+exports[`round-trips the wallet signing bytes for take_back through the real handoff drivers 1`] = `"e40cafa05d8317324fe4b7b87cb9787a474a38dfde1f4a33e1125b848f275489"`;
+
+exports[`round-trips the wallet signing bytes for take_back_subnames through the real handoff drivers 1`] = `"46a9639ebb5ae78c9c15b07ce390fd02b74ecbd1712f4bb2f58a489352d18dcf"`;
+
+exports[`round-trips the wallet signing bytes for transfer through the real handoff drivers 1`] = `"7bcb6da329a46d5d7cc04efc114423830c5128803f9862a8686f4aab28367414"`;

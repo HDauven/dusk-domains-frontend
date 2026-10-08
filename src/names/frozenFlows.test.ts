@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import * as sdk from '@duskdomains/sdk'
-import { handoffDrivers } from '../test/handoffFixtures'
+import { handoff, handoffDrivers } from '../test/handoffFixtures'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import { account, reservation } from '../test/frozenFixtures'
 import { prepareFrozenCall } from './prepareFrozenCall'
@@ -23,7 +24,7 @@ beforeEach(() =>
     }),
   ),
 )
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 const samples = sdk.parseJson(readFileSync('src/test/frozen-wire.json', 'utf8')) as Record<
   string,
   unknown
@@ -165,6 +166,9 @@ function fixture() {
       if (method === 'get_name') return encode({ Local: { ...name, name: { ...name.name, key: args } } })
       if (method === 'quote_registration') return encode(quote)
       if (method === 'quote_renewal') return encode({ Local: renewal })
+      if (method === 'read_refund') return encode({ authority: name.name.owner, amount_lux: '25000000000' })
+      if (method === 'read_state') return encode({ protocol_lux: '30000000000', liability_lux: '40000000000', accounted_lux: '70000000000', reserved_beneficiaries: 1, max_beneficiaries: 100, source_version: 1n })
+      if (method === 'read_referral') return encode({ beneficiary: { kind: 'Moonlight', bytes: endpointBytes(account) }, claimable_lux: '40000000000' })
       if (method === 'pending_commitment') return encode({ key: args, created_at: 100n })
       throw new Error(`Unexpected read ${target}.${method}`)
     },
@@ -672,6 +676,94 @@ it('adapts frozen bid events with the order identity and exact amount', () => {
   })
 })
 
+it.each(['transfer', 'manager', 'reassign'] as const)('shows both named and pasted destinations for %s without changing signing fields', async action => {
+  const h = fixture()
+  const spelling = action === 'reassign' ? 'pay.example.dusk' : 'example.dusk'
+  const addresses = [account, sdk.encodeBase58(Uint8Array.from(handoff.roles.payout))]
+  const details = []
+  for (const address of addresses) {
+    const endpoint = endpointBytes(address)
+    const authority = '0x' + sdk.hex(sdk.authority({ kind: 'Moonlight', bytes: endpoint }))
+    const request = {
+      ...intent.storeUpdateAuthoritiesRequest({ node: namehashHex(spelling),
+        owner: action === 'manager' ? '0x' + sdk.hex(h.name.name.owner) : authority,
+        manager: authority, clearRecords: action !== 'manager' }),
+      ...(action === 'reassign' ? { authorityAction: 'reassign' as const } : {}),
+    }
+    const original = await prepareFrozenCall(h.client, request, spelling, account)
+    for (const named of [false, true]) {
+      const recipient = { address, ...(named ? { name: 'recipient.dusk' } : {}) }
+      h.responses.set(`${id(7)}:resolve_record`, { Local: { key: 'moonlight_address', value: endpoint, ttl_seconds: 60n, updated_at: 100n } })
+      const call = await prepareFrozenCall(h.client, { ...request,
+        ...(action === 'reassign' ? { reviewedAuthorities: { owner: recipient, manager: recipient } }
+          : { reviewedRecipient: { ...recipient, kind: action } }),
+      }, spelling, account)
+      const destination = named ? `recipient.dusk (${address})` : address
+      expect(call.display).toMatchObject(action === 'reassign'
+        ? { 'New owner': destination, 'New manager': destination } : { Recipient: destination })
+      expect(call).toEqual({ ...original, display: call.display })
+      const app = createDuskDomainsConnectApp({ request: async () => 'dusk:0' }, h.release, { gasPrice: 1n })
+      expect(await app.prepare(call as sdk.FrozenCall)).toEqual(await app.prepare(original as sdk.FrozenCall))
+      if (!named) details.push(call.display)
+    }
+  }
+  expect(details[0]).not.toEqual(details[1])
+})
+
+it.each(['address', 'contract'] as const)('shows and verifies separate subname owner and manager destinations from %s input', async input => {
+  const h = fixture()
+  const owner = input === 'contract' ? `contract:0x${id(8)}` : account
+  const manager = input === 'contract' ? `contract:0x${id(9)}` : sdk.encodeBase58(Uint8Array.from(handoff.roles.payout))
+  const request = { ...intent.storeReassignSubnameRequest({ node: namehashHex('pay.example.dusk'),
+    owner: input === 'contract' ? '0x' + id(8) : '0x' + sdk.hex(h.name.name.owner),
+    manager: input === 'contract' ? '0x' + id(9) : '0x' + sdk.hex(sdk.authority({ kind: 'Moonlight', bytes: endpointBytes(manager) })), clearRecords: true }),
+    authorityAction: 'reassign' as const,
+    reviewedAuthorities: { owner: { address: owner }, manager: { address: manager } },
+  }
+  const call = await prepareFrozenCall(h.client, request, 'pay.example.dusk', account)
+  expect(call.display).toMatchObject({ 'New owner': owner, 'New manager': manager })
+  for (const role of ['owner', 'manager'] as const) {
+    await expect(prepareFrozenCall(h.client, { ...request, reviewedAuthorities: {
+      ...request.reviewedAuthorities, [role]: { address: role === 'owner' ? manager : owner },
+    } }, 'pay.example.dusk', account)).rejects.toThrow(/recipient/i)
+  }
+})
+
+it.each(['owner', 'manager'] as const)('rechecks the named subname %s destination before signing', async role => {
+  const h = fixture()
+  h.responses.set(`${id(7)}:resolve_record`, { Local: null })
+  await expect(prepareFrozenCall(h.client, {
+    ...intent.storeReassignSubnameRequest({ node: namehashHex('pay.example.dusk'),
+      owner: '0x' + sdk.hex(h.name.name.owner), manager: '0x' + sdk.hex(h.name.name.owner), clearRecords: true }),
+    authorityAction: 'reassign', reviewedAuthorities: {
+      owner: { address: account }, manager: { address: account }, [role]: { name: 'recipient.dusk', address: account },
+    },
+  }, 'pay.example.dusk', account)).rejects.toThrow(/recipient/i)
+})
+
+it.each(['transfer', 'manager'] as const)('rejects a pasted %s destination that differs from the signed authority', async kind => {
+  const h = fixture()
+  await expect(prepareFrozenCall(h.client, {
+    ...intent.storeUpdateAuthoritiesRequest({ node, owner: '0x' + id(9), manager: '0x' + id(9) }),
+    reviewedRecipient: { address: account, kind },
+  }, 'example.dusk', account)).rejects.toThrow(/recipient/i)
+})
+
+it.each([undefined, [], ['api.docs.example.dusk', 'v1.api.docs.example.dusk']])('discloses cascading subname removal with known descendants %j', async knownDescendants => {
+  const h = fixture()
+  const spelling = 'docs.example.dusk'
+  const request = intent.storeRemoveSubnameRequest({ node: namehashHex(spelling) })
+  const original = await prepareFrozenCall(h.client, request, spelling, account)
+  const call = await prepareFrozenCall(h.client, { ...request, knownDescendants }, spelling, account)
+  expect(call.display).toMatchObject({
+    Summary: 'Remove docs.example.dusk and all its descendants',
+    Records: 'Clear records and primary names of this name and every subname beneath it',
+  })
+  if (knownDescendants?.length) expect(call.display!['Known descendants']).toBe(knownDescendants.join(', '))
+  else expect(call.display).not.toHaveProperty('Known descendants')
+  expect(call).toEqual({ ...original, display: call.display })
+})
+
 it('refuses a named recipient whose on-chain address differs from the reviewed address', async () => {
   const h = fixture()
   h.responses.set(`${id(7)}:resolve_record`, { Local: null })
@@ -773,7 +865,11 @@ const writeCases = [
   'register',
   'renew',
   'transfer',
+  'manager',
+  'reassign',
+  'take_back',
   'records',
+  'clear_record',
   'set_primary',
   'clear_primary',
   'create_subname',
@@ -802,6 +898,7 @@ const writeCases = [
 it.each(writeCases)(
   'round-trips the wallet signing bytes for %s through the real handoff drivers',
   async (action) => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-08T12:00:00Z'))
     const h = fixture()
     const order = reviewedOrder(
       h,
@@ -872,6 +969,10 @@ it.each(writeCases)(
         manager: '0x' + id(9),
         clearRecords: true,
       }),
+      manager: intent.storeUpdateAuthoritiesRequest({ node, owner: '0x' + sdk.hex(h.name.name.owner), manager: '0x' + id(9) }),
+      reassign: { ...intent.storeReassignSubnameRequest({ node, owner: '0x' + id(9), manager: '0x' + id(9), clearRecords: true }), authorityAction: 'reassign' },
+      take_back: { ...intent.storeReassignSubnameRequest({ node, owner: '0x' + id(9), manager: '0x' + id(9), clearRecords: true }), authorityAction: 'take_back' },
+      clear_record: intent.storeMutateRecordsSenderRequest({ node, mutations: [{ action: 'clear', key: 'avatar' }] }),
       records: intent.storeMutateRecordsSenderRequest({
         node,
         mutations: [
@@ -942,10 +1043,12 @@ it.each(writeCases)(
       referral_all: intent.vaultClaimAllReferralRewardsRequest({ recipient: account }),
     }
     const request = requests[action]
+    const spelling = ['reassign', 'take_back', 'remove_subname'].includes(action) ? 'pay.example.dusk' : 'example.dusk'
+    if (spelling !== 'example.dusk') (request.args as { node: string }).node = namehashHex(spelling)
     const call = await prepareFrozenCall(
       h.client,
       { ...request, contractId: request.contractId ?? id(6), reviewedOrder: order },
-      'example.dusk',
+      spelling,
       account,
     )
     const wallet = {
@@ -957,6 +1060,8 @@ it.each(writeCases)(
     const prepared = await createDuskDomainsConnectApp(wallet, h.release, { gasPrice: 1n }).prepare(
       call as sdk.FrozenCall,
     )
+    const { chainId, contractId, fnName, fnArgs, deposit, gas } = prepared
+    expect(createHash('sha256').update(sdk.stringifyJson({ chainId, contractId, fnName, fnArgs, deposit, gas })).digest('hex')).toMatchSnapshot()
     const driver = realDrivers.get(call.role)!
     const archive = Uint8Array.from(sdk.fromHex(prepared.fnArgs))
     const decoded = sdk.wireValue(
@@ -981,6 +1086,49 @@ it.each(writeCases)(
       expect(custody.terms.seller_recipient).toEqual(endpointBytes(account))
       expect(custody.nonce).toBe(8n)
     }
+    const details = call.display
+    const expected = {
+      commit: { Summary: 'Reserve example.dusk for registration', Price: '0 DUSK' },
+      register: { Summary: 'Register example.dusk for 1 year: 10 DUSK', Price: '10 DUSK', Records: 'moonlight_address', 'Primary name': 'example.dusk' },
+      renew: { Summary: 'Renew example.dusk for 1 year: 17 DUSK', Price: '17 DUSK', 'New expiry (estimated)': '2026-10-09' },
+      transfer: { Summary: 'Transfer example.dusk to a new owner', Records: 'Clear records and primary name' },
+      manager: { Summary: 'Change the manager of example.dusk', Records: 'Keep existing records' },
+      reassign: { Summary: 'Reassign pay.example.dusk', Records: 'Clear records and primary name' },
+      take_back: { Summary: 'Take back pay.example.dusk', Records: 'Clear records and primary name' },
+      records: { Summary: 'Update records for example.dusk', Records: 'Set website; Clear avatar' },
+      clear_record: { Summary: 'Update records for example.dusk', Records: 'Clear avatar' },
+      set_primary: { Summary: 'Set example.dusk as your primary name' },
+      clear_primary: { Summary: 'Clear example.dusk as your primary name' },
+      create_subname: { Summary: 'Create pay.example.dusk', Subdomain: 'pay.example.dusk', 'Expiry (estimated)': '2026-10-09' },
+      remove_subname: { Summary: 'Remove pay.example.dusk and all its descendants' },
+      take_back_subnames: { Summary: 'Take back subnames of example.dusk', Subdomains: 'pay.example.dusk' },
+      fixed: { Summary: 'List example.dusk for 10 DUSK', Price: '10 DUSK', Fee: '0.25 DUSK (2.5%)', Proceeds: '9.75 DUSK', 'Expiry (estimated)': '2026-10-08' },
+      auction: { Summary: 'Auction example.dusk with a minimum bid of 10 DUSK', 'Minimum bid': '10 DUSK', Fee: '0.25 DUSK (2.5%) at minimum bid', Proceeds: '9.75 DUSK at minimum bid' },
+      accept: { Summary: 'Accept the offer for example.dusk: 10 DUSK', Price: '10 DUSK', Fee: '0.25 DUSK (2.5%)', Proceeds: '9.75 DUSK' },
+      buy: { Summary: 'Buy example.dusk for 10 DUSK', Price: '10 DUSK', Refund: 'No refund after a successful purchase' },
+      bid: { Summary: 'Bid 11 DUSK on example.dusk', 'Held in escrow (refundable)': '11 DUSK' },
+      offer: { Summary: 'Offer 10 DUSK for example.dusk', 'Held in escrow (refundable)': '10 DUSK', 'Expiry (estimated)': '2026-10-08' },
+      cancel_fixed: { Summary: 'Cancel the listing for example.dusk', Price: '10 DUSK', Refund: '0 DUSK' },
+      expire_fixed: { Summary: 'Close the expired listing for example.dusk', Price: '10 DUSK', Refund: '0 DUSK' },
+      cancel_auction: { Summary: 'Cancel the auction for example.dusk', 'Minimum bid': '10 DUSK', Refund: '0 DUSK' },
+      expire_auction: { Summary: 'Close the expired auction for example.dusk', 'Minimum bid': '10 DUSK', Refund: '0 DUSK' },
+      cancel_offer: { Summary: 'Cancel the offer for example.dusk: refund 10 DUSK', Refund: '10 DUSK' },
+      expire_offer: { Summary: 'Close the expired offer for example.dusk: refund 10 DUSK', Refund: '10 DUSK' },
+      settle: { Summary: 'Settle the auction for example.dusk', 'Minimum bid': '10 DUSK' },
+      return: { Summary: 'Return example.dusk from marketplace escrow', Refund: 'No additional refund; withdraw any available balance separately' },
+      refund: { Summary: 'Withdraw 25 DUSK in marketplace refunds for all names', Refund: '25 DUSK', Names: 'All names in this marketplace' },
+      protocol_exact: { Summary: 'Withdraw 0.000000123 DUSK from the Dusk Domains treasury', Withdrawal: '0.000000123 DUSK' },
+      protocol_all: { Summary: 'Withdraw all treasury funds: currently 30 DUSK', Withdrawal: '30 DUSK' },
+      referral_exact: { Summary: 'Claim 0.000000123 DUSK in Dusk Domains referral rewards', Rewards: '0.000000123 DUSK' },
+      referral_all: { Summary: 'Claim all Dusk Domains referral rewards: currently 40 DUSK', Rewards: '40 DUSK' },
+    }[action]
+    expect(details).toMatchObject(expected)
+    expect(Object.keys(details!)[0]).toBe('Summary')
+    expect(details!['Network fee']).toBe('Paid separately; see wallet estimate')
+    const text = JSON.stringify(details)
+    expect(text).not.toMatch(/deposit|block|domain reference/i)
+    expect(text).not.toContain(node.slice(2))
+    expect(text).not.toContain(namehashHex('pay.example.dusk').slice(2))
   },
 )
 
@@ -1134,4 +1282,56 @@ it('reads refundable funds at the recorded market when the preferred market is a
     ok: true,
     value: { amountLux: 123n },
   })
+})
+
+
+it.each([1, 2])('leads registration with the full name, %s-year term and actual price', async durationYears => {
+  const h = fixture()
+  h.quote.total_lux = '50000000000'
+  h.quote.quote.base_lux = '50000000000'
+  const saved = reservation({ name: 'maya.dusk', directory: id(1), commitmentStore: id(3) })
+  const call = await prepareFrozenCall(h.client, intent.storeCompleteRegistrationRequest({
+    directory: id(1), commitmentStore: id(3), commitment: saved.commitment, secret: saved.secret,
+    node: namehashHex('maya.dusk'), label: 'maya', durationYears, feeLux: 50e9, records: [],
+  }), 'maya.dusk', account)
+  expect(call.display).toMatchObject({
+    Summary: `Register maya.dusk for ${durationYears} ${durationYears === 1 ? 'year' : 'years'}: 50 DUSK`,
+    Name: 'maya.dusk', Price: '50 DUSK', Records: 'None',
+  })
+})
+
+it.each(['place_bid', 'expire_auction', 'settle_auction'] as const)('describes the current bid money for %s', async functionName => {
+  const h = fixture()
+  const order = reviewedOrder(h, 'Auction')
+  order.highest = { payer: { kind: 'Moonlight', bytes: endpointBytes(account) }, manager: h.name.name.manager, amount_lux: '20000000000' }
+  order.end = 200n
+  order.started_at = 100n
+  order.maximum_end = 300n
+  const call = await prepareFrozenCall(h.client, {
+    contract: 'marketplace', functionName, kind: 'write', contractId: id(6), reviewedOrder: order,
+    args: { node, expectedAuctionId: 12, amountLux: 22e9 },
+  }, 'example.dusk', account)
+  if (functionName === 'place_bid') {
+    expect(call.display).toMatchObject({ 'Held in escrow (refundable)': '22 DUSK', 'Previous bid': '20 DUSK' })
+    expect(call.display?.Refund).toContain('raising your own bid')
+    expect(call.display?.['Auction end (estimated)']).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  } else if (functionName === 'expire_auction') {
+    expect(call.display).toMatchObject({ Summary: 'Close the expired auction for example.dusk: refund 20 DUSK', Refund: '20 DUSK' })
+    expect(call.display?.['Refund availability']).toContain('bidder withdraws separately')
+  } else {
+    expect(call.display).toMatchObject({ Price: '20 DUSK', Fee: '0.5 DUSK (2.5%)', Proceeds: '19.5 DUSK' })
+  }
+})
+
+it('names the primary mapping being cleared even when a different name page requested it', async () => {
+  const h = fixture()
+  h.responses.set(`${id(3)}:read_primary`, {
+    spelling: 'actual.dusk', primary: { endpoint: endpointBytes(account),
+      name: { key: sdk.nameKey('actual.dusk'), incarnation: h.name.name.incarnation }, mapping_id: 42n, updated_at: 100n },
+  })
+  const call = await prepareFrozenCall(h.client, intent.storeClearPrimaryNameRequest({
+    endpointType: 'moonlight_address', endpointValue: account,
+  }), 'example.dusk', account)
+  expect(call.display).toMatchObject({ Summary: 'Clear actual.dusk as your primary name', Name: 'actual.dusk' })
+  expect(JSON.stringify(call.display)).not.toContain('example.dusk')
 })
