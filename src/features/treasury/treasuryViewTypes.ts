@@ -8,6 +8,8 @@ import type { FeeConfigFormState } from './feeConfig'
 import type { FeeConfigField } from './cards/types'
 
 export type TreasuryViewProps = {
+  treasuryLoaded?: boolean
+  onRetry?: () => void
   treasuryConfirmation: string
   treasuryError: string
   treasuryLoading: boolean
@@ -37,6 +39,7 @@ export type TreasuryViewProps = {
     feeConfigError: string
     feeConfigForm: FeeConfigFormState
     feeConfigFormError: string
+    feeConfigLoaded?: boolean
     feeConfigLoading: boolean
     feeConfigTxState: DuskDomainTxState | null
     feeConfigUpdateError: string

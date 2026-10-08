@@ -21,9 +21,9 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({ canonicalName: nextResult.canonical, chainId: props.chainId, loadPendingReservations: props.loadPendingReservations })
     }
-    search.showResult(nextResult)
     search.showView(nextResult.status === 'registered' ? 'details' : 'overview')
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
+    if (isCurrent()) search.showResult(nextResult)
   } catch (error) {
     if (isCurrent()) search.fail(userFacingErrorMessage(error))
   } finally {

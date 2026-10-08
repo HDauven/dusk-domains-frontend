@@ -1,8 +1,11 @@
+import { readSharedHealth } from '../../app/sharedIndexerHealth'
+import { useAutoRefresh } from '../../app/useAutoRefresh'
+import type { RefreshOptions } from '../../app/singleFlight'
+import { auctionStatus } from './marketplacePresentation'
 import { marketplaceOrderKey, matchesAuctionSelection, auctionSelection } from './orderIdentity'
 import { appendPage, readMarketplacePage, readMarketplaceWindow, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  userFacingErrorMessage,
   type DuskDomainsIndexerClient,
   type IndexedMarketplaceAuction,
   type IndexedMarketplaceFixedSale,
@@ -48,12 +51,18 @@ export function useMarketplaceData({
   const [ownedNames, setOwnedNames] = useScopedState<IndexedNameSummary[]>(accountScope, [])
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
   const [updatedAt, setUpdatedAt] = useState<number | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [readError, setReadError] = useState('')
+  const [auctionReadError, setAuctionReadError] = useState('')
+  const hasData = useRef(false)
   const [cursors, setCursors] = useState<MarketplaceCursors>({ fixedSales: null, auctions: null, offers: null })
   const loadingMore = useRef(false)
   const refreshPending = useRef(false)
   const loadedPages = useRef(1)
   const requestId = useRef(0)
+  const auctionRequest = useRef(0)
+  const auctionPending = useRef(false)
+  const backgroundSnapshot = useRef<{ updatedAt: number; feeBps: number | null; ownedNames: IndexedNameSummary[]; refund: IndexedMarketplaceRefund | null } | null>(null)
   const onLoadedRef = useRef(onLoaded)
   const setErrorRef = useRef(setError)
   const selectedAuctionRef = useRef(selectedAuctionNode)
@@ -72,40 +81,43 @@ export function useMarketplaceData({
     const shouldApply = () => requestId.current === nextRequestId
 
     loadingMore.current = false
-    setCursors({ fixedSales: null, auctions: null, offers: null })
     const reportError = setErrorRef.current
     if (!background) reportError('')
     if (!indexerClient) {
-      setFixedSales([])
-      setAuctions([])
-      setOffers([])
-      setOwnedNames([])
-      setRefund(null)
       refreshPending.current = false
-      reportError('Marketplace data is unavailable right now.')
+      setReadError('Marketplace data is unavailable right now.')
+      setLoading(false)
       return
     }
 
     setLoading(true)
     try {
+      // Fees and wallet data keep the slow cadence while listings refresh each minute.
+      const cachedSnapshot = background && backgroundSnapshot.current && Date.now() - backgroundSnapshot.current.updatedAt < 180_000
+        ? backgroundSnapshot.current : null
       const [page, nextOwnedNames, health, nextRefund, config] = await Promise.all([
         readMarketplaceWindow(indexerClient, loadedPages.current),
-        selectedAddress
+        cachedSnapshot ? Promise.resolve(cachedSnapshot.ownedNames) : selectedAddress
           ? fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority })
           : Promise.resolve([]),
-        indexerClient.getHealth(),
-        selectedAuthority ? indexerClient.getMarketplaceRefund(selectedAuthority) : Promise.resolve(null),
-        indexerClient.getMarketplaceConfig?.() ?? Promise.resolve(null),
+        readSharedHealth(indexerClient),
+        cachedSnapshot ? Promise.resolve(cachedSnapshot.refund) : selectedAuthority ? indexerClient.getMarketplaceRefund(selectedAuthority) : Promise.resolve(null),
+        cachedSnapshot ? Promise.resolve({ feeBps: cachedSnapshot.feeBps }) : indexerClient.getMarketplaceConfig?.() ?? Promise.resolve(null),
       ])
       if (!shouldApply()) return
 
       const selectedNode = selectedAuctionRef.current
-      if (selectedNode && !page.auctions.some((auction) => matchesAuctionSelection(auction, selectedNode))) {
+      if (selectedNode && (background || !page.auctions.some(auction => matchesAuctionSelection(auction, selectedNode)))) {
         const { node, ...identity } = auctionSelection(selectedNode)
         const selected = await indexerClient.getMarketplaceAuction(node, identity)
         if (!shouldApply()) return
+        page.auctions = page.auctions.filter(auction => !matchesAuctionSelection(auction, selectedNode))
         if (selected) page.auctions = [...page.auctions, selected]
       }
+      if (!cachedSnapshot) backgroundSnapshot.current = { updatedAt: Date.now(), feeBps: config?.feeBps ?? null, ownedNames: nextOwnedNames, refund: nextRefund }
+      hasData.current = true
+      setReadError('')
+      setAuctionReadError('')
       setFeeBps(config?.feeBps ?? null)
       setFixedSales(page.fixedSales)
       setAuctions(page.auctions)
@@ -117,7 +129,8 @@ export function useMarketplaceData({
       setRefund(nextRefund?.amountLux ? nextRefund : null)
       onLoadedRef.current?.({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
     } catch (loadError) {
-      if (shouldApply()) reportError(userFacingErrorMessage(loadError))
+      if (shouldApply()) setReadError(hasData.current ? "Couldn't refresh. Retrying…" : 'Marketplace data is unavailable right now.')
+      void loadError
     } finally {
       if (shouldApply()) { setLoading(false); refreshPending.current = false }
     }
@@ -139,8 +152,10 @@ export function useMarketplaceData({
       setOffers((current) => appendPage(current, page.offers, marketplaceOrderKey))
       setCursors(page.cursors)
       loadedPages.current += 1
+      setReadError('')
     } catch (error) {
-      if (currentRequest === requestId.current) reportError(userFacingErrorMessage(error))
+      if (currentRequest === requestId.current) setReadError("Couldn't refresh. Retrying…")
+      void error
     } finally {
       if (currentRequest === requestId.current) {
         loadingMore.current = false
@@ -149,21 +164,54 @@ export function useMarketplaceData({
     }
   }, [cursors, indexerClient, loading])
 
-  useEffect(() => () => { requestId.current += 1 }, [accountScope, indexerClient])
+  useEffect(() => () => {
+    requestId.current += 1
+    refreshPending.current = false
+    loadingMore.current = false
+    backgroundSnapshot.current = null
+    setLoading(false)
+  }, [accountScope, indexerClient])
+
+  useEffect(() => () => { auctionRequest.current += 1; auctionPending.current = false; setAuctionReadError('') }, [accountScope, indexerClient, selectedAuctionNode])
+  const refreshAuction = useCallback(async () => {
+    if (!indexerClient || !selectedAuctionNode || auctionPending.current || refreshPending.current || loadingMore.current) return
+    const request = ++auctionRequest.current
+    const marketRequest = requestId.current
+    const shouldApply = () => request === auctionRequest.current && marketRequest === requestId.current
+    auctionPending.current = true
+    try {
+      const { node, ...identity } = auctionSelection(selectedAuctionNode)
+      const [auction, health] = await Promise.all([
+        indexerClient.getMarketplaceAuction(node, identity),
+        readSharedHealth(indexerClient),
+      ])
+      if (!shouldApply()) return
+      setAuctionReadError('')
+      setAuctions(current => {
+        const others = current.filter(auction => !matchesAuctionSelection(auction, selectedAuctionNode))
+        return auction ? [...others, auction] : others
+      })
+      setCurrentBlockHeight(health.currentBlockHeight)
+      setUpdatedAt(Date.now())
+    } catch {
+      if (shouldApply()) setAuctionReadError("Couldn't refresh. Retrying…")
+    } finally {
+      if (request === auctionRequest.current) auctionPending.current = false
+    }
+  }, [indexerClient, selectedAuctionNode])
+  const selectedAuction = auctions.find(auction => matchesAuctionSelection(auction, selectedAuctionNode))
+  const auctionPollingEnabled = mainView === 'marketplace' && Boolean(selectedAuction && !selectedAuction.returnPending
+    && ['live', 'ending', 'ended'].includes(auctionStatus(selectedAuction, currentBlockHeight)))
+  useAutoRefresh(refreshAuction, auctionPollingEnabled, 10_000)
 
   useEffect(() => {
     if (mainView !== 'marketplace') return
     let disposed = false
-    const refresh = () => { if (!disposed && document.visibilityState !== 'hidden') void loadMarketplace(true) }
-    globalThis.queueMicrotask(() => { if (!disposed) void loadMarketplace() })
-    const timer = window.setInterval(refresh, 10_000)
-    window.addEventListener('focus', refresh)
-    return () => {
-      disposed = true
-      window.clearInterval(timer)
-      window.removeEventListener('focus', refresh)
-    }
+    globalThis.queueMicrotask(() => { if (!disposed && document.visibilityState !== 'hidden') void loadMarketplace() })
+    return () => { disposed = true }
   }, [loadMarketplace, mainView])
+  const refresh = useCallback((options?: RefreshOptions) => loadMarketplace(!options?.fresh), [loadMarketplace])
+  useAutoRefresh(refresh, mainView === 'marketplace', 60_000)
 
-  return { feeBps, updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
+  return { auctionPollingEnabled, readError: readError || auctionReadError, hasData: updatedAt !== null, feeBps, updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
 }

@@ -256,11 +256,13 @@ it('restores fresh ownership and lifecycle after a pending name is reopened with
     return null
   }
   renderToStaticMarkup(<Probe />)
+  await expect(hydration.hydrateNameFromIndexer({...h.indexerClient,resolveForward:async()=>({records:[]}),
+    getActivityPage:async()=>({activity:[]}),getAllSubnames:async()=>[]} as never,{canonical:'alpha.dusk'} as never)).rejects.toThrow()
+  expectControls(h.managedName,false)
+  h.indexerClient.getNameState.mockResolvedValue({ ...h.state, graceEndsAtBlockHeight: 300 })
+  expect(await h.ownership.retry(node)).toBe(true)
   await hydration.hydrateNameFromIndexer({...h.indexerClient,resolveForward:async()=>({records:[]}),
     getActivityPage:async()=>({activity:[]}),getAllSubnames:async()=>[]} as never,{canonical:'alpha.dusk'} as never)
-  expectControls(h.managedName,false)
-  h.indexerClient.getNameState.mockResolvedValue(h.state)
-  expect(await h.ownership.retry(node)).toBe(true)
   expect(h.managedName).toMatchObject({node,owner:'viewer',manager:'recipient',expiresAt:200,graceEndsAt:300})
   expectControls(h.managedName,true)
 })

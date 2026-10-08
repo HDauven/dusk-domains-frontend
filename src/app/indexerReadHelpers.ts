@@ -1,3 +1,4 @@
+import { readSharedHealth, sharedIndexerHealth } from './sharedIndexerHealth'
 import { unixSecondsFromIso } from '../features/domains/domainFormat'
 import {
   createDuskDomainsIndexerClient,
@@ -16,8 +17,13 @@ export function createHealthyIndexerClient(baseUrl: string) {
     baseUrl,
     fetch: async (input, init) => {
       // A reachable API can still be serving an incomplete or stale projection.
-      if (String(input).split('?')[0] !== healthUrl && Date.now() >= healthyUntil && !(await getHealth()).ok) {
-        throw new Error('Domain data is still syncing. It will update automatically.')
+      if (String(input).split('?')[0] !== healthUrl && Date.now() >= healthyUntil) {
+        try {
+          if (!(await readSharedHealth(healthyClient)).ok) throw new Error('Domain data is still syncing. It will update automatically.')
+        } catch (error) {
+          // The health read already owns its retry; do not retry it again as a projection.
+          throw new Error(error instanceof Error ? error.message : 'Name data is unavailable.', { cause: error })
+        }
       }
       return fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10_000) })
     },
@@ -26,6 +32,7 @@ export function createHealthyIndexerClient(baseUrl: string) {
     // Explicit reads stay fresh for confirmation polling; concurrent checks share one request.
     if (params && Object.keys(params).length) {
       healthyUntil = 0
+      sharedIndexerHealth(healthyClient).invalidate()
       return client.getHealth(params)
     }
     if (pendingHealth) return pendingHealth
@@ -36,7 +43,8 @@ export function createHealthyIndexerClient(baseUrl: string) {
     }).finally(() => { pendingHealth = null })
     return pendingHealth
   }
-  return { ...client, getHealth }
+  const healthyClient = { ...client, getHealth }
+  return healthyClient
 }
 
 export async function waitForIndexerBlock(client: DuskDomainsIndexerClient | null, height: number | null) {

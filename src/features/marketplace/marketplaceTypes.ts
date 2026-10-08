@@ -72,6 +72,9 @@ export type MarketplaceViewProps = {
     onCloseAuction: () => void
   }
   market: {
+    hasData?: boolean
+    readError?: string
+    onRetry?: () => void
     updatedAt?: number | null
     currentBlockHeight: number | null
     hasMore?: boolean

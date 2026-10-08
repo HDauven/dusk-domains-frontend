@@ -1,4 +1,5 @@
-import { matchesAuctionSelection, auctionSelection } from './orderIdentity'
+import { useAutoRefresh } from '../../app/useAutoRefresh'
+import { auctionSelection } from './orderIdentity'
 import { appendPage } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -27,6 +28,7 @@ export function useAuctions({
   indexerClient,
   marketplaceOnChainClient,
   marketScope,
+  refreshActivity = false,
   onBidPlaced,
   selectedAuthority,
   selectedAuctionNode,
@@ -40,6 +42,7 @@ export function useAuctions({
   indexerClient: DuskDomainsIndexerClient | null
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
   marketScope: string
+  refreshActivity?: boolean
   onBidPlaced: (node: string) => void
   selectedAuthority: string
   selectedAuctionNode: string
@@ -53,7 +56,7 @@ export function useAuctions({
   const [activityCursor, setActivityCursor] = useState<string | null>(null)
   const activityRequest = useRef(0)
   const activityPending = useRef(false)
-  useEffect(() => () => { activityRequest.current += 1; activityPending.current = false }, [indexerClient, marketScope])
+  useEffect(() => () => { activityRequest.current += 1; activityPending.current = false }, [indexerClient, marketScope, selectedAuctionNode])
   const [auctionActivityLoading, setAuctionActivityLoading] = useState(false)
   const [bidReview, setBidReview] = useScopedState<MarketplaceViewProps['auction']['bidReview']>(accountScope, null)
 
@@ -67,8 +70,8 @@ export function useAuctions({
     ])))
   }
 
-  const loadAuctionActivity = useCallback(async (node: string, cursor?: string) => {
-    if (!indexerClient || !node || (cursor && activityPending.current)) return
+  const loadAuctionActivity = useCallback(async (node: string, cursor?: string, background = false) => {
+    if (!indexerClient || !node || ((cursor || background) && activityPending.current)) return
     const request = ++activityRequest.current
     activityPending.current = true
     setAuctionActivityLoading(true)
@@ -88,12 +91,17 @@ export function useAuctions({
     }
   }, [indexerClient, setError])
 
-  const selectedBidCount = auctions.find((auction) => matchesAuctionSelection(auction, selectedAuctionNode))?.bidCount
   const activityNode = auctionSelection(selectedAuctionNode).node
   useEffect(() => {
     if (!selectedAuctionNode) return
-    queueMicrotask(() => void loadAuctionActivity(activityNode))
-  }, [loadAuctionActivity, activityNode, selectedAuctionNode, selectedBidCount])
+    let disposed = false
+    const read = () => { if (!disposed && document.visibilityState !== 'hidden') void loadAuctionActivity(activityNode, undefined, true) }
+    queueMicrotask(read)
+    document.addEventListener('visibilitychange', read)
+    return () => { disposed = true; document.removeEventListener('visibilitychange', read) }
+  }, [loadAuctionActivity, activityNode, selectedAuctionNode])
+  const refreshAuctionActivity = useCallback(() => loadAuctionActivity(activityNode, undefined, true), [activityNode, loadAuctionActivity])
+  useAutoRefresh(refreshAuctionActivity, refreshActivity, 10_000)
 
   // The contract's current auction, or null after reporting why it could not be read.
   const readCanonicalAuction = useCallback(async (auction: IndexedMarketplaceAuction) => {

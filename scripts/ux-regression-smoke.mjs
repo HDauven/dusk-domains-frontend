@@ -1,3 +1,4 @@
+import { checkPollingBudget } from './polling-smoke.mjs'
 import { checkLegalPages } from './legal-pages-smoke.mjs'
 import { checkPremiumConfirmation } from './premium-confirmation-smoke.mjs'
 import { checkNamespaceControls } from './namespace-smoke.mjs'
@@ -100,7 +101,7 @@ try {
       const [height, setCurrentBlockHeight] = React.useState(null)
       const [, setNowSeconds] = React.useState(0)
       const [preparedCommit, setPreparedCommit] = React.useState(null)
-      const { pendingReservations } = useRegistrationRuntime({ mainView: 'search', chainId: 'dusk:0',
+      const { pendingReservations } = useRegistrationRuntime({ currentBlockHeight: height, mainView: 'search', chainId: 'dusk:0',
         selectedAuthority: saved.controller, selectedAddress: saved.ownerAddress, indexerClient, getCurrentBlockHeight, preparedCommit, setPreparedCommit,
         setCurrentBlockHeight, setNowSeconds })
       return React.createElement('output', { id: 'saved-reservation' }, `${height}:${pendingReservations[0]?.committedBlockHeight}`)
@@ -152,6 +153,7 @@ try {
       search: {
         ...props.search,
         resultReady,
+        readError: resultReady ? '' : 'Name data is unavailable right now.',
       },
     }))
     window.renderReadReady(true)
@@ -159,7 +161,7 @@ try {
   await page.getByRole('button', { name: 'Claim owned.dusk' }).waitFor()
   assert.equal(await page.locator('.claim-card .status-badge').textContent(), 'Available')
   await page.evaluate(() => window.renderReadReady(false))
-  await page.getByRole('status').filter({ hasText: 'Name data is unavailable' }).waitFor()
+  await page.getByRole('alert').filter({ hasText: 'Name data is unavailable' }).waitFor()
   assert.equal(await page.getByText('Available', { exact: true }).count(), 0)
   assert.equal(await page.getByRole('button', { name: 'Claim owned.dusk' }).count(), 0)
   await page.evaluate(() => window.renderReadReady(true))
@@ -506,10 +508,10 @@ try {
   await page.getByText('Registrations paused.', { exact: false }).waitFor()
   await page.getByText('New marketplace orders and bids paused.', { exact: false }).waitFor()
   await page.evaluate(() => { window.pauseHealth = { ok: false, pause: { registrationsPaused: false, tradingPaused: false } } })
-  await page.clock.runFor(10_000)
+  await page.clock.runFor(60_000)
   assert.match(await page.locator('#pause-probe').textContent(), /Registrations paused/)
   await page.evaluate(() => { window.pauseHealth.ok = true })
-  await page.clock.runFor(10_000)
+  await page.clock.runFor(60_000)
   await page.waitForFunction(() => document.querySelector('#pause-probe')?.textContent === '')
   // A write prepared before a pause is observed must still be refused at submit.
   await page.evaluate(async () => {
@@ -550,6 +552,7 @@ try {
   await checkLockedClaims(page)
   await checkRefreshOrdering(page)
   await checkAppShell(page)
+  await checkPollingBudget(page)
   await page.evaluate(() => window.root.unmount())
   assert.deepEqual(errors, [])
   console.log('PASS: UX regression checks')

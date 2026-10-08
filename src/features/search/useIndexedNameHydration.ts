@@ -1,3 +1,4 @@
+import { readSharedHealth } from '../../app/sharedIndexerHealth'
 import { createSingleFlight, type RefreshOptions } from '../../app/singleFlight'
 import { useSingleFlight } from '../../app/useSingleFlight'
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
@@ -14,11 +15,13 @@ import { readIndexedName } from './indexedNameReads'
 import { createNameReadGuard } from './nameReadGuard'
 import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
 
-async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult, selectedAddress: string, onChainClient: DuskDomainsOnChainClient | null) {
-  const health = await client.getHealth()
+async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult, selectedAddress: string, onChainClient: DuskDomainsOnChainClient | null, fresh = false) {
+  const health = await readSharedHealth(client, fresh)
   if (!health.ok) throw new Error('Name data is still syncing. It will update automatically.')
   const nowSeconds = Math.floor(Date.now() / 1000)
-  return { currentBlockHeight: currentBlockHeightFromHealth(health), nowSeconds, reads: await readIndexedName(client, searchResult, selectedAddress, onChainClient) }
+  const reads = await readIndexedName(client, searchResult, selectedAddress, onChainClient)
+  if (searchResult.status === 'registered' && !reads?.stateRead.value) throw new Error('Name data is unavailable right now.')
+  return { currentBlockHeight: currentBlockHeightFromHealth(health), nowSeconds, reads }
 }
 
 export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
@@ -54,7 +57,7 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     const isCurrentActivity = props.activity.beginRead(safeNamehashHex(searchResult.canonical))
     const isCurrentOwnership = props.domain.beginRead(safeNamehashHex(searchResult.canonical))
     const shouldApply = () => isCurrent() && isCurrentActivity() && isCurrentOwnership() && currentAddress.current === selectedAddress
-    const { currentBlockHeight, nowSeconds, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult, selectedAddress, onChainClient), [client, searchResult.canonical, selectedAddress, onChainClient], options?.fresh)
+    const { currentBlockHeight, nowSeconds, reads } = await hydrationFlight(() => readNameSnapshot(client, searchResult, selectedAddress, onChainClient, options?.fresh), [client, searchResult.canonical, selectedAddress, onChainClient], options?.fresh)
     if (!shouldApply()) return
     search.updateClock(currentBlockHeight, nowSeconds)
     if (reads) applyIndexedNameHydration({ ...props, currentBlockHeight, nowSeconds }, reads)
@@ -71,8 +74,8 @@ export function useIndexedNameHydration(props: UseIndexedNameHydrationProps) {
     try {
       const nextResult = await searchNameFromIndexer(indexerClient, displayName, options)
       if (!isCurrent()) return false
-      search.showResult(nextResult)
       await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent, options)
+      if (isCurrent()) search.showResult(nextResult)
       return isCurrent()
     } catch (error) {
       if (isCurrent()) search.fail(userFacingErrorMessage(error))

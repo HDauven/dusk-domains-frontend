@@ -25,6 +25,8 @@ export type UsePendingReservationsArgs = {
   directory?: string
   chainId: string
   currentCommitment: string
+  committedBlockHeight: number | null
+  currentBlockHeight: number | null
   getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   refreshListView: boolean

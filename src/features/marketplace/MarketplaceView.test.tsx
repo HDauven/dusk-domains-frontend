@@ -591,3 +591,21 @@ it.each(['fixed sale', 'auction listing', 'auction detail'])('shows unverified b
     expect(html.includes('Not verified by google. Check before trusting it.')).toBe(verification?.status !== 'verified')
   }
 })
+
+it('offers retry without empty marketplace facts on a first-load failure', () => {
+  const html = render({ market: { readError: 'Marketplace data is unavailable right now.', hasData: false, onRetry: () => {} } })
+  expect(html).toContain('Retry')
+  expect(html).not.toContain('No names for sale yet')
+})
+
+it.each(['read', 'network'])('keeps bid errors and confirmations visible alongside a %s notice', kind => {
+  const notice = "Couldn't refresh. Retrying…"
+  const input = props({
+    market: { readError: kind === 'read' ? notice : '' },
+    feedback: { error: 'Bid at least 50 DUSK.', confirmation: 'Bid placed.' },
+  })
+  const html = renderToStaticMarkup(<NetworkFreshnessContext value={kind === 'network' ? notice : ''}><MarketplaceView {...input} /></NetworkFreshnessContext>)
+  expect(html).toContain('Retrying…')
+  expect(html).toContain('Bid at least 50 DUSK.')
+  expect(html).toContain('Bid placed.')
+})

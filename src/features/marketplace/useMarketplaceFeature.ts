@@ -111,6 +111,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     feeBps: data.feeBps, duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
   })
   const auctionState = useAuctions({
+    refreshActivity: data.auctionPollingEnabled,
     accountScope, auctions, indexerClient, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
   })
   const offerState = useOffers({
@@ -179,6 +180,9 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
         onCloseAuction: auctionState.closeAuction,
       },
       market: {
+        hasData: data.hasData,
+        readError: data.readError,
+        onRetry: () => void data.loadMarketplace(),
         currentBlockHeight: data.currentBlockHeight,
         updatedAt: data.updatedAt,
         loading: data.loading,

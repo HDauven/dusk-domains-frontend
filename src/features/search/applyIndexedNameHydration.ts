@@ -1,6 +1,5 @@
 import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
 import { lifecycleHeightFromIndexed, renewalGraceEnd, unixSecondsFromIso } from '../domains/domainFormat'
-import { userFacingMessageFromText } from '../../names/internal'
 import type { IndexedNameReadBundle } from './indexedNameReads'
 import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
 
@@ -9,7 +8,6 @@ export function applyIndexedNameHydration(
     currentBlockHeight,
     nowSeconds,
     recordSourceContractId,
-    search,
     domain,
     records,
     activity,
@@ -28,6 +26,8 @@ export function applyIndexedNameHydration(
     readErrors,
     stateRead,
   } = reads
+
+  if (readErrors.length) throw new Error(readErrors[0])
 
   records.hydrate(node, forwardRead.value?.records ?? null)
   let managedName: ManagedNameState
@@ -65,7 +65,4 @@ export function applyIndexedNameHydration(
   domain.hydrate({ managedName, primaryEndpoint, primaryName, connectedPrimaryName, subnames: hydratedSubnames ?? [] })
   activity.hydrate(node, activityRead.value ?? [], reads.activityCursor)
 
-  if (readErrors.length > 0) {
-    search.fail(userFacingMessageFromText(readErrors[0], 'Some name data is still syncing. Trying again automatically.'))
-  }
 }

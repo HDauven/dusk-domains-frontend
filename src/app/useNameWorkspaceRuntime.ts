@@ -37,6 +37,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     getCurrentBlockHeight: appRuntime.getCurrentBlockHeight,
     indexerClient: appRuntime.indexerClient,
     mainView: searchState.mainView,
+    currentBlockHeight: searchState.currentBlockHeight,
     preparedCommit: registrationState.preparedCommit,
     selectedAddress: walletRuntime.selectedAddress,
     selectedAuthority: walletRuntime.selectedAuthority,

@@ -13,6 +13,7 @@ export type UseTreasuryFeatureArgs = {
   indexerClient: DuskDomainsIndexerClient | null
   feeConfig: CoreFeeConfig
   feeConfigError: string
+  feeConfigLoaded: boolean
   feeConfigLoading: boolean
   liveDuskDomainsApp: unknown
   loadFeeConfig: (options?: { fresh?: boolean }) => Promise<boolean>

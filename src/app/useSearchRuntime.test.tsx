@@ -144,7 +144,7 @@ it('clears records and authority from the previous name when the next hydration 
   await act(async () => model.runtime.openIndexedName('alpha.dusk'))
   expect(model.domain.managedName).toMatchObject({ node: namehashHex('alpha.dusk'), owner: 'owner', expiresAt: 200 })
   expect(model.records.resolverRecords).toEqual([{ key: 'website', value: 'https://example.com' }])
-  indexed.getHealth.mockRejectedValueOnce(new Error('Offline'))
+  indexed.getNameState.mockRejectedValueOnce(new Error('Offline'))
   await act(async () => model.runtime.openIndexedName('beta.dusk'))
   expect(model.domain.managedName.node).toBe('')
   expect(model.domain.managedName.owner).not.toBe('owner')

@@ -27,7 +27,7 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
   })
   const runtimeNotice = useRuntimeNotice({
     indexerConfirmation: inputs.searchState.mainView === 'search' ? '' : inputs.searchState.indexerConfirmation,
-    indexerError: inputs.searchState.indexerError,
+    indexerError: inputs.searchState.mainView === 'search' ? '' : inputs.searchState.indexerError,
     walletError: inputs.searchState.resultView === 'register' ? '' : inputs.walletRuntime.walletError,
   })
 
@@ -37,7 +37,9 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
       marketplaceProps: marketplace.marketplaceProps,
       ownershipConfirmationProps: {
         pending: inputs.domainState.pendingOwnership,
-        onRetry: (node: string) => void inputs.domainState.retryOwnershipConfirmation(node),
+        onRetry: (node: string) => void inputs.domainState.retryOwnershipConfirmation(node).then(confirmed => {
+          if (confirmed) void inputs.searchRuntime.refreshCurrentNameFromIndexer({ fresh: true })
+        }),
       },
       mainView: inputs.searchState.mainView,
       myDomainsProps: inputs.mainViewRuntime.myDomainsProps,

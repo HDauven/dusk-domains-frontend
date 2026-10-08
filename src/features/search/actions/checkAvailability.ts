@@ -19,8 +19,8 @@ export async function checkAvailability(props: UseSearchControllerProps) {
   try {
     const nextResult = await (props.searchNameFromIndexer?.(indexerClient, query) ?? indexerClient.searchName(query))
     if (!isCurrent()) return
-    search.showResult(nextResult)
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
+    if (isCurrent()) search.showResult(nextResult)
     if (!isCurrent()) return
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({ canonicalName: nextResult.canonical, chainId, loadPendingReservations })

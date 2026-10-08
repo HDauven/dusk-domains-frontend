@@ -72,6 +72,12 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
     {view === 'activity' ? <ActivityHistoryView {...activityProps} /> : null}
     {view === 'register' ? <RegistrationFlowPanel {...registrationProps} /> : null}
   </>
+  if (headerProps.status === 'registered' && !managedName) return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
+    <h1>{headerProps.displayName}</h1>
+    <p role="status">Loading owner, expiry and records…</p>
+    <NightCard name={headerProps.displayName} />
+    <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} />
+  </section>
   return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
     {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} /> : null}
     {headerProps.status !== 'invalid' ? <>

@@ -126,3 +126,31 @@ it.each([null, { records: [] }, { records: [{ key: 'moonlight_address', value: '
     }))
   },
 )
+
+it('keeps the entire previous name snapshot when any indexed read fails', () => {
+  const domain = vi.fn(), records = vi.fn(), activity = vi.fn()
+  expect(() => applyIndexedNameHydration({ ...searchActions({ domain: { hydrate: domain }, records: { hydrate: records }, activity: { hydrate: activity } }),
+    currentBlockHeight: 100, nowSeconds: 100, recordSourceContractId: 'resolver' } as never, {
+    node: 'node', readErrors: ['HTTP 429'], stateRead: { value: null, error: 'HTTP 429' },
+    forwardRead: { value: null, error: 'HTTP 429' }, activityRead: { value: [], error: null },
+    ownSubnameRead: { value: null, error: null }, hydratedSubnames: [],
+  } as unknown as IndexedNameReadBundle)).toThrow('HTTP 429')
+  expect(domain).not.toHaveBeenCalled()
+  expect(records).not.toHaveBeenCalled()
+  expect(activity).not.toHaveBeenCalled()
+})
+
+it('does not hydrate an empty lifecycle when a registered name state is missing', async () => {
+  const { useIndexedNameHydration } = await import('./useIndexedNameHydration')
+  const { renderToStaticMarkup } = await import('react-dom/server')
+  const { createElement } = await import('react')
+  const actions = searchActions()
+  let hydration!: ReturnType<typeof useIndexedNameHydration>
+  function Probe() { hydration = useIndexedNameHydration({ ...actions, recordSourceContractId: 'resolver' } as never); return null }
+  renderToStaticMarkup(createElement(Probe))
+  await expect(hydration.hydrateNameFromIndexer({ getHealth: async () => ({ ok: true }),
+    resolveForward: async () => ({ records: [] }), getNameState: async () => null,
+    getActivityPage: async () => ({ activity: [] }), getAllSubnames: async () => [],
+  } as never, { canonical: 'alpha.dusk', status: 'registered' } as never)).rejects.toThrow('Name data is unavailable')
+  expect(actions.domain.hydrate).not.toHaveBeenCalled()
+})

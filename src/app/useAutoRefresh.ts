@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 // Loaders own request ordering across navigation, writes and background refresh.
 // A new scope (such as the wallet address once a session restores) makes reads that were in
 // flight stale: they are dropped, so read again at once instead of waiting for the next tick.
-export function useAutoRefresh(refresh: (options?: RefreshOptions) => unknown, enabled = true, intervalMs = 30_000, scope?: unknown) {
+export function useAutoRefresh(refresh: (options?: RefreshOptions) => unknown, enabled = true, intervalMs = 180_000, scope?: unknown) {
   const current = useRef(refresh)
   useEffect(() => { current.current = refresh })
   const seenScope = useRef(scope)
@@ -17,8 +17,11 @@ export function useAutoRefresh(refresh: (options?: RefreshOptions) => unknown, e
   useEffect(() => {
     if (!enabled) return
     let disposed = false
+    let lastResume = -Infinity
     const run = async (event?: Event) => {
       if (disposed || document.visibilityState === 'hidden') return
+      if (event?.type === 'focus' && Date.now() - lastResume < 1_000) return
+      if (event?.type === 'visibilitychange' || event?.type === 'focus') lastResume = Date.now()
       try { await current.current(event?.type === 'dusk-domains:write-confirmed' ? { fresh: true } : undefined) } catch { /* The reader owns its error state. */ }
     }
     const timer = window.setInterval(() => void run(), intervalMs)
