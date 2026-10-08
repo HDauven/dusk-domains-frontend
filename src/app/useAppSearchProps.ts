@@ -73,6 +73,8 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
   } = mainViewRuntime
 
   return useSearchWorkspaceFeature({
+    abuseUrl: appRuntime.runtimeConfig.launchLinks.abuse,
+    verification: result.verification,
     referralAddress: appRuntime.runtimeConfig.capabilities.referralAttribution && walletRuntime.walletSetupState === 'connected'
       ? walletRuntime.selectedAddress : '',
     premiumResult: result,

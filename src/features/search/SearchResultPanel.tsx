@@ -1,3 +1,4 @@
+import { reportNameUrl } from './reportNameUrl'
 import { SubnameAuthorityControls } from '../domains/subdomains/SubnameAuthorityControls'
 import { ManagementFeedback } from '../domains/ManagementFeedback'
 import { canControlThroughAncestor } from '../../app/derived/managementCapabilities'
@@ -23,6 +24,7 @@ import { NightCard } from './NightCard'
 export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'subnames' | 'activity'
 
 export type SearchResultPanelProps = {
+  abuseUrl?: string | null
   referralAddress?: string
   activityProps: ComponentProps<typeof ActivityHistoryView>
   detailsProps: ComponentProps<typeof DomainDetailsView>
@@ -41,7 +43,7 @@ export type SearchResultPanelProps = {
   }
 }
 
-export function SearchResultPanel({ activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, referralAddress, registrationProps, resultView, management }: SearchResultPanelProps) {
+export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, headerProps, nodeHex, onOpenName, onResultViewChange, overviewProps, referralAddress, registrationProps, resultView, management }: SearchResultPanelProps) {
   const {
     primaryProps,
     recordsProps,
@@ -59,6 +61,7 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
   const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
+  const reportUrl = headerProps.status === 'registered' ? reportNameUrl(abuseUrl, headerProps.displayName) : null
   const content = <>
     {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit || primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
     {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
@@ -92,5 +95,6 @@ export function SearchResultPanel({ activityProps, detailsProps, headerProps, no
       {primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : null}
     </> : null}
     {tabbed ? <TabPanel id="name-sections" value={view}>{content}</TabPanel> : content}
+    {reportUrl ? <a className="name-report field-note" href={reportUrl} target="_blank" rel="noreferrer">Report this name</a> : null}
   </section>
 }

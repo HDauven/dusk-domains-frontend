@@ -48,3 +48,16 @@ it('does not imply readiness when a countdown estimate reaches zero', () => {
   expect(countdownCopy(0)).toBe('Waiting for the next block…')
   expect(countdownCopy(-10)).toBe('Waiting for the next block…')
 })
+
+it.each(['review', 'purchase'] as const)('keeps the brand notice above the %s wallet action', registrationStep => {
+  const html = renderToStaticMarkup(<RegistrationFlowPanel {...props}
+    wizard={{ ...props.wizard, displayName: 'google.dusk', registrationStep }}
+    step={{ ...props.step, registrationStep, reservation: { ...props.step.reservation, commitWindow: { status: 'ready', waitBlocks: 0, staleInBlocks: 100 } },
+      purchase: { ...props.step.purchase, canRevealRegistration: true } }} />)
+  const notice = 'google.dusk matches a well-known brand. It will show as unverified unless its owner proves it with their website, and impersonating a brand may be illegal.'
+  expect(html).toContain(notice)
+  const button = html.match(/<button[^>]*>?(?:Reserve|Register)[\s<]/)
+  expect(button).not.toBeNull()
+  expect(html.indexOf(notice)).toBeLessThan(button!.index!)
+  expect(button![0]).not.toContain('disabled')
+})

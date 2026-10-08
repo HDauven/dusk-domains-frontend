@@ -8,6 +8,8 @@ type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['result']['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
+  abuseUrl?: string | null
+  verification?: SearchWorkspaceProps['result']['headerProps']['verification']
   referralAddress?: string
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
   priceTiers?: SearchWorkspaceProps['search']['priceTiers']
@@ -55,6 +57,8 @@ type UseSearchWorkspaceFeatureProps = {
 }
 
 export function useSearchWorkspaceFeature({
+  abuseUrl,
+  verification,
   referralAddress,
   premiumResult,
   priceTiers,
@@ -115,6 +119,7 @@ export function useSearchWorkspaceFeature({
       resultReady,
     },
     result: {
+      abuseUrl,
       activityProps: {
         ownerAddresses,
         hasMore: hasMoreActivity,
@@ -144,6 +149,7 @@ export function useSearchWorkspaceFeature({
         },
       },
       headerProps: {
+        verification,
         ownerAddresses,
         viewerAuthority,
         displayName,

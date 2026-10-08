@@ -218,6 +218,7 @@ export type IndexedMarketplaceConfig = {
 }
 
 export type IndexedMarketplaceFixedSale = {
+  verification?: import('../verification').NameVerification | null
   order?: import('@duskdomains/sdk').Order
   returnPending?: boolean
   saleId: number
@@ -244,6 +245,7 @@ export type IndexedMarketplaceBid = {
 }
 
 export type IndexedMarketplaceAuction = {
+  verification?: import('../verification').NameVerification | null
   order?: import('@duskdomains/sdk').Order
   returnPending?: boolean
   auctionId: number

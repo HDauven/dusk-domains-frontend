@@ -500,3 +500,6 @@
 .timeline-meta details li::before { display: none; }
 .timeline-meta details code { overflow-wrap: anywhere; }
 .timeline-copy > span { font-family: var(--font-ui); }
+
+.name-report { justify-self: start; }
+.brand-claim-notice { margin: 0; line-height: 1.5; }

@@ -184,3 +184,25 @@ it('links the name header to the Offers tab with the name filled in', () => {
   expect(header(true)).toMatch(/<a [^>]*href="\/market\/offer\/alpha.dusk"[^>]*>Make an offer<\/a>/)
   expect(header(false)).not.toContain('Make an offer')
 })
+
+it.each(['', 'owner', 'manager', 'visitor'])('offers reporting on registered pages for viewer %s', viewerAuthority => {
+  for (const displayName of ['alpha.dusk', 'google.dusk', 'mail.google.dusk']) {
+    const html = renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+      abuseUrl="https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml"
+      headerProps={{ ...props.headerProps, displayName, viewerAuthority }}
+      management={{ ...props.management, primaryProps: { ...props.management.primaryProps, primaryVerification: { verified: false } } }} />)
+    expect(html).toContain('>Report this name</a>')
+    expect(html).toContain(`name=${displayName}`)
+    expect(html).toContain(`title=%5BAbuse%5D%3A+${displayName}`)
+  }
+})
+
+it.each(['available', 'reserved', 'invalid'] as const)('does not offer reporting for an unregistered %s name', status => {
+  const html = renderToStaticMarkup(<SearchResultPanel {...props} resultView="overview" abuseUrl="https://forms.example.test/report"
+    headerProps={{ ...props.headerProps, status }} overviewProps={{ ...props.overviewProps, resultStatus: status, resultIssues: [] }} />)
+  expect(html).not.toContain('Report this name')
+})
+
+it('does not render a dead report link without a configured destination', () => {
+  expect(renderToStaticMarkup(<SearchResultPanel {...props} />)).not.toContain('Report this name')
+})

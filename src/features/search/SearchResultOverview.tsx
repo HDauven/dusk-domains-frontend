@@ -1,3 +1,4 @@
+import { BrandClaimNotice } from './BrandClaimNotice'
 import { PremiumNotice } from '../registration/PremiumNotice'
 import { Badge } from '../../components/ui/Badge'
 import { suggestedNames } from './suggestedNames'
@@ -71,6 +72,7 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
           <p>{pendingReservationNextStepCopy(status)}</p>
         </div>
         <div className="claim-stub">
+          <BrandClaimNotice name={displayName} />
           <Button variant="primary" type="button" onClick={() => void onOpenPendingReservation(savedReservation)}>
             {pendingReservationActionCopy(status)} <ArrowRight size={18} />
           </Button>
@@ -115,6 +117,7 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
           <strong>{feeConfigLoading ? '…' : formatDusk(registrationFee)} <small>DUSK</small></strong>
           <span>for {duration} {pluralize(duration, 'year')} · until {expiryDate}</span>
         </div>
+        <BrandClaimNotice name={displayName} />
         <Button variant="primary" type="button" disabled={feeConfigLoading || registrationUnavailable} onClick={onContinueRegistration}>
           {registrationUnavailable ? 'Registration unavailable' : `Claim ${displayName}`}
         </Button>
