@@ -24,7 +24,12 @@ export function activityActions(entries: ActivityEntry[]) {
 
 const paymentKeys = new Set(['moonlight_address', 'phoenix_payment_endpoint', 'evm_address',
   'address.btc', 'address.eth', 'address.sol', 'address.evm', 'dusk_contract', 'dusk_asset'])
-export function paymentWarnings(warnings: RecentChangeWarning[], viewerAuthority: string) {
+// The records a name is registered with are where it starts, not a change to it.
+const txKey = (entry: Pick<ActivityEntry, 'txId' | 'blockHeight' | 'actor'>) => entry.txId ?? `${entry.blockHeight}:${entry.actor}`
+
+export function paymentWarnings(warnings: RecentChangeWarning[], viewerAuthority: string, activity: ActivityEntry[] = []) {
+  const registrations = new Set(activity.filter(entry => entry.eventType === 'registration').map(txKey))
   return warnings.filter(warning => warning.eventType === 'record_update'
-    && paymentKeys.has(warning.target ?? '') && !sameAuthority(warning.actor, viewerAuthority))
+    && paymentKeys.has(warning.target ?? '') && !sameAuthority(warning.actor, viewerAuthority)
+    && !registrations.has(txKey(warning)))
 }

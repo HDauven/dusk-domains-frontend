@@ -27,3 +27,11 @@ it.each(['address.btc', 'address.eth', 'address.sol', 'address.evm'])('warns abo
   expect(paymentWarnings([warning], 'me')).toEqual([warning])
   expect(paymentWarnings([warning], 'other')).toEqual([])
 })
+
+it('does not warn about the payment address a name was registered with', () => {
+  const warning = (txId: string) => ({ actor: 'owner', target: 'moonlight_address', eventType: 'record_update', txId, blockHeight: 12 }) as RecentChangeWarning
+  const activity = [entry('registration', 'register-tx'), entry('record_update', 'register-tx'), entry('record_update', 'later-tx')]
+  expect(paymentWarnings([warning('register-tx'), warning('later-tx')], '', activity)).toEqual([warning('later-tx')])
+  const untracked = { actor: 'owner', target: 'moonlight_address', eventType: 'record_update', blockHeight: 12 } as RecentChangeWarning
+  expect(paymentWarnings([untracked], '', [{ ...entry('registration'), txId: undefined }])).toEqual([])
+})
