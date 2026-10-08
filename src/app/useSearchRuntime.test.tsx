@@ -102,7 +102,7 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
     registerSetsPrimary: true, registrationStep: 'review', registrationCompletion: null })
   expect(model.domain).toMatchObject({ managedName: createManagedNameState('resolver'), managementError: '', recordError: '',
     primaryName: null, connectedPrimaryName: null, primaryEndpointValue: '', renewalYears: 1, subnames: [],
-    subnameLabel: 'settlement', subnameManager: '', subnameExpiryPolicy: 'inherits_parent', subnameExpiryDate: '' })
+    subnameLabel: '', subnameManager: '', subnameExpiryPolicy: 'inherits_parent', subnameExpiryDate: '' })
   expect(model.records).toMatchObject({ recordDrafts: {}, resolverRecordSets: {} })
   expect(model.activity).toMatchObject({ activityEntries: [], activityLoading: false, hasMoreActivity: false })
   await act(async () => model.runtime.handleSearchHome())
