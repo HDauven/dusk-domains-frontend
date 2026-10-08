@@ -33,28 +33,27 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
             <p>Your DUSK is held in escrow. After canceling or closing an expired offer, withdraw your refund under Yours.</p>
           </div>
         </div>
+        {/* Visitors fill in the offer first. The wallet is needed only to review and sign it. */}
+        <div className="marketplace-form">
+          <label className="marketplace-field-wide">
+            <span>Name</span>
+            <Input placeholder="name.dusk" type="text" value={props.offers.offerName} onChange={(event) => props.offers.onOfferNameChange(event.target.value)} />
+          </label>
+          <label>
+            <span>Offer</span>
+            <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.offers.offerAmountDusk} onChange={(event) => props.offers.onOfferAmountDuskChange(event.target.value)} /><span>DUSK</span></div>
+          </label>
+          <label>
+            <span>Valid for</span>
+            <Select value={props.offers.offerDurationDays} onChange={(event) => props.offers.onOfferDurationDaysChange(event.target.value)}>
+              {durations.map((days) => <option key={days} value={days}>{days} {days === 1 ? 'day' : 'days'}</option>)}
+            </Select>
+          </label>
+        </div>
         {!props.wallet.selectedAddress ? (
-          <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet</Button>
+          <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet to offer</Button>
         ) : (
-          <>
-            <div className="marketplace-form">
-              <label className="marketplace-field-wide">
-                <span>Name</span>
-                <Input placeholder="name.dusk" type="text" value={props.offers.offerName} onChange={(event) => props.offers.onOfferNameChange(event.target.value)} />
-              </label>
-              <label>
-                <span>Offer</span>
-                <div className="marketplace-input-suffix"><Input inputMode="decimal" type="text" value={props.offers.offerAmountDusk} onChange={(event) => props.offers.onOfferAmountDuskChange(event.target.value)} /><span>DUSK</span></div>
-              </label>
-              <label>
-                <span>Valid for</span>
-                <Select value={props.offers.offerDurationDays} onChange={(event) => props.offers.onOfferDurationDaysChange(event.target.value)}>
-                  {durations.map((days) => <option key={days} value={days}>{days} {days === 1 ? 'day' : 'days'}</option>)}
-                </Select>
-              </label>
-            </div>
-            <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onPlaceOffer()}>Review offer</Button>
-          </>
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onPlaceOffer()}>Review offer</Button>
         )}
       </Panel>
 
@@ -63,8 +62,8 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
           <h2 id="your-offers-heading" className="eyebrow">Offers · {offers.length}</h2>
         </div>
         <div className="marketplace-offer-filters">
-          <label><span className="sr-only">Search offers</span><Input type="search" placeholder="Search offers" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
-          <label><span className="sr-only">Filter offers</span><Select aria-label="Filter offers" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All offers</option><option value="received">Received</option><option value="sent">Sent</option></Select></label>
+          <label><span className="sr-only">Filter offers by name</span><Input type="search" placeholder="Filter offers" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+          <label><span className="sr-only">Show offers</span><Select aria-label="Show offers" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All offers</option><option value="received">Received</option><option value="sent">Sent</option></Select></label>
           <label><span className="sr-only">Sort offers</span><Select aria-label="Sort offers" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recent">Newest first</option><option value="ending">Ending soon</option><option value="price-high">Highest offer</option></Select></label>
         </div>
         {!offers.length ? (

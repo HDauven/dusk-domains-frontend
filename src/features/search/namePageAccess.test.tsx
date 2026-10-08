@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it } from 'vitest'
-import { namePageAccess, nameSections } from './namePageAccess'
+import { canOfferOn, namePageAccess, nameSections } from './namePageAccess'
+import { NameHeader } from './NameHeader'
 import { SearchResultPanel, type SearchResultPanelProps } from './SearchResultPanel'
 const props = {
   headerProps: { status: 'registered', displayName: 'alpha.dusk', records: [], viewerAuthority: '' },
@@ -163,4 +164,23 @@ it('shows primary clearing to the endpoint holder without name editing controls'
   expect(html).not.toContain('disabled=""')
   expect(html).not.toContain('>Records</')
   expect(html).not.toContain('>Settings</')
+})
+
+it('offers anyone but the owner a way to make an offer on a live second-level name', () => {
+  const live = { name: 'alpha.dusk', status: 'registered' as const, owner: '0xowner', expiresAt: 2_000, currentBlockHeight: 1_000, viewer: '' }
+  expect(canOfferOn(live)).toBe(true)
+  expect(canOfferOn({ ...live, viewer: '0xbuyer' })).toBe(true)
+  expect(canOfferOn({ ...live, viewer: '0xowner' })).toBe(false)
+  expect(canOfferOn({ ...live, name: 'swap.alpha.dusk' })).toBe(false)
+  expect(canOfferOn({ ...live, ownerIsContract: true })).toBe(false)
+  expect(canOfferOn({ ...live, currentBlockHeight: 2_000 })).toBe(false)
+  expect(canOfferOn({ ...live, status: 'available' })).toBe(false)
+  expect(canOfferOn({ ...live, owner: null })).toBe(false)
+})
+
+it('links the name header to the Offers tab with the name filled in', () => {
+  const header = (canMakeOffer: boolean) => renderToStaticMarkup(<NameHeader canMakeOffer={canMakeOffer} displayName="alpha.dusk" lifecycleLabel={null}
+    primaryVerified={false} owner="0xowner" records={[]} reserved={false} status="registered" />)
+  expect(header(true)).toMatch(/<a [^>]*href="\/market\/offer\/alpha.dusk"[^>]*>Make an offer<\/a>/)
+  expect(header(false)).not.toContain('Make an offer')
 })

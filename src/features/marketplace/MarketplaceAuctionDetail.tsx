@@ -157,9 +157,7 @@ function AuctionAction({
       <div className="marketplace-auction-action-stack"><p>Your name remains in escrow until the auction is finalized.</p></div>
     )
   }
-  if (!props.wallet.selectedAddress) {
-    return <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet to bid</Button>
-  }
+  // Visitors can work out a bid first. The wallet is needed only to review and sign it.
   const form = (
     <div className="marketplace-auction-action-stack">
       <label className="marketplace-bid-field">
@@ -181,7 +179,11 @@ function AuctionAction({
         {auction.highestBid ? <span title={`${formatLuxAsDusk(minimumBidLux(auction))} DUSK`}>Minimum {minimum} DUSK</span> : null}
         <Button type="button" onClick={() => props.auction.onBidDraftChange(auction.node, minimum)}>Use minimum</Button>
       </div>
-      <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.auction.onReviewBid(auction)}>Review bid</Button>
+      {!props.wallet.selectedAddress ? (
+        <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet to bid</Button>
+      ) : (
+        <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.auction.onReviewBid(auction)}>Review bid</Button>
+      )}
       <p className="marketplace-custody-note">Your full bid is locked in the marketplace contract. If you’re outbid, it becomes withdrawable marketplace balance.</p>
     </div>
   )

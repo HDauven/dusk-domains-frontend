@@ -79,6 +79,7 @@
   gap: var(--space-2);
   margin-top: 14px;
 }
+.name-hero-offer { margin-top: 14px; }
 
 /* Claim card: the term on the left, the price stub on the right. */
 .claim-card {
