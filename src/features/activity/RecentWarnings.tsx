@@ -12,7 +12,7 @@ function warningRecord(warning: RecentChangeWarning) {
 function recentWarningMessage(warning: RecentChangeWarning) {
   if (warning.code === 'recent_primary_name_change') return 'Apps check that it matches the address before showing it.'
   if (warning.code === 'recent_resolver_change') return 'Records now come from a different source. Check them before sending funds.'
-  return `Someone else changed ${warningRecord(warning) ?? 'this payment record'}. Check it before sending funds.`
+  return `${warningRecord(warning) ?? 'This payment record'} changed recently. Confirm it with the owner before sending funds.`
 }
 
 function recentWarningTitle(warning: RecentChangeWarning) {
