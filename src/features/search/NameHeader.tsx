@@ -1,5 +1,7 @@
 import { BrandVerification } from './BrandVerification'
-import type { NameVerification } from '../../names/verification'
+import { isWebsiteVerification } from '../../names/http/verification'
+import { WebsiteBadge } from '../../components/ui/WebsiteBadge'
+import type { WebsiteVerification } from '../../names/internal'
 import { Badge } from '../../components/ui/Badge'
 import { NameAvatar } from '../../components/brand/NameAvatar'
 import { NameSignature } from '../../components/ui/NameChip'
@@ -10,9 +12,9 @@ import { followLink, navigateTo, routePath } from '../../app/routes'
 
 const offerRoute = (offerName: string) => ({ view: 'marketplace' as const, offerName })
 
-export function NameHeader({ canMakeOffer = false, displayName, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [], verification }: {
-  verification?: NameVerification | null
+export function NameHeader({ canMakeOffer = false, displayName, verification, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
   canMakeOffer?: boolean
+  verification?: WebsiteVerification
   displayName: string
   lifecycleLabel: string | null
   primaryVerified: boolean
@@ -24,6 +26,7 @@ export function NameHeader({ canMakeOffer = false, displayName, lifecycleLabel, 
   viewerAuthority?: string
 }) {
   const registered = status === 'registered'
+  const websiteVerified = isWebsiteVerification(verification) && verification.status === 'verified'
   const avatar = records.find(record => record.key === 'avatar')?.value
   const description = records.find(record => record.key === 'text.description')?.value
   return <header className={`name-hero ${status}`}>
@@ -35,6 +38,7 @@ export function NameHeader({ canMakeOffer = false, displayName, lifecycleLabel, 
     <div className="name-hero-copy">
       {registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={[...ownerAddresses, ...records.filter(record => record.key === 'moonlight_address').map(record => record.value)]} /></div> : null}
       <div className="name-hero-badges">
+        {registered && websiteVerified ? <WebsiteBadge verification={verification} /> : null}
         {reserved ? <Badge status="reserved">Reserved</Badge> : !registered ? <Badge>{statusCopy(status)}</Badge> : null}
         {registered ? <BrandVerification name={displayName} verification={verification} explain /> : null}
         {registered && primaryVerified ? <Badge tone="success">Primary name</Badge> : null}

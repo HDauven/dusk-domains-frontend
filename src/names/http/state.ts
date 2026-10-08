@@ -1,3 +1,4 @@
+import type { WebsiteVerification } from './verification'
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
 import type { CoreFeeConfig } from '../ui/names'
 import type { DuskPrincipal } from '../principals'
@@ -93,6 +94,7 @@ export type IndexedNamespace = NamespaceSummary & {
 }
 
 export type IndexedLifecycleName = {
+  verification?: WebsiteVerification
   registrationPremiumLux?: number
   premiumLux?: number
   premiumEndsAt?: string | null
@@ -181,6 +183,7 @@ export type IndexedReversePrimaryName = {
 }
 
 export type IndexedSubname = {
+  verification?: WebsiteVerification
   parentNode: string
   node: string
   parentName: string
@@ -218,7 +221,7 @@ export type IndexedMarketplaceConfig = {
 }
 
 export type IndexedMarketplaceFixedSale = {
-  verification?: import('../verification').NameVerification | null
+  verification?: WebsiteVerification
   order?: import('@duskdomains/sdk').Order
   returnPending?: boolean
   saleId: number
@@ -245,7 +248,7 @@ export type IndexedMarketplaceBid = {
 }
 
 export type IndexedMarketplaceAuction = {
-  verification?: import('../verification').NameVerification | null
+  verification?: WebsiteVerification
   order?: import('@duskdomains/sdk').Order
   returnPending?: boolean
   auctionId: number

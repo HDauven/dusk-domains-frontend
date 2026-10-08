@@ -1,3 +1,4 @@
+import { isWebsiteVerification } from '../../names/http/verification'
 import { createManagedNameState, type ManagedNameState } from '../../app/managedNameState'
 import { lifecycleHeightFromIndexed, renewalGraceEnd, unixSecondsFromIso } from '../domains/domainFormat'
 import type { IndexedNameReadBundle } from './indexedNameReads'
@@ -44,6 +45,8 @@ export function applyIndexedNameHydration(
       })
     managedName = {
       node,
+      ...(isWebsiteVerification(indexed.verification) && JSON.stringify(indexed.verification) === JSON.stringify(forwardRead.value?.verification)
+        ? { websiteVerification: { owner: indexed.owner ?? '', website: forwardRead.value?.records.find(record => record.key === 'website')?.value ?? '', result: indexed.verification } } : {}),
       ancestors: indexed.namespace?.ancestors,
       owner: indexed.owner ?? '',
       manager: indexed.manager ?? '',

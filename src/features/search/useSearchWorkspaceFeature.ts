@@ -1,3 +1,4 @@
+import { boundWebsiteVerification } from '../../names/http/verification'
 import { ownerAddressCandidates } from '../identity/ownerLabel'
 import type { ComponentProps } from 'react'
 import type { SearchWorkspace } from './SearchWorkspace'
@@ -9,7 +10,6 @@ type SearchResultView = SearchWorkspaceProps['result']['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
   abuseUrl?: string | null
-  verification?: SearchWorkspaceProps['result']['headerProps']['verification']
   referralAddress?: string
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
   priceTiers?: SearchWorkspaceProps['search']['priceTiers']
@@ -60,7 +60,6 @@ type UseSearchWorkspaceFeatureProps = {
 
 export function useSearchWorkspaceFeature({
   abuseUrl,
-  verification,
   referralAddress,
   premiumResult,
   priceTiers,
@@ -155,7 +154,7 @@ export function useSearchWorkspaceFeature({
         },
       },
       headerProps: {
-        verification,
+        verification: managedName.node === nodeHex ? boundWebsiteVerification(managedName, parentResolverRecords.find(record => record.key === 'website')?.value ?? '') : undefined,
         ownerAddresses,
         viewerAuthority,
         displayName,

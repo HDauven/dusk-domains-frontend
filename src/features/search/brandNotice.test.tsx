@@ -30,7 +30,7 @@ it('shows the notice when resuming a saved reservation', () => {
 })
 
 it.each([undefined, null, {}, { status: 'unverified' }, { status: 'pending' }, { status: 'expired' }, { status: 'verified' }])('uses website verification independently of primary-name verification: %j', verification => {
-  const html = renderToStaticMarkup(<NameHeader displayName="google.dusk" lifecycleLabel={null} primaryVerified records={[]} reserved={false} status="registered" verification={verification} />)
+  const html = renderToStaticMarkup(<NameHeader displayName="google.dusk" lifecycleLabel={null} primaryVerified records={[]} reserved={false} status="registered" verification={verification as never} />)
   expect(html.includes('>Unverified</span>')).toBe(verification?.status !== 'verified')
   expect(html.includes('Not verified by google. Check before trusting it.')).toBe(verification?.status !== 'verified')
 })

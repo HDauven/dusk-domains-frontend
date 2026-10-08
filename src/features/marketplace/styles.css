@@ -850,3 +850,5 @@
 .marketplace-owner { color: var(--muted); font-size: var(--text-sm); margin: 8px 0; }
 .marketplace-owner .owner-identity { display: inline; }
 .marketplace-owner code { overflow-wrap: anywhere; }
+
+.listing-name .website-badge { margin-left: var(--space-2); vertical-align: middle; }

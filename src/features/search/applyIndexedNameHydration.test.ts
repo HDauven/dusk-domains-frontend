@@ -154,3 +154,17 @@ it('does not hydrate an empty lifecycle when a registered name state is missing'
   } as never, { canonical: 'alpha.dusk', status: 'registered' } as never)).rejects.toThrow('Name data is unavailable')
   expect(actions.domain.hydrate).not.toHaveBeenCalled()
 })
+
+it('hydrates website verification only when both indexer views agree', () => {
+  const verification = { domain: 'harbourline.com', status: 'verified', checkedAt: new Date().toISOString(), dnssec: false }
+  for (const forwardVerification of [verification, { ...verification, status: 'unverified' }, undefined]) {
+    let managed = createManagedNameState('resolver')
+    const actions = searchActions({ domain: { hydrate: snapshot => { managed = snapshot.managedName } } })
+    applyIndexedNameHydration({ ...actions, currentBlockHeight: 1_000, nowSeconds: 1_790_000_000, recordSourceContractId: 'resolver' } as never, {
+      activityRead: { value: [], error: null }, forwardRead: { value: { records: [{ key: 'website', value: 'https://harbourline.com' }], verification: forwardVerification }, error: null },
+      hydratedSubnames: [], node: 'node', ownSubnameRead: { value: null, error: null }, primaryName: null, readErrors: [],
+      stateRead: { value: { owner: 'alice', manager: 'alice', verification }, error: null },
+    } as never)
+    expect(managed.websiteVerification).toEqual(forwardVerification === verification ? { owner: 'alice', website: 'https://harbourline.com', result: verification } : undefined)
+  }
+})

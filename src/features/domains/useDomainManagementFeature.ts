@@ -1,3 +1,4 @@
+import { boundWebsiteVerification } from '../../names/http/verification'
 import { useCallback, useLayoutEffect, useRef } from 'react'
 import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { canControlSubname } from './namespaceActions'
@@ -173,6 +174,17 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       },
     },
     settingsProps: {
+      websiteVerification: {
+        onRefresh: () => searchRuntime.refreshCurrentNameFromIndexer({ fresh: true }),
+        website: domainRecordState.parentResolverRecords?.find(record => record.key === 'website')?.value ?? '',
+        verification: boundWebsiteVerification(domainState.managedName, domainRecordState.parentResolverRecords?.find(record => record.key === 'website')?.value ?? ''),
+        onCheck: appRuntime.indexerClient ? async () => {
+          const node = namePreview.nodeHex
+          domainState.setManagedName(current => current.node === node ? { ...current, websiteVerification: undefined } : current)
+          await appRuntime.indexerClient!.verifyWebsite(namePreview.displayName)
+          if (!await searchRuntime.refreshCurrentNameFromIndexer({ fresh: true })) throw new Error('Could not refresh website verification. Try again.')
+        } : undefined,
+      },
       displayName: namePreview.displayName,
       managedName: domainState.managedName,
       ownership: {
