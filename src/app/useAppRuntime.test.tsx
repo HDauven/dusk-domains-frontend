@@ -5,6 +5,8 @@ import { expect, it, vi } from 'vitest'
 import { useAppRuntime } from './useAppRuntime'
 
 it('keeps one runtime config when the env object is rebuilt with the same values', async () => {
+  // Provider discovery must not outlive this test's DOM.
+  vi.useFakeTimers()
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   const configs = new Set<unknown>()
   function Probe({ tick }: { tick: number }) {
@@ -23,5 +25,8 @@ it('keeps one runtime config when the env object is rebuilt with the same values
   } finally {
     await act(async () => { root.unmount() })
     container.remove()
+    vi.clearAllTimers()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
   }
 })

@@ -1,3 +1,4 @@
+import { readSharedHealth } from '../../app/sharedIndexerHealth'
 import { searchActions } from './test-fixtures/searchActions'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
@@ -88,6 +89,7 @@ it.each(['open', 'search'])('clears ownership when %s succeeds but hydration hea
   await openIndexedName(actions, 'mine.dusk')
   expect(managedName).toMatchObject({ node: namehashHex('mine.dusk'), owner: 'viewer', manager: 'viewer' })
   client.getHealth.mockRejectedValue(new Error('offline'))
+  await readSharedHealth(client as never, true).catch(() => {})
   if (action === 'open') await openIndexedName(actions, 'other.dusk')
   else await checkAvailability(actions)
   expect(client.searchName).toHaveBeenLastCalledWith('other.dusk')

@@ -36,9 +36,9 @@ export function useSearchAppState(accountScope: string, opening?: () => Opening)
         setIndexerConfirmation('')
       },
       open: (view: SearchResultView) => { setChecked(true); setResultView(view) },
-      showResult: (result: NameResult | null) => setApiSearchResult(result),
+      showResult: (result: NameResult | null) => { setApiSearchResult(result); if (result) setIndexerError('') },
       showView: (view: SearchResultView) => setResultView(view),
-      startRead: () => { setIndexerError(''); setIndexerConfirmation('') },
+      startRead: () => { setIndexerConfirmation('') },
       fail: (message: string) => setIndexerError(message),
       confirm: (message: string) => setIndexerConfirmation(message),
       updateClock: (height: number | null, seconds?: number) => {

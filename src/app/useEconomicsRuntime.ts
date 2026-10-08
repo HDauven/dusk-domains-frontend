@@ -9,7 +9,7 @@ type TreasuryFeatureArgs = Parameters<typeof useTreasuryFeature>[0]
 type ReferralFeatureArgs = Parameters<typeof useReferralFeature>[0]
 
 type UseEconomicsRuntimeArgs =
-  & Omit<TreasuryFeatureArgs, 'feeConfig' | 'feeConfigError' | 'feeConfigLoading' | 'loadFeeConfig'>
+  & Omit<TreasuryFeatureArgs, 'feeConfig' | 'feeConfigError' | 'feeConfigLoading' | 'feeConfigLoaded' | 'loadFeeConfig'>
   & Pick<ReferralFeatureArgs, 'selectedAuthority' | 'selectedReferralKey' | 'selectedTypedPrincipalResult'>
   & {
     mainView: AppMainView
@@ -33,6 +33,7 @@ export function useEconomicsRuntime({
   const {
     feeConfig,
     feeConfigError,
+    feeConfigLoaded,
     feeConfigLoading,
     loadFeeConfig,
   } = useFeeConfig(indexerClient)
@@ -44,6 +45,7 @@ export function useEconomicsRuntime({
     indexerClient,
     feeConfig,
     feeConfigError,
+    feeConfigLoaded,
     feeConfigLoading,
     liveDuskDomainsApp,
     loadFeeConfig,
@@ -91,8 +93,10 @@ export function useEconomicsRuntime({
     appliedReferral,
     feeConfig,
     feeConfigError,
+    feeConfigLoaded,
     feeConfigLoading,
     loadReferralAccount,
+    loadFeeConfig,
     loadTreasuryView,
     referralsProps,
     resetReferralCopied,

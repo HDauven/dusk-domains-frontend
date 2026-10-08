@@ -1,0 +1,70 @@
+import { afterEach, expect, it, vi } from 'vitest'
+import { getJson } from './http'
+
+afterEach(() => vi.useRealTimers())
+
+it.each(['2', new Date(2_000).toUTCString()])('honours Retry-After %s, shares the cooldown and retries only once', async retryAfter => {
+  vi.useFakeTimers({ now: 0 })
+  const fetcher = vi.fn().mockResolvedValue(new Response('', { status: 429, headers: { 'Retry-After': retryAfter } }))
+  const first = getJson(fetcher, 'http://indexer.test/api/names').catch(error => error)
+  await vi.advanceTimersByTimeAsync(0)
+  const second = getJson(fetcher, 'http://indexer.test/api/treasury').catch(error => error)
+  await vi.advanceTimersByTimeAsync(1_999)
+  expect(fetcher).toHaveBeenCalledTimes(1)
+  await vi.runAllTimersAsync()
+  expect(await first).toBeInstanceOf(Error)
+  expect(await second).toBeInstanceOf(Error)
+  expect(fetcher).toHaveBeenCalledTimes(4)
+})
+
+it('retries network failures after five seconds and caps Retry-After at one minute', async () => {
+  vi.useFakeTimers()
+  const fetcher = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValue(Response.json([]))
+  const result = getJson(fetcher, 'http://network.test/api/names').catch(error => error)
+  await vi.advanceTimersByTimeAsync(4_999)
+  expect(fetcher).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(await result).toEqual([])
+  const limited = vi.fn().mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '99999' } })).mockResolvedValue(Response.json([]))
+  const capped = getJson(limited, 'http://capped.test/api/names')
+  await vi.advanceTimersByTimeAsync(59_999)
+  expect(limited).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(await capped).toEqual([])
+})
+
+it('does not retry other HTTP failures', async () => {
+  const fetcher = vi.fn().mockResolvedValue(new Response('', { status: 503 }))
+  await expect(getJson(fetcher, 'http://other.test/api/names')).rejects.toThrow('503')
+  expect(fetcher).toHaveBeenCalledTimes(1)
+})
+
+it.each([['TypeError', 200], ['AbortError', 200], ['TimeoutError', 200], ['TypeError', 503]] as const)('retries a response-body %s (HTTP %s) once and shares its cooldown', async (name, status) => {
+  vi.useFakeTimers()
+  const error = name === 'TypeError' ? new TypeError('Connection lost') : new DOMException('Connection lost', name)
+  const fetcher = vi.fn(async () => new Response(new ReadableStream({ start(controller) { controller.error(error) } }), { status }))
+  const result = getJson(fetcher, 'http://body.test/api/names').catch(error => error)
+  await vi.advanceTimersByTimeAsync(4_999)
+  expect(fetcher).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(fetcher).toHaveBeenCalledTimes(2)
+  expect(await result).toBe(error)
+  const next = getJson(fetcher, 'http://body.test/api/treasury').catch(error => error)
+  await vi.advanceTimersByTimeAsync(4_999)
+  expect(fetcher).toHaveBeenCalledTimes(2)
+  await vi.runAllTimersAsync()
+  expect(await next).toBe(error)
+  expect(fetcher).toHaveBeenCalledTimes(4)
+})
+
+it('recovers from a dropped body without retrying invalid JSON', async () => {
+  vi.useFakeTimers()
+  const fetcher = vi.fn().mockResolvedValueOnce(new Response(new ReadableStream({ start(controller) { controller.error(new TypeError('Connection lost')) } })))
+    .mockImplementation(async () => Response.json([]))
+  const result = getJson(fetcher, 'http://body.test/api/names').catch(error => error)
+  await vi.advanceTimersByTimeAsync(5_000)
+  expect(await result).toEqual([])
+  const malformed = vi.fn(async () => new Response('{'))
+  await expect(getJson(malformed, 'http://body.test/api/names')).rejects.toBeInstanceOf(SyntaxError)
+  expect(malformed).toHaveBeenCalledTimes(1)
+})

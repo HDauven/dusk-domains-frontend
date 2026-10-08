@@ -34,9 +34,9 @@ export async function openPendingReservation(
       indexedOwnCommitment(indexerClient, reservation.commitment, reservation.controller),
     ])
     if (!isCurrent()) return
-    search.showResult(nextResult)
     await hydrateNameFromIndexer(indexerClient, nextResult, isCurrent)
     if (!isCurrent()) return
+    search.showResult(nextResult)
 
     if (nextResult.status === 'registered') {
       clearRegisteredPendingReservations({

@@ -1,3 +1,4 @@
+import { ReadNotice } from '../../components/status/ReadNotice'
 import { matchesAuctionSelection } from './orderIdentity'
 import { useContext } from 'react'
 import { NetworkFreshnessContext } from '../../app/networkFreshness'
@@ -33,6 +34,8 @@ const tabs: Array<{ id: MarketplaceTab; label: string }> = [
 export function MarketplaceView(props: MarketplaceViewProps) {
   const { wallet: { actionsAvailable }, feedback: { confirmation, error, txState }, market: { loading, marketplaceEnabled }, navigation: { onTabChange, tab }, withdrawal: { refund } } = props
   const networkNotice = useContext(NetworkFreshnessContext)
+  const unread = props.market.hasData === false
+  const readError = props.market.readError || networkNotice || ''
   const syncing = error === MARKETPLACE_SYNC_MESSAGE
   const selectedAuction = props.listings.auctions.find((auction) => matchesAuctionSelection(auction, props.auction.selectedAuctionNode)) ?? null
 
@@ -50,8 +53,9 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <p>{offer.name}: the seller still holds {offer.count} subnames. Taking them back clears their records and primary names.</p>
         <Button disabled={!actionsAvailable} onClick={offer.takeBack}>Take back {offer.count} subnames</Button>
       </Panel>)}
+      {readError ? <ReadNotice error={readError} hasData={!unread} onRetry={props.market.onRetry} /> : null}
       <PanelFeedbackStack confirmation={confirmation} error={syncing ? undefined : error} />
-      {syncing && !networkNotice ? <p className="marketplace-freshness" role="status">{error}</p> : null}
+      {!readError && syncing && !networkNotice ? <p className="marketplace-freshness" role="status">{error}</p> : null}
 
       {!marketplaceEnabled ? (
         <PanelMessage icon={<Store size={18} />}>Marketplace is not enabled for this deployment.</PanelMessage>
@@ -76,11 +80,11 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <details className="marketplace-tx-details"><summary>Details</summary><p>Transaction <code>{txState.txId}</code></p></details>
       ) : txState ? <TransactionStatusNotice state={txState} /> : null}
 
-      {loading && !props.listings.fixedSales.length && !props.listings.auctions.length && !props.offers.offers.length ? (
+      {!readError && loading && !props.listings.fixedSales.length && !props.listings.auctions.length && !props.offers.offers.length ? (
         <PanelMessage icon={<RefreshCw size={18} />}>Loading marketplace</PanelMessage>
       ) : null}
 
-      {props.auction.selectedAuctionNode ? (
+      {unread ? (props.auction.selectedAuctionNode ? <h1 id="marketplace-heading">Auction</h1> : null) : props.auction.selectedAuctionNode ? (
         selectedAuction ? <MarketplaceAuctionDetail selectedAuction={selectedAuction} {...props} /> : <div><h1 id="marketplace-heading">Auction</h1><PanelMessage icon={<Store size={18} />}>{loading ? 'Loading auction…' : 'This auction is no longer open.'}</PanelMessage><Button onClick={props.auction.onCloseAuction}>All listings</Button></div>
       ) : <TabPanel id="marketplace-views" value={tab}>
         {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse {...props} /> : null}

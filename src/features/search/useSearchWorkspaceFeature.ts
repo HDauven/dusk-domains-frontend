@@ -44,6 +44,8 @@ type UseSearchWorkspaceFeatureProps = {
   recordsProps: SearchWorkspaceProps['result']['management']['recordsProps']
   registrationFee: number
   registrationProps: SearchWorkspaceProps['result']['registrationProps']
+  readError?: string
+  onRetry?: () => void
   resultReady: boolean
   resultStatus: SearchWorkspaceProps['result']['headerProps']['status']
   resultIssues: SearchWorkspaceProps['result']['overviewProps']['resultIssues']
@@ -92,6 +94,8 @@ export function useSearchWorkspaceFeature({
   recordsProps,
   registrationFee,
   registrationProps,
+  readError,
+  onRetry,
   resultReady,
   resultStatus,
   resultIssues,
@@ -117,6 +121,8 @@ export function useSearchWorkspaceFeature({
       onQueryChange,
       query,
       resultReady,
+      readError,
+      onRetry,
     },
     result: {
       abuseUrl,

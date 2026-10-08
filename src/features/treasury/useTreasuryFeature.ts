@@ -12,6 +12,7 @@ export function useTreasuryFeature({
   indexerClient,
   feeConfig,
   feeConfigError,
+  feeConfigLoaded,
   feeConfigLoading,
   liveDuskDomainsApp,
   loadFeeConfig,
@@ -39,6 +40,7 @@ export function useTreasuryFeature({
     treasuryTxState,
   } = feedbackState
   const {
+    treasuryLoaded,
     treasuryError,
     treasuryLoading,
     treasuryState,
@@ -109,6 +111,8 @@ export function useTreasuryFeature({
   })
 
   const treasuryProps: TreasuryViewProps = {
+    treasuryLoaded,
+    onRetry: () => void loadTreasuryView(),
     treasuryConfirmation,
     treasuryError,
     treasuryLoading,
@@ -138,6 +142,7 @@ export function useTreasuryFeature({
       feeConfigConfirmation,
       feeConfigError,
       feeConfigForm,
+      feeConfigLoaded,
       feeConfigLoading,
       feeConfigTxState,
       feeConfigUpdateError,

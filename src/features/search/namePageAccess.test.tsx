@@ -206,3 +206,12 @@ it.each(['available', 'reserved', 'invalid'] as const)('does not offer reporting
 it('does not render a dead report link without a configured destination', () => {
   expect(renderToStaticMarkup(<SearchResultPanel {...props} />)).not.toContain('Report this name')
 })
+
+it('shows loading instead of lifecycle, owner or empty records until the open node is hydrated', () => {
+  const html = renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+    headerProps={{ ...props.headerProps, lifecycleLabel: 'Renews by tomorrow' }}
+    management={{ ...props.management, settingsProps: { ...props.management.settingsProps, managedName: { ...props.management.settingsProps.managedName, node: 'previous-node' } } }} />)
+  expect(html).toContain('Loading owner, expiry and records')
+  expect(html).not.toContain('Renews by')
+  expect(html).not.toContain('No addresses yet')
+})

@@ -10,6 +10,8 @@ export function usePendingReservations({
   chainId,
   directory,
   currentCommitment,
+  committedBlockHeight,
+  currentBlockHeight,
   getCurrentBlockHeight,
   indexerClient,
   refreshListView,
@@ -32,6 +34,8 @@ export function usePendingReservations({
   } = useCommitmentBlockRefresh({
     chainId,
     currentCommitment,
+    committedBlockHeight,
+    currentBlockHeight,
     getCurrentBlockHeight,
     indexerClient,
     loadPendingReservations,
@@ -43,6 +47,7 @@ export function usePendingReservations({
   const {
     refreshPendingReservationsFromIndexer,
   } = useSavedPendingReservationRefresh({
+    currentBlockHeight,
     indexerClient,
     getCurrentBlockHeight,
     loadPendingReservations,

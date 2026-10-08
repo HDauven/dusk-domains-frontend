@@ -113,7 +113,7 @@ export async function checkIndexerSessionBudget(page) {
     }
     stages.pagedTwice = await page.evaluate(() => window.sessionCalls.length)
     assert.equal(await page.evaluate(() => window.sessionError || ''), '')
-    assert.deepEqual(stages, { home: 3, search: 9, name: 16, marketplace: 24, pagedTwice: 30 })
+    assert.deepEqual(stages, { home: 3, search: 9, name: 16, marketplace: 23, pagedTwice: 29 })
     const beforeSixty = stages.pagedTwice
     assert.equal(await page.evaluate(() => window.readSixtyChildren()), 60)
     assert.equal(await page.evaluate(() => window.sessionCalls.length) - beforeSixty, 7)

@@ -1,5 +1,8 @@
+import { useAutoRefresh } from '../../app/useAutoRefresh'
+import { useSingleFlight } from '../../app/useSingleFlight'
 import { useCallback, useEffect } from 'react'
 import {
+  registrationCommitWindow,
   type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
@@ -7,6 +10,7 @@ import type { CurrentBlockHeightReader } from '../../app/duskNodeHeight'
 import { refreshPendingReservationsFromIndexer as refreshSavedPendingReservationsFromIndexer } from './pendingReservationSync'
 
 export function useSavedPendingReservationRefresh({
+  currentBlockHeight,
   indexerClient,
   getCurrentBlockHeight,
   loadPendingReservations,
@@ -15,6 +19,7 @@ export function useSavedPendingReservationRefresh({
   setCurrentBlockHeight,
   setNowSeconds,
 }: {
+  currentBlockHeight: number | null
   indexerClient: DuskDomainsIndexerClient | null
   getCurrentBlockHeight: CurrentBlockHeightReader
   loadPendingReservations: () => PendingNameReservation[]
@@ -47,35 +52,20 @@ export function useSavedPendingReservationRefresh({
     setNowSeconds,
   ])
 
+  const refresh = useSingleFlight(refreshPendingReservationsFromIndexer, refreshPendingReservationsFromIndexer)
+  const enabled = refreshListView && pendingReservations.length > 0
   useEffect(() => {
-    if (!refreshListView || (!indexerClient && !getCurrentBlockHeight) || pendingReservations.length === 0) return
-
-    let cancelled = false
-    const refresh = async () => {
-      if (cancelled) return
-      try {
-        await refreshPendingReservationsFromIndexer()
-      } catch {
-        // My names keeps the saved reservation visible; the next refresh can update readiness.
-      }
-    }
-
-    void refresh()
-    const intervalId = globalThis.setInterval(() => {
-      void refresh()
-    }, 4_000)
-
-    return () => {
-      cancelled = true
-      globalThis.clearInterval(intervalId)
-    }
-  }, [
-    indexerClient,
-    getCurrentBlockHeight,
-    pendingReservations.length,
-    refreshListView,
-    refreshPendingReservationsFromIndexer,
-  ])
+    let active = true
+    queueMicrotask(() => {
+      if (active && enabled && document.visibilityState !== 'hidden') void refresh().catch(() => {})
+    })
+    return () => { active = false }
+  }, [enabled, refresh])
+  const waiting = pendingReservations.some(reservation => {
+    const status = registrationCommitWindow(reservation.committedBlockHeight, currentBlockHeight).status
+    return status !== 'ready' && status !== 'stale'
+  })
+  useAutoRefresh(refresh, enabled, waiting ? 10_000 : Math.max(180_000, pendingReservations.length * 60_000))
 
   return {
     refreshPendingReservationsFromIndexer,

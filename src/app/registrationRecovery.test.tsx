@@ -37,7 +37,7 @@ function Probe({ session }: { session: Session }) {
     explicitlyDisconnected: session.status === 'disconnected',
     mainView: 'search', indexerClient: null, getCurrentBlockHeight,
     preparedCommit: registration.preparedCommit, setPreparedCommit: registration.setPreparedCommit,
-    setCurrentBlockHeight: search.setCurrentBlockHeight, setNowSeconds: search.setNowSeconds,
+    currentBlockHeight: search.currentBlockHeight, setCurrentBlockHeight: search.setCurrentBlockHeight, setNowSeconds: search.setNowSeconds,
   })
   const commitWindow = registrationCommitWindow(registration.preparedCommit?.committedBlockHeight, search.currentBlockHeight)
   const capabilities = deriveRegistrationCapabilities({

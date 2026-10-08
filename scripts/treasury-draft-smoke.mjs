@@ -29,7 +29,7 @@ export async function checkPricingDraft(page) {
   const draft = page.getByRole('textbox',{name:'Draft price'})
   await draft.fill('123')
   await page.evaluate(async () => { window.pricingFails = true; await window.refreshPricing() })
-  await page.locator('#pricing-error').filter({hasText:'unavailable'}).waitFor()
+  await page.locator('#pricing-error').filter({hasText:"Couldn't refresh. Retrying…"}).waitFor()
   assert.equal(await page.locator('#live-price').textContent(), '91', 'Failed refresh retains the last live prices')
   assert.equal(await draft.inputValue(), '123', 'Failed refresh retains the operator draft')
   await page.evaluate(async () => { window.pricingFails = false; window.livePrice = 92; await window.refreshPricing() })

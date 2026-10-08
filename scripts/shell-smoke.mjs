@@ -73,7 +73,7 @@ export async function checkAppShell(page) {
   await page.waitForFunction(count => window.shellRefreshes > count, before)
   await page.evaluate(() => window.dispatchEvent(new Event('dusk-domains:write-confirmed')))
   await page.waitForFunction(count => window.shellRefreshes > count + 1, before)
-  await page.clock.runFor(30_000)
+  await page.clock.runFor(180_000)
   await page.waitForFunction(count => window.shellRefreshes > count + 2, before)
 
   await page.evaluate(async () => {
@@ -140,7 +140,7 @@ export async function checkAppShell(page) {
   await page.getByRole('dialog').getByRole('button', { name:'Disconnect',exact:true }).click()
   assert.equal(await page.evaluate(() => window.disconnected), true, 'Wallet menu controls receive pointer events inside the home shell')
   const finishedRefreshes = await page.evaluate(() => window.shellRefreshes)
-  await page.clock.runFor(30_000)
+  await page.clock.runFor(180_000)
   assert.equal(await page.evaluate(() => window.shellRefreshes), finishedRefreshes, 'Refresh listeners and timers stop on unmount')
   await page.evaluate(async () => {
     const {React,root} = window
@@ -172,7 +172,7 @@ export async function checkNetworkFreshness(page) {
     const { MarketplaceView } = await import('/src/features/marketplace/MarketplaceView.tsx')
     window.health = { ok: true, lagBlocks: 0, cursor: { updatedAt: new Date().toISOString() } }
     window.healthReads = 0
-    const client = { getHealth: async () => { window.healthReads++; return window.health } }
+    const client = { getHealth: async () => { window.healthReads++; if (!window.health) throw new Error('Offline'); return window.health } }
     const config = { mode: 'live_ready', liveWritesEnabled: true, warnings: [], missingLiveInputs: [] }
     const noop = () => {}
     root.render(React.createElement(AppShell, {
@@ -230,17 +230,19 @@ export async function checkNetworkFreshness(page) {
     for (const [health, message] of [
       [{ ok: true, lagBlocks: 50 }, 'catching up'],
       [{ ok: true, lagBlocks: 0, cursor: { updatedAt: new Date(Date.now() - 180_000).toISOString() } }, 'behind'],
-      [null, 'unavailable'],
+      [null, "Couldn't refresh. Retrying…"],
     ]) {
-      await page.evaluate(value => { window.health = value; window.dispatchEvent(new Event('focus')) }, health)
-      await page.locator('.network-status').filter({ hasText: message }).waitFor()
+      await page.evaluate(value => { window.health = value; document.dispatchEvent(new Event('visibilitychange')) }, health)
+      await page.locator('.marketplace-panel [role="status"]').filter({ hasText: message }).waitFor()
+      assert.equal(await page.locator('.network-status').count(), 0, 'Read feedback belongs to the page, with no duplicate shell banner')
+      assert.equal(await page.locator('.marketplace-panel [role="status"]').count(), 1)
       assert.equal(await page.locator('.marketplace-freshness').count(), 0, 'A network warning replaces market freshness')
     }
     await page.evaluate(() => {
       window.health = { ok: true, lagBlocks: 0, cursor: { updatedAt: new Date().toISOString() } }
-      window.dispatchEvent(new Event('focus'))
+      document.dispatchEvent(new Event('visibilitychange'))
     })
-    await page.locator('.network-status').waitFor({ state: 'detached' })
+    await page.locator('.marketplace-panel .search-status').waitFor({ state: 'detached' })
     await page.locator('.marketplace-freshness').waitFor()
   }
 }

@@ -54,6 +54,7 @@ export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused,
     searching,
   } = navigation
   const freshness = useIndexerFreshness(networkStatus?.client ?? null, networkStatus?.config.mode !== 'live_ready')
+  const pageShowsReadNotice = mainView === 'marketplace' || mainView === 'treasury' || (mainView === 'search' && searching)
   return (
     <div className={mainView === 'search' && !searching ? 'page at-home' : 'page'}>
       <SkyBackground names={skyNames} onOpenName={onOpenName} />
@@ -69,7 +70,7 @@ export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused,
         walletStatus={walletStatus}
       />
 
-      {networkStatus ? <NetworkStatus readOnly={networkStatus.readOnly} config={networkStatus.config} message={freshness} /> : null}
+      {networkStatus ? <NetworkStatus readOnly={networkStatus.readOnly} config={networkStatus.config} message={pageShowsReadNotice || runtimeNotice ? null : freshness} /> : null}
 
       {runtimeNotice ? (
         <RuntimeNotice notice={runtimeNotice} />

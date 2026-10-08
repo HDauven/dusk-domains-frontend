@@ -23,11 +23,13 @@ it('rejects stale, malformed and unreachable health before reading projections, 
   health = { ...(health as object), ok: true }
   await expect(client.getNames()).resolves.toEqual([])
   expect(fetcher.mock.calls.at(-1)?.[0]).toBe('http://localhost:8793/api/names')
-  vi.setSystemTime(Date.now() + 5_001)
+  vi.setSystemTime(Date.now() + 60_001)
   health = { ok: true }
   await expect(client.getNames()).rejects.toThrow('invalid health')
-  fetcher.mockRejectedValueOnce(new TypeError('Failed to fetch'))
-  await expect(client.getNames()).rejects.toThrow('Failed to fetch')
+  fetcher.mockRejectedValue(new TypeError('Failed to fetch'))
+  const failed = expect(client.getNames()).rejects.toThrow('Failed to fetch')
+  await vi.runAllTimersAsync()
+  await failed
 })
 
 it('waits for healthy finalized coverage, not just a current head, and times out safely', async () => {
@@ -76,7 +78,7 @@ it('reuses recent health for concurrent reads but refreshes explicit and expired
   expect(fetcher.mock.calls.filter(([url]) => String(url).includes('/health'))).toHaveLength(1)
   await client.getNames()
   expect(fetcher).toHaveBeenCalledTimes(62)
-  vi.setSystemTime(Date.now() + 5_001)
+  vi.setSystemTime(Date.now() + 60_001)
   await client.getNames()
   expect(fetcher).toHaveBeenCalledTimes(64)
   ok = false

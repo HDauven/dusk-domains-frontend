@@ -9,6 +9,7 @@ export type UseRegistrationRuntimeArgs = {
   explicitlyDisconnected?: boolean
   directory?: string
   chainId: string
+  currentBlockHeight: number | null
   getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   mainView: AppMainView
@@ -24,6 +25,7 @@ export function useRegistrationRuntime({
   explicitlyDisconnected,
   chainId,
   directory,
+  currentBlockHeight,
   getCurrentBlockHeight,
   indexerClient,
   mainView,
@@ -43,6 +45,8 @@ export function useRegistrationRuntime({
     chainId,
   directory,
     currentCommitment: preparedCommit?.commitment ?? '',
+    committedBlockHeight: preparedCommit?.committedBlockHeight ?? null,
+    currentBlockHeight,
     getCurrentBlockHeight,
     indexerClient,
     refreshListView: mainView === 'my-names' || mainView === 'search',

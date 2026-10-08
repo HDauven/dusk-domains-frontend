@@ -1,6 +1,9 @@
+import { useAutoRefresh } from '../../app/useAutoRefresh'
+import { useSingleFlight } from '../../app/useSingleFlight'
 import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'react'
 import {
   currentUnixSeconds,
+  registrationCommitWindow,
   type DuskDomainsIndexerClient,
   type PendingNameReservation,
 } from '../../names/internal'
@@ -11,6 +14,8 @@ import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 export function useCommitmentBlockRefresh({
   chainId,
   currentCommitment,
+  committedBlockHeight,
+  currentBlockHeight,
   getCurrentBlockHeight,
   indexerClient,
   loadPendingReservations,
@@ -21,6 +26,8 @@ export function useCommitmentBlockRefresh({
 }: {
   chainId: string
   currentCommitment: string
+  committedBlockHeight: number | null
+  currentBlockHeight: number | null
   getCurrentBlockHeight: CurrentBlockHeightReader
   indexerClient: DuskDomainsIndexerClient | null
   loadPendingReservations: () => PendingNameReservation[]
@@ -55,37 +62,21 @@ export function useCommitmentBlockRefresh({
     setPreparedCommit,
   ])
 
+  const read = useCallback(async () => {
+    setNowSeconds(currentUnixSeconds())
+    return refreshCommitBlockState(currentCommitment)
+  }, [currentCommitment, refreshCommitBlockState, setNowSeconds])
+  const refresh = useSingleFlight(read, read)
+  const status = registrationCommitWindow(committedBlockHeight, currentBlockHeight).status
+  const waiting = Boolean(currentCommitment) && status !== 'ready' && status !== 'stale'
   useEffect(() => {
-    let cancelled = false
-    globalThis.queueMicrotask(() => {
-      if (!cancelled) setNowSeconds(currentUnixSeconds())
+    let active = true
+    queueMicrotask(() => {
+      if (active && waiting && document.visibilityState !== 'hidden') void refresh().catch(() => {})
     })
-    if (!currentCommitment || (!indexerClient && !getCurrentBlockHeight)) {
-      return () => {
-        cancelled = true
-      }
-    }
-
-    const refresh = async () => {
-      if (cancelled) return
-      setNowSeconds(currentUnixSeconds())
-      try {
-        await refreshCommitBlockState(currentCommitment)
-      } catch {
-        // The reveal transaction remains the final readiness check.
-      }
-    }
-
-    void refresh()
-    const intervalId = globalThis.setInterval(() => {
-      void refresh()
-    }, 2_000)
-
-    return () => {
-      cancelled = true
-      globalThis.clearInterval(intervalId)
-    }
-  }, [currentCommitment, getCurrentBlockHeight, indexerClient, refreshCommitBlockState, setNowSeconds])
+    return () => { active = false }
+  }, [waiting, refresh])
+  useAutoRefresh(refresh, waiting, 2_500)
 
   return {
     refreshCommitBlockState,
