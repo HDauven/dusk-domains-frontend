@@ -20,3 +20,7 @@ it('links to both legal pages', () => {
   expect(render()).toContain('<a href="/terms">Terms</a>')
   expect(render()).toContain('<a href="/privacy">Privacy</a>')
 })
+
+it('credits Mochavi as the builder', () => {
+  expect(render()).toContain('Built by <a href="https://www.mochavi.com/">Mochavi</a>')
+})

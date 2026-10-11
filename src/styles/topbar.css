@@ -120,6 +120,11 @@
   color: var(--ink);
 }
 
+.site-footer p a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .site-footer nav {
   display: flex;
   flex-wrap: wrap;
