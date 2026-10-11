@@ -1,4 +1,5 @@
 import { validateRecordValue as validateFrozenRecord } from '@duskdomains/sdk'
+import { unicodeInputError } from '../unicode'
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
 import {
   checksumEthereumAddress,
@@ -220,6 +221,8 @@ export function getRecordDefinition(key: ResolverRecordKey): RecordDefinition | 
 }
 
 export function validateRecordValue(key: ResolverRecordKey, value: string): string[] {
+  const unicodeError = unicodeInputError(key, 'Record key') ?? unicodeInputError(value, 'Record value')
+  if (unicodeError) return [unicodeError]
   const messages = {
     invalid_address: 'Enter a valid address.',
     invalid_url: 'Use a valid HTTPS URL.',

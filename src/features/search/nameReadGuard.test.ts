@@ -2,6 +2,7 @@ import { searchActions } from './test-fixtures/searchActions'
 import { describe, expect, it, vi } from 'vitest'
 import type { NameResult } from '../../names/internal'
 import { checkAvailability } from './actions/checkAvailability'
+import { openIndexedName } from './actions/openIndexedName'
 import { createNameReadGuard } from './nameReadGuard'
 import type { UseSearchControllerProps } from './searchControllerTypes'
 
@@ -13,6 +14,24 @@ function deferred<T>() {
 }
 
 const result = (canonical: string) => ({ canonical, status: 'available' }) as NameResult
+
+it.each(['search', 'open'] as const)('refuses malformed Unicode locally on %s without an indexer request', async action => {
+  const actions = searchActions()
+  const searchName = vi.fn()
+  const hydrateNameFromIndexer = vi.fn()
+  const query = 'bad\uD800.dusk'
+  const props = { ...actions, query, indexerClient: { searchName }, hydrateNameFromIndexer,
+    openSearchView: vi.fn(), beginNameRead: createNameReadGuard(),
+  } as unknown as UseSearchControllerProps
+  await (action === 'search' ? checkAvailability(props) : openIndexedName(props, query))
+  expect(actions.search.open).toHaveBeenLastCalledWith('overview')
+  expect(actions.search.showResult).toHaveBeenLastCalledWith(expect.objectContaining({
+    status: 'invalid', transactionBlocked: true,
+    issues: [{ tone: 'danger', text: 'Name contains malformed Unicode. Remove or retype the invalid character.' }],
+  }))
+  expect(searchName).not.toHaveBeenCalled()
+  expect(hydrateNameFromIndexer).not.toHaveBeenCalled()
+})
 
 describe('name read guard', () => {
   it('keeps only the newest read current', () => {

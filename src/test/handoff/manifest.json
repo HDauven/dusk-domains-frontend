@@ -46,8 +46,8 @@
         "sha256": "ae32955e981e7a5ec40394819103ae268a6168ca824eec785cc645b54df0cf53"
       },
       "driver": {
-        "path": "contracts/dusk-domains-policy.09d70fc24e17ff5d42d77d47b08f3614659f00455433a163146e17431e6c1473.data-driver.wasm",
-        "sha256": "09d70fc24e17ff5d42d77d47b08f3614659f00455433a163146e17431e6c1473"
+        "path": "contracts/dusk-domains-policy.371eddac967b98d01b522823a2bffd568d285bbb50d3a1dca48f4c41942e4959.data-driver.wasm",
+        "sha256": "371eddac967b98d01b522823a2bffd568d285bbb50d3a1dca48f4c41942e4959"
       }
     },
     "vault": {
@@ -56,8 +56,8 @@
         "sha256": "e71d5c25c4f59b33fb97b8ae06ea845c05b6d6c049f86027f0ef07e32748c876"
       },
       "driver": {
-        "path": "contracts/dusk-domains-vault.0306d0aee3294b680039abd0501ee1b2e0f6b0a8888df9d45c0b0f744f369896.data-driver.wasm",
-        "sha256": "0306d0aee3294b680039abd0501ee1b2e0f6b0a8888df9d45c0b0f744f369896"
+        "path": "contracts/dusk-domains-vault.c35c56e16438aaa0c730965cd304f4f89edd9c9bb918bc4b9b3d6e2b36719c7b.data-driver.wasm",
+        "sha256": "c35c56e16438aaa0c730965cd304f4f89edd9c9bb918bc4b9b3d6e2b36719c7b"
       }
     },
     "resolver": {
@@ -66,8 +66,8 @@
         "sha256": "5489e9554b1fc28a03fa66a50f52c1768d8476aafca5c9ff6a4663a4cea89ce2"
       },
       "driver": {
-        "path": "contracts/dusk-domains-frozen-resolver.4d1c0b24404375bc22e31d1316fb26b7b2664b4107ab2f1f193b4060d1e457d0.data-driver.wasm",
-        "sha256": "4d1c0b24404375bc22e31d1316fb26b7b2664b4107ab2f1f193b4060d1e457d0"
+        "path": "contracts/dusk-domains-frozen-resolver.39eac0945da0330b123938bf2ea586e8ba3ddf466ca050864b0e5a297bb3d51b.data-driver.wasm",
+        "sha256": "39eac0945da0330b123938bf2ea586e8ba3ddf466ca050864b0e5a297bb3d51b"
       }
     },
     "store": {
@@ -76,8 +76,8 @@
         "sha256": "8bdca79579e0d80aa3d27a0710ef37481c91d6311e90bf86a1593a6e6708d825"
       },
       "driver": {
-        "path": "contracts/dusk-domains-store.f4421b2b099f9d7b0d2ea2750ccd1d388333366b22b04d0626a8e7e535c58046.data-driver.wasm",
-        "sha256": "f4421b2b099f9d7b0d2ea2750ccd1d388333366b22b04d0626a8e7e535c58046"
+        "path": "contracts/dusk-domains-store.8922d20a3dacaa4ab2ea13d55030e61c4689f2831309ce1cea213695b7eeb4b3.data-driver.wasm",
+        "sha256": "8922d20a3dacaa4ab2ea13d55030e61c4689f2831309ce1cea213695b7eeb4b3"
       }
     },
     "marketplace": {
@@ -86,8 +86,8 @@
         "sha256": "26bb98bbf8fc52bbb826a454b5d57b334fa384257dcb18d0daf5ee76d5bf1639"
       },
       "driver": {
-        "path": "contracts/dusk-domains-marketplace-v1.eb31c92cc7c94abf56d5ce363b744b190dae3dc3a1190d001a09cb5b2738da66.data-driver.wasm",
-        "sha256": "eb31c92cc7c94abf56d5ce363b744b190dae3dc3a1190d001a09cb5b2738da66"
+        "path": "contracts/dusk-domains-marketplace-v1.4889993cd0e5bfd5c255c821462f3e4de0da71ba2fdae115d699ecadb86e778a.data-driver.wasm",
+        "sha256": "4889993cd0e5bfd5c255c821462f3e4de0da71ba2fdae115d699ecadb86e778a"
       }
     },
     "directory": {
@@ -96,8 +96,8 @@
         "sha256": "80f442cf483beff5ead84d979c2a316d3993ff2a294a03049c728d13978c3b3f"
       },
       "driver": {
-        "path": "contracts/dusk-domains-directory.559878a0d8d10fcc7cb005d73f388adb7a96cbfd7e8a5c81dda582372933839f.data-driver.wasm",
-        "sha256": "559878a0d8d10fcc7cb005d73f388adb7a96cbfd7e8a5c81dda582372933839f"
+        "path": "contracts/dusk-domains-directory.f7bd4412d9781ebbdd74b6415cc14d063bcbddacb01ca579e237b2daa7e2a645.data-driver.wasm",
+        "sha256": "f7bd4412d9781ebbdd74b6415cc14d063bcbddacb01ca579e237b2daa7e2a645"
       }
     }
   },

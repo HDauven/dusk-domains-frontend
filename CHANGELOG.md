@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Route released-name registration through eligible retirement successors while preserving saved commitments and dropped-name premiums.
+
 - Show DNS website verification from the current owner and website binding, with recoverable pending checks.
 
 - Check availability when Search or Enter is pressed, not after each typed letter, so the page stays still while typing.

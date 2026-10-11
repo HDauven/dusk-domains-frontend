@@ -1,4 +1,4 @@
-import { userFacingErrorMessage } from '../../../names/internal'
+import { analyzeName, validateName, userFacingErrorMessage } from '../../../names/internal'
 import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
@@ -10,6 +10,10 @@ export async function checkAvailability(props: UseSearchControllerProps) {
   search.open('overview')
   search.showResult(null)
   registration.review()
+  if (!validateName(query).ok) {
+    search.showResult(analyzeName(query))
+    return
+  }
   if (!indexerClient) return
 
   activity.startLoading()

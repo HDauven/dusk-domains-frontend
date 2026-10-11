@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it } from 'vitest'
 import { DEFAULT_FEE_CONFIG, REGISTRATION_YEAR_BLOCKS } from '../../names/internal'
 import { useNamePreview } from './useNamePreview'
+import { SearchResultOverview } from './SearchResultOverview'
 
 it('previews a grace renewal from the old expiry', () => {
   function Preview() {
@@ -24,3 +25,23 @@ it.each(['docs.alice.dusk', 'docs.wallet.dusk'])('keeps %s out of public root re
   }
   expect(renderToStaticMarkup(<Preview />)).toBe('<output>false</output>')
 })
+
+it.each(['bad\uD800', 'bad\uDC00', 'bad\uD800x.alpha.dusk'])(
+  'shows a clear validation message without crashing the name preview for %j', query => {
+    function Preview() {
+      const { canRegister, nodeHex, result } = useNamePreview({ apiSearchResult: null, query, currentBlockHeight: 100,
+        duration: 1, feeConfig: DEFAULT_FEE_CONFIG, managedNameExpiresAt: 200,
+        nowSeconds: 1_790_000_000, renewalYears: 1 })
+      expect(canRegister).toBe(false)
+      expect(nodeHex).toBe('')
+      expect(result.status).toBe('invalid')
+      return <SearchResultOverview canRegister={canRegister} displayName={result.displayName}
+        resultStatus={result.status} resultIssues={result.issues}
+        onContinueRegistration={() => { throw new Error('Invalid name must not be registered') }} onViewDetails={() => {}}
+        quote={{} as never} reservation={{} as never} />
+    }
+    const markup = renderToStaticMarkup(<Preview />)
+    expect(markup).toContain('Name contains malformed Unicode. Remove or retype the invalid character.')
+    expect(markup).not.toContain('<button')
+  },
+)

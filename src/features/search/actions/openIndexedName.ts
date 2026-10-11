@@ -1,5 +1,5 @@
 import { clearRegisteredPendingReservations } from '../../registration/clearRegisteredPendingReservations'
-import { userFacingErrorMessage } from '../../../names/internal'
+import { analyzeName, validateName, userFacingErrorMessage } from '../../../names/internal'
 import { resetSearchState } from '../searchControllerReset'
 import type { UseSearchControllerProps } from '../searchControllerTypes'
 
@@ -8,6 +8,11 @@ export async function openIndexedName(props: UseSearchControllerProps, name: str
 
   openSearchView()
   resetSearchState(props, name)
+  if (!validateName(name).ok) {
+    search.open('overview')
+    search.showResult(analyzeName(name))
+    return
+  }
   search.open(indexerClient ? 'details' : 'overview')
   if (!indexerClient) return
 

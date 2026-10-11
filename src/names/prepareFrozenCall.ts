@@ -1,7 +1,7 @@
 import * as sdk from '@duskdomains/sdk'
 import { SETTLEMENT_WINDOW_BLOCKS } from './marketplaceProtocol'
 import type * as T from './commandTypes'
-import { endpointBytes, local, registrationQuote, requireName } from './reads'
+import { endpointBytes, local, requireName } from './reads'
 import { createDuskDomainsIndexerClient } from './http/client'
 import { namehashHex } from './hash'
 import { prepareRecordMutations } from './recordMutations'
@@ -61,7 +61,17 @@ export async function prepareFrozenCall(
     if (!pending) throw new Error('Reservation is missing or expired. Reserve this name again.')
     if (sdk.registrationCommitWindow(pending.created_at, height).status !== 'ready')
       throw new Error('Reservation is outside the reveal window')
-    const priced = await registrationQuote(client, spelling, a.durationYears, '0x' + sdk.hex(actor))
+    const priced = await client.prepareRegistration({
+      actor,
+      label: a.label,
+      years: a.durationYears,
+      secret: bytes(a.secret),
+      commitmentStore: a.commitmentStore,
+      commitHeight: pending.created_at,
+      referrer: a.referrer,
+      records: a.records.map((r) => sdk.createRecordInput(r.key, r.value, BigInt(r.ttlSeconds))),
+      primary: a.primaryEndpoint ? endpointBytes(a.primaryEndpoint.endpointValue) : null,
+    })
     if (BigInt(priced.quote.total_lux) !== BigInt(a.feeLux)) throw changed()
     if (request.quote && sdk.stringifyJson(request.quote) !== sdk.stringifyJson(priced.quote)) {
       // The observation height may change; economic and policy bindings must not.
@@ -73,18 +83,7 @@ export async function prepareFrozenCall(
       )
         throw changed()
     }
-    const call = sdk.registrationCalls(priced.store, {
-      actor,
-      label: a.label,
-      years: a.durationYears,
-      secret: bytes(a.secret),
-      commitmentStore: a.commitmentStore,
-      commitHeight: pending.created_at,
-      quote: priced.quote,
-      referrer: a.referrer,
-      records: a.records.map((r) => sdk.createRecordInput(r.key, r.value, BigInt(r.ttlSeconds))),
-      primary: a.primaryEndpoint ? endpointBytes(a.primaryEndpoint.endpointValue) : null,
-    }).reveal
+    const call = priced.calls.reveal
     return describe(call, `Register ${spelling} for ${years(a.durationYears)}: ${money(call.deposit)}`, {
       Duration: years(a.durationYears), Price: money(call.deposit),
       Records: a.records.map(record => record.key).join(', ') || 'None',

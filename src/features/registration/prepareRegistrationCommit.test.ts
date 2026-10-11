@@ -29,7 +29,7 @@ function args() {
   return {
     canPrepareCommit: true, displayName: 'resume.dusk', nodeHex: namehashHex('resume.dusk'), duration: 1,
     selectedAddress: 'owner', selectedAuthority: controller, runtimeConfig: { chainId: 'dusk:0', contracts },
-    liveDuskDomainsApp: {client:Promise.resolve({getName:async()=>({store:contracts.store.contractId})})}, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
+    liveDuskDomainsApp: {client:Promise.resolve({registrationPlacement:async()=>({store:contracts.store.contractId})})}, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
     getCurrentBlockHeight: async () => 500, setCommitTxState: noop, setWalletError: vi.fn(),
     setRegistrationCompletion: noop, setPreparedCommit: noop, setCurrentBlockHeight: noop,
