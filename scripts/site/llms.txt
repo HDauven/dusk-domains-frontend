@@ -34,6 +34,7 @@
 
 ## Developers
 
+- [Developers](%DUSK_DOMAINS_SITE_URL%/developers): resolve a name with the API or the SDK, and this network's contract IDs.
 - [Read API](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md): the public indexer API at %DUSK_DOMAINS_SITE_URL%/api, for names, records, activity and the market.
 - [SDK](https://jsr.io/@duskdomains/sdk): TypeScript SDK on JSR to resolve names, verify primary names and build transactions ([source](https://github.com/HDauven/dusk-domains-sdk)).
 - [Frontend source](https://github.com/HDauven/dusk-domains-frontend): the code for this site.

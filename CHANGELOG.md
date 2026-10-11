@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a Developers page at `/developers` (and `/docs`): resolve a name with curl against the site's API or with the SDK, this network's contract IDs and deployment manifest, and links to the SDK on JSR, its source, the API reference and `llms.txt`. The footer links to it and to the SDK, API and `llms.txt`.
+- Make the SDK example work with what the site publishes: it converts a deploy tool manifest to the SDK's format, or loads the manifest the page lists. A test runs it against the frozen handoff.
+
 - Explain the two claim signatures in the claim flow: the first reserves the name without revealing it, the second registers it and pays.
 - State who controls a registered name, matching the Terms: its owner and its manager, and that a manager can change its records and subnames but can't transfer it. Say so on the owner's name page, in the claim confirmation, on the Treasury and developers pages and in Terms section 5.
 - Point the Terms, Privacy Notice and `llms.txt` at the support@, abuse@ and security@dusk.domains addresses the site links to, instead of GitHub forms. Legal pages render plain mailto links.

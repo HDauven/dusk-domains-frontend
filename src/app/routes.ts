@@ -11,6 +11,7 @@ const viewPaths: Record<AppMainView, string> = {
   treasury: '/treasury',
   terms: '/terms',
   privacy: '/privacy',
+  developers: '/developers',
 }
 
 export function parseRoute(pathname: string): AppRoute {
@@ -34,6 +35,8 @@ function parseDecodedRoute(pathname: string): AppRoute {
   if (auction) return { view: 'marketplace', auctionNode: auction[1].toLowerCase() }
   const name = /^\/name\/([^/]+)$/.exec(path)
   if (name) return { view: 'search', name: dotDusk(decodeURIComponent(name[1])) }
+  // /docs is where people look for developer documentation; it is the developers page.
+  if (path === '/docs') return { view: 'developers' }
   const view = (Object.keys(viewPaths) as AppMainView[]).find((key) => viewPaths[key] === path)
   return { view: view ?? 'search' }
 }

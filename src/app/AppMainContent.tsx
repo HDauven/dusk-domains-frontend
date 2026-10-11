@@ -5,10 +5,12 @@ import { ReferralsView } from '../features/referrals/ReferralsView'
 import { SearchWorkspace } from '../features/search/SearchWorkspace'
 import { TreasuryView } from '../features/treasury/TreasuryView'
 import { LegalPage } from '../legal/LegalPage'
+import { DevelopersPage } from '../features/developers/DevelopersPage'
 import type { AppMainView } from './AppTypes'
 import { OwnershipConfirmationNotice } from './OwnershipConfirmationNotice'
 
 export function AppMainContent({
+  developersProps,
   ownershipConfirmationProps,
   mainView,
   marketplaceProps,
@@ -17,6 +19,7 @@ export function AppMainContent({
   searchProps,
   treasuryProps,
 }: {
+  developersProps?: ComponentProps<typeof DevelopersPage>
   ownershipConfirmationProps: ComponentProps<typeof OwnershipConfirmationNotice>
   mainView: AppMainView
   marketplaceProps: ComponentProps<typeof MarketplaceView>
@@ -28,6 +31,7 @@ export function AppMainContent({
   return (
     <>
       {mainView === 'terms' || mainView === 'privacy' ? <LegalPage page={mainView} /> : null}
+      {mainView === 'developers' && developersProps ? <DevelopersPage {...developersProps} /> : null}
       <OwnershipConfirmationNotice {...ownershipConfirmationProps} />
       {mainView === 'search' ? (
         <SearchWorkspace {...searchProps} />
