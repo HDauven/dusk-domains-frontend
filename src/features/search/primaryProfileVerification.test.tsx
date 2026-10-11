@@ -4,12 +4,16 @@ import { expect, it, vi } from 'vitest'
 import { deriveAppDerivedState } from '../../app/derived/deriveAppDerivedState'
 import { createManagedNameState } from '../../app/managedNameState'
 import { namehashHex } from '../../names/internal'
+import { authorityHexFromPublicSender, decodeBase58 } from '@duskdomains/sdk'
 import { SearchResultPanel, type SearchResultPanelProps } from './SearchResultPanel'
 import { useIndexedNameHydration } from './useIndexedNameHydration'
 import type { ResolverRecordSets } from './indexedNameHydrationTypes'
 
 const aliceAddress = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
 const bobAddress = '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r'
+
+const bobAuthority = authorityHexFromPublicSender(decodeBase58(bobAddress)!)
+const aliceAuthority = authorityHexFromPublicSender(decodeBase58(aliceAddress)!)
 
 it.each([
   { visitor: 'disconnected', selectedAddress: '', indexedPrimary: null },
@@ -18,14 +22,14 @@ it.each([
   { visitor: 'Bob', selectedAddress: bobAddress, indexedPrimary: 'bob.dusk' },
 ])('keeps Bob’s hydrated profile verified for $visitor', async ({ selectedAddress, indexedPrimary }) => {
   const name = 'bob.dusk', node = namehashHex(name)
-  const selectedAuthority = selectedAddress === bobAddress ? 'bob' : selectedAddress ? 'alice' : ''
+  const selectedAuthority = selectedAddress === bobAddress ? bobAuthority : selectedAddress ? aliceAuthority : ''
   const records = [{ key: 'moonlight_address', value: bobAddress }]
   let managedName = createManagedNameState('resolver')
   let primaryName: string | null = null, connectedPrimaryName: string | null = null, primaryEndpointValue = ''
   let recordSets: ResolverRecordSets = {}
   const indexerClient = {
     getHealth: vi.fn(async () => ({ ok: true, currentBlockHeight: 100 })),
-    getNameState: vi.fn(async () => ({ owner: 'bob', manager: 'bob', expiresAtBlockHeight: 200, graceEndsAtBlockHeight: 300 })),
+    getNameState: vi.fn(async () => ({ owner: bobAuthority, manager: bobAuthority, expiresAtBlockHeight: 200, graceEndsAtBlockHeight: 300 })),
     resolveForward: vi.fn(async () => ({ records, verificationStatus: 'forward_resolved', resolver: { health: 'ok' }, expiry: { status: 'active' } })),
     getPrimaryName: vi.fn(async ({ value }: { value: string }) => value === bobAddress ? name : indexedPrimary),
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
@@ -90,7 +94,7 @@ it.each([
 it('drops the verified signal when a hydrated name reaches expiry', () => {
   const state = deriveAppDerivedState({
     displayName: 'bob.dusk', nodeHex: 'node', selectedAddress: bobAddress, selectedAuthority: 'bob',
-    managedName: { node: 'node', owner: 'bob', manager: 'bob', expiresAt: 200, graceEndsAt: 300 },
+    managedName: { node: 'node', owner: bobAuthority, manager: bobAuthority, expiresAt: 200, graceEndsAt: 300 },
     currentBlockHeight: 200, nowSeconds: 0, moonlightRecord: { key: 'moonlight_address', value: bobAddress },
     primaryName: 'bob.dusk', primaryEndpointValue: bobAddress, connectedPrimaryName: 'bob.dusk',
     pendingReservations: [], subnames: [], subnameLabel: '', subnameManager: '', confirmationInput: '', recordDraftMutations: [], recordDraftErrors: [],

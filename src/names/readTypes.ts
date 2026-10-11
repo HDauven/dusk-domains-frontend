@@ -111,7 +111,8 @@ export type DuskDomainsOnChainClient = {
     name: string,
     key?: DuskDomainsOnChainRecordKey,
   ) => Promise<DuskDomainsResult<DuskDomainsOnChainResolvedName>>
-  getPrimaryName: (endpoint: DuskEndpoint) => Promise<DuskDomainsResult<string>>
+  /** Authority-gated resolution, including incarnation, lifecycle and forward verification. */
+  getPrimaryName: (endpoint: DuskEndpoint) => Promise<DuskDomainsResult<string | null>>
   /** Read the stored mapping for endpoint cleanup, without lifecycle or forward verification. */
   readPrimaryName: (
     endpoint: DuskEndpoint,

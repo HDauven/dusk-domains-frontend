@@ -4,11 +4,7 @@ import type { IndexedNameSummary } from '../../../names/internal'
 import { pluralize } from '../../../utils/format'
 import type { MyNamePrimarySummary } from '../MyDomainsView'
 import { nameCardLifecycle } from './nameCardLifecycle'
-
-// Verified primary for the address the name points to; it is only yours when that address is.
-function isOwnPrimary(primary: MyNamePrimarySummary | undefined, paysElsewhere: boolean) {
-  return primary?.tone === 'success' && !paysElsewhere
-}
+import { indexedPrimaryIsActive } from '../indexedPrimary'
 
 export function NameCard({
   currentBlockHeight,
@@ -34,7 +30,7 @@ export function NameCard({
     <NamePortrait verification={name.verification} name={name.canonicalName} avatar={avatar} description={description} onOpen={() => onOpen(name.canonicalName)}>
       <span className={`name-card-life ${life.tone}`}>{life.copy}</span>
       <span className="name-card-tags">
-        {isOwnPrimary(primary, paysElsewhere) ? <Badge tone="success">Primary name</Badge> : null}
+        {primary?.tone === 'success' && address === selectedAddress && indexedPrimaryIsActive(name, currentBlockHeight) ? <Badge tone="success">Primary name</Badge> : null}
         {address ? null : <Badge tone="warning">No address</Badge>}
         {paysElsewhere ? <Badge tone="warning">Pays another wallet</Badge> : null}
         {name.subnameCount ? <Badge tone="neutral">{name.subnameCount} {pluralize(name.subnameCount, 'subname')}</Badge> : null}

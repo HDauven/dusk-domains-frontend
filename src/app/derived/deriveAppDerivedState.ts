@@ -69,12 +69,13 @@ export function deriveAppDerivedState({
     primaryVerification,
   } = derivePrimaryState({
     displayName,
-    expiresAt: managedName?.node === nodeHex ? managedName.expiresAt : 0,
+    managedName: managedName?.node === nodeHex ? managedName : null,
     currentBlockHeight,
     nowSeconds,
     moonlightRecord,
     primaryEndpointValue,
     primaryName,
+    connectedPrimaryName,
     selectedAddress,
   })
   const commitWindow = registrationCommitWindow(preparedCommit?.committedBlockHeight, currentBlockHeight)

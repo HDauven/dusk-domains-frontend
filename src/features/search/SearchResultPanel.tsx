@@ -62,9 +62,14 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
   const reportUrl = headerProps.status === 'registered' ? reportNameUrl(abuseUrl, headerProps.displayName) : null
+  const primaryControl = primaryProps?.primaryVerification ? <PrimaryNameControl {...primaryProps} /> : undefined
+  const hasPrimaryCleanup = primaryProps?.canClearPrimary || Boolean(primaryProps?.primaryVerification?.cleanupDescription)
   const content = <>
-    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit || primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : undefined} /> : null}
-    {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <DomainSettingsView {...settingsProps} isOwner={isOwner} /> : null}
+    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit || hasPrimaryCleanup ? primaryControl : undefined} /> : null}
+    {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <>
+      <DomainSettingsView {...settingsProps} isOwner={isOwner} />
+      {canEdit ? primaryControl : null}
+    </> : null}
     {nodeHex && view === 'subnames' ? <SubdomainsView {...subdomainsProps}
       onRecordTargetSelect={subname => onOpenName?.(subname.name)}
       authority={{ ...subdomainsProps.authority, ownerAddresses: headerProps.ownerAddresses, canEdit }} /> : null}
@@ -98,7 +103,7 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
     </> : null}
     {view === 'overview' ? <>
       <SearchResultOverview {...overviewProps} />
-      {primaryProps?.canClearPrimary ? <PrimaryNameControl {...primaryProps} /> : null}
+      {hasPrimaryCleanup ? primaryControl : null}
     </> : null}
     {tabbed ? <TabPanel id="name-sections" value={view}>{content}</TabPanel> : content}
     {reportUrl ? <a className="name-report field-note" href={reportUrl} target="_blank" rel="noreferrer">Report this name</a> : null}

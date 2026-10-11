@@ -20,7 +20,7 @@ it.each(['transfer', 'take-back', 'missing name'])('clears the connected address
   const state = deriveAppDerivedState(input as never)
   expect(state.canClearPrimary).toBe(true)
   expect(state.canSetPrimary).toBe(false)
-  expect(state.primaryVerification.verified).toBe(reason === 'transfer')
+  expect(state.primaryVerification.verified).toBe(false)
   const submitNameWrite = Object.assign(vi.fn(async () => ({ status: 'executed', txId: 'clear' })), { captureWorkspace: () => () => true })
   const setPrimaryName = vi.fn(), setConnectedPrimaryName = vi.fn()
   await clearPrimaryDomainName({ ...state, displayName: ready.displayName, selectedAuthority: ready.selectedAuthority,

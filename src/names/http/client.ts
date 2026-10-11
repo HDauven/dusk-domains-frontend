@@ -337,8 +337,9 @@ export function createDuskDomainsIndexerClient(
     )
 
     const name = primaryNameFromPayload(payload, endpoint)
-    if (name && (!isRecord(payload) || !('endpoint' in payload))) {
+    if (name) {
       const forward = await resolveForward(name)
+      if (forward.verificationStatus !== 'forward_resolved' || forward.expiry.status !== 'active' || forward.resolver.health !== 'ok') return null
       assertRequestMatch(
         forward.records.some((record) => record.key === endpoint.type && record.value === endpoint.value),
         'reverse',

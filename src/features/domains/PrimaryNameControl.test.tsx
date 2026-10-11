@@ -12,7 +12,7 @@ it('labels the primary switch and describes it separately from its checked state
     expect(descriptionId).toBeTruthy()
     expect(html).toContain(`<label id="${labelId}"`)
     expect(html).toContain('>Primary name</label>')
-    expect(html).toContain(`<p id="${descriptionId}">Apps show alpha.dusk for this Dusk address.</p>`)
+    expect(html).toContain(`<p id="${descriptionId}">${verified ? 'Apps show alpha.dusk for this Dusk address.' : 'Turn on to use alpha.dusk as the primary name for your Dusk address.'}</p>`)
     expect(html).toContain(`role="switch" aria-checked="${verified}"`)
     expect(html).not.toMatch(/>(On|Off)<\/button>/)
   }

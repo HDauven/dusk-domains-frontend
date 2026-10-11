@@ -7,7 +7,7 @@ import {
   type DuskDomainsIndexerClient,
   type IndexedNameSummary,
 } from '../../names/internal'
-import { myNamePrimarySummaryFromIndex } from './domainFormat'
+import { readIndexedPrimarySummaries } from './indexedPrimary'
 import { fetchWalletScopedNames } from './myDomainsData'
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
@@ -37,39 +37,7 @@ export function useMyDomains({
   useLayoutEffect(() => () => { myNamesRequestId.current++ }, [indexerClient, selectedAddress, selectedAuthority])
 
   const loadMyNamePrimarySummaries = useCallback(async (names: IndexedNameSummary[]) => {
-    if (!indexerClient) return {}
-
-    const entries = await Promise.all(names.map(async (name): Promise<[string, MyNamePrimarySummary]> => {
-      const indexedSummary = myNamePrimarySummaryFromIndex(name)
-      if (indexedSummary) return [name.node, indexedSummary]
-
-      const moonlight = name.records.find((record) => record.key === 'moonlight_address')
-
-      if (!moonlight) {
-        return [name.node, { label: 'No address', tone: 'muted' }]
-      }
-
-      try {
-        const primary = await indexerClient.getPrimaryName({
-          type: 'moonlight_address',
-          value: moonlight.value,
-        })
-
-        if (primary === name.canonicalName) {
-          return [name.node, { label: 'Verified', tone: 'success' }]
-        }
-
-        if (primary) {
-          return [name.node, { label: 'Not primary', tone: 'warning' }]
-        }
-
-        return [name.node, { label: 'No primary', tone: 'warning' }]
-      } catch {
-        return [name.node, { label: 'Primary unknown', tone: 'warning' }]
-      }
-    }))
-
-    return Object.fromEntries(entries)
+    return indexerClient ? readIndexedPrimarySummaries(indexerClient, names) : {}
   }, [indexerClient])
 
   const setLoadedMyNames = useCallback(async (
