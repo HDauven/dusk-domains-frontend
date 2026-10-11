@@ -15,6 +15,8 @@ type UseSearchWorkspaceFeatureProps = {
   abuseUrl?: string | null
   referralAddress?: string
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
+  /** Apps that support .dusk names, from the deployment's configuration. */
+  nameSupport?: SearchWorkspaceProps['result']['detailsProps']['nameSupport']
   priceTiers?: SearchWorkspaceProps['search']['priceTiers']
   pricingRules?: SearchWorkspaceProps['search']['pricingRules']
   activityEntries: SearchWorkspaceProps['result']['activityProps']['activityEntries']
@@ -79,6 +81,7 @@ export function useSearchWorkspaceFeature({
   abuseUrl,
   referralAddress,
   premiumResult,
+  nameSupport,
   priceTiers,
   pricingRules,
   activityEntries,
@@ -174,6 +177,7 @@ export function useSearchWorkspaceFeature({
       },
       detailsProps: {
         displayName,
+        nameSupport,
         onManageRecords: () => onResultViewChange('records'),
         onSubdomains: () => onResultViewChange('subnames'),
         parentResolverRecords,

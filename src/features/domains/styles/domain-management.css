@@ -108,3 +108,13 @@
 .verification-record dd { margin: var(--space-1) 0 0; display: flex; align-items: center; gap: var(--space-2); }
 .verification-record code { overflow-wrap: anywhere; min-width: 0; }
 .verification-record .copy-control { flex-shrink: 0; white-space: nowrap; }
+
+.name-support {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}

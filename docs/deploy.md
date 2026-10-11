@@ -35,6 +35,13 @@ filled copies out of git. Never put credentials in a `VITE_` variable.
 block explorer: `https://explorer.dusk.network` on mainnet and
 `https://apps.testnet.dusk.network/explorer` on testnet. Leave it empty to hide the links.
 
+`VITE_DUSK_DOMAINS_NAME_WALLETS` lists the wallets that can send to a `.dusk` name and
+`VITE_DUSK_DOMAINS_NAME_EXPLORERS` the explorers that show `.dusk` names. A name's owner sees
+them under "How people pay you", and the "Send to" box names the wallets. Each is
+comma-separated, an entry being `Name` or `Name|https://link`. A link that isn't https is
+dropped, and a name listed twice keeps its first entry. Leave them empty until that
+support ships; the page then says wallets can't send to `.dusk` names yet.
+
 `VITE_DUSK_DOMAINS_SITE_URL` is an HTTP(S) origin (default `https://dusk.domains`).
 It supplies the canonical, social and structured-data URLs and generated crawler
 files. `VITE_DUSK_DOMAINS_OTHER_NETWORK_URL` adds a small footer link.

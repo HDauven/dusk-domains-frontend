@@ -93,6 +93,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     referralAddress: appRuntime.runtimeConfig.capabilities.referralAttribution && walletRuntime.walletSetupState === 'connected'
       ? walletRuntime.selectedAddress : '',
     premiumResult: result,
+    nameSupport: appRuntime.runtimeConfig.nameSupport,
     priceTiers: !economicsRuntime.feeConfigLoaded ? undefined : ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
     pricingRules: economicsRuntime.feeConfigLoaded ? pricingRules(economicsRuntime.feeConfig) : undefined,
     hasMoreActivity: activityFeed.hasMoreActivity,

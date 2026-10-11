@@ -1,6 +1,10 @@
 import type { ContractRole, ReleaseManifest } from '@duskdomains/sdk'
 import type { DuskDomainContractMap } from './commandTypes'
 export type DuskDomainsRuntimeEnv = Record<string, string | boolean | undefined>
+/** An app that supports .dusk names, with an optional https link. */
+export type NameIntegration = { name: string; url: string | null }
+/** Wallets that can send to a .dusk name and explorers that show .dusk names. Empty until support ships. */
+export type NameSupport = { wallets: NameIntegration[]; explorers: NameIntegration[] }
 export type DuskDomainsRuntimeConfig = {
   mode: 'preview' | 'live_ready'
   contracts: DuskDomainContractMap
@@ -14,6 +18,7 @@ export type DuskDomainsRuntimeConfig = {
   indexerUrl: string | null
   /** A block explorer origin, such as https://explorer.dusk.network, for transaction links. */
   explorerUrl: string | null
+  nameSupport: NameSupport
   nodeUrl: string
   chainId: string
   liveWritesEnabled: boolean
@@ -25,6 +30,20 @@ export const roles = ['directory', 'policy', 'store', 'vault', 'resolver', 'mark
 export const isPlaceholderContractId = (id: string) =>
   !/^(?:0x)?[a-f\d]{64}$/i.test(id) || /^0x?0+$/.test(id) || /^0+$/.test(id)
 const validUrl = (value: string) => /^\/(?!\/)/.test(value) || /^https?:\/\//.test(value)
+// Comma-separated entries, each "Name" or "Name|https://link". A link that isn't plain https is dropped,
+// and a name listed again, in any case, keeps its first entry.
+function nameIntegrations(value: string): NameIntegration[] {
+  const seen = new Set<string>()
+  return value.split(',').map(entry => entry.trim()).filter(Boolean).map(entry => {
+    const [name, link = ''] = entry.split(/\|(.*)/s).map(part => part.trim())
+    return { name, url: /^https:\/\/[^\s"'<>]+$/.test(link) ? link : null }
+  }).filter(entry => {
+    const key = entry.name.toLowerCase()
+    if (!entry.name || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}): DuskDomainsRuntimeConfig {
   const get = (key: string) => String(env[`VITE_DUSK_DOMAINS_${key}`] ?? '').trim()
   const flag = (key: string) => /^(true|1|yes|on)$/i.test(get(key))
@@ -59,6 +78,7 @@ export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}):
     mode: missingLiveInputs.length ? 'preview' : 'live_ready',
     indexerUrl,
     explorerUrl: /^https?:\/\/[^/\s?#]+(?:\/[^\s?#]*)?$/.test(explorer) ? explorer : null,
+    nameSupport: { wallets: nameIntegrations(get('NAME_WALLETS')), explorers: nameIntegrations(get('NAME_EXPLORERS')) },
     nodeUrl,
     chainId,
     liveWritesEnabled: flag('ENABLE_LIVE_WRITES'),
