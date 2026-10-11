@@ -21,7 +21,7 @@ export function SiteFooter({
 
   return (
     <footer className="site-footer">
-      <p>Dusk Domains</p>
+      <p>Dusk Domains · Built by <a href="https://www.mochavi.com/">Mochavi</a></p>
       <nav aria-label="Footer">
         <a href={routePath({ view: 'referrals' })} onClick={(event) => followLink(event, () => onMainViewChange('referrals'))}>Referrals</a>
         <a href={routePath({ view: 'treasury' })} onClick={(event) => followLink(event, () => onMainViewChange('treasury'))}>Treasury</a>
