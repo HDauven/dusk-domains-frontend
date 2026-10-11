@@ -208,6 +208,24 @@ export type IndexedSubname = {
   blockHeight: number | null
 }
 
+/** A row of the indexer's holder index: a name the queried authority owns or manages. */
+export type IndexedHolding = {
+  node: string
+  name: string
+  kind: 'root' | 'subname'
+  /** `owner` when the authority owns the name (it may also manage it), else `manager`. */
+  role: 'owner' | 'manager'
+  /** Null when the store doesn't know it, as a snapshot may not. */
+  owner: string | null
+  manager: string | null
+  root: string | null
+  parentNode: string | null
+  parentName: string | null
+  status: string
+  expiresAtBlockHeight: number | null
+  graceEndsAtBlockHeight: number | null
+}
+
 export type IndexedMarketplaceConfig = {
   tradingPaused: boolean
   pendingOperator: string | null

@@ -6,6 +6,7 @@ import { useAppNavigation } from './useAppNavigation'
 import { useMyDomainsFeature } from '../features/domains/useMyDomainsFeature'
 
 export type UseMainViewRuntimeArgs = {
+  chainId?: string
   walletStatus?: WalletConnectionStatus
   currentBlockHeight: number | null
   indexerClient: DuskDomainsIndexerClient | null
@@ -27,6 +28,7 @@ export type UseMainViewRuntimeArgs = {
 }
 
 export function useMainViewRuntime({
+  chainId,
   walletStatus,
   currentBlockHeight,
   indexerClient,
@@ -52,6 +54,7 @@ export function useMainViewRuntime({
     myNamePrimarySummaries,
     myNames,
   } = useMyDomainsFeature({
+    chainId,
     walletStatus,
     currentBlockHeight,
     indexerClient,

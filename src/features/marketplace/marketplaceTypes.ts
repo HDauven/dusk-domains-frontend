@@ -119,6 +119,11 @@ export type MarketplaceViewProps = {
   navigation: {
     tab: MarketplaceTab
     onTabChange: (tab: MarketplaceTab) => void
+    /** A listing link's name, which the Browse search starts with. */
+    listingName?: string
+    /** Changes each time a listing link opens, so Browse starts over with its name. */
+    listingKey?: number
+    onBrowseQueryChange?: (query: string) => void
   }
   watchlist: {
     watchedNodes: string[]
@@ -131,7 +136,7 @@ export type MarketplaceBrowseProps = {
   listings: Pick<MarketplaceViewProps['listings'], 'auctions' | 'fixedSales' | 'onBuyFixedSale' | 'onCancelFixedSale' | 'onExpireFixedSale'>
   market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
   auction: Pick<MarketplaceViewProps['auction'], 'onOpenAuction'>
-  navigation: Pick<MarketplaceViewProps['navigation'], 'onTabChange'>
+  navigation: Pick<MarketplaceViewProps['navigation'], 'onTabChange' | 'listingName' | 'onBrowseQueryChange'>
   watchlist: Pick<MarketplaceViewProps['watchlist'], 'onToggleWatch' | 'watchedNodes'>
 }
 

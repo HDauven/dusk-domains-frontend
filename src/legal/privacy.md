@@ -1,6 +1,6 @@
 # Privacy Notice
 
-Last updated: 7 October 2026
+Last updated: 11 October 2026
 
 This notice explains what personal data the Dusk Domains website at dusk.domains and testnet.dusk.domains and its public API (**the Services**) process, and why. The Services are operated by **Mochavi Limited**, a private company limited by shares incorporated in Hong Kong (Business Registration No. 77975303) (**Mochavi**, **we**, **us**), which is responsible for the processing described here.
 
@@ -21,7 +21,7 @@ We use these logs to run and secure the Services, investigate abuse and errors, 
 
 **Public blockchain data.** Wallet addresses, names, records, primary names, bids, listings and transactions are public data on the Dusk blockchain. Our indexer reads this data and our website and API display it, including statistics derived from it. We don't control the blockchain and can't change or delete what has been written to it. **Anything you publish in a name's records is public and permanent.** Consider this before linking a name to information that identifies you.
 
-**Data stored in your browser.** The app keeps some data in your own browser's storage so it can work properly: pending name reservations, so you can finish a registration after a reload; your market watchlist; and, for the current session, a referral code from a link you followed and state about your last claim. This data stays in your browser and isn't sent to our servers. Parts of it, such as the referral code and the details of a reservation, go into the transactions you sign, and those become public on the blockchain. You can delete it through your browser's settings, but deleting a pending reservation may mean you lose that registration.
+**Data stored in your browser.** The app keeps some data in your own browser's storage so it can work properly: pending name reservations, so you can finish a registration after a reload; your market watchlist; subnames your wallet holds whose pages you opened, so My names can list them; and, for the current session, a referral code from a link you followed and state about your last claim. This data stays in your browser; the app looks up the names and reservations in it through our API, as it does when you open a name. Parts of it, such as the referral code and the details of a reservation, go into the transactions you sign, and those become public on the blockchain. You can delete it through your browser's settings, but deleting a pending reservation may mean you lose that registration.
 
 **Your wallet.** You connect a wallet, such as the Dusk Wallet browser extension, to sign transactions. The wallet is third-party software with its own terms and privacy practices; we only see the public account address and signed transactions it shares.
 

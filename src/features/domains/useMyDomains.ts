@@ -8,10 +8,11 @@ import {
   type IndexedNameSummary,
 } from '../../names/internal'
 import { readIndexedPrimarySummaries } from './indexedPrimary'
-import { fetchWalletScopedNames } from './myDomainsData'
+import { fetchMyHoldings, servesHolderIndex, type HeldListing, type HeldSubname } from './myDomainsData'
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
 type UseMyDomainsArgs = {
+  chainId?: string
   indexerClient: DuskDomainsIndexerClient | null
   onBlockHeightChange: (height: number | null) => void
   onLoadPendingReservations: () => unknown
@@ -21,6 +22,7 @@ type UseMyDomainsArgs = {
 }
 
 export function useMyDomains({
+  chainId = '',
   indexerClient,
   onBlockHeightChange,
   onLoadPendingReservations,
@@ -29,6 +31,9 @@ export function useMyDomains({
   shouldLoad,
 }: UseMyDomainsArgs) {
   const [myNames, setMyNames] = useState<IndexedNameSummary[]>([])
+  const [myListings, setMyListings] = useState<HeldListing[]>([])
+  const [mySubnames, setMySubnames] = useState<HeldSubname[]>([])
+  const [listingsUnavailable, setListingsUnavailable] = useState(false)
   const [myNamesLoading, setMyNamesLoading] = useState(false)
   const [myNamesError, setMyNamesError] = useState('')
   const [myNamePrimarySummaries, setMyNamePrimarySummaries] = useState<Record<string, MyNamePrimarySummary>>({})
@@ -41,12 +46,15 @@ export function useMyDomains({
   }, [indexerClient])
 
   const setLoadedMyNames = useCallback(async (
-    names: IndexedNameSummary[],
+    { names, listings, subnames, listingsUnavailable: unavailable = false }: { names: IndexedNameSummary[], listings: HeldListing[], subnames: HeldSubname[], listingsUnavailable?: boolean },
     shouldApply: () => boolean = () => true,
   ) => {
     const summaries = await loadMyNamePrimarySummaries(names)
     if (!shouldApply()) return
     setMyNames(names)
+    setMyListings(listings)
+    setMySubnames(subnames)
+    setListingsUnavailable(unavailable)
     setMyNamePrimarySummaries(summaries)
   }, [loadMyNamePrimarySummaries])
 
@@ -60,6 +68,8 @@ export function useMyDomains({
 
     if (!indexerClient) {
       setMyNames([])
+      setMyListings([])
+      setMySubnames([])
       setMyNamePrimarySummaries({})
       setMyNamesLoading(false)
       setMyNamesError('Name data is unavailable right now. Trying again automatically.')
@@ -73,22 +83,25 @@ export function useMyDomains({
       if (shouldApply()) onBlockHeightChange(currentBlockHeightFromHealth(health))
 
       if (!selectedAddress) {
-        await setLoadedMyNames([], shouldApply)
+        await setLoadedMyNames({ names: [], listings: [], subnames: [] }, shouldApply)
         return
       }
 
-      const ownedNames = await fetchWalletScopedNames({
+      const holdings = await fetchMyHoldings({
         indexerClient,
         selectedAddress,
         selectedAuthority,
+        chainId,
+        holderIndex: servesHolderIndex(health),
       })
-      await setLoadedMyNames(ownedNames, shouldApply)
+      await setLoadedMyNames(holdings, shouldApply)
     } catch (error) {
       if (shouldApply()) setMyNamesError(userFacingErrorMessage(error))
     } finally {
       if (shouldApply()) setMyNamesLoading(false)
     }
   }, [
+    chainId,
     indexerClient,
     onBlockHeightChange,
     onLoadPendingReservations,
@@ -109,10 +122,13 @@ export function useMyDomains({
   useAutoRefresh(loadMyNames, shouldLoad)
 
   return {
+    listingsUnavailable,
     loadMyNames,
     myNamePrimarySummaries,
+    myListings,
     myNames,
     myNamesError,
     myNamesLoading,
+    mySubnames,
   }
 }

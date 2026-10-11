@@ -146,3 +146,9 @@
     display: none;
   }
 }
+
+.name-card-parent {
+  align-self: center;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}

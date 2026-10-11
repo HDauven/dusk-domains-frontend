@@ -6,6 +6,7 @@ import { marketplaceOrderKey, matchesAuctionSelection, auctionSelection } from '
 import { appendPage, readMarketplacePage, readMarketplaceWindow, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  namehashHex,
   type DuskDomainsIndexerClient,
   type IndexedMarketplaceAuction,
   type IndexedMarketplaceFixedSale,
@@ -22,11 +23,30 @@ export type MarketplaceSnapshot = {
   ownedNames: IndexedNameSummary[]
 }
 
+type ListingReader = Pick<DuskDomainsIndexerClient, 'getMarketplaceFixedSale' | 'getMarketplaceAuction'>
+
+function listingNode(name: string) {
+  try { return name ? namehashHex(name) : '' } catch { return '' }
+}
+
+// A listing link names a sale or an auction. Read it by its name, not from whichever page has loaded.
+async function readLinkedListing(client: ListingReader, node: string) {
+  const [fixedSale, auction] = await Promise.all([client.getMarketplaceFixedSale(node), client.getMarketplaceAuction(node)])
+  return { fixedSale, auction }
+}
+
+const linkedReadError = "Couldn't load the listing this link opens. Retrying…"
+
+function withOrder<T extends Parameters<typeof marketplaceOrderKey>[0]>(orders: T[], order: T | null) {
+  return order ? [...orders.filter(item => marketplaceOrderKey(item) !== marketplaceOrderKey(order)), order] : orders
+}
+
 // Listings, offers, the wallet's names and refund, read from the indexer. Only the newest
 // request may write state, so a slow response never overwrites a fresher one.
 export function useMarketplaceData({
   accountScope,
   indexerClient,
+  listingName = '',
   mainView,
   onLoaded,
   selectedAddress,
@@ -36,6 +56,8 @@ export function useMarketplaceData({
 }: {
   accountScope: string
   indexerClient: DuskDomainsIndexerClient | null
+  /** The name a listing link opened, read directly even when it is not on a loaded page. */
+  listingName?: string
   mainView: string
   onLoaded?: (snapshot: MarketplaceSnapshot) => void
   selectedAddress: string
@@ -66,10 +88,13 @@ export function useMarketplaceData({
   const onLoadedRef = useRef(onLoaded)
   const setErrorRef = useRef(setError)
   const selectedAuctionRef = useRef(selectedAuctionNode)
+  const linkedNode = listingNode(listingName)
+  const linkedRef = useRef(linkedNode)
   useEffect(() => {
     onLoadedRef.current = onLoaded
     setErrorRef.current = setError
     selectedAuctionRef.current = selectedAuctionNode
+    linkedRef.current = linkedNode
   })
 
   const loadMarketplace = useCallback(async (background = false) => {
@@ -114,9 +139,19 @@ export function useMarketplaceData({
         page.auctions = page.auctions.filter(auction => !matchesAuctionSelection(auction, selectedNode))
         if (selected) page.auctions = [...page.auctions, selected]
       }
+      // A linked listing that can't be read leaves the rest of the market, and the next refresh tries again.
+      const linked = linkedRef.current
+      let linkedFailed = false
+      if (linked && ![...page.fixedSales, ...page.auctions].some(order => order.node === linked)) {
+        const { fixedSale, auction } = await readLinkedListing(indexerClient, linked)
+          .catch(() => { linkedFailed = true; return { fixedSale: null, auction: null } })
+        if (!shouldApply()) return
+        page.fixedSales = withOrder(page.fixedSales, fixedSale)
+        page.auctions = withOrder(page.auctions, auction)
+      }
       if (!cachedSnapshot) backgroundSnapshot.current = { updatedAt: Date.now(), feeBps: config?.feeBps ?? null, ownedNames: nextOwnedNames, refund: nextRefund }
       hasData.current = true
-      setReadError('')
+      setReadError(linkedFailed ? linkedReadError : '')
       setAuctionReadError('')
       setFeeBps(config?.feeBps ?? null)
       setFixedSales(page.fixedSales)
@@ -171,6 +206,22 @@ export function useMarketplaceData({
     backgroundSnapshot.current = null
     setLoading(false)
   }, [accountScope, indexerClient])
+
+  // A listing link opened while the market already shows: the next load includes it, but read it now.
+  const ordersRef = useRef<{ node: string }[]>([])
+  useEffect(() => { ordersRef.current = [...fixedSales, ...auctions] })
+  useEffect(() => {
+    if (!indexerClient || !linkedNode || mainView !== 'marketplace' || !hasData.current) return
+    if (ordersRef.current.some(order => order.node === linkedNode)) return
+    let active = true
+    const marketRequest = requestId.current
+    readLinkedListing(indexerClient, linkedNode).then(({ fixedSale, auction }) => {
+      if (!active || marketRequest !== requestId.current) return
+      setFixedSales(current => withOrder(current, fixedSale))
+      setAuctions(current => withOrder(current, auction))
+    }, () => { if (active) setReadError(linkedReadError) })
+    return () => { active = false }
+  }, [indexerClient, linkedNode, mainView])
 
   useEffect(() => () => { auctionRequest.current += 1; auctionPending.current = false; setAuctionReadError('') }, [accountScope, indexerClient, selectedAuctionNode])
   const refreshAuction = useCallback(async () => {

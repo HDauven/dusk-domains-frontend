@@ -5,9 +5,9 @@ type MarketFilter = 'all' | 'auction' | 'buy-now' | 'watching'
 type MarketSort = 'ending' | 'recent' | 'price-low' | 'price-high'
 type Order = { kind: 'auction'; value: IndexedMarketplaceAuction } | { kind: 'fixed'; value: IndexedMarketplaceFixedSale }
 
-export function useMarketplaceBrowse(fixedSales: IndexedMarketplaceFixedSale[], auctions: IndexedMarketplaceAuction[], watchedNodes: string[]) {
+export function useMarketplaceBrowse(fixedSales: IndexedMarketplaceFixedSale[], auctions: IndexedMarketplaceAuction[], watchedNodes: string[], initialQuery = '') {
   const [filter, setFilter] = useState<MarketFilter>('all')
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialQuery)
   const [sort, setSort] = useState<MarketSort>('ending')
   const watched = new Set(watchedNodes)
   const orders: Order[] = [

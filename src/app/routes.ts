@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import type { AppMainView } from './AppTypes'
 
-export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string, sellName?: string, offerName?: string }
+export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string, sellName?: string, offerName?: string, listingName?: string }
 
 const viewPaths: Record<AppMainView, string> = {
   search: '/',
@@ -28,6 +28,8 @@ function parseDecodedRoute(pathname: string): AppRoute {
   if (sell) return { view: 'marketplace', sellName: decodeURIComponent(sell[1]).toLowerCase() }
   const offer = /^\/market\/offer\/([^/]+)$/.exec(path)
   if (offer) return { view: 'marketplace', offerName: dotDusk(decodeURIComponent(offer[1])) }
+  const listing = /^\/market\/listing\/([^/]+)$/.exec(path)
+  if (listing) return { view: 'marketplace', listingName: dotDusk(decodeURIComponent(listing[1])) }
   const auction = /^\/market\/auction\/(0x[0-9a-f]{64})$/i.exec(path)
   if (auction) return { view: 'marketplace', auctionNode: auction[1].toLowerCase() }
   const name = /^\/name\/([^/]+)$/.exec(path)
@@ -49,6 +51,7 @@ export function openingRoute(): AppRoute {
 export function routePath(route: AppRoute) {
   if (route.view === 'marketplace' && route.sellName) return `/market/sell/${encodeURIComponent(route.sellName)}`
   if (route.view === 'marketplace' && route.offerName) return `/market/offer/${encodeURIComponent(route.offerName)}`
+  if (route.view === 'marketplace' && route.listingName) return `/market/listing/${encodeURIComponent(route.listingName)}`
   if (route.view === 'marketplace' && route.auctionNode) return `/market/auction/${route.auctionNode}`
   return route.name ? `/name/${encodeURIComponent(route.name)}` : viewPaths[route.view]
 }

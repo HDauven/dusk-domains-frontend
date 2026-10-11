@@ -4,9 +4,11 @@ import { useId, useState, type ReactNode } from 'react'
 import { Button } from './Button'
 import { NameSignature } from './NameChip'
 
-export function NameCard({ name, verification, avatar, description, children, onOpen, loading, disabled, className = '' }: {
+export function NameCard({ name, verification, avatar, description, children, onOpen, openLabel, loading, disabled, className = '' }: {
   verification?: WebsiteVerification
   name: string
+  /** What opening the card does, when it opens something other than the name. */
+  openLabel?: string
   avatar?: string | null
   description?: string | null
   children?: ReactNode
@@ -34,6 +36,6 @@ export function NameCard({ name, verification, avatar, description, children, on
     </span>
   </>
   return onOpen ? (
-    <Button className={`name-portrait ${className}`} loading={loading} disabled={disabled} onClick={onOpen} aria-label={`Open ${name}`} aria-describedby={detailsId}>{content}</Button>
+    <Button className={`name-portrait ${className}`} loading={loading} disabled={disabled} onClick={onOpen} aria-label={openLabel ?? `Open ${name}`} aria-describedby={detailsId}>{content}</Button>
   ) : <article className={`name-portrait ${className}`} aria-label={name} aria-busy={loading || undefined}>{content}</article>
 }

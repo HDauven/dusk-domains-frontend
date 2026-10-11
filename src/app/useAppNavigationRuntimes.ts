@@ -36,6 +36,7 @@ export function useAppNavigationRuntimes({
     activity: activityFeed.searchActions,
   })
   const mainViewRuntime = useMainViewRuntime({
+    chainId: appRuntime.runtimeConfig.chainId,
     walletStatus: walletRuntime.walletSetupState,
     currentBlockHeight: searchState.currentBlockHeight,
     indexerClient: appRuntime.indexerClient,

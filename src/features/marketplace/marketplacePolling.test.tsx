@@ -6,7 +6,7 @@ import { useMarketplaceData } from './useMarketplaceData'
 import { useAuctions } from './useAuctions'
 import { useOperatorPause } from '../../app/useOperatorPause'
 import { useIndexerFreshness } from '../../app/useIndexerFreshness'
-import type { IndexedMarketplaceAuction } from '../../names/internal'
+import { namehashHex, type IndexedMarketplaceAuction, type IndexedMarketplaceFixedSale } from '../../names/internal'
 
 const root = createRoot(document.createElement('div'))
 const noop = () => {}
@@ -192,4 +192,65 @@ it('loads auction activity after a hidden mount even when fast polling is disabl
   visible = true
   await act(async () => document.dispatchEvent(new Event('visibilitychange')))
   expect(getActivityPage).toHaveBeenCalledExactlyOnceWith('node', { cursor: undefined })
+})
+
+it('reads a linked listing directly, whichever page it is on', async () => {
+  const client = setup()
+  const sale = (name: string, saleId: number) => ({ node: namehashHex(name), name, saleId, marketplaceContractId: 'market', sellerAuthority: 'seller',
+    priceLux: 30e9, expiresAtBlockHeight: 900, returnPending: false }) as IndexedMarketplaceFixedSale
+  // The first page holds other listings; the linked ones are on later pages.
+  client.getMarketplaceFixedSalesPage.mockResolvedValue({ fixedSales: [sale('first.dusk', 1)] as never[], nextCursor: 'page-2' })
+  const later = { 'later.dusk': sale('later.dusk', 2), 'next.dusk': sale('next.dusk', 3) } as Record<string, IndexedMarketplaceFixedSale>
+  const getMarketplaceFixedSale = vi.fn(async (node: string) => Object.values(later).find(item => item.node === node) ?? null)
+  const auctioned = { node: namehashHex('bidding.dusk'), name: 'bidding.dusk', auctionId: 4, marketplaceContractId: 'market' } as IndexedMarketplaceAuction
+  const getMarketplaceAuction = vi.fn(async (node: string) => node === auctioned.node ? auctioned : null)
+  const indexerClient = { ...client, getMarketplaceFixedSale, getMarketplaceAuction }
+  let data: ReturnType<typeof useMarketplaceData>
+  function Probe({ listingName }: { listingName: string }) {
+    data = useMarketplaceData({ indexerClient: indexerClient as never, accountScope: 'wallet', mainView: 'marketplace', listingName,
+      selectedAddress: '', selectedAuthority: '', setError: noop })
+    return null
+  }
+  await act(async () => root.render(<Probe listingName="later.dusk" />))
+  expect(getMarketplaceFixedSale).toHaveBeenCalledWith(namehashHex('later.dusk'))
+  expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk', 'later.dusk'])
+  // A link opened while the market is showing is read the same way, and stays through refreshes.
+  await act(async () => root.render(<Probe listingName="next.dusk" />))
+  expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk', 'later.dusk', 'next.dusk'])
+  await act(async () => { await vi.advanceTimersByTimeAsync(60_000) })
+  expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk', 'next.dusk'])
+  // A name in auction opens the same way.
+  await act(async () => root.render(<Probe listingName="bidding.dusk" />))
+  expect(data!.auctions.map(item => item.name)).toEqual(['bidding.dusk'])
+  // Loading the next page does not repeat a listing already read.
+  client.getMarketplaceFixedSalesPage.mockResolvedValueOnce({ fixedSales: [later['next.dusk']] as never[], nextCursor: null })
+  await act(async () => { await data!.loadMore() })
+  expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk', 'next.dusk'])
+})
+
+it('keeps the market when the listing a link names can\'t be read, and reads it again', async () => {
+  const client = setup()
+  const sale = (name: string, saleId: number) => ({ node: namehashHex(name), name, saleId, marketplaceContractId: 'market', sellerAuthority: 'seller',
+    priceLux: 30e9, expiresAtBlockHeight: 900, returnPending: false }) as IndexedMarketplaceFixedSale
+  client.getMarketplaceFixedSalesPage.mockResolvedValue({ fixedSales: [sale('first.dusk', 1)] as never[], nextCursor: null })
+  let down = true
+  const getMarketplaceFixedSale = vi.fn(async (node: string) => {
+    if (down) throw new Error('HTTP 503')
+    return node === namehashHex('later.dusk') ? sale('later.dusk', 2) : null
+  })
+  const indexerClient = { ...client, getMarketplaceFixedSale, getMarketplaceAuction: vi.fn(async () => null) }
+  let data: ReturnType<typeof useMarketplaceData>
+  function Probe() {
+    data = useMarketplaceData({ indexerClient: indexerClient as never, accountScope: 'wallet',
+      mainView: 'marketplace', listingName: 'later.dusk', selectedAddress: '', selectedAuthority: '', setError: noop })
+    return null
+  }
+  await act(async () => root.render(<Probe />))
+  expect(data!.hasData).toBe(true)
+  expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk'])
+  expect(data!.readError).toBe("Couldn't load the listing this link opens. Retrying…")
+  down = false
+  await act(async () => { await vi.advanceTimersByTimeAsync(60_000) })
+  expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk', 'later.dusk'])
+  expect(data!.readError).toBe('')
 })

@@ -26,6 +26,7 @@ import { useSellInventory } from './useSellInventory'
 import { useMarketplaceRefund } from './useMarketplaceRefund'
 import { useSellForm } from './useSellForm'
 import { useWatchlist } from './watchlist'
+import { useListingLink } from './useListingLink'
 
 type UseMarketplaceFeatureArgs = {
   tradingPaused: boolean
@@ -45,13 +46,14 @@ type UseMarketplaceFeatureArgs = {
 }
 
 /** The market a route opens: a sell link's Sell tab, an offer link's Offers tab, or a linked auction. */
-export function marketOpening(route?: AppRoute): { tab: MarketplaceTab, sellName: string, offerName: string, auctionNode: string } {
+export function marketOpening(route?: AppRoute): { tab: MarketplaceTab, sellName: string, offerName: string, auctionNode: string, listingName: string } {
   const market = route?.view === 'marketplace' ? route : null
   return {
     tab: market?.sellName ? 'sell' : market?.offerName ? 'offers' : 'browse',
     sellName: market?.sellName ?? '',
     offerName: market?.offerName ?? '',
     auctionNode: market?.auctionNode ?? '',
+    listingName: market?.listingName ?? '',
   }
 }
 
@@ -74,6 +76,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   const [sellName, setSellName] = useState(opening.sellName)
   // The name an offer link asked for. The form's name field starts from it.
   const [offerName, setOfferName] = useState(opening.offerName)
+  // The listing a link asked for. The Browse search starts with its name.
+  const listingLink = useListingLink(opening.listingName)
   const [tab, setTab] = useState<MarketplaceTab>(opening.tab)
   // Auction selection belongs to the market, so wallet restoration keeps the detail open.
   const [selectedAuctionNode, setSelectedAuctionNode] = useScopedState(marketScope, opening.auctionNode)
@@ -93,7 +97,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     && Boolean(duskDomainsOnChainClient)
   const marketplaceContractId = runtimeConfig.contracts.marketplace?.contractId ?? ''
 
-  const data = useMarketplaceData({ accountScope, indexerClient, mainView, onLoaded: () => setError(marketplaceErrorAfterRefresh), selectedAddress, selectedAuctionNode, selectedAuthority, setError })
+  const data = useMarketplaceData({ accountScope, indexerClient, listingName: listingLink.listingName, mainView, onLoaded: () => setError(marketplaceErrorAfterRefresh), selectedAddress, selectedAuctionNode, selectedAuthority, setError })
   const { auctions, fixedSales, loadMarketplace, ownedNames, refund } = data
 
   const writes = useMarketplaceWrites({
@@ -172,6 +176,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
         onExpireAuction: auctionState.expireAuction,
         onOpenAuction: (node) => {
           setTab('browse')
+          listingLink.clearListing()
           auctionState.openAuction(node)
         },
         onPlaceBid: auctionState.placeBid,
@@ -226,8 +231,12 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       },
       navigation: {
         tab,
+        listingName: listingLink.listingName,
+        listingKey: listingLink.listingKey,
+        onBrowseQueryChange: listingLink.onBrowseQueryChange,
         onTabChange: (nextTab) => {
           setTab(nextTab)
+          listingLink.clearListing()
           if (nextTab !== 'browse') auctionState.setSelectedAuctionNode('')
         },
       },
@@ -244,6 +253,8 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       openSell: (name: string) => { setSellName(name); setSelectedNode(''); setSelectedAuctionNode(''); setTab('sell') },
       offerName: tab === 'offers' ? offerName : '',
       openOffer: (name: string) => { setOfferName(name); offerState.setOfferName(name); setSelectedAuctionNode(''); setTab('offers') },
+      listingName: tab === 'browse' && !auctionState.selectedAuctionNode ? listingLink.listingName : '',
+      openListing: (name: string) => { listingLink.openListing(name); setSelectedAuctionNode(''); setTab('browse') },
     }
   }
 

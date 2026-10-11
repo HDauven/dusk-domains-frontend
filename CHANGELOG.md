@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Keep names listed or in auction in My names, with their market status and a link to the listing. Add `/market/listing/<name>`, which opens Browse at that listing.
+- List subnames the wallet owns or manages under someone else's name, with its role, from the indexer's holder index (`/holdings`). An older indexer lists holders' root names only; then, or when the holder index can't be read, My names finds these through the owner index, the wallet's primary name and subname pages opened in this browser.
+- Read the listing a link names directly, so it opens even when it isn't on the loaded pages of the market. If that read fails, the market still loads and tries again on its next refresh.
+
 - Stage several record edits, additions and removals, then save them in one `mutate_records` transaction within the 8-change and 4,096-byte batch limits. A single edit still saves in one click. Refuse a change that would take a name past 16 records.
 - Keep staged record changes editable, even while a value is empty or can't be saved, and keep them with their name when its records panel closes, another name opens or a subname is created. A staged value that can't be saved shows why, with Edit and Undo. Other sections of the name page say how many are unsaved, and the page asks before it closes with changes unsaved.
 
