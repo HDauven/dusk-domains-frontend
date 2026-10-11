@@ -6,6 +6,9 @@ import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspace
 import { lifecycleBadgeCopy, lifecycleNote } from '../features/domains/domainFormat'
 import { clampDurationYears } from './appConstants'
 import type { AppViewModelInputs } from './appViewTypes'
+import { isMarketplaceEscrow } from './managedNameState'
+import { useNameListing } from '../features/marketplace/useNameListing'
+import { nameListingOffer } from '../features/marketplace/nameListing'
 
 type UseAppSearchPropsArgs =
   & AppViewModelInputs
@@ -72,7 +75,15 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     handleMainViewChange,
   } = mainViewRuntime
 
+  // A listed name's price and market link. The market holds a listed name as its owner.
+  const configuredMarket = appRuntime.runtimeConfig.contracts?.marketplace?.contractId ?? null
+  const heldByMarket = result.status === 'registered' && managedName.node === nodeHex
+    && Boolean(managedName.inMarketplaceEscrow ?? isMarketplaceEscrow(managedName, configuredMarket))
+  const listing = useNameListing({ indexerClient: appRuntime.indexerClient, node: heldByMarket ? nodeHex : '', escrowed: heldByMarket })
+
   return useSearchWorkspaceFeature({
+    heldByMarket,
+    listing: nameListingOffer(listing, searchState.currentBlockHeight, walletRuntime.selectedAuthority),
     abuseUrl: appRuntime.runtimeConfig.launchLinks.abuse,
     referralAddress: appRuntime.runtimeConfig.capabilities.referralAttribution && walletRuntime.walletSetupState === 'connected'
       ? walletRuntime.selectedAddress : '',
@@ -105,7 +116,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     nodeHex,
     onCheckAvailability: () => void handleCheckAvailability(),
     onDurationChange: (years) => setDuration(clampDurationYears(years)),
-    onOpenPendingReservation: (reservation) => void openPendingReservation(reservation),
+    onOpenPendingReservation: (reservation, options) => void openPendingReservation(reservation, options),
     onOpenPendingReservations: () => void handleMainViewChange('my-names'),
     onQueryChange: resetSearch,
     onResultViewChange: setResultView,

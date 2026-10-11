@@ -31,7 +31,7 @@ export function useMyDomainsFeature({
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onLoadPendingReservations: () => unknown
   onOpenIndexedName: (name: string) => void
-  onOpenPendingReservation: (reservation: PendingNameReservation) => void
+  onOpenPendingReservation: (reservation: PendingNameReservation, options?: { register?: boolean }) => void
   onSearchHome: () => void
   pendingReservations: PendingNameReservation[]
   selectedAddress: string

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Ask before taking back a subname, and say that its records and primary name are cleared and its holder loses it.
+- Make Register on a saved, ready reservation sign the reveal once the claim is open, and keep the reservation's commitment store when a claim resumes after the wallet session restores.
+- Keep checking a wallet session that lost its authorization without the user disconnecting, so the header recovers from "Connect wallet" without a reload.
+- Show a listed name's price or current bid with a link to its listing on its page and in the taken search result, and say the market holds it while listed.
+
 - Add a Developers page at `/developers` (and `/docs`): resolve a name with curl against the site's API or with the SDK, this network's contract IDs and deployment manifest, and links to the SDK on JSR, its source, the API reference and `llms.txt`. The footer links to it and to the SDK, API and `llms.txt`.
 - Make the SDK example work with what the site publishes: it converts a deploy tool manifest to the SDK's format, or loads the manifest the page lists. A test runs it against the frozen handoff.
 

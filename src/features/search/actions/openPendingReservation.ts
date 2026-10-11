@@ -12,6 +12,8 @@ import type { UseSearchControllerProps } from '../searchControllerTypes'
 export async function openPendingReservation(
   props: UseSearchControllerProps,
   reservation: PendingNameReservation,
+  // Register: sign the reveal as soon as the claim is ready, as the card's Register button promises.
+  options: { register?: boolean } = {},
 ) {
   const { beginNameRead, chainId, hydrateNameFromIndexer, getCurrentBlockHeight, indexerClient,
     loadPendingReservations, openSearchView, search, registration, activity } = props
@@ -19,7 +21,7 @@ export async function openPendingReservation(
   openSearchView()
   resetSearchState(props, reservation.name)
   search.open('register')
-  registration.resume(reservation)
+  registration.resume(reservation, options)
 
   if (!indexerClient) return
 

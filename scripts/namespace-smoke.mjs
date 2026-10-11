@@ -28,6 +28,10 @@ export async function checkNamespaceControls(page) {
   await page.waitForFunction(() => window.namespaceReassigned)
   assert.deepEqual(await page.evaluate(() => window.namespaceReassigned), ['leaf','new-owner','new-manager'])
   await page.getByRole('button', {name:'Take back',exact:true}).click()
+  // Taking back asks first and says what the holder loses.
+  await page.getByText('Take back api.docs.alice.dusk? Its records and primary name are cleared').waitFor()
+  assert.equal(await page.evaluate(() => window.namespaceTakenBack), undefined)
+  await page.getByRole('button', {name:'Take back name',exact:true}).click()
   await page.waitForFunction(() => window.namespaceTakenBack === 'leaf')
   await page.getByRole('button', {name:'Remove',exact:true}).click()
   await page.getByRole('button', {name:'Remove name and descendants',exact:true}).click()

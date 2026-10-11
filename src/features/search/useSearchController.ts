@@ -22,9 +22,9 @@ export function useSearchController(props: UseSearchControllerProps) {
       resetSearchState(props, '')
     },
     openIndexedName: (name: string) => { cancel(); return openIndexedName(props, name) },
-    openPendingReservation: (reservation: Parameters<typeof openPendingReservation>[1]) => {
+    openPendingReservation: (reservation: Parameters<typeof openPendingReservation>[1], options?: Parameters<typeof openPendingReservation>[2]) => {
       cancel()
-      return openPendingReservation(props, reservation)
+      return openPendingReservation(props, reservation, options)
     },
     resetSearch: (nextValue: string) => {
       cancel()

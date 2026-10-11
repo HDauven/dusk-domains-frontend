@@ -9,6 +9,9 @@ type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['result']['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
+  /** The market holds this name while it is listed. */
+  heldByMarket?: boolean
+  listing?: SearchWorkspaceProps['result']['headerProps']['listing']
   abuseUrl?: string | null
   referralAddress?: string
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
@@ -66,6 +69,8 @@ type UseSearchWorkspaceFeatureProps = {
 }
 
 export function useSearchWorkspaceFeature({
+  heldByMarket = false,
+  listing = null,
   abuseUrl,
   referralAddress,
   premiumResult,
@@ -186,6 +191,8 @@ export function useSearchWorkspaceFeature({
         primaryVerified: primaryProps.primaryVerification.verified,
         owner,
         canMakeOffer,
+        heldByMarket,
+        listing,
         records: resultStatus === 'registered' ? parentResolverRecords : [],
         reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
         status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
@@ -193,6 +200,7 @@ export function useSearchWorkspaceFeature({
       nodeHex,
       onResultViewChange,
       overviewProps: {
+        listing,
         canRegister,
         displayName,
         onContinueRegistration: onStartRegistration,

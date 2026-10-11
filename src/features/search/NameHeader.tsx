@@ -9,11 +9,16 @@ import { OwnerLabel } from '../identity/OwnerLabel'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
 import { followLink, navigateTo, routePath } from '../../app/routes'
+import type { NameListingOffer } from '../marketplace/nameListing'
 
 const offerRoute = (offerName: string) => ({ view: 'marketplace' as const, offerName })
 
-export function NameHeader({ canMakeOffer = false, displayName, verification, lifecycleLabel, lifecycleNote, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
+export function NameHeader({ canMakeOffer = false, heldByMarket = false, listing = null, displayName, verification, lifecycleLabel, lifecycleNote, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
   canMakeOffer?: boolean
+  /** The market holds the name while it is listed. */
+  heldByMarket?: boolean
+  /** Its price and where to buy or bid, while listed. */
+  listing?: NameListingOffer | null
   /** What the expiry date means, next to it. */
   lifecycleNote?: string | null
   verification?: WebsiteVerification
@@ -38,7 +43,7 @@ export function NameHeader({ canMakeOffer = false, displayName, verification, li
       {registered && description ? <p className="name-hero-description">{description}</p> : null}
     </div>
     <div className="name-hero-copy">
-      {registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={[...ownerAddresses, ...records.filter(record => record.key === 'moonlight_address').map(record => record.value)]} /></div> : null}
+      {registered && heldByMarket ? <div className="name-hero-owner">Held by the market while listed</div> : registered && owner ? <div className="name-hero-owner">Owner <OwnerLabel authority={owner} viewerAuthority={viewerAuthority} addresses={[...ownerAddresses, ...records.filter(record => record.key === 'moonlight_address').map(record => record.value)]} /></div> : null}
       <div className="name-hero-badges">
         {registered && websiteVerified ? <WebsiteBadge verification={verification} /> : null}
         {reserved ? <Badge status="reserved">Reserved</Badge> : !registered ? <Badge>{statusCopy(status)}</Badge> : null}
@@ -47,6 +52,10 @@ export function NameHeader({ canMakeOffer = false, displayName, verification, li
         {registered && lifecycleLabel ? <Badge>{lifecycleLabel}</Badge> : null}
       </div>
       {registered && lifecycleLabel && lifecycleNote ? <p className="name-hero-note">{lifecycleNote}</p> : null}
+      {registered && listing ? <div className="name-hero-listing">
+        <strong>{listing.text}</strong>
+        <a className="button button-primary compact" href={routePath(listing.route)} onClick={event => followLink(event, () => navigateTo(listing.route))}>{listing.linkLabel}</a>
+      </div> : null}
       {canMakeOffer ? <a className="button button-secondary compact name-hero-offer" href={routePath(offerRoute(displayName))}
         onClick={event => followLink(event, () => navigateTo(offerRoute(displayName)))}>Make an offer</a> : null}
     </div>
