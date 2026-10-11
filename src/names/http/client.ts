@@ -88,6 +88,8 @@ export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
   ) => Promise<IndexerPage<IndexedMarketplaceOffer, 'offers'>>
   getAllNames: (params: { owner: string; maxItems?: number }) => Promise<IndexedNameSummary[]>
   getAllSubnames: (parentNode: string, maxItems?: number) => Promise<IndexedSubname[]>
+  /** Every activity row for a name, newest first, for exports. */
+  getAllActivity: (node: string, maxItems?: number) => Promise<ActivityEntry[]>
   getHealth: (params?: IndexerPageParams) => Promise<DuskDomainsIndexerHealth>
   searchName: (
     query: string,
@@ -559,6 +561,14 @@ export function createDuskDomainsIndexerClient(
     }, maxItems)
   }
 
+  async function getAllActivity(node: string, maxItems?: number) {
+    if (!node.trim()) throw new Error('Complete activity reads require a node.')
+    return collectPages(async (params) => {
+      const page = await getActivityPage(node, params)
+      return { items: page.activity, nextCursor: page.nextCursor }
+    }, maxItems)
+  }
+
   async function getAllSubnames(parentNode: string, maxItems?: number) {
     if (!parentNode.trim()) throw new Error('Complete subname reads require a parent node.')
     return collectPages(async (params) => {
@@ -570,6 +580,7 @@ export function createDuskDomainsIndexerClient(
   return {
     getAllNames,
     getAllSubnames,
+    getAllActivity,
     getHealth,
     searchName,
     getCommitment,

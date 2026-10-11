@@ -24,3 +24,10 @@ export function relativeAge(seconds: number) {
   const months = Math.round(days / 30)
   return months < 24 ? `${months} months ago` : `${Math.round(months / 12)} years ago`
 }
+
+/** An exact date and time in UTC, for records people may compare or audit. */
+export function formatActivityDate(timestamp: string) {
+  const time = Date.parse(timestamp)
+  if (!Number.isFinite(time)) return null
+  return `${new Date(time).toISOString().slice(0, 16).replace('T', ' ')} UTC`
+}

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Show a name's activity as plain actions with their prices and parties, such as "Registered for 1 year · 10 DUSK" or "Sold to … for 30 DUSK", folding internal bookkeeping events into the action they belong to. Show the exact UTC time, the actor and the transaction, linked to `VITE_DUSK_DOMAINS_EXPLORER_URL` when set, and download the full history as CSV.
+- Accept controller and retired-registration events in activity pages; one such row made the whole page unreadable.
+- Credit a record change to the name's holder when one wallet owns and manages it, and nobody when the holders changed in the same block. Read clearing every record as removing them, a records move as a move and records staged for a move to another registry as a copy, and name the subname a parent's change created only when that transaction took its serial.
+
 - Show primary names only while authority-gated resolution succeeds. Explain paused or stale mappings after listing, transfer or expiry and retain the option to clear them.
 
 - Route released-name registration through eligible retirement successors while preserving saved commitments and dropped-name premiums.

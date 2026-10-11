@@ -359,6 +359,7 @@
 
 .timeline-copy {
   display: grid;
+  align-content: start;
   gap: 3px;
   min-width: 0;
 }
@@ -500,6 +501,20 @@
 .timeline-meta details li::before { display: none; }
 .timeline-meta details code { overflow-wrap: anywhere; }
 .timeline-copy > span { font-family: var(--font-ui); }
+.timeline-when { display: grid; justify-items: end; gap: 2px; }
+.timeline-when time { color: var(--ink); font: 500 var(--text-sm) var(--font-mono); }
+.timeline-when small { color: var(--muted); font-size: var(--text-xs); }
+.timeline-tx { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: var(--text-xs); text-decoration: none; }
+a.timeline-tx { color: var(--peach); }
+a.timeline-tx:hover { text-decoration: underline; }
+.timeline-tx code, .timeline-meta details code { font: 500 var(--text-xs) var(--font-mono); }
+.timeline-meta details li { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
+.activity-panel .management-header .button svg { margin-right: 4px; }
+@media (max-width: 600px) {
+  .timeline li { flex-direction: column; gap: var(--space-2); }
+  .timeline-meta, .timeline-when { justify-items: start; max-width: none; }
+  .timeline-meta details, .timeline-meta details li { text-align: left; justify-content: flex-start; }
+}
 
 .name-report { justify-self: start; }
 .brand-claim-notice { margin: 0; line-height: 1.5; }

@@ -14,6 +14,12 @@ type UseSearchWorkspaceFeatureProps = {
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
   priceTiers?: SearchWorkspaceProps['search']['priceTiers']
   activityEntries: SearchWorkspaceProps['result']['activityProps']['activityEntries']
+  /** Block explorer origin for transaction links. */
+  explorerUrl?: string | null
+  /** Reads the name's whole history for the CSV download. */
+  loadFullActivity?: () => Promise<SearchWorkspaceProps['result']['activityProps']['activityEntries']>
+  marketplaceContractId?: string | null
+  nowSeconds?: number
   hasMoreActivity?: boolean
   onLoadMoreActivity?: () => void
   activityLoading: boolean
@@ -65,6 +71,10 @@ export function useSearchWorkspaceFeature({
   priceTiers,
   activityEntries,
   activityLoading,
+  explorerUrl,
+  loadFullActivity,
+  marketplaceContractId,
+  nowSeconds,
   hasMoreActivity,
   onLoadMoreActivity,
   canRegister,
@@ -109,6 +119,7 @@ export function useSearchWorkspaceFeature({
   const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
   const managedName = settingsProps.managedName
   const owner = nodeHex && managedName.node === nodeHex ? managedName.owner : null
+  const holders = owner ? { owner, manager: managedName.manager } : null
   const canMakeOffer = marketplaceOffers && canOfferOn({ name: displayName, status: resultStatus, owner, ownerIsContract: managedName.ownerIsContract,
     expiresAt: managedName.expiresAt, currentBlockHeight, viewer: viewerAuthority })
   const searchProps: SearchWorkspaceProps = {
@@ -131,10 +142,16 @@ export function useSearchWorkspaceFeature({
         onLoadMore: onLoadMoreActivity,
         activityEntries,
         currentBlockHeight,
+        nowSeconds,
         displayName,
+        explorerUrl,
         formatActivityTime,
+        holders,
+        loadFullHistory: loadFullActivity,
         loading: activityLoading,
+        marketplaceContractId,
         recentWarnings,
+        subnames,
         viewerAuthority,
       },
       detailsProps: {
@@ -148,7 +165,11 @@ export function useSearchWorkspaceFeature({
         viewerAuthority,
         activity: {
           activityEntries,
+          hasMore: hasMoreActivity,
           currentBlockHeight,
+          nowSeconds,
+          marketplaceContractId,
+          holders,
           formatActivityTime,
           onActivity: () => onResultViewChange('activity'),
         },

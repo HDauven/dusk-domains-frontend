@@ -96,6 +96,7 @@ export function indexedSubnameToState(subname: IndexedSubname): SubnameState {
     parentExpiresAt: subname.parentExpiresAtBlockHeight ?? unixSecondsFromIso(subname.parentExpiresAt) ?? 0,
     expiryPolicy: subname.expiryPolicy,
     createdAt: unixSecondsFromIso(subname.createdAt) ?? 0,
+    ...(typeof subname.serial === 'string' && /^\d+$/.test(subname.serial) ? { serial: subname.serial } : {}),
     status: subname.status,
   }
 }

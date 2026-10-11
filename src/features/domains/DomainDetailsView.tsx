@@ -12,8 +12,7 @@ import {
   type ResolverRecord,
   type SubnameState,
 } from '../../names/internal'
-import { activityDetail, activityTitle } from '../activity/activityCopy'
-import { activityWhen } from '../activity/activityTime'
+import { ActivityTime } from '../activity/ActivityHistoryView'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
 import { isIdentifierRecord, recordLabel } from './recordPresentation'
 
@@ -40,17 +39,31 @@ export function DomainDetailsView({ canEdit = false, primaryControl, displayName
   viewerAuthority: string
   activity: {
     activityEntries: ActivityEntry[]
+    /** Older activity is still to load. */
+    hasMore?: boolean
     currentBlockHeight: number | null
+    nowSeconds?: number
+    marketplaceContractId?: string | null
+    /** The name's current owner and manager. */
+    holders?: { owner: string, manager: string } | null
     formatActivityTime: (timestamp: string) => string
     onActivity: () => void
   }
 }) {
   const {
     activityEntries,
+    hasMore,
     currentBlockHeight,
+    nowSeconds,
+    marketplaceContractId,
+    holders,
     formatActivityTime,
     onActivity,
   } = activity
+  const recent = activityActions(activityEntries, {
+    viewerAuthority, currentBlockHeight, nowSeconds, marketplaceContractId, subnames, holders, partial: hasMore,
+    addresses: parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value),
+  }).slice(0, 4)
   const payable = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))
     .filter((record): record is ResolverRecord => Boolean(record))
@@ -130,12 +143,12 @@ export function DomainDetailsView({ canEdit = false, primaryControl, displayName
             <h2 id="recent-heading">Recent</h2>
             <Button variant="quiet" type="button" onClick={onActivity}>All activity</Button>
           </div>
-          {activityEntries.length ? (
+          {recent.length ? (
             <ul className="recent-list">
-              {activityActions(activityEntries).slice(0, 4).map(({ entry }) => (
-                <li key={entry.id}>
-                  <span>{activityTitle(entry)} <em>{activityDetail(entry, viewerAuthority, parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value))}</em></span>
-                  <time>{activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}</time>
+              {recent.map(action => (
+                <li key={action.key}>
+                  <span>{action.title}{action.details.length ? <em>{action.details.join(' · ')}</em> : null}</span>
+                  <ActivityTime compact action={action} currentBlockHeight={currentBlockHeight} formatActivityTime={formatActivityTime} />
                 </li>
               ))}
             </ul>

@@ -12,6 +12,8 @@ export type DuskDomainsRuntimeConfig = {
     status: string | null
   }
   indexerUrl: string | null
+  /** A block explorer origin, such as https://explorer.dusk.network, for transaction links. */
+  explorerUrl: string | null
   nodeUrl: string
   chainId: string
   liveWritesEnabled: boolean
@@ -51,10 +53,12 @@ export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}):
         : null,
     ]),
   ) as DuskDomainsRuntimeConfig['launchLinks']
+  const explorer = get('EXPLORER_URL').replace(/\/+$/, '')
   return {
     contracts,
     mode: missingLiveInputs.length ? 'preview' : 'live_ready',
     indexerUrl,
+    explorerUrl: /^https?:\/\/[^/\s?#]+(?:\/[^\s?#]*)?$/.test(explorer) ? explorer : null,
     nodeUrl,
     chainId,
     liveWritesEnabled: flag('ENABLE_LIVE_WRITES'),

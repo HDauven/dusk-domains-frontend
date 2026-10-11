@@ -201,6 +201,8 @@ export type IndexedSubname = {
   expiryPolicy: SubnameExpiryPolicy
   status: SubnameStatus
   createdAt: string
+  /** The serial it took from its root's counters when it was created; frozen indexers report it, older ones may not. */
+  serial?: string
   lastEventType: SubnameRegistryEvent['type']
   txId: string | null
   blockHeight: number | null
