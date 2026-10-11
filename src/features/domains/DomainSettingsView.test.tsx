@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it } from 'vitest'
 import { formatLifecycleDay } from './domainFormat'
+import { userFacingErrorMessage } from '../../names/internal'
 import { DomainSettingsView, type DomainSettingsViewProps } from './DomainSettingsView'
 
 const noop = () => {}
@@ -52,11 +53,11 @@ it('offers a subname no renewal and says how its expiry works', () => {
   expect(inherits).not.toContain('Renewal controls')
   expect(inherits).not.toContain('Renewal term')
   expect(inherits).not.toContain('DUSK')
-  expect(inherits).toContain(`Runs until ${day(20_000)}. It expires with alphavnuc.dusk, and renewing alphavnuc.dusk renews it too.`)
+  expect(inherits).toContain(`Expires ${day(20_000)}. It expires with alphavnuc.dusk, and renewing alphavnuc.dusk renews it too.`)
   // A deeper subname's parent is a subname too, and cannot be renewed.
   const nested = settings({ displayName: 'pay.team.example.dusk', managedName: { ...managedName, expiryPolicy: 'inherits_parent' } })
   expect(nested).not.toContain('Renewal term')
-  expect(nested).toContain(`Runs until ${day(20_000)}. It expires with team.example.dusk.</p>`)
+  expect(nested).toContain(`Expires ${day(20_000)}. It expires with team.example.dusk.</p>`)
   expect(nested).not.toContain('renewing')
   const fixed = settings({ displayName: 'pay.alphavnuc.dusk', managedName: { ...managedName, expiryPolicy: 'fixed_before_parent' } })
   expect(fixed).not.toContain('Renewal term')
@@ -67,7 +68,7 @@ it('offers a subname no renewal and says how its expiry works', () => {
 it('offers renewal through grace and explains the deadline and old-expiry basis', () => {
   const active = settings({})
   expect(active).toContain('Renewal term')
-  expect(active).toContain(`Runs until ${day(20_000)}. You can renew until ${day(300_000)}; after that anyone can register it.`)
+  expect(active).toContain(`Expires ${day(20_000)}. Nothing renews automatically: you can renew it until ${day(300_000)}, and after that anyone can register it.`)
   expect(active).toContain('Renewal extends from the previous expiry.')
   for (const currentBlockHeight of [20_000, 20_001, 299_999]) {
     const expired = settings({
@@ -104,7 +105,7 @@ it('uses the derived grace end for renewal controls and copy when grace is unkno
     const grace = formatLifecycleDay(279_200, currentBlockHeight, nowSeconds)
     if (currentBlockHeight < 279_200) {
       expect(markup).toContain('Renewal term')
-      expect(markup).toContain(currentBlockHeight < 20_000 ? `You can renew until ${grace}` : `Renew by ${grace} to keep it.`)
+      expect(markup).toContain(currentBlockHeight < 20_000 ? `you can renew it until ${grace}` : `Renew by ${grace} to keep it.`)
     } else {
       expect(markup).not.toContain('Renewal term')
       expect(markup).toContain('Anyone can register it now.')
@@ -157,4 +158,33 @@ it('hides renewal controls in open settings until contract custody is known', ()
 it('shows website verification setup only to the owner', () => {
   expect(settings({})).toContain('Verify your website')
   expect(settings({ isOwner: false })).not.toContain('Verify your website')
+})
+
+const YEAR = 3_153_600
+it.each([
+  [3, 7],
+  [9, 1],
+])('offers only renewal terms that stay within ten years ahead: %i years left allow %i more', (left, more) => {
+  const html = settings({ managedName: { ...managedName, expiresAt: 1_000 + left * YEAR, graceEndsAt: 1_000 + left * YEAR + 259_200 } })
+  const terms = [...html.matchAll(/aria-pressed="(?:true|false)"[^>]*>(\d+) years?</g)].map(match => Number(match[1]))
+  expect(Math.max(...terms)).toBe(more)
+  expect(terms.every(years => years <= more)).toBe(true)
+  expect(html).toContain(`A name can run at most 10 years ahead, so you can add up to ${more} ${more === 1 ? 'year' : 'years'} now.`)
+})
+
+it('explains when a name is already at the ten-year limit and offers no term', () => {
+  const html = settings({ managedName: { ...managedName, expiresAt: 1_000 + 10 * YEAR - 10, graceEndsAt: 1_000 + 10 * YEAR + 259_190 } })
+  expect(html).not.toContain('Renewal term')
+  expect(html).not.toMatch(/>Renew<\/button>/)
+  expect(html).toContain(`It already runs close to the 10-year limit. You can add another year from ${day(1_000 + 10 * YEAR - 10 + YEAR - 10 * YEAR)}.`)
+})
+
+it('never shows a raw contract read error for a renewal price', () => {
+  const html = settings({ renewal: { feeConfigError: 'Contract read failed (7fe6b9783ab40773f9f8adb9c8aa1b55b83d7d1e262f93f172bc19272b637a93.quote_renewal): {"error":"Internal server error"}' } as DomainSettingsViewProps['renewal'] })
+  expect(html).not.toContain('Contract read failed')
+  expect(html).not.toContain('Internal server error')
+  expect(html).toContain('The renewal price could not be read. Try again in a moment.')
+  // An error that only names a transaction keeps its reason.
+  const expired = `Transaction ${'ab'.repeat(32)} expired before it was included. Try again.`
+  expect(userFacingErrorMessage(new Error(expired))).toBe(expired)
 })

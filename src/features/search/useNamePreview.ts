@@ -85,6 +85,8 @@ export function useNamePreview({
     registrationLifecycle,
     renewalFee,
     renewalQuote: quotes?.renewal,
+    /** The term the quote and renewal use, within the ten-year limit. */
+    renewalYears,
     renewalNameRef: quotes?.ref,
     quoteError: quotes?.error ?? '',
     quoteLoading: Boolean(onChainClient && !quotes),

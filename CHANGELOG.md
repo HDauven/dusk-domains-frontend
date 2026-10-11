@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Offer only renewal terms that keep a name within ten years of the current block, say why longer terms are missing, and show a plain message instead of a raw contract read error.
+- Say "Expires" with the date instead of "Renews by", and explain beside it that nothing renews automatically and a name can still be renewed for 30 days after it expires.
+
 - Keep names listed or in auction in My names, with their market status and a link to the listing. Add `/market/listing/<name>`, which opens Browse at that listing.
 - List subnames the wallet owns or manages under someone else's name, with its role, from the indexer's holder index (`/holdings`). An older indexer lists holders' root names only; then, or when the holder index can't be read, My names finds these through the owner index, the wallet's primary name and subname pages opened in this browser.
 - Read the listing a link names directly, so it opens even when it isn't on the loaded pages of the market. If that read fails, the market still loads and tries again on its next refresh.

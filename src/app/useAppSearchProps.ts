@@ -3,7 +3,7 @@ import { formatDusk } from '../utils/format'
 import type { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import type { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspaceFeature'
-import { lifecycleBadgeCopy } from '../features/domains/domainFormat'
+import { lifecycleBadgeCopy, lifecycleNote } from '../features/domains/domainFormat'
 import { clampDurationYears } from './appConstants'
 import type { AppViewModelInputs } from './appViewTypes'
 
@@ -96,6 +96,9 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     duration,
     lifecycleLabel: result.status === 'registered' && managedName.node === nodeHex
       ? lifecycleBadgeCopy(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds, managedName.graceEndsAt)
+      : null,
+    lifecycleNote: result.status === 'registered' && managedName.node === nodeHex
+      ? lifecycleNote(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds)
       : null,
     expiryDate,
     feeConfigLoading: !economicsRuntime.feeConfigLoaded || economicsRuntime.feeConfigLoading,

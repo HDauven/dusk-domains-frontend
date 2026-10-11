@@ -8,7 +8,7 @@ const SOON_SECONDS = 30 * 24 * 60 * 60
 // so they only show when they end.
 export function nameCardLifecycle(name: IndexedNameSummary, currentBlockHeight: number | null) {
   const subname = isSubname(name.canonicalName)
-  const ends = subname ? 'Expires' : 'Renews by'
+  const ends = 'Expires'
   const expiresAt = name.expiresAtBlockHeight
   const deadline = renewalDeadline({ expiresAt: expiresAt ?? 0, graceEndsAt: name.graceEndsAtBlockHeight ?? 0 })
   const nowSeconds = Math.floor(Date.now() / 1000)
@@ -39,5 +39,5 @@ export function nameCardLifecycle(name: IndexedNameSummary, currentBlockHeight: 
   }
   const left = (expiresAt - currentBlockHeight) * DUSK_APPROX_BLOCK_TIME_SECONDS
   if (left >= SOON_SECONDS) return { tone: '', copy: `${ends} ${expires}` }
-  return { tone: 'warn', copy: subname ? `Expires soon: ${expires}` : `Renew soon: ends ${expires}` }
+  return { tone: 'warn', copy: subname ? `Expires soon: ${expires}` : `Expires soon: ${expires}. Renew to keep it` }
 }

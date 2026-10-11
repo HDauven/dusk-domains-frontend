@@ -82,7 +82,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       managedName: domainState.managedName,
       nodeHex: namePreview.nodeHex,
       nowSeconds: searchState.nowSeconds,
-      renewalYears: domainState.renewalYears,
+      renewalYears: namePreview.renewalYears,
       resultLabel: namePreview.result.label,
       setManagedName: domainState.setManagedName,
       setManagementError: domainState.setManagementError,
@@ -215,7 +215,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         renewalFee: namePreview.renewalFee,
         renewalPreviewExpiresAt: namePreview.renewalPreviewLifecycle.expiresAt,
         renewalTxState: domainState.renewalTxState,
-        renewalYears: domainState.renewalYears,
+        renewalYears: namePreview.renewalYears,
       },
       clock: {
         currentBlockHeight: searchState.currentBlockHeight,

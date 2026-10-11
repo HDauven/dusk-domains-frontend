@@ -21,7 +21,8 @@ export function TermPicker({
   onChange: (years: number) => void
   value: number
 }) {
-  const terms = [...new Set([...termChoices, value])]
+  // A capped term (say 7 years) is offered itself, so the longest allowed term is always a choice.
+  const terms = [...new Set([...termChoices, value, max])]
     .filter((years) => years >= min && years <= max)
     .sort((a, b) => a - b)
   const row = useRef<HTMLDivElement>(null)

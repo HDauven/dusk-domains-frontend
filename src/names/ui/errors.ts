@@ -72,7 +72,7 @@ export function isRevealTooEarlyMessage(message: string | undefined): boolean {
 }
 
 export function isTechnicalErrorMessage(message: string | undefined): boolean {
-  return /32-byte|DuskDS|contract calls?|Invalid input|public_sender|runtime|payload|data-driver|0x[a-f0-9]{24,}/iu.test(
+  return /32-byte|DuskDS|contract calls?|contract read failed|internal server error|Invalid input|public_sender|runtime|payload|data-driver|0x[a-f0-9]{24,}/iu.test(
     String(message ?? ''),
   )
 }

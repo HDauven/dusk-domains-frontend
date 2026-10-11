@@ -68,6 +68,8 @@ export function MyDomainsView({ listings = [], subnames = [], listingsUnavailabl
         headingId="my-names-heading"
       />
 
+      {myNames.length ? <p className="field-note my-names-note">Names don't renew automatically. After a name expires, it can still be renewed for 30 days; then anyone can register it.</p> : null}
+
       {myNamesError ? <PanelMessage icon={<AlertTriangle size={18} />}>{myNamesError}</PanelMessage> : null}
       {listingsUnavailable && !myNamesError ? <PanelMessage icon={<AlertTriangle size={18} />}>Names you listed in the market could not be loaded. Trying again.</PanelMessage> : null}
 

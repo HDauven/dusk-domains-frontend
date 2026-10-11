@@ -12,8 +12,10 @@ import { followLink, navigateTo, routePath } from '../../app/routes'
 
 const offerRoute = (offerName: string) => ({ view: 'marketplace' as const, offerName })
 
-export function NameHeader({ canMakeOffer = false, displayName, verification, lifecycleLabel, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
+export function NameHeader({ canMakeOffer = false, displayName, verification, lifecycleLabel, lifecycleNote, primaryVerified, owner, records, reserved, status, viewerAuthority, ownerAddresses = [] }: {
   canMakeOffer?: boolean
+  /** What the expiry date means, next to it. */
+  lifecycleNote?: string | null
   verification?: WebsiteVerification
   displayName: string
   lifecycleLabel: string | null
@@ -44,6 +46,7 @@ export function NameHeader({ canMakeOffer = false, displayName, verification, li
         {registered && primaryVerified ? <Badge tone="success">Primary name</Badge> : null}
         {registered && lifecycleLabel ? <Badge>{lifecycleLabel}</Badge> : null}
       </div>
+      {registered && lifecycleLabel && lifecycleNote ? <p className="name-hero-note">{lifecycleNote}</p> : null}
       {canMakeOffer ? <a className="button button-secondary compact name-hero-offer" href={routePath(offerRoute(displayName))}
         onClick={event => followLink(event, () => navigateTo(offerRoute(displayName)))}>Make an offer</a> : null}
     </div>

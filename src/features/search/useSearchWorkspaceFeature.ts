@@ -31,6 +31,7 @@ type UseSearchWorkspaceFeatureProps = {
   displayName: string
   duration: number
   lifecycleLabel: string | null
+  lifecycleNote?: string | null
   expiryDate: string
   feeConfigLoading: boolean
   nodeHex: string
@@ -84,6 +85,7 @@ export function useSearchWorkspaceFeature({
   displayName,
   duration,
   lifecycleLabel,
+  lifecycleNote,
   expiryDate,
   feeConfigLoading,
   nodeHex,
@@ -180,6 +182,7 @@ export function useSearchWorkspaceFeature({
         viewerAuthority,
         displayName,
         lifecycleLabel,
+        lifecycleNote,
         primaryVerified: primaryProps.primaryVerification.verified,
         owner,
         canMakeOffer,
