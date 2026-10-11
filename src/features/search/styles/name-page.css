@@ -38,6 +38,9 @@
   overflow-wrap: anywhere;
 }
 
+/* An empty status takes no place in the row. */
+.name-share-status:empty { position: absolute; }
+
 .night-card {
   position: relative;
   min-width: 0;

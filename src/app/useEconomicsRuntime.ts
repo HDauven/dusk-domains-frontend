@@ -65,6 +65,7 @@ export function useEconomicsRuntime({
     referralsProps,
     resetReferralCopied,
   } = useReferralFeature({
+    feeConfig: feeConfigLoaded && !feeConfigError ? feeConfig : null,
     indexerClient,
     liveDuskDomainsApp,
     onOpenWalletConnection,

@@ -1,5 +1,6 @@
 import { useState, type ComponentProps } from 'react'
 import type {
+  CoreFeeConfig,
   DuskDomainsIndexerClient,
   DuskDomainsRuntimeConfig,
   DuskDomainTxState,
@@ -11,10 +12,12 @@ import { useReferralAccount } from './useReferralAccount'
 import { useReferralActions } from './useReferralActions'
 import { useReferralControls } from './useReferralControls'
 import { useReferralViewModel } from './useReferralViewModel'
+import { referralRules } from './referralRules'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 
 export function useReferralFeature({
+  feeConfig = null,
   indexerClient,
   liveDuskDomainsApp,
   onOpenWalletConnection,
@@ -27,6 +30,8 @@ export function useReferralFeature({
   ensureContractAuthorityForLiveWrite,
   ensurePublicBalanceForLiveWrite,
 }: {
+  /** The live fee configuration, for the reward rates; null until it is read. */
+  feeConfig?: CoreFeeConfig | null
   indexerClient: DuskDomainsIndexerClient | null
   liveDuskDomainsApp: unknown
   onOpenWalletConnection: () => void
@@ -101,6 +106,7 @@ export function useReferralFeature({
     referralConfirmation,
     referralError,
     referralState,
+    rules: referralRules(feeConfig),
     rewards: {
       referralBusy: referralViewModel.referralBusy,
       referralClaimRecipient: referralViewModel.referralClaimRecipient,
