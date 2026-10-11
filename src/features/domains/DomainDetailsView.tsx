@@ -52,6 +52,10 @@ export function DomainDetailsView({ canEdit = false, isOwner = false, separateMa
     marketplaceContractId?: string | null
     /** The name's current owner and manager. */
     holders?: { owner: string, manager: string } | null
+    /** Its subnames' own activity, which says what a subname change on this name was. */
+    subnameActivity?: import('../activity/subnameActivity').SubnameActivity
+    /** Dusk addresses known on this page, to show accounts by address. */
+    addresses?: string[]
     formatActivityTime: (timestamp: string) => string
     onActivity: () => void
   }
@@ -63,12 +67,14 @@ export function DomainDetailsView({ canEdit = false, isOwner = false, separateMa
     nowSeconds,
     marketplaceContractId,
     holders,
+    subnameActivity,
+    addresses = [],
     formatActivityTime,
     onActivity,
   } = activity
   const recent = activityActions(activityEntries, {
-    viewerAuthority, currentBlockHeight, nowSeconds, marketplaceContractId, subnames, holders, partial: hasMore,
-    addresses: parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value),
+    viewerAuthority, currentBlockHeight, nowSeconds, marketplaceContractId, subnames, holders, subnameActivity, partial: hasMore,
+    addresses: [...new Set([...parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value), ...addresses])],
   }).slice(0, 4)
   const payable = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))

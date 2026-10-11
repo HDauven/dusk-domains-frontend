@@ -97,6 +97,7 @@ export function indexedSubnameToState(subname: IndexedSubname): SubnameState {
     expiryPolicy: subname.expiryPolicy,
     createdAt: unixSecondsFromIso(subname.createdAt) ?? 0,
     ...(typeof subname.serial === 'string' && /^\d+$/.test(subname.serial) ? { serial: subname.serial } : {}),
+    ...(typeof subname.updatedAt === 'string' && Number.isFinite(Date.parse(subname.updatedAt)) ? { updatedAt: subname.updatedAt } : {}),
     status: subname.status,
   }
 }

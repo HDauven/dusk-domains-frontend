@@ -190,7 +190,11 @@ describe('activity actions', () => {
     const subRef = { key: { root, node: subRoot }, incarnation: { generation: '1', serial: '3' } }
     const created = row('subname_created', { name: { ...name({ owner: sellerAuthority, manager: buyerAuthority }), ...subRef, label: 'maya',
       subname: { parent: root, depth: 1, expiry_policy: 'InheritsParent', created_at: '461' } }, actor: sellerAuthority }, { tx: 'tx-create', height: 461, at: hex(subRoot) })
-    expect(activityActions([created])[0].title).toBe(`Created and given to Account ID ${abbreviate(hex(buyerAuthority))}`)
+    // The creator stays its owner, so the subname was not given away: another account manages it.
+    expect(activityActions([created])[0].title).toBe(`Created, managed by Account ID ${abbreviate(hex(buyerAuthority))}`)
+    const given = row('subname_created', { name: { ...name({ owner: buyerAuthority, manager: buyerAuthority }), ...subRef, label: 'maya',
+      subname: { parent: root, depth: 1, expiry_policy: 'InheritsParent', created_at: '461' } }, actor: sellerAuthority }, { tx: 'tx-give', height: 461, at: hex(subRoot) })
+    expect(activityActions([given])[0].title).toBe(`Created and given to Account ID ${abbreviate(hex(buyerAuthority))}`)
     const takeBack = row('authorities_changed', { name: { ...name(), ...subRef }, previous_owner: sellerAuthority, previous_manager: buyerAuthority,
       actor: sellerAuthority, reason: 'TakeBack', data_cleared: true }, { tx: 'tx-take', height: 470, at: hex(subRoot) })
     expect(activityActions([takeBack], { label: activityPartyLabel(hex(sellerAuthority)) })[0]).toMatchObject({ title: 'Taken back by you', details: ['Records and primary name cleared'] })

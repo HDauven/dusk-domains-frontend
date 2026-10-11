@@ -4,6 +4,7 @@
 
 - Say on every subname's page, to its holders and to visitors, that the owner or manager of a name above can take it back, give it to another wallet or remove it, and that its holder can't prevent this. Show a name's manager beside its owner, show holders by Dusk address where the names above or a registration prove it, and explain an account ID with no matching address.
 - Show the full manager address in a review step before creating a subname for another manager, and name the new owner and manager in the wallet details. A take-back's wallet details show the signer's address.
+- Name the subname, the action and, where the data proves it, who made it for subname changes in a parent's activity, Recent list and CSV, read from each subname's own activity. A count or a single subname is given only when every subname that could have changed was read and none can have left the namespace since. The CSV shows an account by its Dusk address when one is known.
 - Ask before taking back a subname, and say that its records and primary name are cleared and its holder loses it.
 - Make Register on a saved, ready reservation sign the reveal once the claim is open, and keep the reservation's commitment store when a claim resumes after the wallet session restores.
 - Keep checking a wallet session that lost its authorization without the user disconnecting, so the header recovers from "Connect wallet" without a reload.

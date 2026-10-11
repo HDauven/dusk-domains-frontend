@@ -21,6 +21,10 @@ type UseSearchWorkspaceFeatureProps = {
   explorerUrl?: string | null
   /** Reads the name's whole history for the CSV download. */
   loadFullActivity?: () => Promise<SearchWorkspaceProps['result']['activityProps']['activityEntries']>
+  /** The activity of its subnames that explains subname changes on this name. */
+  subnameActivity?: SearchWorkspaceProps['result']['activityProps']['subnameActivity']
+  /** Reads that activity for a whole history, for the CSV download. */
+  loadSubnameActivity?: SearchWorkspaceProps['result']['activityProps']['loadSubnameActivity']
   marketplaceContractId?: string | null
   nowSeconds?: number
   hasMoreActivity?: boolean
@@ -79,6 +83,8 @@ export function useSearchWorkspaceFeature({
   activityLoading,
   explorerUrl,
   loadFullActivity,
+  subnameActivity,
+  loadSubnameActivity,
   marketplaceContractId,
   nowSeconds,
   hasMoreActivity,
@@ -155,6 +161,8 @@ export function useSearchWorkspaceFeature({
         formatActivityTime,
         holders,
         loadFullHistory: loadFullActivity,
+        subnameActivity,
+        loadSubnameActivity,
         loading: activityLoading,
         marketplaceContractId,
         recentWarnings,
@@ -177,6 +185,8 @@ export function useSearchWorkspaceFeature({
           nowSeconds,
           marketplaceContractId,
           holders,
+          subnameActivity,
+          addresses: ownerAddresses,
           formatActivityTime,
           onActivity: () => onResultViewChange('activity'),
         },

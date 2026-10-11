@@ -22,6 +22,8 @@ export type SubnameState = {
   createdAt: number
   /** The serial it took from its root's counters when it was created; frozen indexers report it. */
   serial?: string | null
+  /** When the indexer observed its latest event, if it reports it. */
+  updatedAt?: string
   status: SubnameStatus
 }
 
