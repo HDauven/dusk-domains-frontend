@@ -31,7 +31,7 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
     displayName: 'approval.dusk', nodeHex: namehashHex('approval.dusk'), duration: 1,
     selectedAuthority: `0x${'11'.repeat(32)}`, selectedAddress: 'wallet', canPrepareCommit: true,
     runtimeConfig: { chainId: 'dusk:0', contracts }, liveDuskDomainsApp: null, preparedCommit: null as PreparedRegistrationCommit | null,
-    commitBusy: false, txBusy: false, registrationCompletion: null, resultIssues: [], registrationStep: 'review',
+    commitBusy: false, txBusy: false, registrationCompletion: null, resultIssues: [], registrationStep: 'review', walletError: '',
     registrationTargetAddress: 'wallet', registrationTargetAddressErrors: [], registrationFee: 10,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: () => balance.promise,
     loadPendingReservations: () => listPendingNameReservations(),

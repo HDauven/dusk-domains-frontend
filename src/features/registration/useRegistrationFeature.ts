@@ -7,6 +7,7 @@ import type { RegistrationFlowPanelProps } from './RegistrationFlowPanel'
 import { useRegistrationActions } from './useRegistrationActions'
 import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 import { registrationCommitMatchesSession } from './pendingReservationTypes'
+import { claimSetsPrimary, isPrimaryAsk, primaryNameNote, useWalletPrimary } from './walletPrimary'
 
 const REGISTER_INTENT_MS = 30_000
 
@@ -26,6 +27,12 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
   }, [reservationToResume])
 
   const onBackToOverview = () => searchState.setResultView('overview')
+  // Default the primary name on only for a wallet that has none, and say which name it would replace.
+  // Read only while a name can be claimed, so other name pages make no extra request. The default is
+  // never kept as a choice: Register reads the primary name again and decides from that read.
+  const { primary: walletPrimary, readFresh: readWalletPrimary } = useWalletPrimary(appRuntime.indexerClient, appRuntime.duskDomainsOnChainClient,
+    walletRuntime.selectedAddress, namePreview.canRegister ? namePreview.displayName : '')
+  const registerSetsPrimary = claimSetsPrimary(registrationState.registerSetsPrimary, walletPrimary, namePreview.displayName)
   const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions({
     appliedReferral: economicsRuntime.appliedReferral,
     appendActivity: activityFeed.appendActivity,
@@ -45,9 +52,10 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
     loadPendingReservations: registrationRuntime.loadPendingReservations,
     nodeHex: namePreview.nodeHex,
     preparedCommit: registrationState.preparedCommit,
+    primaryChoice: registrationState.registerSetsPrimary,
+    readWalletPrimary,
     recordSourceContractId: appRuntime.recordSourceContractId,
     refreshCommitBlockState: registrationRuntime.refreshCommitBlockState,
-    registerSetsPrimary: registrationState.registerSetsPrimary,
     registrationTargetAddress: registrationRuntime.registrationTargetAddress,
     registrationTargetAddressErrors: registrationRuntime.registrationTargetAddressErrors,
     registrationTargetReady: registrationRuntime.registrationTargetReady,
@@ -143,7 +151,9 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
       canRevealRegistration: derivedState.canRevealRegistration,
       onRegisterName: confirmedTotalLux => {
         if (registrationState.registerIntent) registrationState.setRegisterIntent(null)
-        void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux))
+        // The switch and the primary name its note is about, as shown when Register is pressed.
+        const shown = { setsPrimary: registerSetsPrimary, primary: walletPrimary }
+        void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux, shown))
       },
       onAddRecords: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, async name => { await searchRuntime.openIndexedName(name); searchState.setResultView('records') }),
       onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),
@@ -165,8 +175,11 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
         if (primaryChoicePending.current || derivedState.commitBusy || derivedState.txBusy) return
         registrationState.setRegisterSetsPrimary(value)
         if (registrationState.preparedCommit) saveReservationPrimaryChoice({ chainId: appRuntime.runtimeConfig.chainId, commitment: registrationState.preparedCommit.commitment }, value)
+        // Changing the switch answers the question Register asked about it.
+        if (isPrimaryAsk(walletRuntime.walletError)) walletRuntime.setWalletError('')
       },
-      registerSetsPrimary: registrationState.registerSetsPrimary,
+      registerSetsPrimary,
+      primaryNote: primaryNameNote(walletPrimary, registerSetsPrimary, namePreview.displayName),
     },
   }
 

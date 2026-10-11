@@ -2,16 +2,23 @@ import { useScopedState } from '../utils/useScopedState'
 import { clampDurationYears } from './appConstants'
 import { readReservationPrimaryChoice } from '../features/registration/reservationPrimaryChoice'
 import type { PendingNameReservation } from '../names/internal'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { DuskDomainTxState } from '../names/internal'
 import type { RegistrationCompletionState } from '../features/registration/registrationCompletionState'
 import type { RegistrationStepId } from '../features/registration/registrationSteps'
 import type { StrandedCommitment } from '../features/registration/pendingReservationTypes'
 import type { PreparedRegistrationCommit } from '../features/registration/usePendingReservations'
 
-export function useRegistrationAppState(sessionKey = '') {
+/** `address` is the connected wallet's address, which a primary-name choice belongs to. */
+export function useRegistrationAppState(sessionKey = '', address = '') {
   const [duration, setDuration] = useState(1)
-  const [registerSetsPrimary, setRegisterSetsPrimary] = useState(true)
+  // Null until someone chooses: the claim then follows the wallet's primary name (see claimSetsPrimary),
+  // read again when it registers (see revealSetsPrimary). A default is never kept as a choice.
+  // A choice belongs to the address it was made for. Another account starts from its own default,
+  // while a lock and unlock or a reconnect of the same account, which start a new session, keep it.
+  const [primaryChoice, setPrimaryChoice] = useState<{ address: string; value: boolean } | null>(null)
+  const registerSetsPrimary = primaryChoice?.address === address ? primaryChoice.value : null
+  const setRegisterSetsPrimary = useCallback((value: boolean | null) => setPrimaryChoice(value === null ? null : { address, value }), [address])
   const [registrationStep, setRegistrationStep] = useState<RegistrationStepId>('review')
   const [committed, setCommitted] = useScopedState(sessionKey, false)
   const [preparedCommit, setPreparedCommit] = useScopedState<PreparedRegistrationCommit | null>(sessionKey, null)
@@ -28,7 +35,7 @@ export function useRegistrationAppState(sessionKey = '') {
       reset: () => {
         setCommitted(false)
         setPreparedCommit(null)
-        setRegisterSetsPrimary(true)
+        setRegisterSetsPrimary(null)
         setRegistrationStep('review')
         setTxState(null)
         setCommitTxState(null)
@@ -37,7 +44,10 @@ export function useRegistrationAppState(sessionKey = '') {
       },
       review: () => setRegistrationStep('review'),
       resume: (reservation: PendingNameReservation, options: { register?: boolean } = {}) => {
-        setRegisterSetsPrimary(readReservationPrimaryChoice(reservation))
+        // An older reservation may not have saved its owner; it resumes for the connected wallet.
+        // Without a saved choice, the claim follows the wallet's primary name again.
+        const saved = readReservationPrimaryChoice(reservation)
+        setPrimaryChoice(saved === null ? null : { address: reservation.ownerAddress || address, value: saved })
         setDuration(clampDurationYears(reservation.durationYears))
         setRegistrationStep('purchase')
         setCommitted(true)

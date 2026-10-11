@@ -40,9 +40,10 @@ function args() {
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
-it.each([true, false])('preserves the primary name choice %s when an uncertain claim is saved', async (registerSetsPrimary) => {
+// No choice saves none, so Register follows the wallet's primary name as it is then.
+it.each([true, false, null])('preserves the primary name choice %s when an uncertain claim is saved', async (primaryChoice) => {
   const props = args()
-  await prepareRegistrationCommit({ ...props, registerSetsPrimary,
+  await prepareRegistrationCommit({ ...props, primaryChoice,
     submitNameWrite: Object.assign(async (_name: unknown, _call: unknown, options: { beforeSign: () => void; onUpdate: (state: unknown) => void }) => {
       options.beforeSign()
       options.onUpdate({ status: 'awaiting_approval' })
@@ -50,7 +51,7 @@ it.each([true, false])('preserves the primary name choice %s when an uncertain c
     }, { captureSession: () => () => true, captureWorkspace: () => () => true }),
   } as never)
   const saved = listPendingNameReservations()[0]
-  expect(readReservationPrimaryChoice(saved)).toBe(registerSetsPrimary)
+  expect(readReservationPrimaryChoice(saved)).toBe(primaryChoice)
 })
 
 it('saves before wallet approval and preserves the secret while a confirmed height read stalls', async () => {
@@ -189,7 +190,7 @@ function readyReservation(getPendingCommitment: () => Promise<unknown>) {
     preparedCommit: { controller, ownerAddress: 'owner', chainId: 'dusk:0', commitment: saved.commitment, secret: saved.secret, committedBlockHeight: 100, committedTxId: 'old-commit' },
     duskDomainsOnChainClient: { getPendingCommitment: vi.fn(getPendingCommitment) }, setStrandedCommitment: vi.fn(),
     submitNameWrite: Object.assign(vi.fn(async () => ({ status: 'failed' })), { captureSession: () => () => true, captureWorkspace: () => () => true }), result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
-    lifecycleBaseBlockHeight: 500, registerSetsPrimary: false, appliedReferral: null,
+    lifecycleBaseBlockHeight: 500, primaryChoice: false, appliedReferral: null,
     registrationTargetAddress: '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r' } }
 }
 

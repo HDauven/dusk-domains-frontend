@@ -29,7 +29,6 @@ export function createCompleteRegistrationRequest({
   | 'duration'
   | 'feeConfig'
   | 'lifecycleBaseBlockHeight'
-  | 'registerSetsPrimary'
   | 'registrationTargetAddress'
   | 'result'
   | 'selectedAddress'
@@ -38,6 +37,8 @@ export function createCompleteRegistrationRequest({
 > & {
   appliedReferral: ReferralState | null
   preparedCommit: PreparedRegistrationCommit
+  /** Whether the reveal also makes the name primary, as decided from a read made for it. */
+  registerSetsPrimary: boolean
 }) {
   if (!registrationCommitMatchesSession(preparedCommit, selectedAuthority, selectedAddress, runtimeConfig.chainId)) throw new WalletSessionChangedError()
   const feeLux = result.quotedYears === duration && result.totalFeeLux !== undefined ? result.totalFeeLux : registrationFeeLux(result.label, duration, feeConfig, result.premiumLux ?? 0)

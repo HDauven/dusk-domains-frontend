@@ -30,7 +30,7 @@ export async function applyCompleteRegistrationSuccess(
     setRegistrationCompletion,
     setResolverRecordSets,
     shouldApplyPreviewWriteFallback,
-  }: UseRegistrationActionsProps,
+  }: UseRegistrationActionsProps & { /** What the reveal sent. */ registerSetsPrimary: boolean },
   {
     finalState,
     request,

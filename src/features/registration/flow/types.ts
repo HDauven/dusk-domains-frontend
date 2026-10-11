@@ -80,6 +80,8 @@ export type RegistrationStepPanelProps = {
     onRegisterSetsPrimaryChange: (checked: boolean) => void
     primaryChoiceLocked: boolean
     registerSetsPrimary: boolean
+    /** What the claim does to the connected wallet's primary name, if it has one. */
+    primaryNote?: string
   }
 }
 

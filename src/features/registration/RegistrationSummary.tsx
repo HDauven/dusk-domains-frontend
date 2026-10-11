@@ -29,6 +29,8 @@ export function RegistrationSummary({ committed, registrationComplete, selectedA
     onRegisterSetsPrimaryChange?: (checked: boolean) => void
     primaryChoiceLocked?: boolean
     registerSetsPrimary: boolean
+    /** What the claim does to the wallet's primary name, if it has one. */
+    primaryNote?: string
   }
 }) {
   const {
@@ -49,9 +51,11 @@ export function RegistrationSummary({ committed, registrationComplete, selectedA
     onRegisterSetsPrimaryChange,
     primaryChoiceLocked = false,
     registerSetsPrimary,
+    primaryNote = '',
   } = primaryChoice
   const pointsElsewhere = registrationTargetAddress && registrationTargetAddress !== selectedAddress
   const primaryLabelId = useId()
+  const primaryNoteId = useId()
 
   return (
     <aside className="claim-stub register-summary" aria-label="Your claim">
@@ -85,7 +89,8 @@ export function RegistrationSummary({ committed, registrationComplete, selectedA
         {selectedAddress ? (
           <div className="register-primary">
             <dt id={primaryLabelId}>Primary name</dt>
-            <dd>{!registrationComplete && onRegisterSetsPrimaryChange ? <Switch disabled={primaryChoiceLocked} aria-labelledby={primaryLabelId} checked={registerSetsPrimary} onCheckedChange={onRegisterSetsPrimaryChange} /> : registerSetsPrimary ? 'On' : 'Off'}</dd>
+            <dd>{!registrationComplete && onRegisterSetsPrimaryChange ? <Switch disabled={primaryChoiceLocked} aria-labelledby={primaryLabelId} aria-describedby={primaryNoteId} checked={registerSetsPrimary} onCheckedChange={onRegisterSetsPrimaryChange} /> : registerSetsPrimary ? 'On' : 'Off'}</dd>
+            {!registrationComplete ? <dd id={primaryNoteId} className="register-primary-note">Apps that support .dusk names can show this name instead of your Dusk address.{primaryNote ? ` ${primaryNote}` : ''}</dd> : null}
           </div>
         ) : null}
         {activeReferral ? (

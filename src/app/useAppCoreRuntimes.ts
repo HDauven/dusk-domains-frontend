@@ -44,7 +44,8 @@ export function useAppCoreRuntimes(env: DuskDomainsRuntimeEnv) {
     submitNameWrite,
     walletSession,
   } = walletRuntime
-  const registrationState = useRegistrationAppState(`${walletRuntime.walletState.generation}:${walletRuntime.walletState.providerId}:${walletRuntime.walletState.chainId}:${walletRuntime.walletState.selectedProfile?.profileId}:${walletRuntime.selectedAddress}`)
+  const registrationState = useRegistrationAppState(`${walletRuntime.walletState.generation}:${walletRuntime.walletState.providerId}:${walletRuntime.walletState.chainId}:${walletRuntime.walletState.selectedProfile?.profileId}:${walletRuntime.selectedAddress}`,
+    walletRuntime.selectedAddress)
   const searchState = useSearchAppState(`${runtimeConfig.chainId}:${walletRuntime.selectedAddress}`,
     () => ({ route: openingRoute(), indexed: Boolean(indexerClient) }))
   useLayoutEffect(() => {

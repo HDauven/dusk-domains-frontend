@@ -20,6 +20,7 @@ import type { StrandedCommitment } from './pendingReservationTypes'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 import type { RegistrationStepId } from './registrationSteps'
 import type { PreparedRegistrationCommit } from './usePendingReservations'
+import type { WalletPrimary } from './walletPrimary'
 
 export type { SubmitNameWrite, ConfirmedWriteFallback }
 
@@ -51,7 +52,10 @@ export type UseRegistrationActionsProps = {
   preparedCommit: PreparedRegistrationCommit | null
   recordSourceContractId: string
   refreshCommitBlockState: (commitment: string) => Promise<boolean>
-  registerSetsPrimary: boolean
+  /** The person's own primary-name choice, saved with the reservation. Null when they made none. */
+  primaryChoice: boolean | null
+  /** Reads the connected wallet's primary name again, for the reveal. */
+  readWalletPrimary: () => Promise<WalletPrimary>
   registrationTargetAddress: string
   registrationTargetAddressErrors: string[]
   registrationTargetReady: boolean

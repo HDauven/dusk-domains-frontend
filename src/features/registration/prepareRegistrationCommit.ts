@@ -23,8 +23,8 @@ export async function prepareRegistrationCommit({
   liveDuskDomainsApp,
   loadPendingReservations,
   nodeHex,
+  primaryChoice,
   refreshCommitBlockState,
-  registerSetsPrimary,
   runtimeConfig,
   selectedAddress,
   selectedAuthority,
@@ -95,7 +95,8 @@ export async function prepareRegistrationCommit({
         if (!saved.some(entry => entry.commitment === commitment && entry.secret === secret)) {
           throw new Error('Cannot save the reservation. Enable browser storage and try again.')
         }
-        saveReservationPrimaryChoice(reservation, registerSetsPrimary)
+        // Only a choice the person made; a default is worked out again at Register.
+        saveReservationPrimaryChoice(reservation, primaryChoice)
         loadPendingReservations()
       },
       onNotBroadcast: () => {
