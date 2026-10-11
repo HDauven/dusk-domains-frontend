@@ -215,3 +215,20 @@ it('shows loading instead of lifecycle, owner or empty records until the open no
   expect(html).not.toContain('Renews by')
   expect(html).not.toContain('No addresses yet')
 })
+
+it('points to staged record changes from the other sections of the name page', () => {
+  const draft = { recordDraftMutations: [{ action: 'clear', key: 'website' }], recordDraftValues: {}, recordDraftErrors: [] }
+  const staged = (resultView: string, count = 1) => renderToStaticMarkup(<SearchResultPanel {...props} resultView={resultView as never}
+    headerProps={{ ...props.headerProps, viewerAuthority: 'owner' }}
+    management={{ ...props.management, recordsProps: { draft: { ...draft, recordDraftMutations: Array(count).fill(draft.recordDraftMutations[0]) } } } as never} />)
+  expect(staged('details')).toContain('1 record change is not saved yet.')
+  expect(staged('details', 2)).toContain('2 record changes are not saved yet.')
+  expect(staged('details')).toContain('>Review</button>')
+  // A staged value that can't be saved yet is unsaved too.
+  expect(renderToStaticMarkup(<SearchResultPanel {...props} resultView="details" headerProps={{ ...props.headerProps, viewerAuthority: 'owner' }}
+    management={{ ...props.management, recordsProps: { draft: { ...draft, recordDraftInvalid: [{ key: 'avatar', error: 'Use a valid HTTPS URL.' }] } } } as never} />))
+    .toContain('2 record changes are not saved yet.')
+  // The records section shows the changes themselves; visitors see nothing.
+  expect(renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+    management={{ ...props.management, recordsProps: { draft } } as never} />)).not.toContain('not saved yet')
+})

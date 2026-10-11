@@ -19,7 +19,6 @@ export async function createSubdomain({
   runtimeConfig,
   selectedAddress,
   selectedAuthority,
-  setRecordDrafts,
   setRecordError,
   setSubnameError,
   setSubnames,
@@ -92,7 +91,6 @@ export async function createSubdomain({
     if (!workspace()) return
 
     setSubnames((current) => [subname, ...current.filter((existing) => existing.node !== subname.node)])
-    setRecordDrafts({})
     setRecordError('')
     appendActivity({
       eventType: 'subname_created',

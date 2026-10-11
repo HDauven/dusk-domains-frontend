@@ -15,7 +15,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
     addressRequest.current.generation++
     const request = addressRequest.current
     return () => { request.generation++ }
-  }, [namePreview.displayName, domainRecordState.recordDrafts, searchState.mainView, searchState.resultView, walletRuntime.selectedAddress, walletRuntime.walletState?.generation])
+  }, [namePreview.displayName, domainRecordState.recordDrafts, domainRecordState.resetCount, searchState.mainView, searchState.resultView, walletRuntime.selectedAddress, walletRuntime.walletState?.generation])
   const { setRecordDrafts } = domainRecordState
   const { setRecordError, setRecordTxState } = domainState
   const discardDrafts = useCallback(() => {
@@ -101,7 +101,6 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       managedNameExpiresAt: domainState.managedName.expiresAt,
       nowSeconds: searchState.nowSeconds,
       selectedAddress: walletRuntime.selectedAddress,
-      setRecordDrafts: domainRecordState.setRecordDrafts,
       setRecordError: domainState.setRecordError,
       setSubnameError: domainState.setSubnameError,
       setSubnames: domainState.setSubnames,
@@ -132,7 +131,6 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         canRemoveRecords: derivedState.canRemoveRecords,
         canSaveRecords: derivedState.canSaveRecords,
         error: domainState.recordError,
-        onClearRecord: (record) => void actions.handleRecordClear(record),
         onSaveRecords: () => { addressRequest.current.generation++; return actions.handleRecordsSave() },
         recordBusy: derivedState.recordBusy,
         txState: domainState.recordTxState,
@@ -146,7 +144,13 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
           domainState.setRecordError('')
         },
         onDiscardDrafts: discardDrafts,
+        onDiscardDraft: (key) => {
+          addressRequest.current.generation++
+          if (key) domainRecordState.setRecordDrafts(current => Object.fromEntries(Object.entries(current).filter(([draftKey]) => draftKey !== key)))
+          domainState.setRecordError('')
+        },
         recordDraftErrors: domainRecordState.recordDraftErrors,
+        recordDraftInvalid: domainRecordState.recordDraftInvalid,
         recordDraftValues: domainRecordState.recordDraftValues,
       },
       wallet: {

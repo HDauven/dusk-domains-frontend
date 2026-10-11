@@ -23,8 +23,8 @@ function Probe() {
     renewalBusy: false, subnameBusy: false, subnameLabel: '', subnameManager: '',
   })
   return <RecordsView displayName="alpha.dusk" editableRecordKeys={keys} resolverRecords={[]}
-    actions={{ canRemoveRecords: true, canSaveRecords, error: '', onClearRecord: vi.fn(), onSaveRecords, recordBusy: false, txState: null }}
-    draft={{ ...records, onDiscardDrafts: () => records.setRecordDrafts({}),
+    actions={{ canRemoveRecords: true, canSaveRecords, error: '', onSaveRecords, recordBusy: false, txState: null }}
+    draft={{ ...records, onDiscardDrafts: () => records.setRecordDrafts({}), onDiscardDraft: vi.fn(),
       onDraftValueChange: (key, value) => records.setRecordDrafts(current => ({ ...current, [key]: value })) }}
     wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: false }} />
 }

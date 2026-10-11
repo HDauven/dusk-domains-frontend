@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Stage several record edits, additions and removals, then save them in one `mutate_records` transaction within the 8-change and 4,096-byte batch limits. A single edit still saves in one click. Refuse a change that would take a name past 16 records.
+- Keep staged record changes editable, even while a value is empty or can't be saved, and keep them with their name when its records panel closes, another name opens or a subname is created. A staged value that can't be saved shows why, with Edit and Undo. Other sections of the name page say how many are unsaved, and the page asks before it closes with changes unsaved.
+
 - Show a name's activity as plain actions with their prices and parties, such as "Registered for 1 year · 10 DUSK" or "Sold to … for 30 DUSK", folding internal bookkeeping events into the action they belong to. Show the exact UTC time, the actor and the transaction, linked to `VITE_DUSK_DOMAINS_EXPLORER_URL` when set, and download the full history as CSV.
 - Accept controller and retired-registration events in activity pages; one such row made the whole page unreadable.
 - Credit a record change to the name's holder when one wallet owns and manages it, and nobody when the holders changed in the same block. Read clearing every record as removing them, a records move as a move and records staged for a move to another registry as a copy, and name the subname a parent's change created only when that transaction took its serial.

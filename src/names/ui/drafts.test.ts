@@ -38,7 +38,7 @@ it('counts clears as changes and counts their keys in the batch', () => {
 
 it('uses SDK address encoding and leaves unchanged drafts alone', () => {
   const record = createResolverRecord('moonlight_address', account)
-  expect(recordMutationPlan(['moonlight_address'], [record], {})).toEqual({ mutations: [], errors: [] })
+  expect(recordMutationPlan(['moonlight_address'], [record], {})).toEqual({ mutations: [], errors: [], invalid: [] })
   const plan = recordMutationPlan(['moonlight_address'], [], { moonlight_address: account })
   expect(plan.errors).toEqual([])
   expect(prepareRecordMutations(plan.mutations)[0].value).toHaveLength(96)
@@ -47,8 +47,9 @@ it('uses SDK address encoding and leaves unchanged drafts alone', () => {
 it.each(['\uD800', '\uDC00', '\uD800x', '\uD800\uD800'])(
   'refuses malformed Unicode in record values before encoding: %j', value => {
     const message = 'Record value contains malformed Unicode. Remove or retype the invalid character.'
+    // The plan also names the value that can't be saved, so its row can say why.
     expect(recordMutationPlan(['text.bio'], [], { 'text.bio': value })).toEqual({
-      mutations: [], errors: [`text.bio: ${message}`],
+      mutations: [], errors: [`text.bio: ${message}`], invalid: [{ key: 'text.bio', error: message }],
     })
     expect(() => prepareRecordMutations([{ action: 'set', key: 'text.bio', value, ttlSeconds: 3600 }])).toThrow(message)
   },

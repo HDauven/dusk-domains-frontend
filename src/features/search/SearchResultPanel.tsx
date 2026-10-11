@@ -4,6 +4,7 @@ import { ManagementFeedback } from '../domains/ManagementFeedback'
 import { canControlThroughAncestor } from '../../app/derived/managementCapabilities'
 import { sameAuthority } from '../identity/ownerLabel'
 import { Tabs, TabPanel } from '../../components/ui/Tabs'
+import { Button } from '../../components/ui/Button'
 import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { ComponentProps } from 'react'
 import { ActivityHistoryView } from '../activity/ActivityHistoryView'
@@ -62,6 +63,9 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
   const reportUrl = headerProps.status === 'registered' ? reportNameUrl(abuseUrl, headerProps.displayName) : null
+  // Staged record changes stay with the name while other sections are open. Values that can't be saved yet count too.
+  const unsavedRecords = canEdit && view !== 'records'
+    ? (recordsProps?.draft?.recordDraftMutations?.length ?? 0) + (recordsProps?.draft?.recordDraftInvalid?.length ?? 0) : 0
   const primaryControl = primaryProps?.primaryVerification ? <PrimaryNameControl {...primaryProps} /> : undefined
   const hasPrimaryCleanup = primaryProps?.canClearPrimary || Boolean(primaryProps?.primaryVerification?.cleanupDescription)
   const content = <>
@@ -100,6 +104,9 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
     {tabbed ? <>
       <div className="name-section-select"><label htmlFor="name-section">Section</label><select id="name-section" value={view} onChange={event => onResultViewChange(event.target.value as SearchResultView)}>{tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}</select></div>
       <Tabs className="name-section-tabs" id="name-sections" label="Name sections" items={tabs} value={view} onChange={onResultViewChange} />
+      {unsavedRecords ? <p className="field-note record-unsaved" role="status">
+        {unsavedRecords === 1 ? '1 record change is' : `${unsavedRecords} record changes are`} not saved yet. <Button variant="quiet" onClick={() => onResultViewChange('records')}>Review</Button>
+      </p> : null}
     </> : null}
     {view === 'overview' ? <>
       <SearchResultOverview {...overviewProps} />
