@@ -66,7 +66,7 @@ export function defaultPartyLabel(party: ActivityParty) {
   if (party.kind === 'market') return 'the market'
   if (party.kind === 'address') return short(party.address)
   if (party.kind === 'contract') return `contract ${short(party.contract)}`
-  return `Owner ID ${short(party.authority)}`
+  return `Account ID ${short(party.authority)}`
 }
 
 function short(value: string) {

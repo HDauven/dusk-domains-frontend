@@ -120,7 +120,7 @@ it('credits record changes to the name\'s single holder and names subnames by se
   ]
   const html = renderToStaticMarkup(<ActivityHistoryView {...props} activityEntries={entries} holders={{ owner, manager: owner }} />)
   expect(html).toContain('Record updated: Website')
-  expect(html).toContain(`By Owner ID ${owner.slice(0, 10)}...${owner.slice(-6)}`)
+  expect(html).toContain(`By Account ID ${owner.slice(0, 10)}...${owner.slice(-6)}`)
   // Subname rows keep the serial the indexer reports, which is how a parent's history names them.
   const indexed = frozenView({ parentNode: registered.node, node: `0x${'09'.repeat(32)}`, parentName: 'alpha.dusk', name: 'maya.alpha.dusk', label: 'maya',
     owner, manager: owner, resolver: '', expiresAt: null, parentExpiresAt: null, expiryPolicy: 'inherits_parent', status: 'active', createdAt: null,

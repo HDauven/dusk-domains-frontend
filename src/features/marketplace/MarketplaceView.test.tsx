@@ -540,13 +540,13 @@ it('rounds a first-bid minimum up in both the headline and the draft', () => {
 
 it('uses shared owner labels for sellers, bidders and offers, including explanatory ID fallbacks', () => {
   const listing = render({ listings: { fixedSales:[fixedSale()] }, wallet: { selectedAuthority: outsider } })
-  expect(listing).toContain('Owner ID ')
-  expect(listing).toContain('No matching Dusk address is available')
+  expect(listing).toContain('Account ID ')
+  expect(listing).toContain('No address seen on this page matches this one yet')
   expect(render({ listings: { fixedSales:[fixedSale()] }, wallet: { selectedAuthority:seller } })).toContain('Seller <span>You</span>')
   const current = auction({ highestBid:{bidderAuthority:buyer,amountLux:25_000_000_000,placedAtBlockHeight:1000},bidCount:1 })
   const detail = render({ listings: { auctions:[current] }, auction: { selectedAuctionNode:current.node }, wallet: { selectedAuthority:buyer } })
   expect(detail).toContain('Highest bidder <span>You</span>')
-  expect(render({ navigation: { tab:'offers' }, offers: { offers:[offer()] }, wallet: { selectedAuthority:outsider } })).toContain('Owner ID ')
+  expect(render({ navigation: { tab:'offers' }, offers: { offers:[offer()] }, wallet: { selectedAuthority:outsider } })).toContain('Account ID ')
 })
 
 it('keeps seller labels compact on both browse cards and copy on the auction page', () => {

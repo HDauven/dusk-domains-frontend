@@ -39,3 +39,19 @@ it.each([
   expect(setSubnameError).toHaveBeenLastCalledWith(message)
   expect(submitNameWrite).not.toHaveBeenCalled()
 })
+
+it('carries the manager address that was entered, so the wallet details can show it', async () => {
+  const manager = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
+  const authority = `0x${'11'.repeat(32)}`
+  const submitNameWrite = Object.assign(vi.fn(async () => ({ status: 'rejected' })), { captureWorkspace: () => () => true })
+  await createSubdomain({
+    canCreateSubname: true, displayName: 'nightowlshq.dusk', selectedAddress: 'sam-address', selectedAuthority: authority,
+    walletSetupState: 'connected', subnameLabel: 'maya', subnameManager: ` ${manager} `, recordSourceContractId: 'resolver',
+    subnameExpiryPolicy: 'inherits_parent', subnameExpiryDate: '', managedNameExpiresAt: 100_000, currentBlockHeight: 100, nowSeconds: 1_790_000_000,
+    runtimeConfig: { contracts: {} }, setSubnameError: vi.fn(), setSubnameTxState: vi.fn(), submitNameWrite,
+    ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
+  } as never)
+  expect(submitNameWrite).toHaveBeenCalledWith('nightowlshq.dusk', expect.objectContaining({
+    reviewedAuthorities: { owner: { address: 'sam-address' }, manager: { address: manager } },
+  }), expect.anything())
+})

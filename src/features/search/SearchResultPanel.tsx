@@ -21,6 +21,7 @@ import { namePageAccess, nameSections } from './namePageAccess'
 import { useNamePageMetadata } from './namePageMetadata'
 import { NameShare } from './NameShare'
 import { NightCard } from './NightCard'
+import { subnameControlCopy } from '../trust/trustCopy'
 
 export type SearchResultView = 'overview' | 'register' | 'details' | 'manage' | 'records' | 'subnames' | 'activity'
 
@@ -56,10 +57,15 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
   const ancestorControl = canControlThroughAncestor(managedName, headerProps.viewerAuthority ?? '', settingsProps?.clock.currentBlockHeight ?? null)
   const parent = managedName?.ancestors?.[0]
-  // The holder of any name above a subname can take it back. Say so when that isn't only its own owner and manager.
-  const otherAncestorHolder = Boolean(managedName?.ancestors?.some(ancestor => [ancestor.owner, ancestor.manager]
-    .some(authority => !sameAuthority(authority, managedName.owner) && !sameAuthority(authority, managedName.manager))))
   const namespaceTarget = managedName && parent ? { node: managedName.node, name: headerProps.displayName, parentNode: parent.node } : null
+  // Whoever holds a name above a subname can take it back, so every subname page says so, to its holders and to visitors.
+  const labels = headerProps.displayName.replace(/\.dusk$/, '').split('.')
+  const subnameControl = headerProps.status === 'registered' && managedName && isSubname(headerProps.displayName) ? subnameControlCopy({
+    parent: parent?.name ?? `${labels.slice(1).join('.')}.dusk`,
+    deeper: Math.max(managedName.ancestors?.length ?? 0, labels.length - 1) > 1,
+    holder: !ancestorControl && [managedName.owner, managedName.manager].some(authority => sameAuthority(authority, headerProps.viewerAuthority)),
+    expiresWithParent: managedName.expiryPolicy === 'inherits_parent',
+  }) : null
   const canPayRenewal = Boolean(managedName?.ownerIsContract && canRenewOutsideEscrow(managedName) && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
   const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length), canPayRenewal)
   const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
@@ -93,15 +99,12 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
     <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} />
   </section>
   return <section className="result-area" aria-label={`${headerProps.displayName} name page`}>
-    {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} /> : null}
+    {view !== 'register' && !(view === 'overview' && overviewProps.canRegister) ? <NameHeader {...headerProps} owner={managedName?.owner ?? null} manager={managedName?.manager ?? null} /> : null}
+    {subnameControl ? <p className="field-note subname-control">{subnameControl}</p> : null}
     {headerProps.status !== 'invalid' ? <>
       <NightCard name={headerProps.displayName} />
       <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} />
     </> : null}
-    {parent && otherAncestorHolder ? <p className="field-note">
-      The owner or manager of {parent.name}{(managedName?.ancestors?.length ?? 0) > 1 ? ' or a name above it' : ''} can take this name back,
-      and it expires {managedName?.expiryPolicy === 'inherits_parent' ? 'with' : 'no later than'} {parent.name}.
-    </p> : null}
     {ancestorControl && namespaceTarget ? <>
       <SubnameAuthorityControls key={namespaceTarget.node} name={namespaceTarget.name}
         onReassign={(owner, manager) => subdomainsProps.authority.onReassignSubname?.(namespaceTarget, owner, manager) ?? Promise.resolve()}

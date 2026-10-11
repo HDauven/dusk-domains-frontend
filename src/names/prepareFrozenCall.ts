@@ -12,7 +12,7 @@ const changed = () =>
   new Error('On-chain terms changed. Refresh and review the latest terms before signing.')
 
 async function walletRecipient(client: sdk.FrozenClient, authority: string, reviewed?: T.ReviewedAuthorityRecipient) {
-  if (!reviewed) return `Authority ID: ${authority}`
+  if (!reviewed) return `Account ID: ${authority}`
   const mismatch = () => new Error('The recipient changed on chain. Check the address again before confirming.')
   const parsed = sdk.contractPrincipalFromWalletAccount(reviewed.address)
   if (!parsed.ok || sdk.hex(bytes(parsed.principal)) !== sdk.hex(bytes(authority))) throw mismatch()
@@ -39,6 +39,9 @@ export async function prepareFrozenCall(
     actor = sdk.authority({ kind: 'Moonlight', bytes: sender })
   const height = await client.transport.currentBlockHeight(),
     deadline = height + 120n
+  // The signer's own authority is shown as the signer's address.
+  const reviewedOrSelf = (authority: string, reviewed?: T.ReviewedAuthorityRecipient) =>
+    reviewed ?? (sdk.hex(bytes(authority)) === sdk.hex(actor) ? { address: account } : undefined)
   const op = request.functionName
   const describe = (call: WalletFrozenCall, summary: string, fields: WalletCallDetails = {}) =>
     withWalletDetails(call, summary, { Name: spelling, ...fields })
@@ -266,6 +269,10 @@ export async function prepareFrozenCall(
   if (op === 'create_subname') {
     const a = request.args as T.CoreCreateSubnameRuntimeArgs,
       n = await requireName(client, a.parentName)
+    // Name the new holders by the addresses that were entered, each checked against the authority it signs.
+    const ownerLine = await walletRecipient(client, a.owner, reviewedOrSelf(a.owner, request.reviewedAuthorities?.owner))
+    const managerLine = sdk.hex(bytes(a.manager)) === sdk.hex(bytes(a.owner)) ? 'Same as owner'
+      : await walletRecipient(client, a.manager, reviewedOrSelf(a.manager, request.reviewedAuthorities?.manager))
     return describe(sdk.storeCreateSubnameCall(n.store, {
       parent: n.ref,
       node: bytes(a.node),
@@ -275,7 +282,7 @@ export async function prepareFrozenCall(
       expires_at: BigInt(a.expiresAt),
       expiry_policy: a.expiryPolicy === 'inherits_parent' ? 'InheritsParent' : 'FixedBeforeParent',
     }), `Create ${a.name}`, {
-      Name: a.name, Subdomain: a.name, Parent: a.parentName,
+      Name: a.name, Subdomain: a.name, Parent: a.parentName, Owner: ownerLine, Manager: managerLine,
       'Expiry (estimated)': expiry(BigInt(a.expiresAt)),
       'Expiry policy': a.expiryPolicy === 'inherits_parent' ? 'Expires with its parent' : 'Fixed date', Records: 'None; add records separately',
     })
@@ -311,8 +318,8 @@ export async function prepareFrozenCall(
         throw new Error('The recipient changed on chain. Check the address again before confirming.')
       const recipients = request.reviewedAuthorities
       const destinations: WalletCallDetails = recipients || request.authorityAction
-        ? { 'New owner': await walletRecipient(client, a.owner, recipients?.owner),
-          'New manager': await walletRecipient(client, a.manager, recipients?.manager) }
+        ? { 'New owner': await walletRecipient(client, a.owner, reviewedOrSelf(a.owner, recipients?.owner)),
+          'New manager': await walletRecipient(client, a.manager, reviewedOrSelf(a.manager, recipients?.manager)) }
         : { Recipient: await walletRecipient(client, a.manager, reviewed) }
       const summary = request.authorityAction === 'take_back' ? `Take back ${spelling}`
         : request.authorityAction === 'reassign' ? `Reassign ${spelling}`

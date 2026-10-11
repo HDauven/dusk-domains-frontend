@@ -123,10 +123,10 @@ export function useSearchWorkspaceFeature({
   subnames,
   viewerAuthority,
 }: UseSearchWorkspaceFeatureProps) {
-  const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
   const managedName = settingsProps.managedName
   const owner = nodeHex && managedName.node === nodeHex ? managedName.owner : null
   const holders = owner ? { owner, manager: managedName.manager } : null
+  const ownerAddresses = [...new Set([...ownerAddressCandidates(parentResolverRecords, activityEntries), ...(owner ? managedName.ancestorAddresses ?? [] : [])])]
   const canMakeOffer = marketplaceOffers && canOfferOn({ name: displayName, status: resultStatus, owner, ownerIsContract: managedName.ownerIsContract,
     expiresAt: managedName.expiresAt, currentBlockHeight, viewer: viewerAuthority })
   const searchProps: SearchWorkspaceProps = {
@@ -190,6 +190,7 @@ export function useSearchWorkspaceFeature({
         lifecycleNote,
         primaryVerified: primaryProps.primaryVerification.verified,
         owner,
+        manager: owner ? managedName.manager : null,
         canMakeOffer,
         heldByMarket,
         listing,

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Say on every subname's page, to its holders and to visitors, that the owner or manager of a name above can take it back, give it to another wallet or remove it, and that its holder can't prevent this. Show a name's manager beside its owner, show holders by Dusk address where the names above or a registration prove it, and explain an account ID with no matching address.
+- Show the full manager address in a review step before creating a subname for another manager, and name the new owner and manager in the wallet details. A take-back's wallet details show the signer's address.
 - Ask before taking back a subname, and say that its records and primary name are cleared and its holder loses it.
 - Make Register on a saved, ready reservation sign the reveal once the claim is open, and keep the reservation's commitment store when a claim resumes after the wallet session restores.
 - Keep checking a wallet session that lost its authorization without the user disconnecting, so the header recovers from "Connect wallet" without a reload.
@@ -13,7 +15,7 @@
 - Explain the two claim signatures in the claim flow: the first reserves the name without revealing it, the second registers it and pays.
 - State who controls a registered name, matching the Terms: its owner and its manager, and that a manager can change its records and subnames but can't transfer it. Say so on the owner's name page, in the claim confirmation, on the Treasury and developers pages and in Terms section 5.
 - Point the Terms, Privacy Notice and `llms.txt` at the support@, abuse@ and security@dusk.domains addresses the site links to, instead of GitHub forms. Legal pages render plain mailto links.
-- Match the Terms and `llms.txt` to the contracts: anyone can pay to renew a name, a listed one too, while this site lets a name's owner or manager renew it, and a listed one only after it leaves the market; renewal prices can change for registered names, while reserved names affect only new registrations; the operator claims only the protocol's share of the treasury. A subname's page says the owner or manager of a name above it can take it back whenever someone other than the subname's own owner and manager holds one, and that it expires with or no later than its parent.
+- Match the Terms and `llms.txt` to the contracts: anyone can pay to renew a name, a listed one too, while this site lets a name's owner or manager renew it, and a listed one only after it leaves the market; renewal prices can change for registered names, while reserved names affect only new registrations; the operator claims only the protocol's share of the treasury. A subname's page says the owner or manager of a name above it can take it back, and that it expires with or no later than its parent.
 
 - Offer only renewal terms that keep a name within ten years of the current block, say why longer terms are missing, and show a plain message instead of a raw contract read error.
 - Say "Expires" with the date instead of "Renews by", and explain beside it that nothing renews automatically and a name can still be renewed for 30 days after it expires.

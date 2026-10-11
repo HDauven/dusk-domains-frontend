@@ -13,6 +13,8 @@ import { isSubname, safeNamehashHex } from '../domains/domainFormat'
 
 export type IndexedNameReadBundle = {
   activityCursor: string | null
+  /** Dusk addresses of the names above a subname, to show who holds them. Only candidates: each is checked against an authority. */
+  ancestorAddresses: string[]
   activityRead: IndexerReadResult<ActivityEntry[]>
   connectedPrimaryName: string | null
   forwardRead: IndexerReadResult<ForwardResolutionResponse>
@@ -64,6 +66,9 @@ export async function readIndexedName(
       stateRead.value.graceEndsAtBlockHeight=name.value.record.lifecycle.graceEndsAtBlock
     }
   }
+  // The holders of the names above usually point those names at their own address. A failed read only leaves an ID unexplained.
+  const ancestorAddressReads = Promise.all((stateRead.value?.namespace?.ancestors ?? []).map(ancestor =>
+    client.getNodeRecord(ancestor.node, 'moonlight_address').then(record => record?.value ?? null, () => null)))
   const forwardAddress = forwardRead.value?.records.find(record => record.key === 'moonlight_address')?.value || ''
   const forwardVerified = forwardRead.value?.verificationStatus === 'forward_resolved'
     && forwardRead.value.expiry?.status === 'active' && forwardRead.value.resolver?.health === 'ok'
@@ -85,6 +90,7 @@ export async function readIndexedName(
     : null
   const chainPrimary = chainPrimaryRead?.value
   const hydratedSubnames = (stateRead.value?.namespace?.subnames ?? subnameRead.value)?.map(indexedSubnameToState) ?? null
+  const ancestorAddresses = (await ancestorAddressReads).filter((address): address is string => Boolean(address))
   const readErrors = [
     forwardRead.error,
     stateRead.error,
@@ -99,6 +105,7 @@ export async function readIndexedName(
 
   return {
     activityCursor: activityRead.value?.nextCursor ?? null,
+    ancestorAddresses: [...new Set(ancestorAddresses)],
     activityRead: activityRead.error ? { value: null, error: activityRead.error } : { value: activityRead.value?.activity ?? [], error: null },
     connectedPrimaryName: connectedPrimaryRead?.value ?? (chainPrimary?.ok ? chainPrimary.value?.name : null) ?? null,
     forwardRead,

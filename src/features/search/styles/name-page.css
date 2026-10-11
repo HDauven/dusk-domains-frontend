@@ -486,6 +486,8 @@
 }
 
 .name-hero-owner { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.name-hero-owner + .name-hero-owner { margin-top: 4px; }
+.subname-control { max-width: 72ch; }
 .owner-identity { max-width: 100%; }
 .owner-identity summary { cursor: pointer; }
 .owner-identity p, .owner-identity code { overflow-wrap: anywhere; }

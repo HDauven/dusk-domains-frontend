@@ -138,3 +138,31 @@
   gap: var(--space-2);
   min-width: 0;
 }
+
+.subname-review {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.subname-review dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.subname-review dl > div {
+  display: grid;
+  grid-template-columns: minmax(80px, auto) 1fr;
+  gap: var(--space-3);
+}
+
+.subname-review dt { color: var(--muted); font-size: var(--text-sm); }
+.subname-review dd { margin: 0; min-width: 0; }
+.subname-review code { font-family: var(--font-mono); overflow-wrap: anywhere; white-space: normal; }
+.subname-review-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.subname-review:focus { outline: none; }
+.subname-review:focus-visible { outline: 2px solid var(--peach); outline-offset: 2px; }

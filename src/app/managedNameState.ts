@@ -11,6 +11,8 @@ export const fallbackManager = 'dusk1manager-preview'
 export type ManagedNameState = {
   websiteVerification?: import('../names/http/verification').BoundWebsiteVerification
   ancestors?: import('../names/internal').NamespaceAncestor[]
+  /** Dusk addresses read from the names above it, to show their holders by address. */
+  ancestorAddresses?: string[]
   node: string
   owner: string
   manager: string

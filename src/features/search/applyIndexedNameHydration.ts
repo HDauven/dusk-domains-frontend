@@ -48,6 +48,7 @@ export function applyIndexedNameHydration(
       ...(isWebsiteVerification(indexed.verification) && JSON.stringify(indexed.verification) === JSON.stringify(forwardRead.value?.verification)
         ? { websiteVerification: { owner: indexed.owner ?? '', website: forwardRead.value?.records.find(record => record.key === 'website')?.value ?? '', result: indexed.verification } } : {}),
       ancestors: indexed.namespace?.ancestors,
+      ancestorAddresses: reads.ancestorAddresses,
       owner: indexed.owner ?? '',
       manager: indexed.manager ?? '',
       resolver: indexed.resolverId ?? recordSourceContractId,
