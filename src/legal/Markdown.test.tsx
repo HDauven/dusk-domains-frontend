@@ -56,9 +56,15 @@ it.each(['/privacy', './terms', '#contact', '?section=terms', `${window.location
   expect(link.hasAttribute('target')).toBe(false)
 })
 
-it.each(['javascript:void(0)', 'JaVaScRiPt:void(0)', 'data:text/plain,hello', 'mailto:person@example.com', 'tel:123', 'ftp://example.com', 'file:///tmp/file', 'blob:https://example.com/id', '//example.com/path', 'https://[invalid'])('leaves unsupported or invalid links as text: %s', href => {
+it.each(['javascript:void(0)', 'JaVaScRiPt:void(0)', 'data:text/plain,hello', 'mailto:person@example.com?body=x', 'mailto:', 'tel:123', 'ftp://example.com', 'file:///tmp/file', 'blob:https://example.com/id', '//example.com/path', 'https://[invalid'])('leaves unsupported or invalid links as text: %s', href => {
   const source = `[Example](${href})`
   const page = read(source)
   expect(page.querySelector('a')).toBeNull()
   expect(page.textContent).toBe(source)
+})
+
+it('links plain email addresses in the same tab', () => {
+  const link = read('[support@dusk.domains](mailto:support@dusk.domains)').querySelector('a')!
+  expect(link.getAttribute('href')).toBe('mailto:support@dusk.domains')
+  expect(link.hasAttribute('target')).toBe(false)
 })

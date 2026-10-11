@@ -17,6 +17,7 @@ export function RegistrationFlowPanel({ navigation, resultIssues, status, step, 
           <p className="register-stage">{wizard.registrationStep === 'purchase' ? '2 of 2 · Register' : '1 of 2 · Reserve'}</p>
           <h1 id="register-heading" aria-label={wizard.displayName}><NameSignature name={wizard.displayName} fit /></h1>
         </header>
+        <p className="register-why">Two signatures: the first reserves the name without revealing it, so nobody can see it and register it first. The second registers it and pays.</p>
         <BrandClaimNotice name={wizard.displayName} />
         <RegistrationStepPanel {...step} />
         <RegistrationPolicyNotes issues={resultIssues} />

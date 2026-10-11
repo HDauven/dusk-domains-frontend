@@ -15,6 +15,8 @@ import {
 import { ActivityTime } from '../activity/ActivityHistoryView'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
 import { isIdentifierRecord, recordLabel } from './recordPresentation'
+import { isSubname } from './domainFormat'
+import { nameControlCopy } from '../trust/trustCopy'
 
 // Records a sender needs, in the order a wallet would look for them.
 const payableKeys = ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address',
@@ -26,8 +28,12 @@ function safeLink(value: string) {
 }
 
 // A registered name's public profile: where to send, what it links to, and what changed lately.
-export function DomainDetailsView({ canEdit = false, primaryControl, displayName, onManageRecords, onSubdomains, parentResolverRecords, paysPreviousOwner, primaryVerification, subnames, viewerAuthority, activity }: {
+export function DomainDetailsView({ canEdit = false, isOwner = false, separateManager = false, primaryControl, displayName, onManageRecords, onSubdomains, parentResolverRecords, paysPreviousOwner, primaryVerification, subnames, viewerAuthority, activity }: {
   canEdit?: boolean
+  /** The connected wallet owns this name. */
+  isOwner?: boolean
+  /** Another wallet is its manager, which can change its records and subnames. */
+  separateManager?: boolean
   primaryControl?: ReactNode
   displayName: string
   onManageRecords: () => void
@@ -136,6 +142,11 @@ export function DomainDetailsView({ canEdit = false, primaryControl, displayName
           ) : (
             <EmptyState>{canEdit ? 'No subnames. Add one under Subnames.' : 'No subnames.'}</EmptyState>
           )}
+        </Panel> : null}
+
+        {isOwner && !isSubname(displayName) ? <Panel className="profile-card" aria-labelledby="control-heading">
+          <h2 id="control-heading">Who controls it</h2>
+          <p className="profile-note">{nameControlCopy(displayName, separateManager)}</p>
         </Panel> : null}
 
         <Panel className="profile-card" aria-labelledby="recent-heading">

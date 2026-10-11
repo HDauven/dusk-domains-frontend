@@ -25,16 +25,15 @@ We use these logs to run and secure the Services, investigate abuse and errors, 
 
 **Your wallet.** You connect a wallet, such as the Dusk Wallet browser extension, to sign transactions. The wallet is third-party software with its own terms and privacy practices; we only see the public account address and signed transactions it shares.
 
-**Messages through GitHub.** Support, abuse and privacy requests go through forms on GitHub. GitHub's privacy statement applies, and issues are public; don't include personal data you don't want published.
+**Messages by email.** Support, abuse, security and privacy requests go by email to addresses at dusk.domains. We use your email address and message to handle your request.
 
 We don't use cookies, tracking pixels, advertising, or third-party analytics. We don't sell personal data or use it for profiling.
 
 ## Who else is involved
 
 - **Hosting.** Our servers are hosted by Hetzner Online GmbH in the European Union, which processes the data above on our behalf.
-- **DNS.** Cloudflare provides DNS for dusk.domains. Website traffic does not pass through Cloudflare.
+- **DNS and email.** Cloudflare provides DNS for dusk.domains and forwards email sent to our dusk.domains addresses. Website traffic does not pass through Cloudflare.
 - **Dusk nodes.** To read the blockchain and submit transactions, your browser connects directly to public Dusk nodes, such as nodes.dusk.network, which see your IP address under their operators' own policies.
-- **GitHub,** for the request forms described above.
 
 Mochavi is based in Hong Kong, and our servers are in the EU. Where personal data is transferred outside the European Economic Area, we rely on the safeguards the law requires.
 
@@ -46,7 +45,7 @@ Where the EU or UK General Data Protection Regulation applies, we process server
 
 Depending on where you live, you may have the right to access, correct, delete or restrict the processing of your personal data, to object to processing based on legitimate interests, and to complain to a data protection authority. Because our logs store shortened IP addresses only, we usually can't link them to you. We can't delete or change data on the blockchain.
 
-To exercise your rights, use the [privacy request form](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=privacy-request.yml). Don't include personal data in the public request; we'll reply there and, where needed, arrange a private way to continue.
+To exercise your rights, email [support@dusk.domains](mailto:support@dusk.domains).
 
 ## Children
 

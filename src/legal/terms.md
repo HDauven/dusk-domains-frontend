@@ -1,6 +1,6 @@
 # Terms of Use
 
-Last updated: 7 October 2026
+Last updated: 11 October 2026
 
 These terms govern your use of the Dusk Domains website at dusk.domains and testnet.dusk.domains, its public API, and the related software and documentation (together, **the Services**). The Services are operated by **Mochavi Limited**, a private company limited by shares incorporated in Hong Kong (Business Registration No. 77975303) (**Mochavi**, **we**, **us**). By using the Services you agree to these terms. If you don't agree, don't use them.
 
@@ -17,9 +17,9 @@ You must be at least 18 years old and legally able to enter into these terms. Yo
 ## 3. Names
 
 - **Registration is a rental for a fixed term.** A name is registered for 1 to 10 years at a time, for a yearly price shown before you confirm. It is not a purchase of property, and it does not give you a trademark, trade name or any other right in the word or phrase.
-- **Expiry.** When a name's term ends, its owner, or anyone else, can renew it during a 30-day grace period. A name listed in the market can't be renewed until the listing ends or is cancelled. After that, anyone can register it, and its records and subnames are cleared. A recently released name may carry an extra premium that decreases daily.
+- **Expiry.** When a name's term ends, its owner, or anyone else, can renew it during a 30-day grace period. On this website, a name's owner or manager can renew it, and a listed name only after it leaves the market. After the grace period, anyone can register it, and its records and subnames are cleared. A recently released name may carry an extra premium that decreases daily.
 - **Subnames.** The owner or manager of a name can create subnames and give them to others. The owner or manager of any name above a subname can reassign or take back that subname at any time, which clears its records. If you hold a subname, you hold it on those terms.
-- **Reserved and restricted names.** Some names are reserved, and names shorter than 3 characters can't currently be registered. Which names are reserved, and the prices, are set by the protocol and may change for future registrations.
+- **Reserved and restricted names.** Some names are reserved, and names shorter than 3 characters can't currently be registered. Which names are reserved is set by the protocol and may change for future registrations. Prices are also set by the protocol and may change for future registrations and renewals.
 - **Payments are final.** Fees are paid in DUSK to the protocol's on-chain treasury when your transaction executes. There are no refunds, including when a name expires, when you stop using it, or when it is hidden in the interface.
 - **Two-step registration.** Registration uses a commitment followed by a reveal. If you don't complete the reveal in time, the commitment expires and you may need to start again. Network fees for transactions that fail or expire are not refundable.
 
@@ -37,15 +37,17 @@ You are solely responsible for the names you register and the records you publis
 
 ## 5. What we can and can't do
 
-We can't change who owns a name, edit its records, or move anyone's funds. Those are controlled by the contracts.
+Once a name is registered, only its owner and its manager control it, and they are usually the same wallet. A manager can change the name's records and subnames but can't transfer it. We can't take a name, change its records or move anyone else's funds on chain. Our website and API may hide abusive names from display. A name stays its owner's while they keep renewing it. A subname is the exception in section 3: the owner or manager of a name above it can take it back.
+
+We can't change who owns a name, edit its records, or move anyone else's funds. Those are controlled by the contracts.
 
 We can, at our discretion and without notice:
 
 - **hide or flag names, records and listings in our website and API**, for example after an infringement, abuse or legal complaint. This doesn't change anything on-chain, and other interfaces may still show them;
 - suspend, limit or discontinue any part of the Services, including the website and API;
-- use the powers the contracts give the protocol's operator. These are limited to the rules built into the contracts: for example setting prices and reserved names for future registrations, pausing new registrations and trades, admitting new contract shards, and collecting the treasury balance. Some of these powers take effect only after a delay that is visible on-chain.
+- use the powers the contracts give the protocol's operator. These are limited to the rules built into the contracts: for example setting prices for future registrations and renewals, choosing reserved names for future registrations, pausing new registrations and trades, admitting new contract shards, and collecting the protocol's share of the treasury. Some of these powers take effect only after a delay that is visible on-chain.
 
-We don't arbitrate disputes about names. There is no transfer procedure for trademark holders comparable to UDRP. If you believe a name infringes your rights, report it through our abuse form; we may hide it in our interface, but we can't take it from its owner.
+We don't arbitrate disputes about names. There is no transfer procedure for trademark holders comparable to UDRP. If you believe a name infringes your rights, report it to [abuse@dusk.domains](mailto:abuse@dusk.domains); we may hide it in our interface, but we can't take it from its owner.
 
 ## 6. The marketplace
 
@@ -53,7 +55,7 @@ The marketplace lets owners list names at a fixed price or by auction and lets o
 
 ## 7. The treasury
 
-Registration, renewal and premium fees and the marketplace fee are paid to an on-chain protocol treasury. A share may be credited to a referrer. We may use the treasury's balance as we see fit, including to provide liquidity in DUSK liquidity pools. Nothing about the treasury gives you any right to its funds, a share of revenue, or any return.
+Registration, renewal and premium fees and the marketplace fee are paid to an on-chain protocol treasury. A share may be credited to a referrer. We may use the protocol's share of the treasury as we see fit, including to provide liquidity in DUSK liquidity pools. Nothing about the treasury gives you any right to its funds, a share of revenue, or any return.
 
 ## 8. No financial advice
 
@@ -109,4 +111,4 @@ If any part of these terms is found unenforceable, the rest remains in effect. O
 
 ## 17. Contact
 
-For support, abuse reports and privacy requests, use the forms in our [GitHub repository](https://github.com/HDauven/dusk-domains-frontend/issues/new/choose). Report security vulnerabilities privately through [GitHub's private vulnerability reporting](https://github.com/HDauven/dusk-domains-frontend/security/advisories/new). Don't post private keys, seed phrases or personal data in public issues.
+Email [support@dusk.domains](mailto:support@dusk.domains) for support and privacy requests, [abuse@dusk.domains](mailto:abuse@dusk.domains) to report abuse or infringement, and [security@dusk.domains](mailto:security@dusk.domains) to report a security vulnerability privately. Never send private keys or seed phrases.

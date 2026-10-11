@@ -80,6 +80,7 @@
   margin-top: 14px;
 }
 .name-hero-offer { margin-top: 14px; }
+.profile-note { margin: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-sm); line-height: 1.5; }
 .name-hero-note { max-width: 34ch; margin: 10px 0 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.45; }
 
 /* Claim card: the term on the left, the price stub on the right. */
@@ -368,6 +369,7 @@
 .timeline-copy strong {
   color: var(--ink);
   font-size: 14.5px;
+  overflow-wrap: anywhere;
 }
 
 .timeline-copy span {

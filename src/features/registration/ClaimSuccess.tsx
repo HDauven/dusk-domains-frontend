@@ -1,6 +1,7 @@
 import { Button } from '../../components/ui/Button'
 import { NameSignature } from '../../components/ui/NameChip'
 import type { RegistrationCompletionState } from './registrationCompletionState'
+import { nameControlCopy } from '../trust/trustCopy'
 
 // The name page's Night Card, with its Share and Download card row, sits right above.
 export function ClaimSuccess({ name, onOpen, onAddRecords, progress }: {
@@ -11,6 +12,7 @@ export function ClaimSuccess({ name, onOpen, onAddRecords, progress }: {
 }) {
   return <section className="claim-success" aria-labelledby="claim-success-heading">
     <h1 id="claim-success-heading" aria-label={`${name} is yours`}><NameSignature name={name} fit /> is yours</h1>
+    <p className="claim-success-note">{nameControlCopy(name)}</p>
     <div className="claim-success-actions">
       <Button variant="primary" onClick={onOpen}>Open</Button>
       <Button onClick={onAddRecords ?? onOpen}>Add records</Button>

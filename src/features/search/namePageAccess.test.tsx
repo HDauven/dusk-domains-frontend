@@ -143,13 +143,32 @@ it.each(['details', 'records', 'subnames'] as const)('shows ancestor actions wit
     },
   } as SearchResultPanelProps
   const html = renderToStaticMarkup(<SearchResultPanel {...subnameProps} />)
-  expect(html).toContain('The owner of alice.dusk can take this name back, and it expires with alice.dusk.')
+  expect(html).toContain('The owner or manager of alice.dusk can take this name back, and it expires no later than alice.dusk.')
+  // A subname that inherits its parent's expiry expires with it; one deeper down can be taken back from any name above.
+  const inheriting = { ...subnameProps, management: { ...subnameProps.management, settingsProps: { ...subnameProps.management.settingsProps,
+    managedName: { ...subnameProps.management.settingsProps.managedName, expiryPolicy: 'inherits_parent',
+      ancestors: [parent, { ...parent, node: 'root', name: 'dusk-root.dusk' }] } } } } as SearchResultPanelProps
+  expect(renderToStaticMarkup(<SearchResultPanel {...inheriting} />))
+    .toContain('The owner or manager of alice.dusk or a name above it can take this name back, and it expires with alice.dusk.')
   expect(html).not.toContain('>Records</')
   expect(html).not.toContain('Create subname')
   expect(html).not.toContain('primary-control')
   expect(html).toContain('>Reassign</')
   expect(html).toContain('>Take back</')
   expect(html).toContain('>Remove</')
+})
+
+it('says who else can take a subname back whenever a name above it has another holder', () => {
+  // The subname's owner also holds its parent, but someone else owns the name above that.
+  const note = (ancestors: { owner: string, manager: string }[]) => renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+    headerProps={{ ...props.headerProps, displayName: 'pay.team.alice.dusk' }}
+    management={{ ...props.management, settingsProps: { ...props.management.settingsProps, managedName: { ...props.management.settingsProps.managedName,
+      ancestors: ancestors.map((holders, index) => ({ node: `ancestor-${index}`, name: ['team.alice.dusk', 'alice.dusk'][index], expiresAtBlockHeight: 200, ...holders })) } } } as never} />)
+  expect(note([{ owner: 'owner', manager: 'owner' }, { owner: 'alice', manager: 'alice' }]))
+    .toContain('The owner or manager of team.alice.dusk or a name above it can take this name back')
+  expect(note([{ owner: 'owner', manager: 'carol' }, { owner: 'owner', manager: 'owner' }])).toContain('can take this name back')
+  // Only the subname's own owner and manager hold the names above it.
+  expect(note([{ owner: 'owner', manager: 'manager' }, { owner: 'manager', manager: 'owner' }])).not.toContain('can take this name back')
 })
 
 
