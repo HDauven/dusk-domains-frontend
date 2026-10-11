@@ -159,8 +159,13 @@ describe('activity actions', () => {
       'Returned from the market',
       'Listing cancelled',
       'Bid of 66 DUSK',
-      'Auction started · minimum bid 60 DUSK',
+      // Listing an auction starts nothing: the first bid starts its timer.
+      'Listed for auction · minimum bid 60 DUSK',
     ])
+    const [first] = activityActions([row('order_changed', { order: order('Auction', '60000000000', { highest: { payer: moonlight(buyerKey), manager: buyerAuthority, amount_lux: '60000000000' },
+      bid_count: 1, started_at: '165', end: '8805' }) }, { tx: 'tx-first-bid', height: 165 })])
+    expect(first).toMatchObject({ title: 'Bid of 60 DUSK', details: ['The first bid started the timer'] })
+    expect(actions[2].details).toEqual([])
   })
 
   it('reads renewals with the new expiry date when the chain height is known', () => {

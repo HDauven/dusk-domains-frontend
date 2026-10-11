@@ -8,6 +8,7 @@ import { PanelMessage } from '../../components/ui/PanelMessage'
 import { MarketplaceReviewSummary } from './MarketplaceReviewSummary'
 import { validLuxAmount } from './auctionMath'
 import { proceedsRows } from './marketplaceFees'
+import { AuctionRules } from './AuctionRules'
 import { abbreviate } from '../../utils/format'
 import type { MarketplaceSellProps } from './marketplaceTypes'
 
@@ -31,7 +32,7 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
           <div className="marketplace-section-heading">
             <div>
               <h2 id="sell-domain-heading">Sell a name</h2>
-              <p>It moves into escrow until it sells or you cancel.</p>
+              <p>It moves into escrow until it sells or is returned to you.</p>
             </div>
             <ChoiceRow className="marketplace-mode-control" label="Sale type" value={props.selling.saleMode}>
               <Button aria-pressed={props.selling.saleMode === 'fixed'} type="button" onClick={() => props.selling.onSaleModeChange('fixed')}>Fixed price</Button>
@@ -75,7 +76,10 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
           </div>
 
           {props.selling.feeBps != null && amount !== null ? <MarketplaceReviewSummary ariaLabel="Seller proceeds" rows={proceedsRows(amount, props.selling.feeBps)} /> : <p className="field-note">{props.selling.feeBps == null ? 'Loading marketplace fee…' : 'Enter an amount to see the fee and proceeds.'}</p>}
-          {props.selling.saleMode === 'auction' ? <p className="field-note">Proceeds shown at the minimum bid. Starts when someone bids, then runs {props.selling.durationDays} {props.selling.durationDays === '1' ? 'day' : 'days'}. Bids in the last 10 minutes extend it.</p> : null}
+          {props.selling.saleMode === 'auction' ? <>
+            <p className="field-note">Proceeds shown at the minimum bid.</p>
+            <AuctionRules duration={`${props.selling.durationDays} ${props.selling.durationDays === '1' ? 'day' : 'days'}`} feeBps={props.selling.feeBps} startWindow="within 7 days of listing" />
+          </> : null}
           <div className="marketplace-review-line">
             <span>Payout</span>
             <code>{abbreviate(props.wallet.selectedAddress)}</code>
@@ -84,7 +88,7 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
           <NamespaceTransferWarning namespace={selectedName?.namespace} />
 
           <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || props.selling.feeBps == null || !selectedName} type="button" onClick={() => props.selling.onCreateListing()}>
-            {props.selling.saleMode === 'auction' ? 'Start auction' : 'List for sale'}
+            {props.selling.saleMode === 'auction' ? 'List for auction' : 'List for sale'}
           </Button>
         </Panel>
       )}

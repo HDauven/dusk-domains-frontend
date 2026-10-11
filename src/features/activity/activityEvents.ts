@@ -320,12 +320,14 @@ function marketTitle(events: ActivityEntry[], context: ActivityContext, label: (
   const highest = field(order, 'highest')
   if (kind === 'Auction' && isRow(highest) && !find('custody_started')) {
     const bidder = principalParty(highest.payer) ?? authorityParty(highest.manager, context)
-    return { title: `Bid of ${dusk(highest.amount_lux)}`, details: [], actor: bidder }
+    // An auction waits for its first bid; that bid starts the timer.
+    const first = integer(field(order, 'bid_count')) === 1n
+    return { title: `Bid of ${dusk(highest.amount_lux)}`, details: first ? ['The first bid started the timer'] : [], actor: bidder }
   }
   const buyer = field(order, 'terms', 'buyer')
   const privateBuyer = isBytes(buyer) ? authorityParty(buyer, context) : null
   return {
-    title: kind === 'Auction' ? `Auction started · minimum bid ${price}` : `Listed for ${price}`,
+    title: kind === 'Auction' ? `Listed for auction · minimum bid ${price}` : `Listed for ${price}`,
     details: privateBuyer ? [`Only ${label(privateBuyer)} can buy it`] : [],
     actor: seller,
   }

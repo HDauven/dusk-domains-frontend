@@ -16,6 +16,7 @@ type UseSearchWorkspaceFeatureProps = {
   referralAddress?: string
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
   priceTiers?: SearchWorkspaceProps['search']['priceTiers']
+  pricingRules?: SearchWorkspaceProps['search']['pricingRules']
   activityEntries: SearchWorkspaceProps['result']['activityProps']['activityEntries']
   /** Block explorer origin for transaction links. */
   explorerUrl?: string | null
@@ -79,6 +80,7 @@ export function useSearchWorkspaceFeature({
   referralAddress,
   premiumResult,
   priceTiers,
+  pricingRules,
   activityEntries,
   activityLoading,
   explorerUrl,
@@ -138,6 +140,7 @@ export function useSearchWorkspaceFeature({
   const searchProps: SearchWorkspaceProps = {
     search: {
       priceTiers,
+      pricingRules,
       checked,
       loading: activityLoading,
       onCheckAvailability,

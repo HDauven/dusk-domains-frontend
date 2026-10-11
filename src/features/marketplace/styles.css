@@ -852,3 +852,7 @@
 .marketplace-owner code { overflow-wrap: anywhere; }
 
 .listing-name .website-badge { margin-left: var(--space-2); vertical-align: middle; }
+
+.auction-rules { max-width: 64ch; color: var(--muted); font-size: var(--text-sm); }
+.auction-rules summary { cursor: pointer; color: var(--ink); }
+.auction-rules ul { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding-left: 1.1em; line-height: 1.5; }

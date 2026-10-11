@@ -10,6 +10,7 @@ import { isMarketplaceEscrow } from './managedNameState'
 import { useNameListing } from '../features/marketplace/useNameListing'
 import { nameListingOffer } from '../features/marketplace/nameListing'
 import { loadSubnameActivity, useSubnameActivity } from '../features/activity/subnameActivity'
+import { pricingRules } from '../features/search/pricingRules'
 
 type UseAppSearchPropsArgs =
   & AppViewModelInputs
@@ -93,6 +94,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
       ? walletRuntime.selectedAddress : '',
     premiumResult: result,
     priceTiers: !economicsRuntime.feeConfigLoaded ? undefined : ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
+    pricingRules: economicsRuntime.feeConfigLoaded ? pricingRules(economicsRuntime.feeConfig) : undefined,
     hasMoreActivity: activityFeed.hasMoreActivity,
     onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),
     loadFullActivity: activityFeed.loadAllActivity,

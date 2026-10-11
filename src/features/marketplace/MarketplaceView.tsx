@@ -13,7 +13,7 @@ import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { PanelFeedbackStack } from '../../components/ui/PanelFeedbackStack'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import { TransactionStatusNotice } from '../../components/status/TransactionStatusNotice'
-import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
+import { MARKETPLACE_SYNC_MESSAGE, marketplaceFeeLabel } from './marketplacePresentation'
 import { MarketplaceActivity } from './MarketplaceActivity'
 import { MarketplaceAuctionDetail } from './MarketplaceAuctionDetail'
 import { MarketplaceReview } from './MarketplaceReview'
@@ -42,7 +42,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
   return (
     <AccountPanel className="marketplace-panel" labelledBy="marketplace-heading" panelId="marketplace">
       {!props.auction.selectedAuctionNode ? <AccountViewHeader
-        description="Buy, sell and bid on .dusk names. Names and payments are held in escrow."
+        description={`Buy, sell and bid on .dusk names. Names and payments are held in escrow.${props.selling.feeBps == null ? '' : ` Sellers pay a ${marketplaceFeeLabel(props.selling.feeBps)} fee on each sale.`}`}
         heading="Market"
         headingId="marketplace-heading"
       /> : null}

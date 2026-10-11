@@ -211,6 +211,35 @@ describe('MarketplaceView actions', () => {
   })
 })
 
+describe('Market rules before connecting', () => {
+  const plain = (html: string) => html.replaceAll('&#x27;', '\'').replaceAll('<!-- -->', '')
+  const disconnected = { selectedAddress: '', selectedAuthority: '' }
+
+  it('states the seller fee in the market header, with or without a wallet', () => {
+    expect(render({ wallet: disconnected })).toContain('Sellers pay a 2.50% fee on each sale.')
+    expect(render({ wallet: disconnected, selling: { feeBps: 500 } })).toContain('Sellers pay a 5% fee on each sale.')
+    // Before the market's fee is read, no fee is claimed.
+    expect(render({ selling: { feeBps: null } })).not.toContain('Sellers pay')
+  })
+
+  it('explains how an auction starts and ends where it is shown and where it is listed', () => {
+    const selected = auction()
+    const detail = plain(render({ listings: { auctions: [selected] }, auction: { selectedAuctionNode: selected.node }, wallet: disconnected }))
+    expect(detail).toContain('<summary>How auctions work</summary>')
+    // A listed auction's own start window may differ from the 7 days this site gives new listings.
+    expect(detail).toContain('The timer starts at the first bid and runs 7 days. If nobody bids before its start window closes, the auction can be closed and the name returned to the seller.')
+    expect(detail).toContain('Each bid must be at least 5% higher than the last. A bid in the last 10 minutes moves the end to 10 minutes after it, by up to 7 days in total.')
+    expect(detail).toContain('When it ends, anyone can finalize it within a day. The highest bidder gets the name, with its records and primary name cleared, and the seller gets the bid minus the 2.50% fee.')
+    expect(detail).toContain('Outbid bidders withdraw their bids under Yours. If nobody finalizes it in time, anyone can close it. Then the highest bidder withdraws their bid the same way, and the name can be returned to the seller.')
+    const sell = plain(render({ navigation: { tab: 'sell' }, selling: { saleMode: 'auction', durationDays: '1', sellableNames: [ownedName()] }, wallet: { selectedAuthority: seller } }))
+    expect(sell).toContain('>List for auction</button>')
+    // Cancelling doesn't end escrow by itself: the name comes back when it is returned.
+    expect(sell).toContain('It moves into escrow until it sells or is returned to you.')
+    expect(sell).not.toContain('Start auction')
+    expect(sell).toContain('The timer starts at the first bid and runs 1 day. If nobody bids within 7 days of listing, the auction can be closed and the name returned to the seller.')
+  })
+})
+
 function render(overrides: MarketplaceOverrides = {}) {
   return renderToStaticMarkup(<MarketplaceView {...props(overrides)} />)
 }
@@ -399,7 +428,7 @@ it('disables only new orders while paused and keeps custody release and refunds 
   expect(button(render({ ...paused, listings: { fixedSales: [fixedSale()] }, wallet: { ...paused.wallet, selectedAuthority: seller } }), 'Cancel listing')).not.toContain('disabled')
   expect(button(render({ ...paused, listings: { fixedSales: [fixedSale({ expiresAtBlockHeight: 1000 })] } }), 'Close listing')).not.toContain('disabled')
   for (const saleMode of ['fixed', 'auction'] as const) {
-    expect(button(render({ ...paused, navigation: { tab: 'sell' }, selling: { sellableNames: [ownedName()], saleMode }, wallet: { ...paused.wallet, selectedAuthority: seller } }), saleMode === 'fixed' ? 'List for sale' : 'Start auction')).toContain('disabled')
+    expect(button(render({ ...paused, navigation: { tab: 'sell' }, selling: { sellableNames: [ownedName()], saleMode }, wallet: { ...paused.wallet, selectedAuthority: seller } }), saleMode === 'fixed' ? 'List for sale' : 'List for auction')).toContain('disabled')
   }
   expect(button(render({ ...paused, navigation: { tab: 'offers' }, offers: { offers: [offer()] }, selling: { sellableNames: [ownedName()] }, wallet: { ...paused.wallet, selectedAuthority: seller } }), 'Accept')).not.toContain('disabled')
   expect(button(render({ ...paused, navigation: { tab: 'offers' }, offers: { offers: [offer()] } }), 'Cancel')).not.toContain('disabled')
