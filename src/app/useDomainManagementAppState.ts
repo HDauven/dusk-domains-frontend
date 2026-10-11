@@ -24,7 +24,9 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
   const [subnameError, setSubnameError] = useState('')
   const [confirmationInput, setConfirmationInput] = useState('')
   const [primaryEndpointValue, setPrimaryEndpointValue] = useState('')
+  // Resolved identity for the name's forward address.
   const [primaryName, setPrimaryName] = useState<string | null>(null)
+  // Cleanup mapping for the connected wallet, including unresolved raw primaries.
   const [connectedPrimaryName, setConnectedPrimaryName] = useState<string | null>(null)
   const [subnameLabel, setSubnameLabel] = useState('')
   const [subnameManager, setSubnameManager] = useState('')

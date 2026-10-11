@@ -213,7 +213,7 @@ it('requires name authority to set primary but only endpoint control to clear it
     managedName:name,moonlightRecord:{key:'moonlight_address',value:address},primaryName:'docs.alice.dusk',connectedPrimaryName:'docs.alice.dusk',primaryEndpointValue:address,
     currentBlockHeight:100,nowSeconds:0,pendingReservations:[],subnames:[],subnameLabel:'',subnameManager:'',confirmationInput:'',recordDraftMutations:[],recordDraftErrors:[]}
   const before = deriveAppDerivedState(ready as never)
-  expect(before.primaryVerification.verified).toBe(true)
+  expect(before.primaryVerification.verified).toBe(false)
   expect(before.canSetPrimary).toBe(false)
   expect(before.canClearPrimary).toBe(true)
   const after = deriveAppDerivedState({...ready,managedName:{...name,owner:'ancestor',manager:'ancestor'}} as never)

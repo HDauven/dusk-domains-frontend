@@ -169,9 +169,33 @@ export function createDuskDomainsOnChainClient(
   const primary = async (endpoint: import('./http/results').DuskEndpoint) => {
     if (endpoint.type !== 'moonlight_address')
       throw new Error('Only public Dusk addresses support primary names.')
-    const c = await getClient(),
-      v = await c.verifyPrimary(endpointBytes(endpoint.value))
-    if (!v) throw new Error('No verified primary name')
+    const c = await getClient()
+    // SDK 0.3.2 verifyPrimary reads the raw mapping. The store's resolution
+    // additionally requires the endpoint to be the current owner or manager.
+    const v = await c.snapshot(async (height) => {
+      const { stores } = await c.discover()
+      const bytes = endpointBytes(endpoint.value)
+      let found: sdk.VerifiedPrimary | null = null
+      for (const admission of stores) {
+        const store = sdk.contractId(admission.id)
+        const primary = await c.store(store).resolve_primary({ endpoint: bytes })
+        if (!primary) continue
+        const key = primary.primary.name.key
+        const name = await c.locate<sdk.NameView>(store, key.root, 'get_name', key)
+        if (name.store !== store) continue
+        const resolved = await c.locate<sdk.RecordValue | null>(store, key.root, 'resolve_record', {
+          key, record_key: 'moonlight_address',
+        })
+        const record = local(resolved.value)
+        if (resolved.store !== store || !record || !sdk.primaryNameStatus({
+          endpoint: bytes, primary, name: local(name.value), record, height,
+        }).verified) continue
+        if (found) throw new Error('Multiple resolved pool primaries')
+        found = { store, primary, record, height }
+      }
+      return found
+    })
+    if (!v) return null
     return {
       endpoint,
       primaryName: v.primary.spelling,
@@ -221,10 +245,11 @@ export function createDuskDomainsOnChainClient(
           record: r,
         }
       }),
-    getPrimaryName: (endpoint) => wrapped(async () => (await primary(endpoint)).primaryName),
+    getPrimaryName: (endpoint) => wrapped(async () => (await primary(endpoint))?.primaryName ?? null),
     verifyPrimaryName: (endpoint, expectedName) =>
       wrapped(async () => {
         const p = await primary(endpoint)
+        if (!p) throw new Error('No resolved primary name')
         if (expectedName && expectedName !== p.primaryName) throw new Error('Primary name mismatch')
         return p
       }),

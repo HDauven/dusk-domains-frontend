@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { useAppRuntime } from './useAppRuntime'
+import { readIndexedPrimarySummaries } from '../features/domains/indexedPrimary'
 
 export type ShowcaseName = {
   verification?: import('../names/internal').WebsiteVerification
@@ -19,18 +20,19 @@ export function useSkyNames(indexerClient: ReturnType<typeof useAppRuntime>['ind
     if (!indexerClient) return
     let live = true
     indexerClient.getNames()
-      .then((list) => {
+      .then(async (list) => {
+        const active = list.filter(entry => entry.status === 'active')
+        const primaries = await readIndexedPrimarySummaries(indexerClient, active)
+        const entries = active.map(entry => ({
+          verification: entry.verification,
+          name: entry.canonicalName,
+          node: entry.node,
+          avatar: entry.records.find(record => record.key === 'avatar')?.value ?? null,
+          primary: primaries[entry.node]?.tone === 'success',
+          activity: entry.activityCount,
+        }))
         if (!live) return
-        setNames(list
-          .filter((entry) => entry.status === 'active')
-          .map((entry) => ({
-            verification: entry.verification,
-            name: entry.canonicalName,
-            node: entry.node,
-            avatar: entry.records.find((record) => record.key === 'avatar')?.value ?? null,
-            primary: entry.primaryStatus === 'verified' && entry.primaryName === entry.canonicalName,
-            activity: entry.activityCount,
-          })))
+        setNames(entries)
       })
       .catch(() => {
         // The sky is decoration; an unreachable indexer leaves it empty.

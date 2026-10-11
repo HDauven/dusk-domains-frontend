@@ -22,7 +22,7 @@ export async function checkPrimaryNameSwitches(page) {
   })
   const control = page.getByRole('switch', { name: 'Primary name', exact: true })
   await expect(control).toHaveAccessibleName('Primary name')
-  await expect(control).toHaveAccessibleDescription('Apps show alpha.dusk for this Dusk address.')
+  await expect(control).toHaveAccessibleDescription('Turn on to use alpha.dusk as the primary name for your Dusk address.')
   await expect(page.locator('.primary-control label')).toHaveText('Primary name')
   await expect(control).toHaveAttribute('aria-checked', 'false')
   await control.focus()
@@ -57,8 +57,11 @@ export async function checkPrimaryNameSwitches(page) {
     function FormerHolder({ mode }) {
       const [primaryName, setPrimaryName] = React.useState('alice.dusk')
       const [connectedPrimaryName, setConnectedPrimaryName] = React.useState('alice.dusk')
-      const moonlightRecord = mode === 'transfer' ? { key: 'moonlight_address', value: address } : undefined
-      const managedName = { node: 'name', owner: mode === 'missing' ? '' : 'bob', manager: 'bob', expiresAt: 200, graceEndsAt: 300 }
+      const [listingCancelled, setListingCancelled] = React.useState(false)
+      window.cancelPrimaryListing = () => setListingCancelled(true)
+      const moonlightRecord = ['transfer', 'escrow'].includes(mode) ? { key: 'moonlight_address', value: address } : undefined
+      const managedName = { node: 'name', owner: listingCancelled ? address : mode === 'missing' ? '' : 'bob',
+        manager: listingCancelled ? address : 'bob', inMarketplaceEscrow: mode === 'escrow' && !listingCancelled, expiresAt: 200, graceEndsAt: 300 }
       const state = deriveAppDerivedState({ walletSigningReady: true, selectedAddress: address, selectedAuthority: 'alice',
         nodeHex: 'name', displayName: 'alice.dusk', managedName, primaryName, connectedPrimaryName, primaryEndpointValue: address,
         moonlightRecord,
@@ -71,7 +74,7 @@ export async function checkPrimaryNameSwitches(page) {
       return React.createElement(SearchResultPanel, {
         nodeHex: 'name',
         resultView: mode === 'expired' ? 'overview' : 'details',
-        headerProps: { status: ['missing', 'expired'].includes(mode) ? 'available' : 'registered', displayName: 'alice.dusk', records: [], viewerAuthority: 'alice' },
+        headerProps: { status: ['missing', 'expired'].includes(mode) ? 'available' : 'registered', displayName: 'alice.dusk', records: [], viewerAuthority: 'alice', primaryVerified: state.primaryVerification.verified },
         detailsProps: {
           displayName: 'alice.dusk',
           parentResolverRecords: [],
@@ -115,17 +118,31 @@ export async function checkPrimaryNameSwitches(page) {
     }
     window.renderPrimaryClearCase = mode => root.render(React.createElement(FormerHolder, { key: mode, mode }))
   })
-  for (const mode of ['transfer', 'take-back', 'missing', 'expired']) {
+  for (const mode of ['transfer', 'take-back', 'missing', 'expired', 'escrow']) {
     await page.evaluate(mode => window.renderPrimaryClearCase(mode), mode)
     if (mode === 'expired') await expect(page.getByRole('button', { name: 'Claim alice.dusk', exact: true })).toBeVisible()
-    const clear = mode === 'transfer' ? control : page.getByRole('button', { name: 'Clear primary name', exact: true })
+    await expect(control).toHaveAttribute('aria-checked', 'false')
+    await expect(control).toBeDisabled()
+    await expect(page.locator('.primary-control')).not.toContainText('Apps show')
+    await expect(page.locator('.name-hero-badges .status-badge').filter({ hasText: 'Primary name' })).toHaveCount(0)
+    if (mode === 'escrow') {
+      await expect(page.locator('.primary-control')).toContainText('paused while this name is listed for sale')
+      await page.evaluate(() => window.cancelPrimaryListing())
+      await expect(control).toHaveAttribute('aria-checked', 'true')
+      await expect(page.locator('.primary-control')).toContainText('Apps show alice.dusk for this Dusk address.')
+      await expect(page.locator('.name-hero-badges')).toContainText('Primary name')
+      await control.click()
+      await expect(page.locator('.primary-control')).toHaveCount(0)
+      continue
+    }
+    const clear = page.getByRole('button', { name: 'Clear primary name', exact: true })
     await expect(clear).toBeEnabled()
     assert.equal(await page.getByRole('tab', { name: 'Records', exact: true }).count(), 0)
     await clear.click()
     await expect(page.locator('.primary-control')).toHaveCount(0)
   }
   const clearCalls = await page.evaluate(() => window.primaryClearCalls)
-  assert.equal(clearCalls.length, 4)
+  assert.equal(clearCalls.length, 5)
   for (const call of clearCalls) {
     assert.equal(call.functionName, 'clear_primary_name')
     assert.deepEqual(Object.keys(call.args).sort(), ['endpointType', 'endpointValue'])
@@ -178,7 +195,7 @@ export async function checkPrimaryNameSwitches(page) {
     const client = {
       getHealth: async () => ({ ok: true, currentBlockHeight: 100 }),
       resolveForward: async () => ({ records: [{ key: 'moonlight_address', value: bob }], verificationStatus: 'forward_resolved', expiry: { status: 'active' }, resolver: { health: 'ok' } }),
-      getNameState: async () => ({ owner: 'bob', manager: 'bob', expiresAtBlockHeight: 200, graceEndsAtBlockHeight: 300 }),
+      getNameState: async () => ({ owner: bob, manager: bob, expiresAtBlockHeight: 200, graceEndsAtBlockHeight: 300 }),
       getActivityPage: async () => ({ activity: [] }), getAllSubnames: async () => [],
       getPrimaryName: async ({ value }) => value === bob ? 'bob.dusk' : 'alice.dusk',
     }

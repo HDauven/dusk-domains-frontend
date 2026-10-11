@@ -3,14 +3,12 @@ import {
   DUSK_APPROX_BLOCK_TIME_SECONDS,
   getRecordDefinition,
   namehashHex,
-  type IndexedNameSummary,
   type NameResult,
   type NameStatus,
   type RecordVisibility,
   type ResolverRecordKey,
   type SubnameExpiryPolicy,
 } from '../../names/internal'
-import type { MyNamePrimarySummary } from './MyDomainsView'
 
 // Lifecycle values are block heights, or unix seconds when no block height was known.
 // Heights stay below a billion for about 300 years; Unix time passed it in 2001.
@@ -223,14 +221,6 @@ export function overviewStatusCopy(status: NameStatus) {
 export function overviewPrimaryCopy(status: NameStatus, verified: boolean) {
   if (status === 'available') return 'Set after claim'
   return verified ? 'Verified' : 'Needs setup'
-}
-
-export function myNamePrimarySummaryFromIndex(name: IndexedNameSummary): MyNamePrimarySummary | null {
-  if (!name.primaryStatus) return null
-  if (name.primaryStatus === 'verified') return { label: 'Verified', tone: 'success' }
-  if (name.primaryStatus === 'mismatch') return { label: 'Not primary', tone: 'warning' }
-  if (name.primaryStatus === 'missing') return { label: 'No primary', tone: 'warning' }
-  return { label: 'No address', tone: 'muted' }
 }
 
 export function recordVisibilityLabel(visibility: RecordVisibility | undefined) {

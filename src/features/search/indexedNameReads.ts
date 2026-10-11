@@ -20,6 +20,7 @@ export type IndexedNameReadBundle = {
   node: string
   // This name's own subname entry, which holds its expiry policy; null for a root name.
   ownSubnameRead: IndexerReadResult<IndexedSubname | null>
+  // Resolved name for the forward endpoint; never populated from read_primary.
   primaryName: string | null
   primaryEndpoint: string
   readErrors: string[]
@@ -66,13 +67,19 @@ export async function readIndexedName(
   const forwardAddress = forwardRead.value?.records.find(record => record.key === 'moonlight_address')?.value || ''
   const forwardVerified = forwardRead.value?.verificationStatus === 'forward_resolved'
     && forwardRead.value.expiry?.status === 'active' && forwardRead.value.resolver?.health === 'ok'
-  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(onChainClient ? onChainClient.getPrimaryName({type:'moonlight_address',value:forwardAddress}).then(r=>r.ok?r.value:null) : client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
+  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(onChainClient
+    ? onChainClient.getPrimaryName({ type: 'moonlight_address', value: forwardAddress }).then(result => {
+      if (!result.ok) throw new Error(result.error.message)
+      return result.value
+    })
+    : client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
   const [primaryRead, connectedPrimaryRead] = await Promise.all([
     primaryReadPromise,
     selectedAddress === forwardAddress && primaryReadPromise ? primaryReadPromise
       : selectedAddress ? indexerRead(client.getPrimaryName({ type: 'moonlight_address', value: selectedAddress })) : null,
   ])
-  // The connected wallet can still clear a stale primary; this lookup never verifies the viewed name.
+  // connectedPrimaryName is cleanup state, including a raw mapping that no longer
+  // resolves. It must never be used for a display identity or a primary badge.
   const chainPrimaryRead = selectedAddress && !connectedPrimaryRead?.value && onChainClient
     ? await indexerRead(onChainClient.readPrimaryName({ type: 'moonlight_address', value: selectedAddress }))
     : null

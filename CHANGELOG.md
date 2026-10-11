@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show primary names only while authority-gated resolution succeeds. Explain paused or stale mappings after listing, transfer or expiry and retain the option to clear them.
+
 - Route released-name registration through eligible retirement successors while preserving saved commitments and dropped-name premiums.
 
 - Show DNS website verification from the current owner and website binding, with recoverable pending checks.

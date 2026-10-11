@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import * as sdk from '@duskdomains/sdk'
+import * as projection from '@duskdomains/sdk/projection'
 import { handoff, handoffDrivers } from '../test/handoffFixtures'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import { account, contracts, reservation } from '../test/frozenFixtures'
@@ -1461,4 +1462,77 @@ it('names the primary mapping being cleared even when a different name page requ
   }), 'example.dusk', account)
   expect(call.display).toMatchObject({ Summary: 'Clear actual.dusk as your primary name', Name: 'actual.dusk' })
   expect(JSON.stringify(call.display)).not.toContain('example.dusk')
+})
+
+// resolve_primary replies follow the SDK projection, while read_primary retains
+// the mapping. The real SDK client and wire driver exercise the frontend adapter.
+function primaryFixture() {
+  const h = fixture()
+  const endpoint = endpointBytes(account)
+  const record = { key: 'moonlight_address', value: endpoint, ttl_seconds: 60n, updated_at: 100n }
+  const primary: sdk.PrimaryView = { spelling: 'example.dusk', primary: {
+    endpoint, name: { key: h.name.name.key, incarnation: { ...h.name.name.incarnation } },
+    mapping_id: 42n, updated_at: 100n,
+  } }
+  const state = projection.createProjectionState({ directoryId: id(1), contracts: { [id(1)]: 'directory', [id(7)]: 'store' } })
+  const digest = projection.recordsDigest([record])
+  h.name.name.records = { resolver: bytes(5), epoch: 1n, count: 1, digest }
+  state.names[projection.nameStateKey(id(7), h.name.name.key)] = h.name.name
+  state.primaries[projection.primaryStateKey(id(7), endpoint)] = primary.primary
+  state.slots[projection.slotStateKey(id(5), { registry: bytes(7), node: h.name.name.key.node, epoch: 1n })] = { records: [record], count: 1, digest }
+  h.responses.set(`${id(3)}:read_primary`, null)
+  h.responses.set(`${id(3)}:resolve_primary`, null)
+  h.responses.set(`${id(7)}:read_primary`, primary)
+  h.responses.set(`${id(7)}:resolve_record`, { Local: record })
+  const publish = (height = 106n) => {
+    h.setHeight(height)
+    h.responses.set(`${id(7)}:resolve_primary`, projection.projectedPrimary(state, endpoint, height) ? primary : null)
+  }
+  const client = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: async () => null } })
+  return { ...h, client, sdkClient: h.client, publish, endpoint: { type: 'moonlight_address', value: account }, primary }
+}
+
+it.each(['escrow', 'transfer with identity kept', 'manager-only', 'expiry', 're-registration'])(
+  'resolves primary authority and incarnation through the store after %s', async change => {
+    const h = primaryFixture()
+    if (change === 'escrow' || change === 'transfer with identity kept') {
+      h.name.name.owner = bytes(6)
+      h.name.name.manager = bytes(6)
+      if (change === 'escrow') h.name.name.custody = sample('NameView').name.custody
+    }
+    if (change === 'manager-only') h.name.name.owner = bytes(6)
+    if (change === 're-registration') h.name.name.incarnation = { generation: 8n, serial: 1n }
+    h.publish(change === 'expiry' ? h.name.name.expires_at : 106n)
+    const expected = change === 'manager-only' ? 'example.dusk' : null
+    expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: expected })
+    expect((await h.client.verifyPrimaryName(h.endpoint)).ok).toBe(expected !== null)
+    expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
+    if (change === 'escrow' || change === 'transfer with identity kept') {
+      // Proves the old verifyPrimary path would reproduce the product bug.
+      expect(await h.sdkClient.verifyPrimary(endpointBytes(account))).not.toBeNull()
+    }
+    expect(h.calls.some(call => call.method === 'resolve_primary')).toBe(true)
+  },
+)
+
+it('restores primary resolution when a listing is cancelled without replacing its raw mapping', async () => {
+  const h = primaryFixture()
+  const owner = h.name.name.owner
+  h.publish()
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+  h.name.name.owner = bytes(6)
+  h.name.name.manager = bytes(6)
+  h.publish()
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: null })
+  h.name.name.owner = owner
+  h.name.name.manager = owner
+  h.publish()
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+  expect(h.primary.primary.mapping_id).toBe(42n)
+})
+
+it('does not turn a failed resolve_primary read into a missing primary', async () => {
+  const h = primaryFixture()
+  h.responses.delete(`${id(3)}:resolve_primary`)
+  expect(await h.client.getPrimaryName(h.endpoint)).toMatchObject({ ok: false, error: { code: 'contract_read_failed' } })
 })

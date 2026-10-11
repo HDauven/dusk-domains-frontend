@@ -9,6 +9,7 @@ import type { IndexedNameSummary, PendingNameReservation } from '../../names/int
 import { pluralize } from '../../utils/format'
 import { NameCard } from './my-domains/NameCard'
 import { PendingReservationsList } from './my-domains/PendingReservationsList'
+import { indexedPrimaryIsActive } from './indexedPrimary'
 
 export type MyNamePrimarySummary = {
   label: string
@@ -42,7 +43,7 @@ export function MyDomainsView({ currentBlockHeight, loading, myNames, myNamesErr
   } = wallet
   const empty = myNames.length === 0 && pendingReservations.length === 0
   const pointsHere = (name: IndexedNameSummary) => name.records.find((record) => record.key === 'moonlight_address')?.value === selectedAddress
-  const primaryCount = myNames.filter((name) => primarySummaries[name.node]?.tone === 'success' && pointsHere(name)).length
+  const primaryCount = myNames.filter((name) => primarySummaries[name.node]?.tone === 'success' && pointsHere(name) && indexedPrimaryIsActive(name, currentBlockHeight)).length
 
   return (
     <section className="my-names-panel" id="my-names" aria-labelledby="my-names-heading">
