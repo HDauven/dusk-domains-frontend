@@ -4,6 +4,7 @@ import { ManagementFeedback } from '../domains/ManagementFeedback'
 import { canControlThroughAncestor } from '../../app/derived/managementCapabilities'
 import { sameAuthority } from '../identity/ownerLabel'
 import { Tabs, TabPanel } from '../../components/ui/Tabs'
+import { Button } from '../../components/ui/Button'
 import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { ComponentProps } from 'react'
 import { ActivityHistoryView } from '../activity/ActivityHistoryView'
@@ -55,6 +56,9 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
   const { isOwner, canEdit } = namePageAccess(managedName?.owner ?? '', managedName?.manager ?? '', headerProps.viewerAuthority ?? '')
   const ancestorControl = canControlThroughAncestor(managedName, headerProps.viewerAuthority ?? '', settingsProps?.clock.currentBlockHeight ?? null)
   const parent = managedName?.ancestors?.[0]
+  // The holder of any name above a subname can take it back. Say so when that isn't only its own owner and manager.
+  const otherAncestorHolder = Boolean(managedName?.ancestors?.some(ancestor => [ancestor.owner, ancestor.manager]
+    .some(authority => !sameAuthority(authority, managedName.owner) && !sameAuthority(authority, managedName.manager))))
   const namespaceTarget = managedName && parent ? { node: managedName.node, name: headerProps.displayName, parentNode: parent.node } : null
   const canPayRenewal = Boolean(managedName?.ownerIsContract && canRenewOutsideEscrow(managedName) && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
   const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length), canPayRenewal)
@@ -62,10 +66,15 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.
   const view = tabbed && !tabs.some(tab => tab.id === resultView) ? 'details' : resultView
   const reportUrl = headerProps.status === 'registered' ? reportNameUrl(abuseUrl, headerProps.displayName) : null
+  // Staged record changes stay with the name while other sections are open. Values that can't be saved yet count too.
+  const unsavedRecords = canEdit && view !== 'records'
+    ? (recordsProps?.draft?.recordDraftMutations?.length ?? 0) + (recordsProps?.draft?.recordDraftInvalid?.length ?? 0) : 0
   const primaryControl = primaryProps?.primaryVerification ? <PrimaryNameControl {...primaryProps} /> : undefined
   const hasPrimaryCleanup = primaryProps?.canClearPrimary || Boolean(primaryProps?.primaryVerification?.cleanupDescription)
   const content = <>
-    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} primaryControl={canEdit || hasPrimaryCleanup ? primaryControl : undefined} /> : null}
+    {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} isOwner={isOwner}
+      separateManager={Boolean(managedName && !sameAuthority(managedName.manager, managedName.owner))}
+      primaryControl={canEdit || hasPrimaryCleanup ? primaryControl : undefined} /> : null}
     {nodeHex && view === 'manage' && (canEdit || canPayRenewal) ? <>
       <DomainSettingsView {...settingsProps} isOwner={isOwner} />
       {canEdit ? primaryControl : null}
@@ -89,7 +98,10 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
       <NightCard name={headerProps.displayName} />
       <NameShare key={headerProps.displayName} name={headerProps.displayName} referralAddress={referralAddress} />
     </> : null}
-    {parent && !sameAuthority(parent.owner, managedName?.owner) ? <p className="field-note">The owner of {parent.name} can take this name back, and it expires with {parent.name}.</p> : null}
+    {parent && otherAncestorHolder ? <p className="field-note">
+      The owner or manager of {parent.name}{(managedName?.ancestors?.length ?? 0) > 1 ? ' or a name above it' : ''} can take this name back,
+      and it expires {managedName?.expiryPolicy === 'inherits_parent' ? 'with' : 'no later than'} {parent.name}.
+    </p> : null}
     {ancestorControl && namespaceTarget ? <>
       <SubnameAuthorityControls key={namespaceTarget.node} name={namespaceTarget.name}
         onReassign={(owner, manager) => subdomainsProps.authority.onReassignSubname?.(namespaceTarget, owner, manager) ?? Promise.resolve()}
@@ -100,6 +112,9 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
     {tabbed ? <>
       <div className="name-section-select"><label htmlFor="name-section">Section</label><select id="name-section" value={view} onChange={event => onResultViewChange(event.target.value as SearchResultView)}>{tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}</select></div>
       <Tabs className="name-section-tabs" id="name-sections" label="Name sections" items={tabs} value={view} onChange={onResultViewChange} />
+      {unsavedRecords ? <p className="field-note record-unsaved" role="status">
+        {unsavedRecords === 1 ? '1 record change is' : `${unsavedRecords} record changes are`} not saved yet. <Button variant="quiet" onClick={() => onResultViewChange('records')}>Review</Button>
+      </p> : null}
     </> : null}
     {view === 'overview' ? <>
       <SearchResultOverview {...overviewProps} />

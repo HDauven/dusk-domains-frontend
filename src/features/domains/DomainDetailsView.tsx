@@ -12,10 +12,11 @@ import {
   type ResolverRecord,
   type SubnameState,
 } from '../../names/internal'
-import { activityDetail, activityTitle } from '../activity/activityCopy'
-import { activityWhen } from '../activity/activityTime'
+import { ActivityTime } from '../activity/ActivityHistoryView'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
 import { isIdentifierRecord, recordLabel } from './recordPresentation'
+import { isSubname } from './domainFormat'
+import { nameControlCopy } from '../trust/trustCopy'
 
 // Records a sender needs, in the order a wallet would look for them.
 const payableKeys = ['moonlight_address', 'phoenix_payment_endpoint', 'evm_address',
@@ -27,8 +28,12 @@ function safeLink(value: string) {
 }
 
 // A registered name's public profile: where to send, what it links to, and what changed lately.
-export function DomainDetailsView({ canEdit = false, primaryControl, displayName, onManageRecords, onSubdomains, parentResolverRecords, paysPreviousOwner, primaryVerification, subnames, viewerAuthority, activity }: {
+export function DomainDetailsView({ canEdit = false, isOwner = false, separateManager = false, primaryControl, displayName, onManageRecords, onSubdomains, parentResolverRecords, paysPreviousOwner, primaryVerification, subnames, viewerAuthority, activity }: {
   canEdit?: boolean
+  /** The connected wallet owns this name. */
+  isOwner?: boolean
+  /** Another wallet is its manager, which can change its records and subnames. */
+  separateManager?: boolean
   primaryControl?: ReactNode
   displayName: string
   onManageRecords: () => void
@@ -40,17 +45,31 @@ export function DomainDetailsView({ canEdit = false, primaryControl, displayName
   viewerAuthority: string
   activity: {
     activityEntries: ActivityEntry[]
+    /** Older activity is still to load. */
+    hasMore?: boolean
     currentBlockHeight: number | null
+    nowSeconds?: number
+    marketplaceContractId?: string | null
+    /** The name's current owner and manager. */
+    holders?: { owner: string, manager: string } | null
     formatActivityTime: (timestamp: string) => string
     onActivity: () => void
   }
 }) {
   const {
     activityEntries,
+    hasMore,
     currentBlockHeight,
+    nowSeconds,
+    marketplaceContractId,
+    holders,
     formatActivityTime,
     onActivity,
   } = activity
+  const recent = activityActions(activityEntries, {
+    viewerAuthority, currentBlockHeight, nowSeconds, marketplaceContractId, subnames, holders, partial: hasMore,
+    addresses: parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value),
+  }).slice(0, 4)
   const payable = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))
     .filter((record): record is ResolverRecord => Boolean(record))
@@ -125,17 +144,22 @@ export function DomainDetailsView({ canEdit = false, primaryControl, displayName
           )}
         </Panel> : null}
 
+        {isOwner && !isSubname(displayName) ? <Panel className="profile-card" aria-labelledby="control-heading">
+          <h2 id="control-heading">Who controls it</h2>
+          <p className="profile-note">{nameControlCopy(displayName, separateManager)}</p>
+        </Panel> : null}
+
         <Panel className="profile-card" aria-labelledby="recent-heading">
           <div className="profile-card-head">
             <h2 id="recent-heading">Recent</h2>
             <Button variant="quiet" type="button" onClick={onActivity}>All activity</Button>
           </div>
-          {activityEntries.length ? (
+          {recent.length ? (
             <ul className="recent-list">
-              {activityActions(activityEntries).slice(0, 4).map(({ entry }) => (
-                <li key={entry.id}>
-                  <span>{activityTitle(entry)} <em>{activityDetail(entry, viewerAuthority, parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value))}</em></span>
-                  <time>{activityWhen(entry.blockHeight, currentBlockHeight, entry.timestamp, formatActivityTime)}</time>
+              {recent.map(action => (
+                <li key={action.key}>
+                  <span>{action.title}{action.details.length ? <em>{action.details.join(' · ')}</em> : null}</span>
+                  <ActivityTime compact action={action} currentBlockHeight={currentBlockHeight} formatActivityTime={formatActivityTime} />
                 </li>
               ))}
             </ul>

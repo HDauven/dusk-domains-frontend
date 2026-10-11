@@ -1,4 +1,5 @@
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
+import { MAX_RECORDS_PER_NAME } from '@duskdomains/sdk'
 import { type CoreRecordMutationInput } from '../commands'
 import { prepareRecordMutations } from '../recordMutations'
 import {
@@ -12,6 +13,8 @@ import {
 export type RecordMutationPlan = {
   mutations: CoreRecordMutationInput[]
   errors: string[]
+  /** Staged values that can't be saved as they are, with why. */
+  invalid: { key: ResolverRecordKey; error: string }[]
 }
 
 export function recordValueFor(records: ResolverRecord[], key: ResolverRecordKey): string {
@@ -35,8 +38,12 @@ export function recordMutationPlan(
 ): RecordMutationPlan {
   const mutations: CoreRecordMutationInput[] = []
   const errors: string[] = []
+  const invalid: RecordMutationPlan['invalid'] = []
+  // A record the editor cannot write can still be removed: its draft is empty.
+  const removable = Object.keys(drafts).filter((key) => !keys.includes(key as ResolverRecordKey)
+    && !drafts[key].trim() && records.some((record) => record.key === key)) as ResolverRecordKey[]
 
-  for (const key of keys) {
+  for (const key of [...keys, ...removable]) {
     const existingValue = recordValueFor(records, key)
     const nextValue = (Object.hasOwn(drafts, key) ? drafts[key] : existingValue).trim()
 
@@ -50,6 +57,7 @@ export function recordMutationPlan(
     const validationErrors = validateRecordValue(key, nextValue)
     if (validationErrors.length > 0) {
       errors.push(`${definition?.label ?? key}: ${validationErrors.join(' ')}`)
+      invalid.push({ key, error: validationErrors.join(' ') })
       continue
     }
 
@@ -69,7 +77,12 @@ export function recordMutationPlan(
       errors.push((error as Error).message)
     }
   }
-  return { mutations, errors }
+  const resulting = applyRecordMutations(records, mutations).length
+  if (resulting > MAX_RECORDS_PER_NAME && resulting > records.length) {
+    const excess = resulting - MAX_RECORDS_PER_NAME
+    errors.push(`A name can hold at most ${MAX_RECORDS_PER_NAME} records. Remove ${excess} ${excess === 1 ? 'record' : 'records'} before adding ${excess === 1 ? 'this one' : 'these'}.`)
+  }
+  return { mutations, errors, invalid }
 }
 
 export function applyRecordMutations(

@@ -11,6 +11,9 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>%DUSK_DOMAINS_SITE_URL%/developers</loc>
+  </url>
+  <url>
     <loc>%DUSK_DOMAINS_SITE_URL%/terms</loc>
   </url>
   <url>

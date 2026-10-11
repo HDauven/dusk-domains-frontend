@@ -53,6 +53,11 @@ export const ACTIVITY_EVENT_TYPES = [
   'refund_changed',
   'refund_claimed',
   'escrow_renewed',
+  'beneficiary_released',
+  'controller_changed',
+  'controller_suspension_changed',
+  'controller_used',
+  'root_ceded',
   'registration',
   'renewal',
   'expiry',
@@ -83,6 +88,13 @@ export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number]
 export type ActivityEntry = {
   marketplaceOrderId?: string
   marketplaceAction?: 'bid'
+  /** The indexer's canonical event body, with SDK field names and byte arrays. */
+  data?: unknown
+  /** The contract that emitted the event. */
+  contractId?: string | null
+  /** Who a delegated effect acted for, and the controller contract it went through. */
+  principal?: unknown
+  via?: string
   id: string
   eventType: ActivityEventType
   node: string

@@ -1,8 +1,11 @@
+// @vitest-environment happy-dom
 import { account } from '../../test/frozenFixtures'
 import { NetworkFreshnessContext } from '../../app/networkFreshness'
 import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
 import { contractPrincipalFromWalletAccount } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type {
@@ -12,6 +15,8 @@ import type {
   IndexedNameSummary,
 } from '../../names/internal'
 import { MarketplaceView } from './MarketplaceView'
+import { marketOpening } from './useMarketplaceFeature'
+import { useListingLink } from './useListingLink'
 import type { MarketplaceViewProps } from './marketplaceTypes'
 
 type MarketplaceOverrides = { [K in Exclude<keyof MarketplaceViewProps, 'takeBackOffers'>]?: Partial<MarketplaceViewProps[K]> } & Pick<MarketplaceViewProps, 'takeBackOffers'>
@@ -19,6 +24,42 @@ type MarketplaceOverrides = { [K in Exclude<keyof MarketplaceViewProps, 'takeBac
 const seller = `0x${'22'.repeat(32)}`
 const buyer = `0x${'33'.repeat(32)}`
 const outsider = `0x${'44'.repeat(32)}`
+
+describe('MarketplaceView listing links', () => {
+  it('opens a listing link in Browse with the search set to its name', () => {
+    expect(marketOpening({ view: 'marketplace', listingName: 'aurora.dusk' })).toMatchObject({ tab: 'browse', listingName: 'aurora.dusk' })
+    const html = render({ listings: { fixedSales: [fixedSale(), fixedSale({ node: `0x${'12'.repeat(32)}`, name: 'other.dusk' })] }, navigation: { listingName: 'aurora.dusk' } })
+    expect(html).toContain('value="aurora.dusk"')
+    expect(html).toContain('aria-label="Watch aurora.dusk"')
+    expect(html).not.toContain('aria-label="Watch other.dusk"')
+  })
+
+  it('keeps what the visitor types after a listing link, and starts over on the next link', async () => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+    Object.defineProperty(document, 'fonts', { configurable: true, value: Object.assign(new EventTarget(), { ready: Promise.resolve() }) })
+    let link: ReturnType<typeof useListingLink> | undefined
+    function Market() {
+      link = useListingLink('aurora.dusk')
+      return <MarketplaceView {...props({ listings: { fixedSales: [fixedSale(), fixedSale({ node: `0x${'12'.repeat(32)}`, name: 'other.dusk' })] },
+        navigation: { listingName: link.listingName, listingKey: link.listingKey, onBrowseQueryChange: link.onBrowseQueryChange } })} />
+    }
+    const container = document.createElement('div')
+    const root = createRoot(container)
+    await act(async () => root.render(<Market />))
+    const search = () => container.querySelector('input[aria-label="Search marketplace"]') as HTMLInputElement
+    expect(search().value).toBe('aurora.dusk')
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search(), 'auror')
+      search().dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    expect(search().value).toBe('auror')
+    expect(link?.listingName).toBe('')
+    await act(async () => link?.openListing('other.dusk'))
+    expect(search().value).toBe('other.dusk')
+    await act(async () => root.unmount())
+    vi.unstubAllGlobals()
+  })
+})
 
 describe('MarketplaceView actions', () => {
   it.each(['fixed sale', 'auction listing', 'auction detail'])('explains renewal to the seller of a %s', kind => {

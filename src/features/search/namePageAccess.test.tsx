@@ -143,13 +143,32 @@ it.each(['details', 'records', 'subnames'] as const)('shows ancestor actions wit
     },
   } as SearchResultPanelProps
   const html = renderToStaticMarkup(<SearchResultPanel {...subnameProps} />)
-  expect(html).toContain('The owner of alice.dusk can take this name back, and it expires with alice.dusk.')
+  expect(html).toContain('The owner or manager of alice.dusk can take this name back, and it expires no later than alice.dusk.')
+  // A subname that inherits its parent's expiry expires with it; one deeper down can be taken back from any name above.
+  const inheriting = { ...subnameProps, management: { ...subnameProps.management, settingsProps: { ...subnameProps.management.settingsProps,
+    managedName: { ...subnameProps.management.settingsProps.managedName, expiryPolicy: 'inherits_parent',
+      ancestors: [parent, { ...parent, node: 'root', name: 'dusk-root.dusk' }] } } } } as SearchResultPanelProps
+  expect(renderToStaticMarkup(<SearchResultPanel {...inheriting} />))
+    .toContain('The owner or manager of alice.dusk or a name above it can take this name back, and it expires with alice.dusk.')
   expect(html).not.toContain('>Records</')
   expect(html).not.toContain('Create subname')
   expect(html).not.toContain('primary-control')
   expect(html).toContain('>Reassign</')
   expect(html).toContain('>Take back</')
   expect(html).toContain('>Remove</')
+})
+
+it('says who else can take a subname back whenever a name above it has another holder', () => {
+  // The subname's owner also holds its parent, but someone else owns the name above that.
+  const note = (ancestors: { owner: string, manager: string }[]) => renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+    headerProps={{ ...props.headerProps, displayName: 'pay.team.alice.dusk' }}
+    management={{ ...props.management, settingsProps: { ...props.management.settingsProps, managedName: { ...props.management.settingsProps.managedName,
+      ancestors: ancestors.map((holders, index) => ({ node: `ancestor-${index}`, name: ['team.alice.dusk', 'alice.dusk'][index], expiresAtBlockHeight: 200, ...holders })) } } } as never} />)
+  expect(note([{ owner: 'owner', manager: 'owner' }, { owner: 'alice', manager: 'alice' }]))
+    .toContain('The owner or manager of team.alice.dusk or a name above it can take this name back')
+  expect(note([{ owner: 'owner', manager: 'carol' }, { owner: 'owner', manager: 'owner' }])).toContain('can take this name back')
+  // Only the subname's own owner and manager hold the names above it.
+  expect(note([{ owner: 'owner', manager: 'manager' }, { owner: 'manager', manager: 'owner' }])).not.toContain('can take this name back')
 })
 
 
@@ -209,9 +228,26 @@ it('does not render a dead report link without a configured destination', () => 
 
 it('shows loading instead of lifecycle, owner or empty records until the open node is hydrated', () => {
   const html = renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
-    headerProps={{ ...props.headerProps, lifecycleLabel: 'Renews by tomorrow' }}
+    headerProps={{ ...props.headerProps, lifecycleLabel: 'Expires tomorrow' }}
     management={{ ...props.management, settingsProps: { ...props.management.settingsProps, managedName: { ...props.management.settingsProps.managedName, node: 'previous-node' } } }} />)
   expect(html).toContain('Loading owner, expiry and records')
-  expect(html).not.toContain('Renews by')
+  expect(html).not.toContain('Expires tomorrow')
   expect(html).not.toContain('No addresses yet')
+})
+
+it('points to staged record changes from the other sections of the name page', () => {
+  const draft = { recordDraftMutations: [{ action: 'clear', key: 'website' }], recordDraftValues: {}, recordDraftErrors: [] }
+  const staged = (resultView: string, count = 1) => renderToStaticMarkup(<SearchResultPanel {...props} resultView={resultView as never}
+    headerProps={{ ...props.headerProps, viewerAuthority: 'owner' }}
+    management={{ ...props.management, recordsProps: { draft: { ...draft, recordDraftMutations: Array(count).fill(draft.recordDraftMutations[0]) } } } as never} />)
+  expect(staged('details')).toContain('1 record change is not saved yet.')
+  expect(staged('details', 2)).toContain('2 record changes are not saved yet.')
+  expect(staged('details')).toContain('>Review</button>')
+  // A staged value that can't be saved yet is unsaved too.
+  expect(renderToStaticMarkup(<SearchResultPanel {...props} resultView="details" headerProps={{ ...props.headerProps, viewerAuthority: 'owner' }}
+    management={{ ...props.management, recordsProps: { draft: { ...draft, recordDraftInvalid: [{ key: 'avatar', error: 'Use a valid HTTPS URL.' }] } } } as never} />))
+    .toContain('2 record changes are not saved yet.')
+  // The records section shows the changes themselves; visitors see nothing.
+  expect(renderToStaticMarkup(<SearchResultPanel {...props} resultView="details"
+    management={{ ...props.management, recordsProps: { draft } } as never} />)).not.toContain('not saved yet')
 })

@@ -127,7 +127,7 @@ it('does not call an uncertain saved request signed or submitted after reopening
     indexerClient: { getCommitment, getHealth: async () => ({ ok: true, currentBlockHeight: 500 }),
       searchName: async () => ({ canonical: saved.name, status: 'available' }) } } as never, saved)
   expect(getCommitment).toHaveBeenCalledExactlyOnceWith(saved.commitment, controller)
-  expect(resume).toHaveBeenCalledExactlyOnceWith(saved)
+  expect(resume).toHaveBeenCalledExactlyOnceWith(saved, {})
   // Resuming the flow does not prove a broadcast.
   const commitWindow = registrationCommitWindow(updateCommit.mock.calls.at(-1)?.[0].committedBlockHeight, currentBlockHeight)
   expect(commitWindow.status).toBe('missing')

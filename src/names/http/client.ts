@@ -9,6 +9,7 @@ export { INDEXER_COMPLETE_SET_CAP, type IndexerPage, type IndexerPageParams } fr
 import type { ActivityEntry } from '../ui/activity'
 import type { ForwardResolutionResponse } from './types'
 import type {
+  IndexedHolding,
   IndexedReferralState,
   IndexedTreasuryState,
   IndexedFeeConfig,
@@ -28,6 +29,7 @@ import {
   isActivityEntry,
   isForwardResolutionResponse,
   isIndexedFeeConfig,
+  isIndexedHolding,
   isIndexedLifecycleName,
   isIndexedMarketplaceConfig,
   isIndexedMarketplaceFixedSale,
@@ -60,6 +62,10 @@ export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
   getNamesPage: (
     params?: { owner?: string } & IndexerPageParams,
   ) => Promise<IndexerPage<IndexedNameSummary, 'names'>>
+  /** Names, root or subname, the authority owns or manages. Older indexers lack the route. */
+  getHoldingsPage: (
+    params: { authority: string } & IndexerPageParams,
+  ) => Promise<IndexerPage<IndexedHolding, 'holdings'>>
   getNodeRecordsPage: (
     node: string,
     params?: IndexerPageParams,
@@ -87,7 +93,13 @@ export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
     filters?: { node?: string; buyerAuthority?: string } & IndexerPageParams,
   ) => Promise<IndexerPage<IndexedMarketplaceOffer, 'offers'>>
   getAllNames: (params: { owner: string; maxItems?: number }) => Promise<IndexedNameSummary[]>
+  getAllHoldings: (params: { authority: string; maxItems?: number }) => Promise<IndexedHolding[]>
   getAllSubnames: (parentNode: string, maxItems?: number) => Promise<IndexedSubname[]>
+  /** Every open fixed-price listing and auction; the API has no seller filter. */
+  getAllMarketplaceFixedSales: (maxItems?: number) => Promise<IndexedMarketplaceFixedSale[]>
+  getAllMarketplaceAuctions: (maxItems?: number) => Promise<IndexedMarketplaceAuction[]>
+  /** Every activity row for a name, newest first, for exports. */
+  getAllActivity: (node: string, maxItems?: number) => Promise<ActivityEntry[]>
   getHealth: (params?: IndexerPageParams) => Promise<DuskDomainsIndexerHealth>
   searchName: (
     query: string,
@@ -373,6 +385,11 @@ export function createDuskDomainsIndexerClient(
     return (await getNamesPage(params)).names
   }
 
+  async function getHoldingsPage(params: { authority: string } & IndexerPageParams) {
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'holdings', pageQuery(params)))
+    return parsePage(payload, 'holdings', isIndexedHolding, 'holdings')
+  }
+
   async function getActivityPage(node: string, params: IndexerPageParams = {}) {
     const payload = await getJson(fetcher, endpointUrl(baseUrl, 'activity', pageQuery({ node, ...params })))
     return parsePage(payload, 'activity', isActivityEntry, 'activity')
@@ -559,6 +576,36 @@ export function createDuskDomainsIndexerClient(
     }, maxItems)
   }
 
+  async function getAllHoldings({ authority, maxItems }: { authority: string; maxItems?: number }) {
+    if (!authority?.trim()) throw new Error('Complete holding reads require an authority.')
+    return collectPages(async (params) => {
+      const page = await getHoldingsPage({ authority, ...params })
+      return { items: page.holdings, nextCursor: page.nextCursor }
+    }, maxItems)
+  }
+
+  async function getAllMarketplaceFixedSales(maxItems?: number) {
+    return collectPages(async (params) => {
+      const page = await getMarketplaceFixedSalesPage(params)
+      return { items: page.fixedSales, nextCursor: page.nextCursor }
+    }, maxItems)
+  }
+
+  async function getAllMarketplaceAuctions(maxItems?: number) {
+    return collectPages(async (params) => {
+      const page = await getMarketplaceAuctionsPage(params)
+      return { items: page.auctions, nextCursor: page.nextCursor }
+    }, maxItems)
+  }
+
+  async function getAllActivity(node: string, maxItems?: number) {
+    if (!node.trim()) throw new Error('Complete activity reads require a node.')
+    return collectPages(async (params) => {
+      const page = await getActivityPage(node, params)
+      return { items: page.activity, nextCursor: page.nextCursor }
+    }, maxItems)
+  }
+
   async function getAllSubnames(parentNode: string, maxItems?: number) {
     if (!parentNode.trim()) throw new Error('Complete subname reads require a parent node.')
     return collectPages(async (params) => {
@@ -569,7 +616,11 @@ export function createDuskDomainsIndexerClient(
 
   return {
     getAllNames,
+    getAllHoldings,
     getAllSubnames,
+    getAllActivity,
+    getAllMarketplaceFixedSales,
+    getAllMarketplaceAuctions,
     getHealth,
     searchName,
     getCommitment,
@@ -585,6 +636,7 @@ export function createDuskDomainsIndexerClient(
     getNameState,
     getNames,
     getNamesPage,
+    getHoldingsPage,
     getActivity,
     getActivityPage,
     getSubnames,

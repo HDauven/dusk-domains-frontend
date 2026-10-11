@@ -157,7 +157,9 @@ describe('wallet status', () => {
       [{ node: node('HTTP://LOCALHOST:18181///?ignored#fragment') }, 10_000],
       [{ node: node('http://localhost:8080/'), accounts: [] }, 1_000],
       [{ node: node('invalid') }, 10_000],
-      [{ authorized: false }, null],
+      // A dropped authorization keeps being checked; a disconnect the user chose does not.
+      [{ authorized: false }, 10_000],
+      [{ authorized: false, explicitlyDisconnected: true } as Partial<DuskWalletState>, null],
       [{ installed: false, providerInfo: null }, null],
     ]
     try {

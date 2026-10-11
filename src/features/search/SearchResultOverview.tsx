@@ -16,13 +16,17 @@ import { TermPicker } from '../../components/ui/TermPicker'
 import { formatDusk, pluralize } from '../../utils/format'
 import { overviewCopyForIssues } from '../domains/domainFormat'
 import type { ReservationWindow } from './overviewTypes'
+import type { NameListingOffer } from '../marketplace/nameListing'
+import { followLink, navigateTo, routePath } from '../../app/routes'
 
 
 // The result for a name nobody holds: a claim card with the term, the price and one action.
 // A saved reservation or a name that cannot be claimed replaces it with the right next step.
-export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
+export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, listing = null, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
   readOnly?: boolean
   registrationUnavailable?: boolean
+  /** A taken name's price and market link, while it is listed. */
+  listing?: NameListingOffer | null
   canRegister: boolean
   displayName: string
   onContinueRegistration: () => void
@@ -40,7 +44,7 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
     registrationFee: number
   }
   reservation: {
-    onOpenPendingReservation: (reservation: PendingNameReservation) => void
+    onOpenPendingReservation: (reservation: PendingNameReservation, options?: { register?: boolean }) => void
     onOpenPendingReservations: () => void
     savedReservation: PendingNameReservation | null
     savedReservationWindow: ReservationWindow | null
@@ -73,7 +77,8 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
         </div>
         <div className="claim-stub">
           <BrandClaimNotice name={displayName} />
-          <Button variant="primary" type="button" onClick={() => void onOpenPendingReservation(savedReservation)}>
+          {/* A ready reservation's Register signs straight away; otherwise the claim opens. */}
+          <Button variant="primary" type="button" onClick={() => void onOpenPendingReservation(savedReservation, { register: status === 'ready' })}>
             {pendingReservationActionCopy(status)} <ArrowRight size={18} />
           </Button>
           <Button type="button" onClick={() => void onOpenPendingReservations()}>
@@ -89,11 +94,12 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
       <Panel className="claim-card blocked" aria-labelledby="overview-heading">
         <div className="claim-main">
           <h2 id="overview-heading">{resultStatus === 'registered' ? 'This name is taken' : 'This name can’t be claimed'}</h2>
-          <p>{overviewCopyForIssues(resultStatus, resultIssues)}</p>
+          {listing ? <p className="claim-listing"><strong>{listing.text}</strong></p> : <p>{overviewCopyForIssues(resultStatus, resultIssues)}</p>}
           {resultStatus === 'registered' && onSuggestion ? <div className="name-suggestions"><p>Try another name</p>{suggestedNames(displayName).map(name => <Button key={name} onClick={() => onSuggestion(name)}>{name}</Button>)}</div> : null}
         </div>
         {resultStatus === 'registered' ? (
           <div className="claim-stub">
+            {listing ? <a className="button button-primary" href={routePath(listing.route)} onClick={event => followLink(event, () => navigateTo(listing.route))}>{listing.linkLabel}</a> : null}
             <Button type="button" onClick={onViewDetails}>View profile</Button>
           </div>
         ) : null}

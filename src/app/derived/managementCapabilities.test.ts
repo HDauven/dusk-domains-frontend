@@ -5,7 +5,7 @@ import { expect, it, vi } from 'vitest'
 import { canManageActiveName } from './managementCapabilities'
 import { deriveRecordCapabilities } from './recordCapabilities'
 import { deriveAppDerivedState } from './deriveAppDerivedState'
-import { clearDomainRecord } from '../../features/domains/clearDomainRecord'
+import { saveDomainRecords } from '../../features/domains/saveDomainRecords'
 import { useIndexedNameHydration } from '../../features/search/useIndexedNameHydration'
 import { readIndexedName } from '../../features/search/indexedNameReads'
 import { applyIndexedNameHydration } from '../../features/search/applyIndexedNameHydration'
@@ -13,7 +13,7 @@ import { applyIndexedNameHydration } from '../../features/search/applyIndexedNam
 vi.mock('../../features/search/indexedNameReads', () => ({ readIndexedName: vi.fn() }))
 vi.mock('../../features/search/applyIndexedNameHydration', () => ({ applyIndexedNameHydration: vi.fn() }))
 
-it('limits active name actions to that target’s owner or manager, and blocks removal before a wallet call', async () => {
+it('limits active name actions to that target’s owner or manager, and blocks a staged removal before a wallet call', async () => {
   const parent = { owner: 'owner', manager: 'manager', expiresAt: 200 }
   expect(canManageActiveName(parent, 'OWNER', 100)).toBe(true)
   expect(canManageActiveName(parent, 'manager', 100)).toBe(true)
@@ -26,13 +26,13 @@ it('limits active name actions to that target’s owner or manager, and blocks r
   expect(canManageActiveName(child, 'owner', 100)).toBe(false)
   expect(canManageActiveName(child, 'child-manager', 100)).toBe(true)
   const submitNameWrite = Object.assign(vi.fn(), { captureWorkspace: () => () => true }), ensureContractAuthorityForLiveWrite = vi.fn(), setRecordError = vi.fn()
-  await clearDomainRecord({ activeRecordTarget: { name: 'name.dusk', node: 'node' }, canRemoveRecords: false,
+  await saveDomainRecords({ activeRecordTarget: { name: 'name.dusk', node: 'node' }, canSaveRecords: false,
+    recordDraftErrors: [], recordDraftMutations: [{ action: 'clear', key: 'website' }],
     walletSetupState: 'connected', walletAuthorized: true, selectedAddress: 'owner', recordBusy: false,
-    setRecordError, submitNameWrite, ensureContractAuthorityForLiveWrite } as never,
-  { key: 'website' } as never)
+    setRecordError, submitNameWrite, ensureContractAuthorityForLiveWrite } as never)
   expect(submitNameWrite).not.toHaveBeenCalled()
   expect(ensureContractAuthorityForLiveWrite).not.toHaveBeenCalled()
-  expect(setRecordError).toHaveBeenLastCalledWith('Connect the manager wallet before removing this record.')
+  expect(setRecordError).toHaveBeenLastCalledWith('Connect the owner or manager wallet before saving.')
 })
 
 it('refreshes unknown height before applying lifecycle state and refuses unhealthy hydration', async () => {

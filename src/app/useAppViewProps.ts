@@ -34,6 +34,7 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
   return {
     marketplace,
     mainContentProps: {
+      developersProps: { runtimeConfig: appRuntime.runtimeConfig, origin: typeof window === 'undefined' ? 'https://dusk.domains' : window.location.origin },
       marketplaceProps: marketplace.marketplaceProps,
       ownershipConfirmationProps: {
         pending: inputs.domainState.pendingOwnership,

@@ -3,9 +3,12 @@ import { formatDusk } from '../utils/format'
 import type { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import type { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspaceFeature'
-import { lifecycleBadgeCopy } from '../features/domains/domainFormat'
+import { lifecycleBadgeCopy, lifecycleNote } from '../features/domains/domainFormat'
 import { clampDurationYears } from './appConstants'
 import type { AppViewModelInputs } from './appViewTypes'
+import { isMarketplaceEscrow } from './managedNameState'
+import { useNameListing } from '../features/marketplace/useNameListing'
+import { nameListingOffer } from '../features/marketplace/nameListing'
 
 type UseAppSearchPropsArgs =
   & AppViewModelInputs
@@ -72,7 +75,15 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     handleMainViewChange,
   } = mainViewRuntime
 
+  // A listed name's price and market link. The market holds a listed name as its owner.
+  const configuredMarket = appRuntime.runtimeConfig.contracts?.marketplace?.contractId ?? null
+  const heldByMarket = result.status === 'registered' && managedName.node === nodeHex
+    && Boolean(managedName.inMarketplaceEscrow ?? isMarketplaceEscrow(managedName, configuredMarket))
+  const listing = useNameListing({ indexerClient: appRuntime.indexerClient, node: heldByMarket ? nodeHex : '', escrowed: heldByMarket })
+
   return useSearchWorkspaceFeature({
+    heldByMarket,
+    listing: nameListingOffer(listing, searchState.currentBlockHeight, walletRuntime.selectedAuthority),
     abuseUrl: appRuntime.runtimeConfig.launchLinks.abuse,
     referralAddress: appRuntime.runtimeConfig.capabilities.referralAttribution && walletRuntime.walletSetupState === 'connected'
       ? walletRuntime.selectedAddress : '',
@@ -80,6 +91,10 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     priceTiers: !economicsRuntime.feeConfigLoaded ? undefined : ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
     hasMoreActivity: activityFeed.hasMoreActivity,
     onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),
+    loadFullActivity: activityFeed.loadAllActivity,
+    explorerUrl: appRuntime.runtimeConfig.explorerUrl,
+    marketplaceContractId: appRuntime.marketplaceContractId ?? appRuntime.runtimeConfig.contracts?.marketplace?.contractId ?? null,
+    nowSeconds: searchState.nowSeconds,
     activityEntries,
     activityLoading,
     canRegister,
@@ -93,12 +108,15 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     lifecycleLabel: result.status === 'registered' && managedName.node === nodeHex
       ? lifecycleBadgeCopy(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds, managedName.graceEndsAt)
       : null,
+    lifecycleNote: result.status === 'registered' && managedName.node === nodeHex
+      ? lifecycleNote(displayName, managedName.expiresAt, searchState.currentBlockHeight, searchState.nowSeconds)
+      : null,
     expiryDate,
     feeConfigLoading: !economicsRuntime.feeConfigLoaded || economicsRuntime.feeConfigLoading,
     nodeHex,
     onCheckAvailability: () => void handleCheckAvailability(),
     onDurationChange: (years) => setDuration(clampDurationYears(years)),
-    onOpenPendingReservation: (reservation) => void openPendingReservation(reservation),
+    onOpenPendingReservation: (reservation, options) => void openPendingReservation(reservation, options),
     onOpenPendingReservations: () => void handleMainViewChange('my-names'),
     onQueryChange: resetSearch,
     onResultViewChange: setResultView,

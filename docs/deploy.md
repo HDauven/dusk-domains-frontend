@@ -31,6 +31,10 @@ The separate `indexer.env` belongs to a fresh frozen indexer database, replayed 
 first deployment block with the emitted event schema version. Env files contain public build configuration; keep
 filled copies out of git. Never put credentials in a `VITE_` variable.
 
+`VITE_DUSK_DOMAINS_EXPLORER_URL` links transaction IDs in a name's activity to a
+block explorer: `https://explorer.dusk.network` on mainnet and
+`https://apps.testnet.dusk.network/explorer` on testnet. Leave it empty to hide the links.
+
 `VITE_DUSK_DOMAINS_SITE_URL` is an HTTP(S) origin (default `https://dusk.domains`).
 It supplies the canonical, social and structured-data URLs and generated crawler
 files. `VITE_DUSK_DOMAINS_OTHER_NETWORK_URL` adds a small footer link.

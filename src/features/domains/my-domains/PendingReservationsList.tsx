@@ -21,7 +21,7 @@ export function PendingReservationsList({
   onConnectWallet?: () => void
   currentBlockHeight: number | null
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
-  onOpenPendingReservation: (reservation: PendingNameReservation) => void
+  onOpenPendingReservation: (reservation: PendingNameReservation, options?: { register?: boolean }) => void
   pendingReservations: PendingNameReservation[]
 }) {
   return (
@@ -46,7 +46,7 @@ export function PendingReservationsList({
               <Button variant={reservationWindow.status === 'ready' ? 'primary' : 'secondary'}
                 className="compact"
                 type="button"
-                onClick={() => walletAction ? onConnectWallet?.() : onOpenPendingReservation(reservation)}
+                onClick={() => walletAction ? onConnectWallet?.() : onOpenPendingReservation(reservation, { register: reservationWindow.status === 'ready' })}
               >
                 {walletAction ?? pendingReservationActionCopy(reservationWindow.status)} <ArrowRight size={16} />
               </Button>

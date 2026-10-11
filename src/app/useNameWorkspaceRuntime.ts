@@ -5,12 +5,15 @@ import { useRegistrationRuntime } from './useRegistrationRuntime'
 import { useActivityFeed } from '../features/activity/useActivityFeed'
 import { useDomainRecordState } from '../features/domains/useDomainRecordState'
 import { useNamePreview } from '../features/search/useNamePreview'
+import { renewalTermLimit } from '../features/domains/domainFormat'
 
 // Everything about the name being looked at: its preview, activity, registration and records,
 // and the flags derived from them.
 export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
   const { appRuntime, domainState, economicsRuntime, registrationState, searchState, walletRuntime } = core
 
+  // Quotes and renewals use a term the store accepts now: at most ten years ahead.
+  const renewalCap = renewalTermLimit(domainState.managedName.expiresAt, searchState.currentBlockHeight).maxYears
   const namePreview = useNamePreview({
     onChainClient: appRuntime.duskDomainsOnChainClient,
     selectedAuthority: walletRuntime.selectedAuthority,
@@ -21,7 +24,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
     managedNameExpiresAt: domainState.managedName.expiresAt,
     nowSeconds: searchState.nowSeconds,
     query: searchState.query,
-    renewalYears: domainState.renewalYears,
+    renewalYears: Math.max(1, Math.min(domainState.renewalYears, renewalCap ?? domainState.renewalYears)),
   })
   const activityFeed = useActivityFeed({
     indexerClient: appRuntime.indexerClient,
@@ -91,7 +94,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
 
   return {
     activityFeed,
-    derivedState,
+    derivedState: { ...derivedState, canRenewName: derivedState.canRenewName && renewalCap !== 0 },
     domainRecordState,
     namePreview,
     registrationRuntime,

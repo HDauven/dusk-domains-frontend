@@ -1,0 +1,25 @@
+.developers-page { display: grid; gap: var(--space-4); width: min(860px, calc(100% - 2 * var(--domain-page-gutter))); margin: var(--space-8) auto 0; }
+.developers-page header h1 { margin: 0; font: 400 var(--text-3xl)/1.1 var(--font-display); }
+.developers-page header p { margin: var(--space-2) 0 0; color: var(--muted); }
+.developer-section { display: grid; gap: 12px; min-width: 0; }
+.developer-section h2 { margin: 0; font: 400 var(--text-2xl)/1.1 var(--font-display); }
+.developer-section p { margin: 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.55; }
+.developer-section p code, .developer-links code { color: var(--ink); font: 500 var(--text-sm) var(--font-mono); overflow-wrap: anywhere; }
+.developer-code { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
+.developer-code pre { min-width: 0; margin: 0; overflow-x: auto; color: var(--ink); font: 500 13px/1.55 var(--font-mono); white-space: pre; }
+.developer-manifest summary { cursor: pointer; color: var(--muted); font-size: var(--text-sm); }
+.developer-manifest[open] summary { margin-bottom: 10px; }
+.developer-manifest pre { max-height: 22rem; }
+.developer-contracts { display: grid; gap: 10px; margin: 0; }
+.developer-contracts > div { display: grid; grid-template-columns: minmax(10rem, max-content) minmax(0, 1fr); gap: 4px 16px; align-items: center; }
+.developer-contracts dt { color: var(--muted); font-size: var(--text-sm); }
+.developer-contracts dd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; margin: 0; }
+.developer-contracts code { min-width: 0; overflow-wrap: anywhere; font: 500 13px var(--font-mono); }
+.developer-links { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.developer-links li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.developers-page .developer-links a { display: inline-flex; align-items: center; gap: 4px; color: var(--peach); text-decoration: none; }
+.developer-links a:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .developer-code { grid-template-columns: minmax(0, 1fr); }
+  .developer-contracts > div { grid-template-columns: minmax(0, 1fr); }
+}

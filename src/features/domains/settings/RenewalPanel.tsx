@@ -1,7 +1,8 @@
 import { Button } from '../../../components/ui/Button'
 import { TermPicker } from '../../../components/ui/TermPicker'
-import { formatDusk } from '../../../utils/format'
-import { formatLifecycleDay, lifecycleHeightReached, renewalDeadline, renewalWindowCopy } from '../domainFormat'
+import { formatDusk, pluralize } from '../../../utils/format'
+import { isTechnicalErrorMessage } from '../../../names/internal'
+import { formatLifecycleDay, lifecycleHeightReached, renewalDeadline, renewalTermLimit, renewalWindowCopy } from '../domainFormat'
 import { ManagementFeedback } from '../ManagementFeedback'
 import type { RenewalPanelProps } from './types'
 
@@ -26,6 +27,11 @@ export function RenewalPanel({ managedName, renewal, clock }: RenewalPanelProps)
     nowSeconds,
   } = clock
   const renewalClosed = lifecycleHeightReached(renewalDeadline(managedName), currentBlockHeight, nowSeconds)
+  const limit = renewalTermLimit(managedName.expiresAt, currentBlockHeight)
+  const maxYears = Math.min(maxDurationYears, limit.maxYears ?? maxDurationYears)
+  const atLimit = limit.maxYears === 0
+  // A read failure says nothing useful in contract terms; a pricing message stays as written.
+  const priceError = feeConfigError && isTechnicalErrorMessage(feeConfigError) ? 'The renewal price could not be read. Try again in a moment.' : feeConfigError
 
   return (
     <div className="renewal-box" aria-label="Renewal controls">
@@ -35,18 +41,23 @@ export function RenewalPanel({ managedName, renewal, clock }: RenewalPanelProps)
         <p>{renewalWindowCopy(managedName, currentBlockHeight, nowSeconds)}</p>
       </div>
 
-      {renewalClosed ? null : (
+      {renewalClosed ? null : atLimit ? (
+        <p className="field-note">It already runs close to the 10-year limit. You can add another year from {formatLifecycleDay(limit.nextYearAt ?? 0, currentBlockHeight, nowSeconds)}.</p>
+      ) : (
         <>
           <TermPicker
             disabled={renewalBusy}
             label="Renewal term"
-            max={maxDurationYears}
+            max={maxYears}
             min={minDurationYears}
-            value={renewalYears}
+            value={Math.min(renewalYears, maxYears)}
             onChange={onRenewalYearsChange}
           />
-          {feeConfigLoading || feeConfigError ? (
-            <p className={feeConfigError ? 'field-note warning' : 'field-note'}>{feeConfigError || 'Loading live pricing.'}</p>
+          {limit.maxYears !== null && limit.maxYears < maxDurationYears ? (
+            <p className="field-note">A name can run at most 10 years ahead, so you can add up to {maxYears} {pluralize(maxYears, 'year')} now.</p>
+          ) : null}
+          {feeConfigLoading || priceError ? (
+            <p className={priceError ? 'field-note warning' : 'field-note'}>{priceError || 'Loading live pricing.'}</p>
           ) : null}
 
           <div className="renewal-summary">

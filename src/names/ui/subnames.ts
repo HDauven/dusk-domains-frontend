@@ -20,6 +20,8 @@ export type SubnameState = {
   parentExpiresAt: number
   expiryPolicy: SubnameExpiryPolicy
   createdAt: number
+  /** The serial it took from its root's counters when it was created; frozen indexers report it. */
+  serial?: string | null
   status: SubnameStatus
 }
 

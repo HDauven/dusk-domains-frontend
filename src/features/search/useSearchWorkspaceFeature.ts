@@ -9,11 +9,20 @@ type SearchWorkspaceProps = ComponentProps<typeof SearchWorkspace>
 type SearchResultView = SearchWorkspaceProps['result']['resultView']
 
 type UseSearchWorkspaceFeatureProps = {
+  /** The market holds this name while it is listed. */
+  heldByMarket?: boolean
+  listing?: SearchWorkspaceProps['result']['headerProps']['listing']
   abuseUrl?: string | null
   referralAddress?: string
   premiumResult?: SearchWorkspaceProps['result']['overviewProps']['quote']['premiumResult']
   priceTiers?: SearchWorkspaceProps['search']['priceTiers']
   activityEntries: SearchWorkspaceProps['result']['activityProps']['activityEntries']
+  /** Block explorer origin for transaction links. */
+  explorerUrl?: string | null
+  /** Reads the name's whole history for the CSV download. */
+  loadFullActivity?: () => Promise<SearchWorkspaceProps['result']['activityProps']['activityEntries']>
+  marketplaceContractId?: string | null
+  nowSeconds?: number
   hasMoreActivity?: boolean
   onLoadMoreActivity?: () => void
   activityLoading: boolean
@@ -25,6 +34,7 @@ type UseSearchWorkspaceFeatureProps = {
   displayName: string
   duration: number
   lifecycleLabel: string | null
+  lifecycleNote?: string | null
   expiryDate: string
   feeConfigLoading: boolean
   nodeHex: string
@@ -59,12 +69,18 @@ type UseSearchWorkspaceFeatureProps = {
 }
 
 export function useSearchWorkspaceFeature({
+  heldByMarket = false,
+  listing = null,
   abuseUrl,
   referralAddress,
   premiumResult,
   priceTiers,
   activityEntries,
   activityLoading,
+  explorerUrl,
+  loadFullActivity,
+  marketplaceContractId,
+  nowSeconds,
   hasMoreActivity,
   onLoadMoreActivity,
   canRegister,
@@ -74,6 +90,7 @@ export function useSearchWorkspaceFeature({
   displayName,
   duration,
   lifecycleLabel,
+  lifecycleNote,
   expiryDate,
   feeConfigLoading,
   nodeHex,
@@ -109,6 +126,7 @@ export function useSearchWorkspaceFeature({
   const ownerAddresses = ownerAddressCandidates(parentResolverRecords, activityEntries)
   const managedName = settingsProps.managedName
   const owner = nodeHex && managedName.node === nodeHex ? managedName.owner : null
+  const holders = owner ? { owner, manager: managedName.manager } : null
   const canMakeOffer = marketplaceOffers && canOfferOn({ name: displayName, status: resultStatus, owner, ownerIsContract: managedName.ownerIsContract,
     expiresAt: managedName.expiresAt, currentBlockHeight, viewer: viewerAuthority })
   const searchProps: SearchWorkspaceProps = {
@@ -131,10 +149,16 @@ export function useSearchWorkspaceFeature({
         onLoadMore: onLoadMoreActivity,
         activityEntries,
         currentBlockHeight,
+        nowSeconds,
         displayName,
+        explorerUrl,
         formatActivityTime,
+        holders,
+        loadFullHistory: loadFullActivity,
         loading: activityLoading,
+        marketplaceContractId,
         recentWarnings,
+        subnames,
         viewerAuthority,
       },
       detailsProps: {
@@ -148,7 +172,11 @@ export function useSearchWorkspaceFeature({
         viewerAuthority,
         activity: {
           activityEntries,
+          hasMore: hasMoreActivity,
           currentBlockHeight,
+          nowSeconds,
+          marketplaceContractId,
+          holders,
           formatActivityTime,
           onActivity: () => onResultViewChange('activity'),
         },
@@ -159,9 +187,12 @@ export function useSearchWorkspaceFeature({
         viewerAuthority,
         displayName,
         lifecycleLabel,
+        lifecycleNote,
         primaryVerified: primaryProps.primaryVerification.verified,
         owner,
         canMakeOffer,
+        heldByMarket,
+        listing,
         records: resultStatus === 'registered' ? parentResolverRecords : [],
         reserved: resultStatus !== 'registered' && Boolean(savedReservation && savedReservation.committedBlockHeight !== null) && !registrationProps.wizard.registrationComplete,
         status: registrationProps.wizard.registrationComplete ? 'registered' : resultStatus,
@@ -169,6 +200,7 @@ export function useSearchWorkspaceFeature({
       nodeHex,
       onResultViewChange,
       overviewProps: {
+        listing,
         canRegister,
         displayName,
         onContinueRegistration: onStartRegistration,

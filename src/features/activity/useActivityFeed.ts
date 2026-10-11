@@ -78,6 +78,10 @@ export function useActivityFeed({
     }
   }, [activityCursor, defaultNode, indexerClient, setError])
   const recentWarnings = useMemo(() => createRecentChangeWarnings(activityEntries), [activityEntries])
+  const loadAllActivity = useCallback(async () => {
+    if (!indexerClient || !defaultNode) throw new Error('Name history is unavailable right now.')
+    return indexerClient.getAllActivity(defaultNode)
+  }, [defaultNode, indexerClient])
 
   const appendActivity = useCallback((input: AppendActivityInput) => {
     const node = input.node ?? defaultNode
@@ -112,6 +116,7 @@ export function useActivityFeed({
     activityLoading,
     hasMoreActivity,
     loadMoreActivity,
+    loadAllActivity,
     setActivityCursor,
     appendActivity,
     recentWarnings,

@@ -89,8 +89,8 @@ describe('record presentation', () => {
     const html = renderToStaticMarkup(<RecordsView resolverRecords={records}
       displayName="aurora.dusk"
       editableRecordKeys={['website']}
-      actions={{ canRemoveRecords: true, recordBusy: false, onClearRecord: vi.fn(), canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
-      draft={{ recordDraftMutations: [], criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
+      actions={{ canRemoveRecords: true, recordBusy: false, canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
+      draft={{ recordDraftMutations: [], criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDiscardDraft: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
       wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('<strong>Description</strong>')
     expect(html).toContain('<p>Building tools for Dusk.</p>')
@@ -102,8 +102,8 @@ describe('record presentation', () => {
     const html = renderToStaticMarkup(<RecordsView resolverRecords={[record('text.email', 'hello@example.test'), record('website', 'https://example.test')]}
       displayName={displayName}
       editableRecordKeys={['website']}
-      actions={{ canRemoveRecords: true, recordBusy: false, onClearRecord: vi.fn(), canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
-      draft={{ recordDraftMutations: [], criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
+      actions={{ canRemoveRecords: true, recordBusy: false, canSaveRecords: false, error: "", onSaveRecords: vi.fn(), txState: null }}
+      draft={{ recordDraftMutations: [], criticalRecordChange: false, onDiscardDrafts: vi.fn(), onDiscardDraft: vi.fn(), onDraftValueChange: vi.fn(), recordDraftErrors: [], recordDraftValues: {} }}
       wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('hello@example.test')
     expect(html).toContain('Read only')

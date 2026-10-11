@@ -18,9 +18,13 @@ export function useWalletAutoRefresh({
   const providerDetected = walletProviderDetected(walletState)
   const selectedAccount = walletState.selectedAddress ?? walletState.accounts[0] ?? ''
   const wrongNetwork = !walletNetworkMatchesExpected(walletState, selectedAccount ? expectedChainId : '', expectedNodeUrl)
+  const explicitlyDisconnected = Boolean((walletState as { explicitlyDisconnected?: boolean }).explicitlyDisconnected)
 
+  // Keep checking while the session reads as disconnected too: the extension's page provider can
+  // drop its authorization for a moment and only re-syncs when asked, so a stopped poll left the
+  // header on "Connect wallet" until a reload. Reads never prompt. A disconnect the user chose stays.
   useEffect(() => {
-    if (!walletDiscoveryReady || !providerDetected || !walletState.authorized) return
+    if (!walletDiscoveryReady || !providerDetected || explicitlyDisconnected) return
     const intervalMs = wrongNetwork ? 1_000 : 10_000
 
     let cancelled = false
@@ -55,6 +59,7 @@ export function useWalletAutoRefresh({
   }, [
     expectedChainId,
     expectedNodeUrl,
+    explicitlyDisconnected,
     providerDetected,
     refreshWalletSessionState,
     wrongNetwork,

@@ -36,6 +36,7 @@ export function useAppNavigationRuntimes({
     activity: activityFeed.searchActions,
   })
   const mainViewRuntime = useMainViewRuntime({
+    chainId: appRuntime.runtimeConfig.chainId,
     walletStatus: walletRuntime.walletSetupState,
     currentBlockHeight: searchState.currentBlockHeight,
     indexerClient: appRuntime.indexerClient,
@@ -46,7 +47,7 @@ export function useAppNavigationRuntimes({
     onConnectWallet: () => void walletRuntime.handleOpenWalletConnection(),
     onForgetPendingReservation: (reservation) => void searchRuntime.forgetPendingReservation(reservation),
     onOpenIndexedName: (name) => void searchRuntime.openIndexedName(name),
-    onOpenPendingReservation: (reservation) => void searchRuntime.openPendingReservation(reservation),
+    onOpenPendingReservation: (reservation, options) => void searchRuntime.openPendingReservation(reservation, options),
     onSearchHome: searchRuntime.handleSearchHome,
     pendingReservations: registrationRuntime.pendingReservations,
     resetReferralCopied: economicsRuntime.resetReferralCopied,

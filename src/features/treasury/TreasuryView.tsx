@@ -11,6 +11,7 @@ import { TreasuryClaimHistoryCard } from './cards/TreasuryClaimHistoryCard'
 import { TreasuryHeader } from './cards/TreasuryHeader'
 import { TreasuryPricingCard } from './cards/TreasuryPricingCard'
 import type { TreasuryViewProps } from './treasuryViewTypes'
+import { NAME_CONTROL_SUMMARY } from '../trust/trustCopy'
 
 export function TreasuryView({ treasuryLoaded = true, onRetry, treasuryConfirmation, treasuryError, treasuryState, claim, pricing, wallet }: TreasuryViewProps) {
   const { feeConfig, feeConfigError } = pricing
@@ -47,6 +48,11 @@ export function TreasuryView({ treasuryLoaded = true, onRetry, treasuryConfirmat
       </AccountCard>}
 
       <TreasuryClaimHistoryCard treasuryState={treasuryState} />
+
+      <AccountCard title="Control" heading="What the team can do">
+        <p>Registration, renewal and premium fees and the market's fee go to this on-chain treasury, and referrers may be credited a share. The operator can claim the protocol's share of the fees held here.</p>
+        <p>{NAME_CONTROL_SUMMARY}</p>
+      </AccountCard>
     </AccountViewLayout>
   )
 }

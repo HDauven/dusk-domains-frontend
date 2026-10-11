@@ -26,7 +26,7 @@ import { useMarketplaceBrowse } from './useMarketplaceBrowse'
 import type { MarketplaceBrowseProps } from './marketplaceTypes'
 
 export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
-  const { filter, setFilter, query, setQuery, sort, setSort, watched, results } = useMarketplaceBrowse(props.listings.fixedSales, props.listings.auctions, props.watchlist.watchedNodes)
+  const { filter, setFilter, query, setQuery, sort, setSort, watched, results } = useMarketplaceBrowse(props.listings.fixedSales, props.listings.auctions, props.watchlist.watchedNodes, props.navigation.listingName)
   if (!props.listings.fixedSales.length && !props.listings.auctions.length) {
     return <PanelMessage icon={<Gavel size={18} />} tone="subtle">No names for sale yet. <Button variant="quiet" onClick={() => props.navigation.onTabChange('sell')}>List a name</Button><a href="/">Browse names</a></PanelMessage>
   }
@@ -42,7 +42,7 @@ export function MarketplaceBrowse(props: MarketplaceBrowseProps) {
             placeholder="Search names for sale"
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); props.navigation.onBrowseQueryChange?.(event.target.value) }}
           />
         </label>
         <ChoiceRow className="tabs marketplace-filter-control" label="Marketplace filters" value={filter}>

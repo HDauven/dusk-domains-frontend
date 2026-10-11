@@ -5,6 +5,7 @@ import { MyDomainsView } from './MyDomainsView'
 import { useMyDomains } from './useMyDomains'
 
 export function useMyDomainsFeature({
+  chainId,
   walletStatus,
   currentBlockHeight,
   indexerClient,
@@ -20,6 +21,7 @@ export function useMyDomainsFeature({
   selectedAddress,
   selectedAuthority,
 }: {
+  chainId?: string
   walletStatus?: WalletConnectionStatus
   currentBlockHeight: number | null
   indexerClient: DuskDomainsIndexerClient | null
@@ -29,7 +31,7 @@ export function useMyDomainsFeature({
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onLoadPendingReservations: () => unknown
   onOpenIndexedName: (name: string) => void
-  onOpenPendingReservation: (reservation: PendingNameReservation) => void
+  onOpenPendingReservation: (reservation: PendingNameReservation, options?: { register?: boolean }) => void
   onSearchHome: () => void
   pendingReservations: PendingNameReservation[]
   selectedAddress: string
@@ -37,11 +39,15 @@ export function useMyDomainsFeature({
 }) {
   const {
     loadMyNames,
+    myListings,
     myNamePrimarySummaries,
     myNames,
     myNamesError,
     myNamesLoading,
+    mySubnames,
+    listingsUnavailable,
   } = useMyDomains({
+    chainId,
     indexerClient,
     onBlockHeightChange,
     onLoadPendingReservations,
@@ -52,6 +58,9 @@ export function useMyDomainsFeature({
 
   const myDomainsProps: ComponentProps<typeof MyDomainsView> = {
     currentBlockHeight,
+    listings: myListings,
+    listingsUnavailable,
+    subnames: mySubnames,
     loading: myNamesLoading,
     myNames,
     myNamesError,

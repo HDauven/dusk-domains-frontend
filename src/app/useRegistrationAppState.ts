@@ -18,6 +18,8 @@ export function useRegistrationAppState(sessionKey = '') {
   const [txState, setTxState] = useScopedState<DuskDomainTxState | null>(sessionKey, null)
   const [commitTxState, setCommitTxState] = useScopedState<DuskDomainTxState | null>(sessionKey, null)
   const [registrationCompletion, setRegistrationCompletion] = useScopedState<RegistrationCompletionState | null>(sessionKey, null)
+  // Register was pressed on a saved reservation: sign the reveal once this claim is ready.
+  const [registerIntent, setRegisterIntent] = useScopedState<{ commitment: string, requestedAt: number } | null>(sessionKey, null)
   // A saved commitment the reveal would not find on chain; see revealCommitmentMissing.
   const [strandedCommitment, setStrandedCommitment] = useState<StrandedCommitment | null>(null)
 
@@ -31,14 +33,19 @@ export function useRegistrationAppState(sessionKey = '') {
         setTxState(null)
         setCommitTxState(null)
         setRegistrationCompletion(null)
+        setRegisterIntent(null)
       },
       review: () => setRegistrationStep('review'),
-      resume: (reservation: PendingNameReservation) => {
+      resume: (reservation: PendingNameReservation, options: { register?: boolean } = {}) => {
         setRegisterSetsPrimary(readReservationPrimaryChoice(reservation))
         setDuration(clampDurationYears(reservation.durationYears))
         setRegistrationStep('purchase')
         setCommitted(true)
+        setRegisterIntent(options.register ? { commitment: reservation.commitment, requestedAt: Date.now() } : null)
+        // The reveal goes to the store that took the commitment, saved with the reservation.
         setPreparedCommit({
+          directory: reservation.directory,
+          commitmentStore: reservation.commitmentStore,
           controller: reservation.controller,
           ownerAddress: reservation.ownerAddress,
           chainId: reservation.chainId,
@@ -60,6 +67,7 @@ export function useRegistrationAppState(sessionKey = '') {
     committed,
     duration,
     preparedCommit,
+    registerIntent,
     registerSetsPrimary,
     registrationCompletion,
     registrationStep,
@@ -67,6 +75,7 @@ export function useRegistrationAppState(sessionKey = '') {
     setCommitted,
     setDuration,
     setPreparedCommit,
+    setRegisterIntent,
     setRegisterSetsPrimary,
     setRegistrationCompletion,
     setRegistrationStep,

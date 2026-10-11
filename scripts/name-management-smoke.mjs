@@ -107,7 +107,6 @@ export async function checkNameManagement(page) {
             state.setRecordDrafts({})
             return true
           },
-          onClearRecord: record => state.setResolverRecordSets(current => ({ node: current.node.filter(existing => existing.key !== record.key) })),
         },
         wallet: {
           walletAddressAvailable: false,
@@ -119,6 +118,7 @@ export async function checkNameManagement(page) {
           recordDraftValues: state.recordDraftValues,
           onDraftValueChange: (key, value) => state.setRecordDrafts(current => ({ ...current, [key]: value })),
           onDiscardDrafts: () => state.setRecordDrafts({}),
+          onDiscardDraft: key => { if (key) state.setRecordDrafts(current => Object.fromEntries(Object.entries(current).filter(([draft]) => draft !== key))) },
         },
       })
     }
@@ -142,8 +142,15 @@ export async function checkNameManagement(page) {
   await page.getByRole('button', { name: 'Save record' }).click()
   await page.getByRole('button', { name: 'Edit Description' }).waitFor()
   assert.deepEqual(await page.evaluate(() => window.savedMutations.map(({ key, value }) => ({ key, value }))), [{ key: 'text.description', value: 'Description' }])
+  // Removal is staged with other changes; one save writes them together.
   await page.getByRole('button', { name: 'Remove Website' }).click()
+  await page.getByRole('button', { name: 'Edit Description' }).click()
+  await page.getByRole('textbox', { name: 'Description record' }).fill('Edited description')
+  await page.getByRole('button', { name: 'Add another change' }).click()
+  await page.getByRole('button', { name: 'Save 2 changes' }).click()
   await page.getByRole('button', { name: 'Edit Website' }).waitFor({ state: 'detached' })
+  assert.deepEqual(await page.evaluate(() => window.savedMutations.map(({ action, key }) => ({ action, key }))),
+    [{ action: 'clear', key: 'website' }, { action: 'set', key: 'text.description' }])
   await page.setViewportSize({ width: 360, height: 900 })
   for (const [mode, address] of [
     ['Add', '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'],
@@ -160,7 +167,7 @@ export async function checkNameManagement(page) {
     for (const name of ['Save record', 'Cancel']) {
       const action = page.getByRole('button', { name, exact: true })
       assert.ok(await action.isEnabled())
-      await action.scrollIntoViewIfNeeded()
+      await action.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
       assert.ok(await action.evaluate(element => {
         const rect = element.getBoundingClientRect()
         return rect.left >= 0 && rect.right <= document.documentElement.clientWidth

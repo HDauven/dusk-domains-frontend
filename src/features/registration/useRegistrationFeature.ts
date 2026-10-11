@@ -8,6 +8,8 @@ import { useRegistrationActions } from './useRegistrationActions'
 import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 import { registrationCommitMatchesSession } from './pendingReservationTypes'
 
+const REGISTER_INTENT_MS = 30_000
+
 export type UseRegistrationFeatureProps = Pick<AppViewModelInputs,
   'activityFeed' | 'appRuntime' | 'derivedState' | 'domainRecordState' | 'domainState' | 'economicsRuntime' | 'mainViewRuntime' | 'namePreview' | 'registrationRuntime' | 'registrationState' | 'searchRuntime' | 'searchState' | 'walletRuntime'
 >
@@ -88,12 +90,29 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
   }
   const registrationComplete = registrationState.registrationCompletion?.status === 'executed'
 
+  // Register on a saved reservation signs once the reopened claim can be registered. A claim
+  // that needs a price decision, or that cannot be registered within a short while, waits for
+  // the Register button instead.
+  const premiumConfirmation = premiumConfirmationQuote(namePreview.result, registrationState.duration, economicsRuntime.feeConfig, namePreview.lifecycleBaseBlockHeight)
+  const intent = registrationState.registerIntent
+  const intentReady = Boolean(intent && intent.commitment === registrationState.preparedCommit?.commitment
+    && registrationState.registrationStep === 'purchase' && derivedState.canRevealRegistration && !premiumConfirmation)
+  const registerFromIntent = useEffectEvent(() => {
+    const requestedAt = registrationState.registerIntent?.requestedAt ?? 0
+    registrationState.setRegisterIntent(null)
+    if (Date.now() - requestedAt > REGISTER_INTENT_MS) return
+    void withPrimaryChoiceLocked(() => handleRegisterName())
+  })
+  useEffect(() => {
+    if (intentReady) registerFromIntent()
+  }, [intentReady])
+
   const step: RegistrationFlowPanelProps['step'] = {
     registrationStep: registrationState.registrationStep,
     quote: {
       premiumResult: namePreview.result,
       currentBlockHeight: namePreview.lifecycleBaseBlockHeight,
-      premiumConfirmation: premiumConfirmationQuote(namePreview.result, registrationState.duration, economicsRuntime.feeConfig, namePreview.lifecycleBaseBlockHeight),
+      premiumConfirmation,
       onWaitForPremium: onBackToOverview,
       canRegister: namePreview.canRegister,
       displayName: namePreview.displayName,
@@ -122,7 +141,10 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
     },
     purchase: {
       canRevealRegistration: derivedState.canRevealRegistration,
-      onRegisterName: confirmedTotalLux => void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux)),
+      onRegisterName: confirmedTotalLux => {
+        if (registrationState.registerIntent) registrationState.setRegisterIntent(null)
+        void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux))
+      },
       onAddRecords: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, async name => { await searchRuntime.openIndexedName(name); searchState.setResultView('records') }),
       onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),
       registrationCompletion: registrationState.registrationCompletion,

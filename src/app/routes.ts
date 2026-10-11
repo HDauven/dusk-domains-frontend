@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react'
 import type { AppMainView } from './AppTypes'
 
-export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string, sellName?: string, offerName?: string }
+export type AppRoute = { view: AppMainView, name?: string, auctionNode?: string, sellName?: string, offerName?: string, listingName?: string }
 
 const viewPaths: Record<AppMainView, string> = {
   search: '/',
@@ -11,6 +11,7 @@ const viewPaths: Record<AppMainView, string> = {
   treasury: '/treasury',
   terms: '/terms',
   privacy: '/privacy',
+  developers: '/developers',
 }
 
 export function parseRoute(pathname: string): AppRoute {
@@ -28,10 +29,14 @@ function parseDecodedRoute(pathname: string): AppRoute {
   if (sell) return { view: 'marketplace', sellName: decodeURIComponent(sell[1]).toLowerCase() }
   const offer = /^\/market\/offer\/([^/]+)$/.exec(path)
   if (offer) return { view: 'marketplace', offerName: dotDusk(decodeURIComponent(offer[1])) }
+  const listing = /^\/market\/listing\/([^/]+)$/.exec(path)
+  if (listing) return { view: 'marketplace', listingName: dotDusk(decodeURIComponent(listing[1])) }
   const auction = /^\/market\/auction\/(0x[0-9a-f]{64})$/i.exec(path)
   if (auction) return { view: 'marketplace', auctionNode: auction[1].toLowerCase() }
   const name = /^\/name\/([^/]+)$/.exec(path)
   if (name) return { view: 'search', name: dotDusk(decodeURIComponent(name[1])) }
+  // /docs is where people look for developer documentation; it is the developers page.
+  if (path === '/docs') return { view: 'developers' }
   const view = (Object.keys(viewPaths) as AppMainView[]).find((key) => viewPaths[key] === path)
   return { view: view ?? 'search' }
 }
@@ -49,6 +54,7 @@ export function openingRoute(): AppRoute {
 export function routePath(route: AppRoute) {
   if (route.view === 'marketplace' && route.sellName) return `/market/sell/${encodeURIComponent(route.sellName)}`
   if (route.view === 'marketplace' && route.offerName) return `/market/offer/${encodeURIComponent(route.offerName)}`
+  if (route.view === 'marketplace' && route.listingName) return `/market/listing/${encodeURIComponent(route.listingName)}`
   if (route.view === 'marketplace' && route.auctionNode) return `/market/auction/${route.auctionNode}`
   return route.name ? `/name/${encodeURIComponent(route.name)}` : viewPaths[route.view]
 }

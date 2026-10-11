@@ -11,8 +11,15 @@
 .record-entry code { font-family: var(--font-mono); }
 .record-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .inline-record-editor { width: 100%; min-width: 0; display: grid; gap: 16px; }
-.record-draft-review { min-width: 0; margin: 0; overflow-wrap: anywhere; }
-.record-draft-review dd { min-width: 0; margin: 8px 0 0; }
+.record-draft-review { display: grid; gap: 10px; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.record-draft-review > div { display: grid; grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr); gap: 4px 16px; }
+.record-draft-review dt { color: var(--muted); font-size: var(--text-sm); }
+.record-draft-review dd { min-width: 0; margin: 0; }
+.record-staged { color: var(--peach) !important; font-size: var(--text-sm); }
+.record-staged.invalid { color: var(--error) !important; }
+.record-entry.staged.clear > div:first-child > :is(p, code):not(.record-staged) { text-decoration: line-through; }
+.record-pending { display: grid; gap: 12px; margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); }
+.record-pending .field-note { margin: 0; }
 .record-draft-review code { white-space: pre-wrap; font-family: var(--font-mono); }
 .record-add { min-width: 0; display: grid; gap: 12px; margin-top: 20px; }
 .record-add select { background: var(--surface); color: var(--ink); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius); font: inherit; }
@@ -21,4 +28,5 @@
 @media (max-width: 600px) {
   .record-draft-control { grid-template-columns: 1fr; }
   .record-entry > div:first-child { flex-basis: 100%; }
+  .record-draft-review > div { grid-template-columns: minmax(0, 1fr); }
 }

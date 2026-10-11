@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 
 function linkTarget(href: string) {
+  // An email address is the one non-web link the documents use.
+  if (/^mailto:[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(href)) return { external: false }
   const base = typeof window === 'undefined' ? 'https://dusk.domains/' : window.location.href
   try {
     const url = new URL(href, base)

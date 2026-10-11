@@ -8,6 +8,7 @@ import { useAppCoreRuntimes } from './useAppCoreRuntimes'
 import { useAppNavigationRuntimes } from './useAppNavigationRuntimes'
 import { useAppViewProps } from './useAppViewProps'
 import { useNameWorkspaceRuntime } from './useNameWorkspaceRuntime'
+import { useRememberHeldSubname } from '../features/domains/heldSubnames'
 
 function networkBadge(config: DuskDomainsRuntimeConfig): NetworkBadge {
   if (config.mode !== 'live_ready') return { label: 'Preview', tone: 'preview' }
@@ -31,6 +32,15 @@ export function useDuskDomainsAppModel() {
   const { handleMainViewChange } = mainViewRuntime
   const { handleSearchHome, searchName } = searchRuntime
   useAutoRefresh(searchRuntime.refreshCurrentNameFromIndexer, mainView === 'search' && searchState.checked && ['overview', 'details', 'activity', 'subnames'].includes(searchState.resultView), undefined, core.walletRuntime.selectedAddress)
+  const { managedName } = core.domainState
+  useRememberHeldSubname({
+    chainId: appRuntime.runtimeConfig.chainId,
+    name: workspace.namePreview.displayName,
+    node: managedName.node === workspace.namePreview.nodeHex ? managedName.node : '',
+    owner: managedName.owner,
+    manager: managedName.manager,
+    authority: walletRuntime.selectedAuthority,
+  })
   const skyNames = useSkyNames(appRuntime.indexerClient)
   const openName = (name: string) => void searchName(name)
   const openView = (view: AppMainView) => {
@@ -45,6 +55,8 @@ export function useDuskDomainsAppModel() {
     onOpenSell: marketplace.openSell,
     offerName: marketplace.offerName,
     onOpenOffer: marketplace.openOffer,
+    listingName: marketplace.listingName,
+    onOpenListing: marketplace.openListing,
     selectedAuctionNode: marketplace.marketplaceProps.auction.selectedAuctionNode,
     onOpenAuction: marketplace.marketplaceProps.auction.onOpenAuction,
     checked: searchState.checked,

@@ -87,7 +87,7 @@ export function MarketplaceView(props: MarketplaceViewProps) {
       {unread ? (props.auction.selectedAuctionNode ? <h1 id="marketplace-heading">Auction</h1> : null) : props.auction.selectedAuctionNode ? (
         selectedAuction ? <MarketplaceAuctionDetail selectedAuction={selectedAuction} {...props} /> : <div><h1 id="marketplace-heading">Auction</h1><PanelMessage icon={<Store size={18} />}>{loading ? 'Loading auction…' : 'This auction is no longer open.'}</PanelMessage><Button onClick={props.auction.onCloseAuction}>All listings</Button></div>
       ) : <TabPanel id="marketplace-views" value={tab}>
-        {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse {...props} /> : null}
+        {marketplaceEnabled && tab === 'browse' && !selectedAuction ? <MarketplaceBrowse key={props.navigation.listingKey ?? 0} {...props} /> : null}
         {marketplaceEnabled && tab === 'activity' ? <MarketplaceActivity {...props} /> : null}
         {marketplaceEnabled && tab === 'sell' ? <MarketplaceSell {...props} /> : null}
         {marketplaceEnabled && tab === 'offers' ? <MarketplaceOffers {...props} /> : null}

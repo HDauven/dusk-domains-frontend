@@ -34,7 +34,6 @@ export type UseSubdomainActionsProps = {
   runtimeConfig: DuskDomainsRuntimeConfig
   selectedAddress: string
   selectedAuthority: string
-  setRecordDrafts: Dispatch<SetStateAction<Record<string, string>>>
   setRecordError: Dispatch<SetStateAction<string>>
   setSubnameError: Dispatch<SetStateAction<string>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>

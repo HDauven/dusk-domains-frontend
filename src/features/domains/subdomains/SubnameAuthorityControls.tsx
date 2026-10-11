@@ -8,7 +8,7 @@ export function SubnameAuthorityControls({ name, onReassign, onTakeBack, onRemov
   onTakeBack: () => Promise<void>
   onRemove: () => Promise<void>
 }) {
-  const [mode, setMode] = useState<'reassign' | 'remove' | null>(null)
+  const [mode, setMode] = useState<'reassign' | 'take-back' | 'remove' | null>(null)
   const [owner, setOwner] = useState('')
   const [manager, setManager] = useState('')
   const [busy, setBusy] = useState(false)
@@ -19,7 +19,7 @@ export function SubnameAuthorityControls({ name, onReassign, onTakeBack, onRemov
   return <div className="subname-actions">
     <p>Taking back or reassigning a subname always clears its records and primary name.</p>
     <Button disabled={busy} onClick={() => { setMode('reassign'); setOwner(''); setManager('') }}>Reassign</Button>
-    <Button disabled={busy} onClick={() => void run(onTakeBack)}>Take back</Button>
+    <Button disabled={busy} onClick={() => setMode('take-back')}>Take back</Button>
     <Button disabled={busy} onClick={() => setMode('remove')}>Remove</Button>
     {mode === 'reassign' ? <form onSubmit={event => { event.preventDefault(); void run(() => onReassign(owner, manager || owner)) }}>
       <label>New owner<Input required value={owner} onChange={event => setOwner(event.target.value)} placeholder="Dusk address, .dusk name or contract:0x…" /></label>
@@ -27,6 +27,11 @@ export function SubnameAuthorityControls({ name, onReassign, onTakeBack, onRemov
       <Button type="submit" disabled={busy || !owner.trim()}>Save authorities</Button>
       <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
     </form> : null}
+    {mode === 'take-back' ? <div>
+      <p>Take back {name}? Its records and primary name are cleared, and its current owner and manager lose it. You become its owner and manager.</p>
+      <Button disabled={busy} onClick={() => void run(onTakeBack)}>Take back name</Button>
+      <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
+    </div> : null}
     {mode === 'remove' ? <div>
       <p>Remove {name} and all its descendants?</p>
       <Button disabled={busy} onClick={() => void run(onRemove)}>Remove name and descendants</Button>

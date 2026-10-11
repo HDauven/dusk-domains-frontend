@@ -147,3 +147,30 @@ it.each([
   expect(submitNameWrite).toHaveBeenCalledOnce()
   expect(listPendingNameReservations()).toEqual([saved])
 })
+
+// A full reload restores the wallet session after the page has started, which resets the
+// session-scoped claim and resumes it from the saved reservation.
+it('keeps the saved reservation\'s store when a claim resumes after the session restores', async () => {
+  const buildReveal = vi.spyOn(registrationCall, 'createCompleteRegistrationRequest')
+  const saved = await reserve()
+  expect(saved.commitmentStore).toBeTruthy()
+  await renderSession({ ...connected, generation: 2 })
+  expect(state.preparedCommit).toMatchObject({ directory: saved.directory, commitmentStore: saved.commitmentStore })
+  const register = [...host.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Register')!
+  await act(async () => register.click())
+  expect(buildReveal.mock.calls[0][0].preparedCommit).toMatchObject({ directory: saved.directory, commitmentStore: saved.commitmentStore })
+})
+
+it('signs as soon as the claim is ready when Register opened it from a saved reservation', async () => {
+  const saved = await reserve()
+  expect(submitNameWrite).toHaveBeenCalledOnce()
+  // The reservation card: open the claim and register in one click.
+  await act(async () => { state.searchActions.reset(); state.searchActions.resume(saved, { register: true }) })
+  await vi.waitFor(() => expect(submitNameWrite).toHaveBeenCalledTimes(2))
+  expect(state.registrationCompletion?.status).toBe('executed')
+  // Opening a claim without Register only shows it.
+  submitNameWrite.mockClear()
+  await act(async () => { state.searchActions.reset(); state.searchActions.resume(saved) })
+  await new Promise(resolve => setTimeout(resolve, 20))
+  expect(submitNameWrite).not.toHaveBeenCalled()
+})

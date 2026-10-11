@@ -3,6 +3,7 @@ import { ACTIVITY_EVENT_TYPES, type ActivityEntry } from '../ui/activity'
 import type { ForwardResolutionResponse } from './types'
 import type {
   IndexedFeeConfig,
+  IndexedHolding,
   IndexedLifecycleName,
   IndexedMarketplaceConfig,
   IndexedMarketplaceFixedSale,
@@ -220,6 +221,24 @@ export function isIndexedSubname(value: unknown): value is IndexedSubname {
     typeof value.lastEventType === 'string' &&
     isNullableString(value.txId) &&
     (isNonNegativeInteger(value.blockHeight) || value.blockHeight === null)
+  )
+}
+
+export function isIndexedHolding(value: unknown): value is IndexedHolding {
+  return (
+    isRecord(value) &&
+    typeof value.node === 'string' &&
+    typeof value.name === 'string' &&
+    (value.kind === 'root' || value.kind === 'subname') &&
+    (value.role === 'owner' || value.role === 'manager') &&
+    isNullableString(value.owner) &&
+    isNullableString(value.manager) &&
+    isNullableString(value.root) &&
+    isNullableString(value.parentNode) &&
+    isNullableString(value.parentName) &&
+    typeof value.status === 'string' &&
+    isNullableNumber(value.expiresAtBlockHeight) &&
+    isNullableNumber(value.graceEndsAtBlockHeight)
   )
 }
 

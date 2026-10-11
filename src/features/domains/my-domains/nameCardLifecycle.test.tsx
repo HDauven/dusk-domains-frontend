@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type { IndexedNameSummary } from '../../../names/internal'
 import { NameHeader } from '../../search/NameHeader'
-import { formatLifecycleDay, lifecycleBadgeCopy, subnameExpiryCopy } from '../domainFormat'
+import { formatLifecycleDay, lifecycleBadgeCopy, lifecycleNote, subnameExpiryCopy } from '../domainFormat'
 import { nameCardLifecycle } from './nameCardLifecycle'
 
 function summary(canonicalName: string): IndexedNameSummary {
@@ -26,7 +26,7 @@ function summary(canonicalName: string): IndexedNameSummary {
 
 describe('name lifecycle labels', () => {
   it('offers renewal after expiry until grace ends', () => {
-    expect(nameCardLifecycle(summary('aurora.dusk'), 10).copy).toMatch(/^Renews by /)
+    expect(nameCardLifecycle(summary('aurora.dusk'), 10).copy).toMatch(/^Expires \d{4}-/)
     const held = nameCardLifecycle(summary('aurora.dusk'), 1_100_000)
     expect(held.copy).toMatch(/^Expired .+\. Renew by .+ to keep it$/)
     expect(nameCardLifecycle(summary('aurora.dusk'), 1_300_000).copy).toMatch(/^Expired /)
@@ -35,7 +35,7 @@ describe('name lifecycle labels', () => {
   it('reads expiry from the indexer when heights are missing', () => {
     const noHeights = { expiresAtBlockHeight: null, graceEndsAtBlockHeight: null }
     expect(nameCardLifecycle({ ...summary('aurora.dusk'), ...noHeights, expiresAt: '2020-01-01T00:00:00Z' }, 10).copy).toBe('Expired 2020-01-01')
-    expect(nameCardLifecycle({ ...summary('aurora.dusk'), ...noHeights, expiresAt: '2999-01-01T00:00:00Z' }, 10).copy).toBe('Renews by 2999-01-01')
+    expect(nameCardLifecycle({ ...summary('aurora.dusk'), ...noHeights, expiresAt: '2999-01-01T00:00:00Z' }, 10).copy).toBe('Expires 2999-01-01')
     const inGrace = { ...summary('aurora.dusk'), expiresAt: '2020-01-01T00:00:00Z', graceEndsAt: '2999-01-01T00:00:00Z' }
     expect(nameCardLifecycle({ ...inGrace, ...noHeights }, 10).copy).toBe('Expired 2020-01-01. Renew by 2998-12-31 to keep it')
     expect(nameCardLifecycle(inGrace, null).copy).toBe('Expired 2020-01-01. Renew by 2998-12-31 to keep it')
@@ -44,7 +44,7 @@ describe('name lifecycle labels', () => {
     const dated = { ...summary('aurora.dusk'), expiresAt: '2020-09-29T12:00:00Z' }
     expect(nameCardLifecycle({ ...dated, status: 'expired' }, null).copy).toBe('Expired 2020-09-29')
     expect(nameCardLifecycle({ ...summary('aurora.dusk'), status: 'expired' }, null).copy).toBe('Expired')
-    expect(nameCardLifecycle({ ...dated, expiresAt: '2999-01-01T00:00:00Z' }, null).copy).toBe('Renews by 2999-01-01')
+    expect(nameCardLifecycle({ ...dated, expiresAt: '2999-01-01T00:00:00Z' }, null).copy).toBe('Expires 2999-01-01')
   })
 
   it('promises renewal through the root only before expiry', () => {
@@ -57,7 +57,7 @@ describe('name lifecycle labels', () => {
   it.each([0, 1_300_000])('shows the root expiry before expiry with grace end %s', (graceEndsAt) => {
     for (const currentBlockHeight of [10, 999_999]) {
       const expiry = formatLifecycleDay(1_000_000, currentBlockHeight, 0)
-      expect(lifecycleBadgeCopy('aurora.dusk', 1_000_000, currentBlockHeight, 0, graceEndsAt)).toBe(`Renews by ${expiry}`)
+      expect(lifecycleBadgeCopy('aurora.dusk', 1_000_000, currentBlockHeight, 0, graceEndsAt)).toBe(`Expires ${expiry}`)
     }
   })
 
@@ -127,5 +127,16 @@ describe('name lifecycle labels', () => {
       <NameHeader displayName="aurora.dusk" lifecycleLabel="Expired 2028-09-29" primaryVerified={false} records={[]} reserved={false} status="registered" />,
     )
     expect(header.replaceAll('<!-- -->', '')).toContain('>Expired 2028-09-29<')
+  })
+})
+
+describe('expiry wording', () => {
+  it('says Expires, never Renews by, and explains the grace period beside it', () => {
+    const header = renderToStaticMarkup(<NameHeader displayName="aurora.dusk" lifecycleLabel="Expires 2028-09-29" primaryVerified={false} records={[]} reserved={false} status="registered"
+      lifecycleNote={lifecycleNote('aurora.dusk', 1_000_000, 10, 0)} />).replaceAll('&#x27;', '\'')
+    expect(header).toContain('>Expires 2028-09-29<')
+    expect(header).toContain('Nothing renews automatically. After it expires, it can still be renewed for 30 days; then anyone can register it.')
+    expect(nameCardLifecycle(summary('aurora.dusk'), 10).copy).not.toContain('Renews by')
+    expect(nameCardLifecycle(summary('aurora.dusk'), 999_000).copy).toMatch(/^Expires soon: .+\. Renew to keep it$/)
   })
 })
