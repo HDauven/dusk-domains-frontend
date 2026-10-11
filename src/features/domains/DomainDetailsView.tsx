@@ -13,6 +13,7 @@ import {
   type NameSupport,
   type ResolverRecord,
   type SubnameState,
+  socialRecordLink,
 } from '../../names/internal'
 import { ActivityTime } from '../activity/ActivityHistoryView'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
@@ -152,13 +153,14 @@ export function DomainDetailsView({ canEdit = false, isOwner = false, separateMa
             <h2 id="links-heading">Links and records</h2>
             <ul className="link-list">
               {other.map((record) => {
-                const href = record.key.startsWith('text.') ? null : safeLink(record.value)
+                const social = socialRecordLink(record.key, record.value)
+                const href = social?.href ?? (record.key.startsWith('text.') ? null : safeLink(record.value))
                 return (
                   <li key={record.key}>
                     <span>{recordLabel(record.key)}</span>
                     {href ? (
                       <a href={href} target="_blank" rel="noreferrer nofollow">
-                        {record.value.replace(/^https:\/\//i, '').replace(/\/$/, '')} <ArrowUpRight size={14} />
+                        {social?.text ?? record.value.replace(/^https:\/\//i, '').replace(/\/$/, '')} <ArrowUpRight size={14} />
                       </a>
                     ) : isIdentifierRecord(record.key) ? (
                       <code>{record.value}</code>

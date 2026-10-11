@@ -68,7 +68,7 @@ const TEXT_MAX_BYTES = 512
 const staticDefinitions: Record<StaticRecordKey, RecordDefinition> = {
   moonlight_address: {
     key: 'moonlight_address',
-    label: 'Dusk Public Address',
+    label: 'Dusk address',
     visibility: 'public',
     maxBytes: 160,
     defaultTtlSeconds: 300,
@@ -220,6 +220,54 @@ export function getRecordDefinition(key: ResolverRecordKey): RecordDefinition | 
   return undefined
 }
 
+// Social profile records. The frozen resolver takes any key of 1-64 UTF-8 bytes, and the SDK reads
+// `text.*` values as nonblank text without control characters. These keys and formats are this
+// app's conventions on top of that: a handle or invite where the service has one, else a link.
+export const SOCIAL_RECORD_KEYS = ['text.x', 'text.discord', 'text.github', 'text.link'] as const
+export type SocialRecordKey = (typeof SOCIAL_RECORD_KEYS)[number]
+
+const X_HANDLE = /^@?([A-Za-z0-9_]{1,15})$/
+const GITHUB_NAME = /^[A-Za-z0-9](?:-?[A-Za-z0-9])*$/
+const DISCORD_INVITE = /^(?:https:\/\/)?(?:www\.)?(?:discord\.gg|discord\.com\/invite)\/([A-Za-z0-9-]{2,32})\/?$/i
+const DISCORD_USERNAME = /^(?!.*\.\.)[a-z0-9_.]{2,32}$/
+
+function httpsLink(value: string) {
+  if (/\s/.test(value)) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && url.hostname && !url.username && !url.password ? url : null
+  } catch {
+    return null
+  }
+}
+
+function socialRecordIssue(key: ResolverRecordKey, value: string) {
+  if (key === 'text.x') return X_HANDLE.test(value) ? null : 'Enter an X handle: up to 15 letters, numbers or underscores.'
+  if (key === 'text.github') return GITHUB_NAME.test(value) && value.length <= 39 ? null : 'Enter a GitHub user or organization name.'
+  if (key === 'text.discord') return DISCORD_INVITE.test(value) || DISCORD_USERNAME.test(value) ? null : 'Enter a Discord invite link, like discord.gg/name, or a Discord username.'
+  if (key === 'text.link') return httpsLink(value) ? null : 'Use a valid HTTPS URL.'
+  return null
+}
+
+/** Where a social record links to, or null for a value that isn't in its expected format. */
+export function socialRecordLink(key: ResolverRecordKey, value: string): { href: string; text: string } | null {
+  const trimmed = value.trim()
+  if (key === 'text.x') {
+    const handle = X_HANDLE.exec(trimmed)?.[1]
+    return handle ? { href: `https://x.com/${handle}`, text: `@${handle}` } : null
+  }
+  if (key === 'text.github') return GITHUB_NAME.test(trimmed) && trimmed.length <= 39 ? { href: `https://github.com/${trimmed}`, text: trimmed } : null
+  if (key === 'text.discord') {
+    const invite = DISCORD_INVITE.exec(trimmed)?.[1]
+    return invite ? { href: `https://discord.gg/${invite}`, text: `discord.gg/${invite}` } : null
+  }
+  if (key === 'text.link') {
+    const url = httpsLink(trimmed)
+    return url ? { href: url.href, text: trimmed.replace(/^https:\/\//i, '').replace(/\/$/, '') } : null
+  }
+  return null
+}
+
 export function validateRecordValue(key: ResolverRecordKey, value: string): string[] {
   const unicodeError = unicodeInputError(key, 'Record key') ?? unicodeInputError(value, 'Record value')
   if (unicodeError) return [unicodeError]
@@ -233,7 +281,9 @@ export function validateRecordValue(key: ResolverRecordKey, value: string): stri
     value_bytes: 'Use a value of 1–512 bytes.',
     ttl: 'Use a TTL of 1–86400 seconds.',
   }
-  return validateFrozenRecord(key, value).map((code) => messages[code])
+  const issues = validateFrozenRecord(key, value).map((code) => messages[code])
+  const social = issues.length ? null : socialRecordIssue(key, value)
+  return social ? [social] : issues
 }
 
 export function createResolverRecord(
@@ -321,10 +371,18 @@ function isServiceEndpointRecordKey(key: ResolverRecordKey): key is `service_end
   return /^service_endpoint\.[a-z0-9_-]{1,40}$/.test(key)
 }
 
+const TEXT_RECORD_LABELS: Partial<Record<`text.${string}`, string>> = { 'text.x': 'X', 'text.discord': 'Discord', 'text.github': 'GitHub', 'text.link': 'Link' }
+
+// A text record is named after its key, such as Description for text.description.
+function textRecordLabel(key: `text.${string}`) {
+  const words = key.slice('text.'.length).replace(/[._:-]+/g, ' ')
+  return TEXT_RECORD_LABELS[key] ?? words.charAt(0).toUpperCase() + words.slice(1)
+}
+
 function createTextRecordDefinition(key: `text.${string}`): RecordDefinition {
   return {
     key,
-    label: key,
+    label: textRecordLabel(key),
     visibility: 'public',
     maxBytes: TEXT_MAX_BYTES,
     defaultTtlSeconds: 3600,

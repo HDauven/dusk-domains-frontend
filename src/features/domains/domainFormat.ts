@@ -208,6 +208,10 @@ export function recordPlaceholder(key: ResolverRecordKey) {
   if (key === 'address.sol') return 'Base58 address'
   if (key === 'dusk_contract') return `0x${'0'.repeat(64)}`
   if (key === 'website') return 'https://example.com'
+  if (key === 'text.x') return '@handle'
+  if (key === 'text.discord') return 'discord.gg/invite'
+  if (key === 'text.github') return 'username'
+  if (key === 'text.link') return 'https://'
   if (key === 'avatar') return 'https://example.com/avatar.png'
   if (key === 'content_pointer') return 'ipfs://...'
   return 'Public description'
