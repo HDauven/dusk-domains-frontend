@@ -4,12 +4,12 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import * as sdk from '@duskdomains/sdk'
 import { handoff, handoffDrivers } from '../test/handoffFixtures'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
-import { account, reservation } from '../test/frozenFixtures'
+import { account, contracts, reservation } from '../test/frozenFixtures'
 import { prepareFrozenCall } from './prepareFrozenCall'
 import { submitDuskDomainWrite } from './transactions'
 import * as intent from './commands'
 import { namehashHex } from './hash'
-import { endpointBytes, recordView, createDuskDomainsOnChainClient } from './reads'
+import { endpointBytes, recordView, createDuskDomainsOnChainClient, registrationRegistry } from './reads'
 import {
   registrationCommitWindow,
   listPendingNameReservations,
@@ -35,9 +35,15 @@ const id = (n: number) => n.toString(16).padStart(2, '0').repeat(32),
   bytes = (n: number) => Array(32).fill(n)
 const encode = (v: unknown) => new TextEncoder().encode(sdk.stringifyJson(v)),
   decode = (v: Uint8Array) => sdk.parseJson(new TextDecoder().decode(v))
+// Model the store's policy reply using the SDK's published pricing curve.
+function quotedPolicy(request: sdk.QuoteRequest) {
+  const { estimate, total_lux, ...quote } = sdk.estimateRegistrationQuote(sdk.launchPolicyConfig(), request)
+  expect(estimate).toBe(true)
+  return { height: request.height, policy: bytes(2), policy_version: request.policy_version, total_lux, quote }
+}
 const realDrivers = await handoffDrivers()
 const node = namehashHex('example.dusk')
-function fixture() {
+function fixture({ released = false, unseen = false, policyQuotes = false } = {}) {
   const roles = [
     ...(['directory', 'policy', 'store', 'vault', 'resolver', 'marketplace'] as const),
     'store' as const,
@@ -92,9 +98,12 @@ function fixture() {
   name.name.owner = sdk.authority({ kind: 'Moonlight', bytes: endpointBytes(account) })
   name.name.manager = name.name.owner
   name.name.custody = null
-  name.name.expires_at = 5000n
-  name.name.grace_end = 6000n
+  name.name.expires_at = released ? 80n : 5000n
+  name.name.grace_end = released ? 100n : 6000n
+  name.active = !released
+  name.counters!.generation = 7n
   name.counters!.next_custody = 8n
+  const policy = sdk.launchPolicyConfig()
   const quote = sample('RegistrationQuote')
   quote.policy = bytes(2)
   quote.quote.base_lux = '10000000000'
@@ -145,12 +154,12 @@ function fixture() {
         })
       if (method === 'config')
         return encode(
-          role === 'directory' ? directory : role === 'policy' ? sdk.launchPolicyConfig() : market,
+          role === 'directory' ? directory : role === 'policy' ? policy : market,
         )
       if (method === 'registration_context') return encode(directory.registration)
       if (method === 'home')
         return encode(
-          target === id(3)
+          unseen ? 'Absent' : target === id(3)
             ? {
                 Forwarded: {
                   root: (args as { root: number[] }).root,
@@ -164,7 +173,28 @@ function fixture() {
             : 'Local',
         )
       if (method === 'get_name') return encode({ Local: { ...name, name: { ...name.name, key: args } } })
-      if (method === 'quote_registration') return encode(quote)
+      if (method === 'capacity')
+        return encode({ memory_bytes: 0n, reserved_bytes: 0n, accepts_new: true, sealed: false })
+      if (method === 'released_root')
+        return encode({ counters: name.counters, grace_end: name.name.grace_end })
+      if (method === 'quote_registration') {
+        if (admissions.find((a) => sdk.contractId(a.id) === target)?.retiring)
+          throw new Error('WrongHome')
+        const request = args as sdk.QuoteRegistration
+        const quoteRequest: sdk.QuoteRequest = {
+          version: 1, directory: bytes(1), store: sdk.fromHex(target, 32),
+          node: request.node, label: request.label, actor: request.actor, years: request.years,
+          height, previous_generation: unseen ? 0n : name.name.incarnation.generation,
+          previous_grace_end: unseen ? null : name.name.grace_end,
+          policy_version: directory.registration.policy_version,
+        }
+        const estimated = quotedPolicy(quoteRequest)
+        if (policyQuotes) return encode(estimated)
+        return encode({
+          ...quote, height,
+          quote: { ...quote.quote, request_hash: estimated.quote.request_hash },
+        })
+      }
       if (method === 'quote_renewal') return encode({ Local: renewal })
       if (method === 'read_refund') return encode({ authority: name.name.owner, amount_lux: '25000000000' })
       if (method === 'read_state') return encode({ protocol_lux: '30000000000', liability_lux: '40000000000', accounted_lux: '70000000000', reserved_beneficiaries: 1, max_beneficiaries: 100, source_version: 1n })
@@ -184,6 +214,7 @@ function fixture() {
     renewal,
     market,
     directory,
+    admissions,
     setHeight: (n: bigint) => {
       height = n
     },
@@ -216,7 +247,7 @@ it('recovers the exact secret, deployment and original commitment store after re
   expect(() => upsertPendingNameReservation({ ...r, secret: '00'.repeat(32) }, storage)).toThrow()
 })
 it('reveals using the original commitment store and SDK deadline, never the policy observation deadline', async () => {
-  const h = fixture(),
+  const h = fixture({ released: true }),
     saved = reservation({ name: 'example.dusk', directory: id(1), commitmentStore: id(3) })
   const call = intent.storeCompleteRegistrationRequest({
     directory: id(1),
@@ -246,6 +277,101 @@ it('reveals using the original commitment store and SDK deadline, never the poli
   await expect(prepareFrozenCall(h.client, call, 'example.dusk', account)).rejects.toThrow(
     'reveal window',
   )
+})
+it.each([
+  { scenario: 'released root on a retiring store', retiring: true, unseen: false, saved: false, target: 7 },
+  { scenario: 'saved reservation on a retiring store', retiring: true, unseen: false, saved: true, target: 7 },
+  { scenario: 'released root on a non-retiring store', retiring: false, unseen: false, saved: false, target: 3 },
+  { scenario: 'unseen root', retiring: false, unseen: true, saved: false, target: 7 },
+])('quotes, commits and reveals a $scenario at the SDK placement', async ({ retiring, unseen, saved, target }) => {
+  const h = fixture({ released: true, unseen, policyQuotes: true })
+  h.admissions[0].retiring = retiring
+  if (!unseen) {
+    h.responses.set(`${id(3)}:home`, 'Local')
+    h.responses.set(`${id(7)}:home`, 'Absent')
+    // Ordinary canonical homes can re-register even when sealed.
+    h.responses.set(`${id(3)}:capacity`, { memory_bytes: 0n, reserved_bytes: 0n, accepts_new: false, sealed: true })
+  }
+  h.setHeight(8740n) // One day after the old grace end, including the SDK's day-21 offset.
+  const actor = '0x' + sdk.hex(h.name.name.owner)
+  const client = createDuskDomainsOnChainClient({
+    read: { client: Promise.resolve(h.client), read: vi.fn() },
+  })
+  const result = await client.getRegistrationQuote('example.dusk', 1, actor)
+  if (!result.ok) throw new Error(result.error.message)
+  const { store, quote } = result.value
+  const premium = unseen ? '0' : '499999523162842'
+  const total = (10_000_000_000n + BigInt(premium)).toString()
+  expect(store).toBe(id(target))
+  expect(quote).toMatchObject({
+    total_lux: total, quote: { base_lux: '10000000000', premium_lux: premium },
+  })
+  expect(await client.getRegistrationPremium('example.dusk')).toMatchObject({ ok: true, value: Number(premium) })
+  const registry = await registrationRegistry(
+    { client: Promise.resolve(h.client), readContract: vi.fn() }, contracts, 'example.dusk',
+  )
+  expect(registry).toBe(id(target))
+
+  const memory = new Map<string, string>()
+  const storage = {
+    getItem: (key: string) => memory.get(key) ?? null,
+    setItem: (key: string, value: string) => { memory.set(key, value) },
+  }
+  const original = reservation({
+    name: 'example.dusk', directory: id(1), controller: actor,
+    commitmentStore: saved ? id(3) : registry, committedBlockHeight: 8735,
+  })
+  upsertPendingNameReservation(original, storage)
+  const [recovered] = listPendingNameReservations({ directory: id(1), controller: actor }, storage)
+  expect(recovered).toEqual(original)
+  for (const storeId of [3, 7])
+    h.responses.set(`${id(storeId)}:pending_commitment`, id(storeId) === recovered.commitmentStore
+      ? { key: { actor: h.name.name.owner, hash: sdk.fromHex(recovered.commitment, 32) }, created_at: 8735n }
+      : null)
+  const commit = await prepareFrozenCall(h.client, {
+    ...intent.storeCommitRequest({ commitment: recovered.commitment }), contractId: recovered.commitmentStore,
+  }, recovered.name, account)
+  expect(commit).toMatchObject({ contractId: original.commitmentStore, functionName: 'commit' })
+  const reveal = await prepareFrozenCall(h.client, {
+    ...intent.storeCompleteRegistrationRequest({
+      directory: recovered.directory, commitmentStore: recovered.commitmentStore,
+      commitment: recovered.commitment, secret: recovered.secret,
+      node, label: 'example', durationYears: 1, feeLux: Number(total), records: [],
+    }), quote,
+  }, recovered.name, account)
+  expect(reveal).toMatchObject({
+    contractId: id(target), functionName: 'register', deposit: total,
+    args: {
+      commitment_store: sdk.fromHex(original.commitmentStore, 32),
+      commitment: sdk.fromHex(original.commitment, 32), secret: sdk.fromHex(original.secret, 32),
+      expected_fee_lux: total, valid_until: 17375n,
+    },
+  })
+  expect(h.calls.filter((call) => call.method === 'quote_registration').map((call) => call.target))
+    .toEqual([id(target), id(target), id(target)])
+  expect(h.calls.filter((call) => call.method === 'pending_commitment').map((call) => call.target))
+    .toEqual([original.commitmentStore])
+  expect(h.calls.some((call) => call.method === 'released_root')).toBe(retiring)
+  expect(h.calls.some((call) => call.method === 'cede_released')).toBe(false)
+})
+it('refuses a successor quote that drops the old generation and grace end', async () => {
+  const h = fixture({ released: true, policyQuotes: true })
+  h.admissions[0].retiring = true
+  h.responses.set(`${id(3)}:home`, 'Local')
+  h.responses.set(`${id(7)}:home`, 'Absent')
+  const actor = h.name.name.owner
+  const omittedLifecycle: sdk.QuoteRequest = {
+    version: 1, directory: bytes(1), store: bytes(7), node: sdk.nameKey('example.dusk').node,
+    label: 'example', actor, years: 1, height: 106n,
+    previous_generation: 0n, previous_grace_end: null, policy_version: h.directory.registration.policy_version,
+  }
+  const estimated = quotedPolicy(omittedLifecycle)
+  h.responses.set(`${id(7)}:quote_registration`, estimated)
+  const saved = reservation({ name: 'example.dusk', controller: '0x' + sdk.hex(actor) })
+  await expect(prepareFrozenCall(h.client, intent.storeCompleteRegistrationRequest({
+    directory: id(1), commitmentStore: id(3), commitment: saved.commitment, secret: saved.secret,
+    node, label: 'example', durationYears: 1, feeLux: Number(estimated.total_lux), records: [],
+  }), saved.name, account)).rejects.toThrow('Registration quote does not match placement and previous lifecycle')
 })
 it('follows forwarded names for transfer and directory-priced renewal, preserving incarnation', async () => {
   const h = fixture()
@@ -325,6 +451,7 @@ it('claims protocol and referral funds from the vault with the operator epoch an
   ).toMatchObject({
     contractId: id(4),
     functionName: 'claim_protocol',
+    gasLimit: 242_000_000n,
     args: { amount: 'All', expected_operator_epoch: 9n },
   })
   expect(
@@ -899,7 +1026,7 @@ it.each(writeCases)(
   'round-trips the wallet signing bytes for %s through the real handoff drivers',
   async (action) => {
     vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-08T12:00:00Z'))
-    const h = fixture()
+    const h = fixture({ released: action === 'register' })
     const order = reviewedOrder(
       h,
       ['bid', 'settle', 'cancel_auction', 'expire_auction'].includes(action)
@@ -1286,7 +1413,7 @@ it('reads refundable funds at the recorded market when the preferred market is a
 
 
 it.each([1, 2])('leads registration with the full name, %s-year term and actual price', async durationYears => {
-  const h = fixture()
+  const h = fixture({ released: true })
   h.quote.total_lux = '50000000000'
   h.quote.quote.base_lux = '50000000000'
   const saved = reservation({ name: 'maya.dusk', directory: id(1), commitmentStore: id(3) })

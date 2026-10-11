@@ -5,8 +5,10 @@ import {
   RESERVED_LABELS,
   launchPolicyConfig,
   registrationPremiumSchedule as premium,
+  normalizeNameInput,
 } from '@duskdomains/sdk'
 import { safeNumber } from '../numbers'
+import { unicodeInputError } from '../unicode'
 export { normalizeNameInput } from '@duskdomains/sdk'
 export const LUX_PER_DUSK = 1_000_000_000
 const policy = launchPolicyConfig()
@@ -112,6 +114,11 @@ export type NameValidationResult =
     }
 
 export function validateName(value: string): NameValidationResult {
+  const unicodeError = unicodeInputError(value, 'Name')
+  if (unicodeError) {
+    const canonical = normalizeNameInput(value)
+    return { ok: false, canonical, labels: canonical.split('.'), issues: [{ tone: 'danger', text: unicodeError }] }
+  }
   const result = validate(value)
   const issues: SearchIssue[] = result.issues.map((code) => ({
     tone: code === 'empty' ? 'info' : 'danger',

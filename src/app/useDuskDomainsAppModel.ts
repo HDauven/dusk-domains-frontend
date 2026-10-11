@@ -51,7 +51,7 @@ export function useDuskDomainsAppModel() {
     mainView,
     onOpenName: openName,
     onOpenView: openView,
-    searchedName: searchState.apiSearchResult?.canonical ?? null,
+    searchedName: searchState.apiSearchResult?.status === 'invalid' ? null : searchState.apiSearchResult?.canonical ?? null,
   })
 
   return {

@@ -43,3 +43,26 @@ it('uses SDK address encoding and leaves unchanged drafts alone', () => {
   expect(plan.errors).toEqual([])
   expect(prepareRecordMutations(plan.mutations)[0].value).toHaveLength(96)
 })
+
+it.each(['\uD800', '\uDC00', '\uD800x', '\uD800\uD800'])(
+  'refuses malformed Unicode in record values before encoding: %j', value => {
+    const message = 'Record value contains malformed Unicode. Remove or retype the invalid character.'
+    expect(recordMutationPlan(['text.bio'], [], { 'text.bio': value })).toEqual({
+      mutations: [], errors: [`text.bio: ${message}`],
+    })
+    expect(() => prepareRecordMutations([{ action: 'set', key: 'text.bio', value, ttlSeconds: 3600 }])).toThrow(message)
+  },
+)
+
+it.each(['set', 'clear'] as const)('refuses malformed Unicode keys in a %s mutation', action => {
+  expect(() => prepareRecordMutations([{ action, key: 'text.\uD800', value: 'valid', ttlSeconds: 3600 }])).toThrow(
+    'Record key contains malformed Unicode. Remove or retype the invalid character.',
+  )
+})
+
+it('preserves valid surrogate pairs and counts their UTF-8 bytes', () => {
+  const value = 'Hello 🌙'
+  const plan = recordMutationPlan(['text.bio'], [], { 'text.bio': value })
+  expect(plan.errors).toEqual([])
+  expect(prepareRecordMutations(plan.mutations)[0].value).toEqual(Array.from(new TextEncoder().encode(value)))
+})

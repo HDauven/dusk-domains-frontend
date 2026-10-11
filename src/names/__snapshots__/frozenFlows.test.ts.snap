@@ -34,9 +34,9 @@ exports[`round-trips the wallet signing bytes for manager through the real hando
 
 exports[`round-trips the wallet signing bytes for offer through the real handoff drivers 1`] = `"2b91e1eff042f43900bdcb20ea3203f5c190b4c050d9740c9161dafe6736aedc"`;
 
-exports[`round-trips the wallet signing bytes for protocol_all through the real handoff drivers 1`] = `"81bf226593ad1f7424e5ab1a6f1c3f44e86e67c2d2914ec2f850c31ac097c8e3"`;
+exports[`round-trips the wallet signing bytes for protocol_all through the real handoff drivers 1`] = `"c56825531785e4b58ee4fad01177c14c5957156a97187983837c60d5b12be81d"`;
 
-exports[`round-trips the wallet signing bytes for protocol_exact through the real handoff drivers 1`] = `"b551c41fdc001a836cdcb16ac0a9459dbee200920e7ebbb581ec76954f47d508"`;
+exports[`round-trips the wallet signing bytes for protocol_exact through the real handoff drivers 1`] = `"32cfde937df0f1988fdc81805a9c9baa5dd010b82510e08cb02bb11e8031f572"`;
 
 exports[`round-trips the wallet signing bytes for reassign through the real handoff drivers 1`] = `"e40cafa05d8317324fe4b7b87cb9787a474a38dfde1f4a33e1125b848f275489"`;
 

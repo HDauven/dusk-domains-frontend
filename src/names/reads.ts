@@ -67,10 +67,10 @@ export async function registrationQuote(
   years: number,
   actor: string,
 ) {
-  const located = await client.getName(spelling),
+  const placement = await client.registrationPlacement(sdk.nameKey(spelling).root),
     context = await client.directory.registration_context()
   const policy = await client.policy(sdk.contractId(context.policy)).config()
-  const quote = await client.quoteRegistration(located.store, {
+  const quote = await client.quoteRegistration(placement.store, {
     node: sdk.nameKey(spelling).node,
     label: spelling.split('.').at(-2)!,
     years,
@@ -78,7 +78,7 @@ export async function registrationQuote(
     expected_policy_version: context.policy_version,
     expected_policy_config_version: policy.config_version,
   })
-  return { store: located.store, quote }
+  return { store: placement.store, quote }
 }
 export async function registrationRegistry(
   app: DuskConnectAppLike,
@@ -86,7 +86,7 @@ export async function registrationRegistry(
   name: string,
 ): Promise<string> {
   if (!app.client) throw new Error('Frozen client unavailable')
-  return (await (await app.client).getName(name)).store
+  return (await (await app.client).registrationPlacement(sdk.nameKey(name).root)).store
 }
 export function createDuskDomainsOnChainReadTransport(
   app: DuskConnectAppLike,

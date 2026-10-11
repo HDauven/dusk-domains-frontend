@@ -6,9 +6,15 @@ import {
   type RecordMutation,
 } from '@duskdomains/sdk'
 import type { CoreRecordMutationInput } from './commandTypes'
+import { unicodeInputError } from './unicode'
 
 /** Encode exactly as the write does and simulate the entire batch before any signing. */
 export function prepareRecordMutations(mutations: readonly CoreRecordMutationInput[]): RecordMutation[] {
+  for (const mutation of mutations) {
+    const error = unicodeInputError(mutation.key, 'Record key')
+      ?? (mutation.action === 'set' ? unicodeInputError(mutation.value, 'Record value') : undefined)
+    if (error) throw new Error(error)
+  }
   let encoded: RecordMutation[] = []
   try {
     encoded = mutations.map((mutation) => mutation.action === 'clear'
