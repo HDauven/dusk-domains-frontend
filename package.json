@@ -14,7 +14,8 @@
     "avatars": "node scripts/night-card-avatars.mjs",
     "shell": "vitest run src/app/staticShell.test.ts --update",
     "lint": "eslint .",
-    "check": "npm run test -- --run && npm run build"
+    "check": "npm run test -- --run && npm run build",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@dusk/connect": "npm:@jsr/dusk__connect@^0.2.0",
