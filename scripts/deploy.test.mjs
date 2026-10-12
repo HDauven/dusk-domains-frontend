@@ -4,6 +4,9 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { resolve } from 'node:path'
 import { afterEach, expect, it } from 'vitest'
 
+// Fixture repos must never inherit a caller's GIT_DIR/GIT_WORK_TREE (git hooks, rebase --exec).
+const isolatedEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')))
+
 const roots = []
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
@@ -63,12 +66,12 @@ const version = JSON.parse(fs.readFileSync(process.env.DEPLOY_DIR + '/version.js
 if (process.env.WRONG_COMMIT) version.frontendCommit = 'wrong'
 console.log(JSON.stringify(version))
 `)
-  const git = (...args) => execFileSync('git', ['-c', 'user.name=Deploy Test', '-c', 'user.email=deploy-test@example.invalid', ...args], { cwd: repo, encoding: 'utf8' }).trim()
+  const git = (...args) => execFileSync('git', ['-c', 'user.name=Deploy Test', '-c', 'user.email=deploy-test@example.invalid', ...args], { cwd: repo, env: isolatedEnv, encoding: 'utf8' }).trim()
   git('init', '--quiet')
   git('add', '.')
   git('commit', '--quiet', '-m', 'Create fixture')
   const env = {
-    ...process.env, PATH: `${root}/bin:${process.env.PATH}`, TMPDIR: `${root}/tmp`,
+    ...isolatedEnv, PATH: `${root}/bin:${process.env.PATH}`, TMPDIR: `${root}/tmp`,
     DEPLOY_HOST: 'fixture', DEPLOY_DIR: `${root}/server/dist`, MOCK_LOG: `${root}/calls`,
     VITE_DUSK_DOMAINS_SITE_URL: 'https://wrong.example',
   }

@@ -5,6 +5,9 @@ import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { checkDocScripts, missingDocScripts } from './check-doc-scripts.mjs'
 
+// Fixture repos must never inherit a caller's GIT_DIR/GIT_WORK_TREE (git hooks, rebase --exec).
+const isolatedEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')))
+
 const roots = []
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
@@ -111,16 +114,16 @@ describe('documented npm scripts', () => {
     writeFileSync(join(root, 'README.md'), 'npm run build\n')
     writeFileSync(join(root, 'docs/usage.mdx'), 'npm run missing\n')
     writeFileSync(join(root, 'untracked.md'), 'npm run ignored\n')
-    execFileSync('git', ['init', '--quiet', root])
-    execFileSync('git', ['add', 'README.md', 'docs/usage.mdx'], { cwd: root })
+    execFileSync('git', ['init', '--quiet', root], { env: isolatedEnv })
+    execFileSync('git', ['add', 'README.md', 'docs/usage.mdx'], { cwd: root, env: isolatedEnv })
     expect(checkDocScripts(root)).toEqual([{ file: 'docs/usage.mdx', line: 1, script: 'missing' }])
     const command = resolve('scripts/ci/check-doc-scripts.mjs')
-    const failed = spawnSync(process.execPath, [command, root], { encoding: 'utf8' })
+    const failed = spawnSync(process.execPath, [command, root], { env: isolatedEnv, encoding: 'utf8' })
     expect(failed.status).toBe(1)
     expect(failed.stderr).toContain('docs/usage.mdx:1: npm script "missing"')
     writeFileSync(join(root, 'package.json'), JSON.stringify({ scripts: { build: 'build', missing: 'test' } }))
     expect(checkDocScripts(root)).toEqual([])
-    expect(spawnSync(process.execPath, [command, root]).status).toBe(0)
+    expect(spawnSync(process.execPath, [command, root], { env: isolatedEnv }).status).toBe(0)
   })
 
   it('keeps repository documentation runnable', () => {
