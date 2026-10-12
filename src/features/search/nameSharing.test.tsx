@@ -144,7 +144,9 @@ it.each(['', `contract:0x${'09'.repeat(32)}`, 'not-a-referrer'])('copies the nam
   const link = new URL('https://dusk.domains/name/aurora.dusk')
   if (referralAddress.startsWith('contract:')) link.searchParams.set('ref', referralAddress)
   expect(writeText).toHaveBeenCalledExactlyOnceWith(link.href)
-  expect(document.querySelector('[role="status"]')?.textContent).toBe('Copied')
+  // A link that carries a referral says so.
+  expect(document.querySelector('[role="status"]')?.textContent)
+    .toBe(link.searchParams.has('ref') ? 'Copied. The link includes your contract ID as a referral.' : 'Copied')
   expect(canonical()).toBe('https://dusk.domains/name/aurora.dusk')
 })
 

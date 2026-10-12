@@ -42,7 +42,7 @@ describe('names for sale', () => {
     expect(header).toContain('href="/market/listing/marrowfen.dusk"')
     expect(header).toContain('Buy in the market')
     expect(header).toContain('Held by the market while listed')
-    expect(header).not.toContain('Owner ID')
+    expect(header).not.toContain('Account ID')
     const taken = renderToStaticMarkup(<SearchResultOverview canRegister={false} displayName="marrowfen.dusk" onContinueRegistration={vi.fn()} onViewDetails={vi.fn()}
       resultIssues={[]} resultStatus="registered" listing={offer} quote={{ duration: 1, expiryDate: '', feeConfigLoading: false, onDurationChange: vi.fn(), registrationFee: 10 }}
       reservation={{ onOpenPendingReservation: vi.fn(), onOpenPendingReservations: vi.fn(), savedReservation: null, savedReservationWindow: null }} />)

@@ -12,6 +12,7 @@ import { activityEventDetail } from './activityCopy'
 import { activityCsv, downloadCsv } from './activityCsv'
 import { activityWhen, formatActivityDate } from './activityTime'
 import { RecentWarningStack } from './RecentWarnings'
+import type { SubnameActivity } from './subnameActivity'
 
 export function ActivityHistoryView({
   ownerAddresses = [],
@@ -29,6 +30,8 @@ export function ActivityHistoryView({
   marketplaceContractId,
   recentWarnings,
   subnames,
+  subnameActivity,
+  loadSubnameActivity,
   viewerAuthority,
 }: {
   ownerAddresses?: string[]
@@ -49,10 +52,14 @@ export function ActivityHistoryView({
   marketplaceContractId?: string | null
   recentWarnings: RecentChangeWarning[]
   subnames?: ActivityContext['subnames']
+  /** Its subnames' own activity, which says what a subname change on this name was. */
+  subnameActivity?: SubnameActivity
+  /** Reads that activity for a whole history. */
+  loadSubnameActivity?: (entries: ActivityEntry[]) => Promise<SubnameActivity>
   viewerAuthority: string
 }) {
   const [download, setDownload] = useState<{ busy: boolean, error: string }>({ busy: false, error: '' })
-  const context = { viewerAuthority, addresses: ownerAddresses, currentBlockHeight, nowSeconds, subnames, marketplaceContractId, holders }
+  const context = { viewerAuthority, addresses: ownerAddresses, currentBlockHeight, nowSeconds, subnames, marketplaceContractId, holders, subnameActivity }
   const label = activityPartyLabel(viewerAuthority, ownerAddresses)
   const actions = activityActions(activityEntries, { ...context, partial: hasMore })
 
@@ -60,7 +67,8 @@ export function ActivityHistoryView({
     setDownload({ busy: true, error: '' })
     try {
       const entries = loadFullHistory ? await loadFullHistory() : activityEntries
-      downloadCsv(`${displayName}-history.csv`, activityCsv(entries, { ...context, explorerUrl }))
+      const feeds = loadSubnameActivity ? await loadSubnameActivity(entries) : subnameActivity
+      downloadCsv(`${displayName}-history.csv`, activityCsv(entries, { ...context, subnameActivity: feeds, explorerUrl }))
       setDownload({ busy: false, error: '' })
     } catch (error) {
       setDownload({ busy: false, error: `Could not download the history. ${userFacingErrorMessage(error)}` })

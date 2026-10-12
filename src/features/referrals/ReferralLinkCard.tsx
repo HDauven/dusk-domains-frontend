@@ -25,7 +25,7 @@ export function ReferralLinkCard({ link, wallet }: {
   } = wallet
   const heading = selectedAddress ? 'Share it anywhere' : 'Get your link'
   const intro = selectedAddress
-    ? 'It counts when someone registers a new name through it.'
+    ? 'It counts when someone registers a name through it.'
     : walletRequiredIntro(walletSetupState, 'Connect a wallet to create your link.')
 
   return (

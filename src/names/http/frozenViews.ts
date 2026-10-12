@@ -153,10 +153,13 @@ export function frozenView(input: unknown, path: string): unknown {
     const policy = row(v.policy) ? v.policy : {},
       p = row(policy.config) ? policy.config : {},
       renewal = row(v.renewalSchedule) ? v.renewalSchedule : {}
+    // The schedule's tiers are lengths 1, 2, 3, 4 and 5+; names have at least 3 characters.
+    const annual = Array.isArray(renewal.annual_lux) && renewal.annual_lux.length === 5 ? renewal.annual_lux.map(value => safeNumber(String(value))) : null
     Object.assign(v, {
       referralRewardBps: p.base_referral_bps,
       premiumReferralRewardBps: p.premium_referral_bps,
       renewalReferralRewardBps: renewal.referral_bps,
+      ...(annual ? { renewalYearLux: { threeChar: annual[2], fourChar: annual[3], fivePlus: annual[4] } } : {}),
       version: policy.version == null ? null : safeNumber(String(policy.version)),
       updatedAt: 0,
       operator: null,

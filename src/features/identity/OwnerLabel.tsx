@@ -11,5 +11,5 @@ export function OwnerLabel({ authority, viewerAuthority, addresses, compact = fa
   if (owner.kind === 'you') return <span>You</span>
   if (compact && owner.kind === 'address') return <span title={owner.value}>{owner.label}</span>
   if (owner.kind === 'address') return <AddressChip value={owner.value} label="Dusk address" />
-  return <details className="owner-identity"><summary>{owner.label}</summary><p>This is a registry account ID. No matching Dusk address is available.</p><code>{owner.value}</code></details>
+  return <details className="owner-identity"><summary>{owner.label}</summary><p>The registry stores an ID made from each account's Dusk address, or a contract's own ID. No address seen on this page matches this one yet.</p><code>{owner.value}</code></details>
 }

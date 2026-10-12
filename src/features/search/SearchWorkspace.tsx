@@ -10,6 +10,7 @@ type SearchWorkspaceProps = {
   result: SearchResultPanelProps
   search: {
     priceTiers?: { label: string; price: string }[]
+    pricingRules?: string[]
     checked: boolean
     featuredNames?: ShowcaseName[] | null
     loading: boolean

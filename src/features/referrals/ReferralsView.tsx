@@ -1,11 +1,12 @@
 import { AccountViewLayout } from '../../components/ui/AccountViewLayout'
+import { AccountCard } from '../../components/ui/AccountCard'
 import { ActiveReferralCard } from './ActiveReferralCard'
 import { AccountViewHeader } from '../../components/ui/AccountViewHeader'
 import { ReferralLinkCard } from './ReferralLinkCard'
 import { ReferralRewardsCard } from './ReferralRewardsCard'
 import type { ReferralsViewProps } from './referralsViewTypes'
 
-export function ReferralsView({ onClearReferral, referralError, referralState, referralConfirmation, wallet, link, rewards }: ReferralsViewProps) {
+export function ReferralsView({ onClearReferral, referralError, referralState, referralConfirmation, wallet, link, rewards, rules = [] }: ReferralsViewProps) {
   return (
     <AccountViewLayout
       className="referrals-panel"
@@ -22,6 +23,10 @@ export function ReferralsView({ onClearReferral, referralError, referralState, r
       {wallet.selectedAddress ? (
         <ReferralRewardsCard rewards={rewards} />
       ) : null}
+
+      {rules.length ? <AccountCard className="referral-rules" title="How rewards work" heading="Rates and rules">
+        <ul>{rules.map(rule => <li key={rule}>{rule}</li>)}</ul>
+      </AccountCard> : null}
     </AccountViewLayout>
   )
 }

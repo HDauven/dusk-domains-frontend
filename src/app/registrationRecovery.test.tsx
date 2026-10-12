@@ -1,6 +1,6 @@
 import { contracts } from '../test/frozenFixtures'
 // @vitest-environment happy-dom
-import { act, useLayoutEffect } from 'react'
+import { act, useLayoutEffect, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { analyzeName, DEFAULT_FEE_CONFIG, listPendingNameReservations, namehashHex, registrationCommitWindow } from '../names/internal'
@@ -28,9 +28,12 @@ const submitNameWrite = Object.assign(vi.fn(async (_name, _call, options) => {
 let root: Root, host: HTMLDivElement
 let state: ReturnType<typeof useRegistrationAppState>
 let feature: ReturnType<typeof useRegistrationFeature>
+// The chain the claim reads the wallet's primary name and the reservation from; none by default.
+let chain: unknown = null
 
 function Probe({ session }: { session: Session }) {
-  const registration = useRegistrationAppState(`${session.generation}:${session.chainId}:${session.address}`)
+  const [walletError, setWalletError] = useState('')
+  const registration = useRegistrationAppState(`${session.generation}:${session.chainId}:${session.address}`, session.address)
   const search = useSearchAppState(session.address)
   const runtime = useRegistrationRuntime({
     chainId: session.chainId, selectedAuthority: session.controller, selectedAddress: session.address,
@@ -48,10 +51,10 @@ function Probe({ session }: { session: Session }) {
   const common = new Proxy({
     displayName, nodeHex, result: analyzeName(displayName), canRegister: true,
     runtimeConfig: { chainId: session.chainId, contracts }, indexerClient: null,
-    liveDuskDomainsApp: null, duskDomainsOnChainClient: null, getCurrentBlockHeight,
+    liveDuskDomainsApp: null, duskDomainsOnChainClient: chain, getCurrentBlockHeight,
     lifecycleBaseBlockHeight: search.currentBlockHeight ?? 100, feeConfig: DEFAULT_FEE_CONFIG,
     selectedAuthority: session.controller, selectedAddress: session.address, walletSetupState: session.status,
-    commitBusy: false, txBusy: false, walletError: '', appliedReferral: null,
+    commitBusy: false, txBusy: false, walletError, setWalletError, appliedReferral: null,
     submitNameWrite, ensureContractAuthorityForLiveWrite: () => true,
     ensurePublicBalanceForLiveWrite: async () => true, shouldApplyPreviewWriteFallback: async () => true,
     handleMainViewChange: onView,
@@ -89,6 +92,7 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   localStorage.clear()
   sessionStorage.clear()
+  chain = null
   host = document.createElement('div')
   root = createRoot(host)
 })
@@ -173,4 +177,89 @@ it('signs as soon as the claim is ready when Register opened it from a saved res
   await act(async () => { state.searchActions.reset(); state.searchActions.resume(saved) })
   await new Promise(resolve => setTimeout(resolve, 20))
   expect(submitNameWrite).not.toHaveBeenCalled()
+})
+
+// A chain whose answer about the wallet's primary name can change, and can be held back.
+function primaryNameChain() {
+  let primary: string | null = null
+  let held: { promise: Promise<void>; resolve: () => void } | null = null
+  const answer = <T,>(value: () => T) => (held?.promise ?? Promise.resolve()).then(value)
+  const client = {
+    getPrimaryName: vi.fn(() => answer(() => ({ ok: true, value: primary }))),
+    readPrimaryName: vi.fn(() => answer(() => ({ ok: true, value: primary ? { name: primary } : null }))),
+    // The reservation is still on chain.
+    getPendingCommitment: vi.fn(async () => ({ ok: true, value: { pending: { controller, createdAtBlock: 1 } } })),
+  }
+  return {
+    client,
+    setPrimary: (name: string | null) => { primary = name },
+    hold: () => {
+      let resolve!: () => void
+      held = { promise: new Promise<void>(done => { resolve = done }), resolve: () => resolve() }
+    },
+    release: () => { held?.resolve(); held = null },
+  }
+}
+const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 10)) })
+const registerButton = () => [...host.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Register')!
+const revealPrimary = () => (submitNameWrite.mock.calls[1][1] as { args: { primaryEndpoint: unknown } }).args.primaryEndpoint
+
+// Reserve with the wallet that has no primary name yet, where the switch starts on, then make
+// alpha.dusk its primary name, as registering another name would.
+async function reserveThenPrimaryElsewhere(choice: boolean | null) {
+  const wallet = primaryNameChain()
+  chain = wallet.client
+  await renderSession(connected)
+  await settle()
+  expect(feature.registrationProps.step.primaryChoice).toMatchObject({ registerSetsPrimary: true, primaryNote: '' })
+  if (choice !== null) await act(async () => feature.registrationProps.step.primaryChoice.onRegisterSetsPrimaryChange(choice))
+  await act(async () => feature.registrationProps.step.reservation.onPrepareCommit())
+  await settle()
+  expect(submitNameWrite).toHaveBeenCalledOnce()
+  wallet.setPrimary('alpha.dusk')
+  return { wallet, saved: listPendingNameReservations()[0] }
+}
+
+it('reads the primary name again before Register on a saved claim, so the default no longer replaces one set since', async () => {
+  const { wallet, saved } = await reserveThenPrimaryElsewhere(null)
+  wallet.hold()
+  await act(async () => { state.searchActions.reset(); state.searchActions.resume(saved, { register: true }) })
+  await settle()
+  // Nothing is signed until the new read returns.
+  expect(submitNameWrite).toHaveBeenCalledOnce()
+  await act(async () => wallet.release())
+  await settle()
+  expect(submitNameWrite).toHaveBeenCalledTimes(2)
+  expect(revealPrimary()).toBeNull()
+  expect(feature.registrationProps.step.primaryChoice).toMatchObject({ registerSetsPrimary: false, primaryNote: 'Your primary name is alpha.dusk.' })
+})
+
+it('registers without replacing a primary name set since the page read it, when the switch was only the default', async () => {
+  await reserveThenPrimaryElsewhere(null)
+  // The page still shows the switch on, from its earlier read.
+  expect(feature.registrationProps.step.primaryChoice).toMatchObject({ registerSetsPrimary: true, primaryNote: '' })
+  await act(async () => registerButton().click())
+  await settle()
+  expect(submitNameWrite).toHaveBeenCalledTimes(2)
+  expect(revealPrimary()).toBeNull()
+  expect(feature.registrationProps.step.primaryChoice).toMatchObject({ registerSetsPrimary: false, primaryNote: 'Your primary name is alpha.dusk.' })
+})
+
+it('asks before a choice made when there was no primary name replaces one set since, and replaces it once Register is pressed with it shown', async () => {
+  const { saved } = await reserveThenPrimaryElsewhere(true)
+  await act(async () => { state.searchActions.reset(); state.searchActions.resume(saved, { register: true }) })
+  await settle()
+  expect(submitNameWrite).toHaveBeenCalledOnce()
+  const ask = 'This replaces alpha.dusk as your primary name. Press Register again to confirm, or turn off Primary name.'
+  expect(host.textContent).toContain(ask)
+  expect(feature.registrationProps.step.primaryChoice).toMatchObject({ registerSetsPrimary: true, primaryNote: 'This replaces alpha.dusk as your primary name.' })
+  // The switch answers the question, so turning it off clears it.
+  await act(async () => feature.registrationProps.step.primaryChoice.onRegisterSetsPrimaryChange(false))
+  expect(host.textContent).not.toContain(ask)
+  expect(feature.registrationProps.step.primaryChoice).toMatchObject({ registerSetsPrimary: false, primaryNote: 'Your primary name is alpha.dusk.' })
+  await act(async () => feature.registrationProps.step.primaryChoice.onRegisterSetsPrimaryChange(true))
+  await act(async () => registerButton().click())
+  await settle()
+  expect(submitNameWrite).toHaveBeenCalledTimes(2)
+  expect(revealPrimary()).toEqual({ endpointType: 'moonlight_address', endpointValue: account })
 })

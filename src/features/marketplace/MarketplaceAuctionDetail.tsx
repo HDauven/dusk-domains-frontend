@@ -13,6 +13,7 @@ import { MarketplaceAmount } from './MarketplaceAmount'
 import { formatLuxAsDusk, minimumBidDusk, minimumBidLux } from './auctionMath'
 import { AuctionCountdown } from './AuctionCountdown'
 import { ListingName } from './ListingName'
+import { AuctionRules } from './AuctionRules'
 import {
   MARKETPLACE_SYNC_MESSAGE,
   auctionDurationLabel,
@@ -46,6 +47,7 @@ export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }:
           <p>{auction.startBlockHeight === null
             ? `Starts when someone bids, then runs ${auctionDurationLabel(auction.durationBlocks)}.`
             : 'The highest bid wins when the auction ends.'}</p>
+          <AuctionRules duration={auctionDurationLabel(auction.durationBlocks)} feeBps={auction.feeBps} />
         </div>
         <div className="marketplace-auction-hero-actions">
           <Badge tone={auctionStatusTone(status)}>{auctionStatusLabel(status)}</Badge>

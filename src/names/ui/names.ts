@@ -60,6 +60,8 @@ export type CoreFeeConfig = {
   renewalReferralRewardBps: number
   premiumStartLux: number
   premiumReferralRewardBps: number
+  /** Yearly renewal prices from the directory's renewal schedule, when the indexer reports it. */
+  renewalYearLux?: { threeChar: number; fourChar: number; fivePlus: number }
   version: number
   updatedAt: number
 }

@@ -2,7 +2,7 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { Shield, Wallet } from 'lucide-react'
 import { useState } from 'react'
-import { recordLabel } from './recordPresentation'
+import { recordHelp, recordLabel } from './recordPresentation'
 import {
   getRecordDefinition,
   type ResolverRecordKey,
@@ -44,6 +44,7 @@ export function RecordDraftEditor({
         const definition = getRecordDefinition(key)
         const value = recordDraftValues[key] ?? ''
         const walletAction = recordWalletAction(key)
+        const help = recordHelp(key)
         return (
           <div className="record-draft-row" key={key}>
             <div className="record-draft-label">
@@ -53,6 +54,7 @@ export function RecordDraftEditor({
               <Input
                 id={`record-draft-${key}`}
                 aria-label={`${recordLabel(key)} record`}
+                aria-describedby={help ? `record-help-${key}` : undefined}
                 value={value}
                 onChange={(event) => onDraftValueChange(key, event.target.value)}
                 placeholder={recordPlaceholder(key)}
@@ -82,6 +84,7 @@ export function RecordDraftEditor({
                 </Button>
               ) : null}
             </div>
+            {help ? <p className="field-note record-draft-hint" id={`record-help-${key}`}>{help}</p> : null}
             <details className="record-draft-help"><summary>Advanced</summary><p>{recordFreshnessCopy(definition)}</p></details>
           </div>
         )

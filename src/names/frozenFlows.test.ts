@@ -857,6 +857,33 @@ it.each(['address', 'contract'] as const)('shows and verifies separate subname o
   }
 })
 
+it('shows who will own and manage a new subname in the wallet details, checked against the signed authorities', async () => {
+  const h = fixture()
+  const sender = '0x' + sdk.hex(sdk.authority({ kind: 'Moonlight', bytes: endpointBytes(account) }))
+  const manager = sdk.encodeBase58(Uint8Array.from(handoff.roles.payout))
+  const managerAuthority = '0x' + sdk.hex(sdk.authority({ kind: 'Moonlight', bytes: endpointBytes(manager) }))
+  const create = (owner: string, managedBy: string) => intent.storeCreateSubnameRequest({
+    node: namehashHex('maya.example.dusk'), parentNode: node, parentName: 'example.dusk', name: 'maya.example.dusk', label: 'maya',
+    owner, manager: managedBy, expiresAt: 5000, expiryPolicy: 'inherits_parent',
+  })
+  const request = { ...create(sender, managerAuthority), reviewedAuthorities: { owner: { address: account }, manager: { address: manager } } }
+  const call = await prepareFrozenCall(h.client, request, 'example.dusk', account)
+  expect(call.display).toMatchObject({ Summary: 'Create maya.example.dusk', Owner: account, Manager: manager })
+  // The details never claim an address the signed call does not use.
+  await expect(prepareFrozenCall(h.client, { ...request, reviewedAuthorities: { ...request.reviewedAuthorities, manager: { address: account } } },
+    'example.dusk', account)).rejects.toThrow(/recipient/i)
+  // Without a reviewed address the wallet still names the manager, by account ID.
+  expect((await prepareFrozenCall(h.client, create(sender, managerAuthority), 'example.dusk', account)).display)
+    .toMatchObject({ Owner: account, Manager: `Account ID: ${managerAuthority}` })
+  expect((await prepareFrozenCall(h.client, create(sender, sender), 'example.dusk', account)).display)
+    .toMatchObject({ Owner: account, Manager: 'Same as owner' })
+  // Taking a subname back names the signer's own address rather than an ID.
+  const takeBack = { ...intent.storeReassignSubnameRequest({ node: namehashHex('pay.example.dusk'), owner: sender, manager: sender, clearRecords: true }),
+    authorityAction: 'take_back' as const }
+  expect((await prepareFrozenCall(h.client, takeBack, 'pay.example.dusk', account)).display)
+    .toMatchObject({ Summary: 'Take back pay.example.dusk', 'New owner': account, 'New manager': account })
+})
+
 it.each(['owner', 'manager'] as const)('rechecks the named subname %s destination before signing', async role => {
   const h = fixture()
   h.responses.set(`${id(7)}:resolve_record`, { Local: null })

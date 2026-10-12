@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
+import { sameAuthority } from '../../identity/ownerLabel'
 import { Button } from '../../../components/ui/Button'
 import {
   subnameExpiryDescription,
@@ -22,6 +24,29 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
   const {
     selectedAuthority,
   } = authority
+  // Before the wallet opens, show the full address entered as manager: it receives control of
+  // the new name's records. A subname you manage yourself needs no review.
+  const manager = subnameManager.trim()
+  const managedByOther = Boolean(manager && !sameAuthority(manager, selectedAuthority))
+  const [reviewing, setReviewing] = useState(false)
+  const showReview = reviewing && managedByOther
+  // Focus moves into the review when Create subname opens it. When the wallet opens or Edit closes
+  // it, focus goes back to Create subname, or to the label while that button can't be used. Editing
+  // the manager closes the review, so typing never reopens it.
+  const reviewRef = useRef<HTMLDivElement>(null)
+  const createRef = useRef<HTMLButtonElement>(null)
+  const labelRef = useRef<HTMLInputElement>(null)
+  const returnFocus = useRef(false)
+  useEffect(() => {
+    if (showReview) reviewRef.current?.focus()
+    else if (returnFocus.current) {
+      returnFocus.current = false
+      if (createRef.current && !createRef.current.disabled) createRef.current.focus()
+      else labelRef.current?.focus()
+    }
+  }, [showReview])
+  const closeReview = () => { if (showReview) returnFocus.current = true; setReviewing(false) }
+  const create = () => { closeReview(); void onCreateSubname() }
   return (
     <>
       <div>
@@ -31,6 +56,7 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
 
       <div className="subname-quick-create">
         <TextField
+          ref={labelRef}
           id="subname-label"
           hint={subdomainPreview}
           label="Label"
@@ -41,15 +67,31 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
 
         <div className="subname-create-action">
           <Button
+            ref={createRef}
             className="save-record"
-            disabled={!canCreateSubname}
+            disabled={!canCreateSubname || showReview}
             type="button"
-            onClick={() => void onCreateSubname()}
+            onClick={() => managedByOther ? setReviewing(true) : create()}
           >
             Create subname
           </Button>
         </div>
       </div>
+
+      {showReview ? (
+        <div className="subname-review" role="group" aria-label={`Review ${subdomainPreview}`} tabIndex={-1} ref={reviewRef}>
+          <dl>
+            <div><dt>Name</dt><dd>{subdomainPreview}</dd></div>
+            <div><dt>Owner</dt><dd>You</dd></div>
+            <div><dt>Manager</dt><dd><code>{manager}</code></dd></div>
+          </dl>
+          <p>Check the manager address. That wallet can change the name's records and create subnames below it. You stay its owner and can take it back.</p>
+          <div className="subname-review-actions">
+            <Button variant="primary" disabled={!canCreateSubname} type="button" onClick={create}>Create in wallet</Button>
+            <Button type="button" onClick={closeReview}>Edit</Button>
+          </div>
+        </div>
+      ) : null}
 
       <details className="subname-advanced">
         <summary>Ownership and policy</summary>
@@ -60,7 +102,7 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
             label="Manager"
             placeholder="Dusk address"
             value={subnameManager === selectedAuthority ? '' : subnameManager}
-            onChange={(event) => onSubnameManagerChange(event.target.value)}
+            onChange={(event) => { setReviewing(false); onSubnameManagerChange(event.target.value) }}
           />
 
           <SelectField

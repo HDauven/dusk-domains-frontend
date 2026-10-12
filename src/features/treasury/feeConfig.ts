@@ -123,6 +123,7 @@ export function feeConfigValuesMatch(
     && current.renewalReferralRewardBps === next.renewalReferralRewardBps
     && current.premiumReferralRewardBps === next.premiumReferralRewardBps
     && current.premiumStartLux === next.premiumStartLux
+    && JSON.stringify(current.renewalYearLux ?? null) === JSON.stringify(next.renewalYearLux ?? null)
 }
 
 export function referralRewardStatusLabel(args: {

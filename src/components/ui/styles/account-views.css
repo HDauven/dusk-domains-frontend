@@ -69,3 +69,17 @@
     flex: 1 1 auto;
   }
 }
+
+.referral-rules {
+  grid-column: 1 / -1;
+}
+
+.referral-rules ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}

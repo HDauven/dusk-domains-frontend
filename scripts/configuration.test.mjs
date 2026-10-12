@@ -21,6 +21,9 @@ it.each(['mainnet', 'testnet'])('documents every production setting for %s', (ne
     VITE_DUSK_DOMAINS_SECURITY_URL: 'mailto:security@dusk.domains',
     VITE_DUSK_DOMAINS_STATUS_URL: '',
     VITE_DUSK_DOMAINS_EXPLORER_URL: mainnet ? 'https://explorer.dusk.network' : 'https://apps.testnet.dusk.network/explorer',
+    // No wallet or explorer supports .dusk names yet; add them here when they ship.
+    VITE_DUSK_DOMAINS_NAME_WALLETS: '',
+    VITE_DUSK_DOMAINS_NAME_EXPLORERS: '',
   })
   for (const role of ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE']) {
     expect(env[`VITE_DUSK_DOMAINS_${role}_CONTRACT_ID`]).toMatch(/^<.+>$/)

@@ -97,7 +97,7 @@ export function useSellForm({
       }
       if (!reviewed) {
         writes.requestReview({
-          title: `Auction ${selectedName.canonicalName}`,
+          title: `List ${selectedName.canonicalName} for auction`,
           createsOrder: true,
           namespace: selectedName.namespace,
           transfersNamespace: true,
@@ -108,7 +108,7 @@ export function useSellForm({
             { label: 'Your payout address', value: selectedAddress, address: true },
             { label: 'Duration after first bid', value: `${days} ${days === 1 ? 'day' : 'days'}` },
           ],
-          note: 'Proceeds are shown at the minimum bid and the current fee. You can cancel before the first bid. Once bidding starts, the name stays in escrow until finalization. Bids in the last 10 minutes extend it.',
+          note: 'Proceeds are shown at the minimum bid and the current fee. You can cancel before the first bid, which starts the timer; bids in its last 10 minutes extend it. If nobody bids within 7 days, the auction can be closed and the name returned to you. Otherwise the name stays in escrow until anyone finalizes the auction within a day of its end, or later closes it and returns the name.',
         }, () => createListing(true, currentRef))
         return
       }
@@ -123,7 +123,7 @@ export function useSellForm({
           durationBlocks: durationBlocks(days),
           sellerRecipient: selectedAddress,
         }), expectedFeeBps: feeBps, nameRef: currentRef },
-        'Auction created. The first bid starts the timer.',
+        'Listed for auction. The first bid starts the timer.',
       )
       if (auctioned?.status === 'executed') clearAfterListing()
       return
@@ -169,7 +169,7 @@ export function useSellForm({
           { label: 'Private buyer', value: privateBuyer.trim() || 'Anyone', address: Boolean(privateBuyer.trim()) },
           { label: 'Listing duration', value: `${days} ${days === 1 ? 'day' : 'days'}` },
         ],
-        note: 'Proceeds use the current marketplace fee. The name stays in escrow until it sells or you cancel. If it expires, close the listing to return the name to your wallet.',
+        note: 'Proceeds use the current marketplace fee. The name stays in escrow until it sells. To get it back, cancel the listing, or close it once it expires, then return the name to your wallet.',
       }, () => createListing(true, currentRef))
       return
     }

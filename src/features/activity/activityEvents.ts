@@ -31,9 +31,44 @@ export type ActivityContext = {
   subnames?: readonly { name: string; serial?: string | null }[]
   /** Older rows are still to load, so the oldest loaded transaction may be cut off. */
   partial?: boolean
+  /** The activity of subnames below this name. The indexer files a subname's events under the subname,
+   * so on this name a subname change shows only as its root's counters changing. */
+  subnameActivity?: SubnameActivityFeeds
+  /** What each transaction did to subnames, described from subnameActivity. */
+  related?: ReadonlyMap<string, readonly RelatedAction[]>
+  /** Where a subname may have left the namespace, described from subnameActivity. */
+  removals?: readonly SubnameRemoval[]
+  /** The subname whose own events are being described for its parent's feed. */
+  subject?: string
 }
 
 type Holders = { owner: string; manager: string }
+
+/** A subname's own activity, as its page reads it, with its current holders. */
+export type SubnameActivityFeed = { name: string; node: string; holders: Holders; entries: ActivityEntry[]; partial: boolean }
+/**
+ * Subnames' own activity, and whether every subname that could have changed was read. `since` is the
+ * time that holds from: the subnames changed at or after it were read, so an older transaction may
+ * have touched one that wasn't.
+ */
+export type SubnameActivityFeeds = { feeds: readonly SubnameActivityFeed[]; complete: boolean; since?: number }
+/** One subname's part in a transaction. */
+export type RelatedAction = { name: string; title: string; details: string[]; actor: ActivityParty | null }
+/**
+ * A transaction after which a subname may be gone from the namespace, and so from today's subnames.
+ * `removedOthers`: it removed names besides the subname whose activity shows it, so it hides part of
+ * its own transaction too.
+ */
+export type SubnameRemoval = { txId: string | null; blockHeight: number | null; removedOthers?: boolean }
+
+// The indexer files a subname's events under the subname. On the root, a subname transaction leaves
+// only the root's counters (and store bookkeeping, and the controller it went through, if any).
+const SUBNAME_TRACE = new Set(['root_counters_changed', 'store_watermarks_changed', 'controller_used'])
+
+/** A transaction on the root that only its subnames' activity can explain. */
+export function isSubnameTrace(events: readonly ActivityEntry[]) {
+  return events.every(event => SUBNAME_TRACE.has(event.eventType)) && events.some(event => event.eventType === 'root_counters_changed')
+}
 
 export type DescribedAction = { title: string; details: string[]; actor: ActivityParty | null }
 
@@ -66,7 +101,7 @@ export function defaultPartyLabel(party: ActivityParty) {
   if (party.kind === 'market') return 'the market'
   if (party.kind === 'address') return short(party.address)
   if (party.kind === 'contract') return `contract ${short(party.contract)}`
-  return `Owner ID ${short(party.authority)}`
+  return `Account ID ${short(party.authority)}`
 }
 
 function short(value: string) {
@@ -285,12 +320,14 @@ function marketTitle(events: ActivityEntry[], context: ActivityContext, label: (
   const highest = field(order, 'highest')
   if (kind === 'Auction' && isRow(highest) && !find('custody_started')) {
     const bidder = principalParty(highest.payer) ?? authorityParty(highest.manager, context)
-    return { title: `Bid of ${dusk(highest.amount_lux)}`, details: [], actor: bidder }
+    // An auction waits for its first bid; that bid starts the timer.
+    const first = integer(field(order, 'bid_count')) === 1n
+    return { title: `Bid of ${dusk(highest.amount_lux)}`, details: first ? ['The first bid started the timer'] : [], actor: bidder }
   }
   const buyer = field(order, 'terms', 'buyer')
   const privateBuyer = isBytes(buyer) ? authorityParty(buyer, context) : null
   return {
-    title: kind === 'Auction' ? `Auction started · minimum bid ${price}` : `Listed for ${price}`,
+    title: kind === 'Auction' ? `Listed for auction · minimum bid ${price}` : `Listed for ${price}`,
     details: privateBuyer ? [`Only ${label(privateBuyer)} can buy it`] : [],
     actor: seller,
   }
@@ -317,10 +354,36 @@ function authorityTitle(event: ActivityEntry, context: ActivityContext, label: (
   if (reason === 'Ancestor') return { title: owner ? `Reassigned to ${label(owner)}` : 'Reassigned', details: [...managerNote, ...cleared], actor }
   if (ownerChanged) return { title: owner ? `Transferred to ${label(owner)}` : 'Transferred', details: [...managerNote, ...cleared], actor }
   if (managerChanged) return { title: manager ? `Manager changed to ${label(manager)}` : 'Manager changed', details: cleared, actor }
-  return { title: 'Owner and manager confirmed', details: cleared, actor }
+  // Neither holder changed: what changed, if anything, is the cleared data.
+  return cleared.length ? { title: cleared[0], details: [], actor } : { title: 'Owner and manager confirmed', details: [], actor }
 }
 
+const named = (action: RelatedAction) => action.title.includes(action.name) ? action.title : `${action.name}: ${action.title}`
+
 function subnameParentTitle(events: ActivityEntry[], context: ActivityContext, prior: Prior): DescribedAction {
+  // The subnames' own events name the action and who took it. One transaction has one caller, so the
+  // actor of any part is the transaction's. One take-back can change up to 256 subnames while the root's
+  // revision rises once, so a count or a single subname is given only when every subname that could
+  // have changed was read back to this transaction, and none can have left the namespace since: the
+  // subnames read are today's, and a removed one isn't among them.
+  const txId = events.find(event => event.txId)?.txId
+  const related = txId ? context.related?.get(txId) : undefined
+  if (related?.length) {
+    const height = events[0].blockHeight
+    const activity = context.subnameActivity
+    const at = Date.parse(events[0].timestamp)
+    const since = activity?.since
+    const inWindow = since === undefined || since === -Infinity || (Number.isFinite(at) && at >= since)
+    const removedSince = (context.removals ?? []).some(removal => (removal.txId !== txId || removal.removedOthers)
+      && (removal.blockHeight == null || height == null || removal.blockHeight >= height))
+    const covered = Boolean(activity?.complete) && inWindow && height != null && !removedSince && (activity?.feeds ?? [])
+      .every(feed => !feed.partial || feed.entries.some(entry => entry.blockHeight != null && entry.blockHeight < height))
+    const actors = new Set(related.map(action => JSON.stringify(action.actor)))
+    const actor = actors.size === 1 ? related[0].actor : null
+    if (!covered) return { title: 'Subnames changed', details: [`Including ${related.map(named).join('; ')}`], actor }
+    if (related.length === 1) return { title: named(related[0]), details: related[0].details, actor: related[0].actor }
+    return { title: `${related.length} subnames changed`, details: related.map(named), actor }
+  }
   // One transaction can change a root's counters more than once, one revision at a time.
   const changes = events.flatMap(event => countersOf(event) ?? []).sort((left, right) => left.revision < right.revision ? -1 : 1)
   const first = changes[0], last = changes[changes.length - 1]
@@ -396,9 +459,14 @@ export function describeFrozenAction(events: ActivityEntry[], context: ActivityC
     const created = find('subname_created')
     if (created) {
       const actor = authorityParty(field(created.data, 'actor'), context)
-      const holder = ['manager', 'owner'].map(key => field(created.data, 'name', key)).find(value => !sameParty(value, field(created.data, 'actor')))
-      const given = holder === undefined ? null : authorityParty(holder, context)
-      return { title: given ? `Created and given to ${label(given)}` : 'Subname created', details: [], actor }
+      const owner = field(created.data, 'name', 'owner'), manager = field(created.data, 'name', 'manager')
+      // Given away only when someone else owns it; a creator who stays its owner can still name a manager.
+      const given = sameParty(owner, field(created.data, 'actor')) ? null : authorityParty(owner, context)
+      const managedBy = sameParty(manager, owner) ? null : authorityParty(manager, context)
+      const what = given ? ` and given to ${label(given)}` : managedBy ? `, managed by ${label(managedBy)}` : ''
+      const details = given && managedBy ? [`Manager: ${label(managedBy)}`] : []
+      if (context.subject) return { title: `Subname ${context.subject} created${what}`, details, actor }
+      return { title: what ? `Created${what}` : 'Subname created', details, actor }
     }
     const removed = find('subtree_removed')
     if (removed) {

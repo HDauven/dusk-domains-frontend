@@ -58,7 +58,7 @@ it('shows the byte excess inline and blocks signing until the batch is within 4,
 it.each(['\uD800', '\uDC00'])('shows malformed record Unicode inline and blocks signing: %j', async value => {
   await act(async () => state.setRecordDrafts({ 'text.k0': value }))
   expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-    'text.k0: Record value contains malformed Unicode. Remove or retype the invalid character.',
+    'K0: Record value contains malformed Unicode. Remove or retype the invalid character.',
   )
   expect((document.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true)
   await act(async () => document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))

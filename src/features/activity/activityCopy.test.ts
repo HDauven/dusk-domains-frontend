@@ -24,7 +24,7 @@ describe('activity copy', () => {
 
   it('reads raw activity targets as plain words', () => {
     expect(activityDetail(entry('registration', me), me)).toBe('Owner: you')
-    expect(activityDetail(entry('transfer', other), me)).toBe(`Owner: Owner ID ${other.slice(0, 10)}...${other.slice(-6)}`)
+    expect(activityDetail(entry('transfer', other), me)).toBe(`Owner: Account ID ${other.slice(0, 10)}...${other.slice(-6)}`)
     expect(activityDetail(entry('renewal', '2029-09-26T15:55:33.000Z'))).toBe('Now runs until 2029-09-26')
     expect(activityDetail(entry('record_update', 'website'))).toBe('Website')
     expect(activityDetail(entry('primary_name', `moonlight_address:${address}`))).toBe('')
@@ -45,7 +45,7 @@ describe('activity copy', () => {
   it('names the viewer and the marketplace', () => {
     expect(activityActor(me.toUpperCase().replace('0X', '0x'), me)).toBe('You')
     expect(activityActor('marketplace', me)).toBe('Marketplace')
-    expect(activityActor(other, me)).toMatch(/^Owner ID 0xabababab/)
+    expect(activityActor(other, me)).toMatch(/^Account ID 0xabababab/)
     expect(activityTitle(entry('primary_name', ''))).toBe('Primary name changed')
   })
 

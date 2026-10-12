@@ -221,7 +221,8 @@
 .register-card button:disabled { opacity: .45; cursor: not-allowed; }
 .register-head h1 .name-signature { --name-size: var(--text-name); --name-min-size: 2rem; }
 .claim-success h1 .name-signature { --name-size: var(--text-3xl); --name-min-size: 1.75rem; }
-.register-facts .register-primary { align-items: center; }
+.register-facts .register-primary { align-items: center; flex-wrap: wrap; }
+.register-facts .register-primary-note { display: block; flex-basis: 100%; color: var(--muted); font-size: var(--text-sm); font-weight: 400; line-height: 1.45; text-align: left; }
 .claim-main > .status-badge { justify-self: start; }
 .register-why { margin: 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.5; }
 .claim-success-note { max-width: 56ch; margin: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-sm); line-height: 1.5; text-align: center; }

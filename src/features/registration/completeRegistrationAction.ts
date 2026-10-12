@@ -16,8 +16,17 @@ import { applyCompleteRegistrationSuccess } from './completeRegistrationSuccess'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import { updateRegistrationCompletion } from './registrationTxProgress'
 import { revealCommitmentMissing } from './strandedReservation'
+import { revealSetsPrimary, type PrimaryShown } from './walletPrimary'
 
-export async function completeRegistration(props: UseRegistrationActionsProps, confirmedTotalLux?: number) {
+// The wallet's primary name is read again for the reveal, so it never acts on an older read. Off
+// never touches the primary name, so it needs no read.
+async function revealPrimary({ displayName, primaryChoice, readWalletPrimary }: UseRegistrationActionsProps, shown?: PrimaryShown) {
+  if (shown ? !shown.setsPrimary : primaryChoice === false) return { setsPrimary: false }
+  return revealSetsPrimary(primaryChoice, await readWalletPrimary(), displayName, shown)
+}
+
+/** `shown` is what the person saw as they pressed Register; Register on a saved reservation shows nothing first. */
+export async function completeRegistration(props: UseRegistrationActionsProps, confirmedTotalLux?: number, shown?: PrimaryShown) {
   const {
     displayName,
     preparedCommit,
@@ -51,16 +60,22 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
     checkSession()
     if (!ensureContractAuthorityForLiveWrite('register this name', setWalletError)) return
     // The purchase step then offers to reserve again instead of a reveal that would fail.
-    const missing = await revealCommitmentMissing(props)
+    const [missing, primary] = await Promise.all([revealCommitmentMissing(props), revealPrimary(props, shown)])
     if (!workspace()) return
     checkSession()
     if (missing) {
       setStrandedCommitment({ controller: selectedAuthority, commitment: preparedCommit.commitment })
       return
     }
+    // The switch and its note now show that read; Register signs once pressed with them in view.
+    if ('ask' in primary) {
+      setWalletError(primary.ask)
+      return
+    }
     const request = createCompleteRegistrationRequest({
       ...props,
       preparedCommit,
+      registerSetsPrimary: primary.setsPrimary,
     })
     if (!(await ensurePublicBalanceForLiveWrite(
       'registering this name',
@@ -82,7 +97,7 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
     if (!workspace() || !session()) return
 
     if (finalState.status === 'executed') {
-      await applyCompleteRegistrationSuccess(props, {
+      await applyCompleteRegistrationSuccess({ ...props, registerSetsPrimary: primary.setsPrimary }, {
         finalState,
         request,
         workspace,

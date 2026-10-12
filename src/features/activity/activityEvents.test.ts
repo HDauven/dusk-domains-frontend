@@ -159,8 +159,13 @@ describe('activity actions', () => {
       'Returned from the market',
       'Listing cancelled',
       'Bid of 66 DUSK',
-      'Auction started · minimum bid 60 DUSK',
+      // Listing an auction starts nothing: the first bid starts its timer.
+      'Listed for auction · minimum bid 60 DUSK',
     ])
+    const [first] = activityActions([row('order_changed', { order: order('Auction', '60000000000', { highest: { payer: moonlight(buyerKey), manager: buyerAuthority, amount_lux: '60000000000' },
+      bid_count: 1, started_at: '165', end: '8805' }) }, { tx: 'tx-first-bid', height: 165 })])
+    expect(first).toMatchObject({ title: 'Bid of 60 DUSK', details: ['The first bid started the timer'] })
+    expect(actions[2].details).toEqual([])
   })
 
   it('reads renewals with the new expiry date when the chain height is known', () => {
@@ -182,7 +187,7 @@ describe('activity actions', () => {
     expect(moved.details).toEqual(['Records and primary name cleared'])
     const manager = row('authorities_changed', { name: name({ manager: buyerAuthority }), previous_owner: sellerAuthority, previous_manager: sellerAuthority,
       actor: sellerAuthority, reason: 'Holder', data_cleared: false }, { tx: 'tx-manager' })
-    expect(activityActions([manager])[0].title).toBe(`Manager changed to Owner ID ${abbreviate(hex(buyerAuthority))}`)
+    expect(activityActions([manager])[0].title).toBe(`Manager changed to Account ID ${abbreviate(hex(buyerAuthority))}`)
   })
 
   it('reads subname creation, take-back and removal on the subname, and subname changes on its parent', () => {
@@ -190,7 +195,11 @@ describe('activity actions', () => {
     const subRef = { key: { root, node: subRoot }, incarnation: { generation: '1', serial: '3' } }
     const created = row('subname_created', { name: { ...name({ owner: sellerAuthority, manager: buyerAuthority }), ...subRef, label: 'maya',
       subname: { parent: root, depth: 1, expiry_policy: 'InheritsParent', created_at: '461' } }, actor: sellerAuthority }, { tx: 'tx-create', height: 461, at: hex(subRoot) })
-    expect(activityActions([created])[0].title).toBe(`Created and given to Owner ID ${abbreviate(hex(buyerAuthority))}`)
+    // The creator stays its owner, so the subname was not given away: another account manages it.
+    expect(activityActions([created])[0].title).toBe(`Created, managed by Account ID ${abbreviate(hex(buyerAuthority))}`)
+    const given = row('subname_created', { name: { ...name({ owner: buyerAuthority, manager: buyerAuthority }), ...subRef, label: 'maya',
+      subname: { parent: root, depth: 1, expiry_policy: 'InheritsParent', created_at: '461' } }, actor: sellerAuthority }, { tx: 'tx-give', height: 461, at: hex(subRoot) })
+    expect(activityActions([given])[0].title).toBe(`Created and given to Account ID ${abbreviate(hex(buyerAuthority))}`)
     const takeBack = row('authorities_changed', { name: { ...name(), ...subRef }, previous_owner: sellerAuthority, previous_manager: buyerAuthority,
       actor: sellerAuthority, reason: 'TakeBack', data_cleared: true }, { tx: 'tx-take', height: 470, at: hex(subRoot) })
     expect(activityActions([takeBack], { label: activityPartyLabel(hex(sellerAuthority)) })[0]).toMatchObject({ title: 'Taken back by you', details: ['Records and primary name cleared'] })
@@ -335,7 +344,7 @@ describe('records, subnames and who acted', () => {
     const transfer = row('authorities_changed', { name: name({ owner: buyerAuthority, manager: buyerAuthority }), previous_owner: sellerAuthority,
       previous_manager: sellerAuthority, actor: sellerAuthority, reason: 'Holder', data_cleared: false }, { tx: 'tx-transfer', height: 130 })
     const [moved, edited] = activityActions([transfer, ...addWebsite()], { holders: { owner: hex(buyerAuthority), manager: hex(buyerAuthority) } })
-    expect(moved.title).toBe(`Transferred to Owner ID ${abbreviate(hex(buyerAuthority))}`)
+    expect(moved.title).toBe(`Transferred to Account ID ${abbreviate(hex(buyerAuthority))}`)
     expect(edited.actor).toEqual(seller)
     // A change after the manager changed has two possible signers.
     const manager = row('authorities_changed', { name: name({ manager: buyerAuthority }), previous_owner: sellerAuthority, previous_manager: sellerAuthority,

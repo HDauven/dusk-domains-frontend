@@ -21,7 +21,8 @@ let client: DuskDomainsIndexerClient | null
 
 function useWorkspace() {
   const search = useSearchAppState('account')
-  const registration = useRegistrationAppState()
+  // The connected wallet owns the reservations these tests open.
+  const registration = useRegistrationAppState('', 'wallet')
   const domain = useDomainManagementAppState('resolver', client, null)
   const displayName = search.apiSearchResult?.canonical ?? search.query
   const records = useDomainRecordState({ displayName, nodeHex: safeNamehashHex(displayName), editableRecordKeys })
@@ -99,7 +100,8 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
   expect(model.search).toMatchObject({ query: 'beta.dusk', mainView: 'treasury', checked: false, resultView: 'overview', apiSearchResult: null,
     currentBlockHeight: 123, nowSeconds: 456, indexerError: '', indexerConfirmation: '' })
   expect(model.registration).toMatchObject({ duration: 4, strandedCommitment: stranded, committed: false, preparedCommit: null,
-    registerSetsPrimary: true, registrationStep: 'review', registrationCompletion: null })
+    // A new search forgets the primary choice; the next claim follows the wallet's primary name again.
+    registerSetsPrimary: null, registrationStep: 'review', registrationCompletion: null })
   expect(model.domain).toMatchObject({ managedName: createManagedNameState('resolver'), managementError: '', recordError: '',
     primaryName: null, connectedPrimaryName: null, primaryEndpointValue: '', renewalYears: 1, subnames: [],
     subnameLabel: '', subnameManager: '', subnameExpiryPolicy: 'inherits_parent', subnameExpiryDate: '' })
@@ -122,7 +124,7 @@ it.each([true, false])('restores saved reservation primary choice %s and its bou
   expect(model.registration).toMatchObject({ registrationStep: 'purchase', committed: true, duration: maxDurationYears, registerSetsPrimary: primary,
     preparedCommit: { controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0', commitment: 'commit', secret: 'secret', committedBlockHeight: null, committedTxId: null } })
   await act(async () => model.runtime.handleSearchHome())
-  expect(model.registration).toMatchObject({ committed: false, preparedCommit: null, registerSetsPrimary: true })
+  expect(model.registration).toMatchObject({ committed: false, preparedCommit: null, registerSetsPrimary: null })
   expect(readReservationPrimaryChoice(reservation)).toBe(primary)
 })
 

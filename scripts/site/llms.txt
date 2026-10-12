@@ -5,7 +5,7 @@
 - A root name has 3 to 63 characters: lowercase letters, digits and hyphens. It is registered for 1 to 10 years at a time, and its yearly price depends on its length.
 - Registration takes two transactions: a commitment that hides the name, then a reveal a short time later.
 - After a name expires, its owner or anyone else can renew it for 30 days. On this site, a name's owner or manager can renew it, and a listed name only after it leaves the market. After those 30 days anyone can register it; for the 21 days after that, it may carry a premium that halves every day.
-- Records are public: a Dusk address, a shielded payment endpoint, addresses on other chains (Bitcoin, Ethereum, Solana, EVM), a Dusk contract, a website, an avatar, a content pointer and a description.
+- Records are public: a Dusk address, a shielded payment endpoint, addresses on other chains (Bitcoin, Ethereum, Solana, EVM), a Dusk contract, a website, an avatar, a content pointer, a description, and links to X, Discord, GitHub and one other site.
 - A primary name is the name an address chooses to be shown as. It counts only while the name's Dusk address record points back to that address.
 - Subnames, such as pay.alice.dusk, are created by the parent's owner or manager. The owner or manager of any name above a subname can reassign or take it back, and a subname expires with its parent or earlier.
 - The market sells names at a fixed price or by auction and takes offers. A listed name is held in escrow.

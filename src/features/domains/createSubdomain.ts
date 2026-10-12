@@ -53,7 +53,8 @@ export async function createSubdomain({
     const requestedExpiresAt = subnameExpiryPolicy === 'fixed_before_parent'
       ? blockHeightFromDateInput(subnameExpiryDate, currentBlockHeight, nowSeconds)
       : null
-    const manager = subnameManager.trim() ? contractPrincipalInput(subnameManager.trim(), 'Subname manager') : selectedAuthority
+    const managerInput = subnameManager.trim()
+    const manager = managerInput ? contractPrincipalInput(managerInput, 'Subname manager') : selectedAuthority
     const subname = createSubnameState({
       parentName: displayName,
       label: subnameLabel,
@@ -75,6 +76,8 @@ export async function createSubdomain({
       expiresAt: subname.expiresAt,
       expiryPolicy: subname.expiryPolicy,
     })
+    // The wallet details name the addresses entered here, checked against the authorities they sign.
+    if (managerInput && manager !== selectedAuthority) call.reviewedAuthorities = { owner: { address: selectedAddress }, manager: { address: managerInput } }
     const finalState = await submitNameWrite(displayName, call, {
       workspace,
       contracts: runtimeConfig.contracts,

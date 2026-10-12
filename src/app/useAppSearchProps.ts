@@ -9,6 +9,8 @@ import type { AppViewModelInputs } from './appViewTypes'
 import { isMarketplaceEscrow } from './managedNameState'
 import { useNameListing } from '../features/marketplace/useNameListing'
 import { nameListingOffer } from '../features/marketplace/nameListing'
+import { loadSubnameActivity, useSubnameActivity } from '../features/activity/subnameActivity'
+import { pricingRules } from '../features/search/pricingRules'
 
 type UseAppSearchPropsArgs =
   & AppViewModelInputs
@@ -80,6 +82,9 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
   const heldByMarket = result.status === 'registered' && managedName.node === nodeHex
     && Boolean(managedName.inMarketplaceEscrow ?? isMarketplaceEscrow(managedName, configuredMarket))
   const listing = useNameListing({ indexerClient: appRuntime.indexerClient, node: heldByMarket ? nodeHex : '', escrowed: heldByMarket })
+  // What a subname change on this name was, and who made it, is only in the subname's own activity.
+  const subnameActivity = useSubnameActivity(appRuntime.indexerClient, nodeHex, activityEntries, subnames)
+  const indexerClient = appRuntime.indexerClient
 
   return useSearchWorkspaceFeature({
     heldByMarket,
@@ -88,10 +93,14 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     referralAddress: appRuntime.runtimeConfig.capabilities.referralAttribution && walletRuntime.walletSetupState === 'connected'
       ? walletRuntime.selectedAddress : '',
     premiumResult: result,
+    nameSupport: appRuntime.runtimeConfig.nameSupport,
     priceTiers: !economicsRuntime.feeConfigLoaded ? undefined : ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
+    pricingRules: economicsRuntime.feeConfigLoaded ? pricingRules(economicsRuntime.feeConfig) : undefined,
     hasMoreActivity: activityFeed.hasMoreActivity,
     onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),
     loadFullActivity: activityFeed.loadAllActivity,
+    subnameActivity,
+    loadSubnameActivity: indexerClient ? entries => loadSubnameActivity(indexerClient, entries, subnames, { full: true }) : undefined,
     explorerUrl: appRuntime.runtimeConfig.explorerUrl,
     marketplaceContractId: appRuntime.marketplaceContractId ?? appRuntime.runtimeConfig.contracts?.marketplace?.contractId ?? null,
     nowSeconds: searchState.nowSeconds,

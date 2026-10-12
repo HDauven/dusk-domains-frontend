@@ -203,6 +203,8 @@ export type IndexedSubname = {
   createdAt: string
   /** The serial it took from its root's counters when it was created; frozen indexers report it, older ones may not. */
   serial?: string
+  /** When the indexer observed its latest event. */
+  updatedAt?: string | null
   lastEventType: SubnameRegistryEvent['type']
   txId: string | null
   blockHeight: number | null

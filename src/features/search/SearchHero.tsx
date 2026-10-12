@@ -8,6 +8,7 @@ import type { ShowcaseName } from '../../app/useSkyNames'
 export function SearchHero({
   checked,
   priceTiers,
+  pricingRules,
   featuredNames = [],
   loading,
   onCheckAvailability,
@@ -16,6 +17,8 @@ export function SearchHero({
   query,
 }: {
   priceTiers?: { label: string; price: string }[]
+  /** Renewal, the ten-year limit and the dropped-name premium, each a sentence. */
+  pricingRules?: string[]
   checked: boolean
   featuredNames?: ShowcaseName[] | null
   loading: boolean
@@ -70,6 +73,10 @@ export function SearchHero({
       </form>
 
       {!checked && priceTiers ? <p className="search-prices">{priceTiers.map(tier => <span key={tier.label}>{tier.label}: {tier.price} DUSK / year</span>)}</p> : null}
+      {!checked && pricingRules?.length ? <details className="search-rules">
+        <summary>Renewals and expiry</summary>
+        <ul role="list">{pricingRules.map(rule => <li key={rule}>{rule}</li>)}</ul>
+      </details> : null}
 
       {featuredNames === null ? (
         // While names load, an invisible row holds their place, so nothing below moves.

@@ -24,6 +24,8 @@ export type ReferralsViewProps = {
     referralCopied: boolean
     referralLink: string
   }
+  /** How rewards work, each a sentence; rates only once read from the chain. */
+  rules?: string[]
   wallet: {
     onOpenWalletConnection: () => void
     selectedAddress: string
