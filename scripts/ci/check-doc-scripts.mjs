@@ -6,10 +6,15 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 // Standalone so other repositories can run this against their own package.json.
+const REPO_SELECTORS = new Set(['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY', 'GIT_PREFIX'])
+
 export function checkDocScripts(root = '.') {
   const { scripts = {} } = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
+  // Inspect the repository at root, not one selected by an inherited GIT_DIR/GIT_WORK_TREE.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !REPO_SELECTORS.has(key)))
   const files = execFileSync('git', ['ls-files', '-z', '--', '*.md', '*.mdx', '*.markdown'], {
     cwd: root,
+    env,
     encoding: 'utf8',
   }).split('\0').filter(Boolean)
   return files.flatMap((file) => {
