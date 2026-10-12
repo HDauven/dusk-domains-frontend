@@ -217,6 +217,14 @@ export type DuskDomainsIndexerHealth = {
   }
 }
 
+/** The indexer withholds registration prices: the selected policy's initialization is not verified. */
+export class RegistrationPricesUnavailableError extends Error {
+  constructor() {
+    super('Registration prices are unavailable right now.')
+    this.name = 'RegistrationPricesUnavailableError'
+  }
+}
+
 export function createDuskDomainsIndexerClient(
   options: DuskDomainsIndexerClientOptions,
 ): DuskDomainsIndexerClient {
@@ -561,6 +569,7 @@ export function createDuskDomainsIndexerClient(
   async function getFeeConfig() {
     const payload = await getJson(fetcher, endpointUrl(baseUrl, 'fee-config', {}))
 
+    if (isRecord(payload) && payload.registrationPricesUnavailable === true) throw new RegistrationPricesUnavailableError()
     if (!isIndexedFeeConfig(payload)) {
       throw new Error('Dusk Domains indexer returned an invalid fee config response.')
     }

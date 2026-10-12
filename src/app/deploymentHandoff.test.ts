@@ -175,3 +175,52 @@ it.each([
   if (outcome === 'refuses') await expect(loaded).rejects.toThrow('configured network and contracts')
   else expect((await loaded).contracts.filter((c) => c.role === 'store')).toHaveLength(2)
 })
+
+// After a governance SetPolicy, quotes read the newly selected policy. The site follows it only once the
+// operator republishes the manifest with that policy listed beside the old one (docs/deploy.md).
+const replacementPolicy = '0b'.repeat(32)
+it.each([
+  ['a manifest republished after the page loaded', true, true],
+  ['a manifest without the new policy', true, false],
+  ['configuration without a manifest', false, false],
+] as const)('follows a replacement policy from %s, and says plainly when it is missing', async (_, useManifest, republished) => {
+  vi.spyOn(FrozenClient.prototype, 'discover').mockResolvedValue({} as never)
+  let manifest = structuredClone(handoff)
+  const fetcher = vi.fn<(input: string | URL | Request, init?: RequestInit) => Promise<Response>>(async (input) => {
+    const url = new URL(String(input))
+    if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))
+    const role = roles.find((role) => url.pathname === `/releases/local/${handoff.artifacts[role].driver.path}`
+      || url.pathname === `/${handoff.artifacts[role].driver.path}`)
+    if (role) return new Response(handoffDriver(role as ContractRole) as BodyInit)
+    throw new Error(`Unexpected network request: ${url}`)
+  })
+  vi.stubGlobal('fetch', fetcher)
+  const runtimeConfig = createDuskDomainsRuntimeConfig({
+    ...handoffEnv,
+    VITE_DUSK_DOMAINS_INDEXER_URL: '/api',
+    ...(useManifest ? { VITE_DUSK_DOMAINS_MANIFEST_URL: '/releases/local/manifest.json' } : {}),
+  })
+  const { names } = createDuskDomainsLiveApp({
+    runtimeConfig,
+    wallet: { state: { chainId: 'dusk:0' } } as never,
+    session: { state: {} } as never,
+  })
+  const client = await names.client!
+  expect(client.release.contracts.has(replacementPolicy)).toBe(false)
+  if (republished) {
+    manifest = structuredClone(handoff)
+    manifest.contracts.push({ ...manifest.contracts.find((c: { key: string }) => c.key === 'policy'), id: replacementPolicy })
+  }
+  const verified = client.verifyContract('policy', replacementPolicy)
+  if (republished) {
+    // The reviewed policy driver loads for it; its interface read then goes to the node.
+    await expect(verified).rejects.toThrow('Unexpected network request: http://127.0.0.1:18184/')
+    expect(client.release.contracts.get(replacementPolicy)?.role).toBe('policy')
+  } else {
+    await expect(verified).rejects.toThrow('This site has not been updated for the new registration prices yet. Try again later.')
+  }
+  // The republished manifest is read again rather than from a cached copy.
+  const manifestReads = fetcher.mock.calls.filter(([input]) => new URL(String(input)).pathname.endsWith('/manifest.json'))
+  expect(manifestReads).toHaveLength(useManifest ? 2 : 0)
+  for (const [, init] of manifestReads) expect(init).toMatchObject({ cache: 'no-cache' })
+})

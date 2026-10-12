@@ -36,6 +36,7 @@ export function useEconomicsRuntime({
     feeConfigLoaded,
     feeConfigLoading,
     loadFeeConfig,
+    registrationPricesUnavailable,
   } = useFeeConfig(indexerClient)
 
   const {
@@ -100,6 +101,7 @@ export function useEconomicsRuntime({
     loadFeeConfig,
     loadTreasuryView,
     referralsProps,
+    registrationPricesUnavailable,
     resetReferralCopied,
     treasuryProps,
   }

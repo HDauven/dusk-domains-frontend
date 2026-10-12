@@ -19,6 +19,7 @@ import type { ReferralState } from '../referrals/referralState'
 import type { StrandedCommitment } from './pendingReservationTypes'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 import type { RegistrationStepId } from './registrationSteps'
+import type { RegistrationPriceReview } from './reservationQuote'
 import type { PreparedRegistrationCommit } from './usePendingReservations'
 import type { WalletPrimary } from './walletPrimary'
 
@@ -50,12 +51,16 @@ export type UseRegistrationActionsProps = {
   loadPendingReservations: () => void
   nodeHex: string
   preparedCommit: PreparedRegistrationCommit | null
+  /** A changed registration price waiting to be confirmed for this reservation. */
+  priceChange: RegistrationPriceReview | null
   recordSourceContractId: string
   refreshCommitBlockState: (commitment: string) => Promise<boolean>
   /** The person's own primary-name choice, saved with the reservation. Null when they made none. */
   primaryChoice: boolean | null
   /** Reads the connected wallet's primary name again, for the reveal. */
   readWalletPrimary: () => Promise<WalletPrimary>
+  /** Quotes the claim again, so the price it shows follows a policy change. */
+  refreshQuotes: () => void
   registrationTargetAddress: string
   registrationTargetAddressErrors: string[]
   registrationTargetReady: boolean
@@ -71,6 +76,7 @@ export type UseRegistrationActionsProps = {
   setManagedName: Dispatch<SetStateAction<ManagedNameState>>
   setNowSeconds: Dispatch<SetStateAction<number>>
   setPreparedCommit: Dispatch<SetStateAction<PreparedRegistrationCommit | null>>
+  setPriceChange: Dispatch<SetStateAction<RegistrationPriceReview | null>>
   setPrimaryEndpointValue: Dispatch<SetStateAction<string>>
   setConnectedPrimaryName: Dispatch<SetStateAction<string | null>>
   setPrimaryName: Dispatch<SetStateAction<string | null>>

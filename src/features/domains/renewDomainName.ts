@@ -5,7 +5,7 @@ import {
 } from './domainFormat'
 import {
   storeRenewRequest,
-  registrationFeeLux,
+  renewalFeeLux,
   renewRegistrationLifecycle,
   userFacingErrorMessage,
 } from '../../names/internal'
@@ -58,7 +58,12 @@ export async function renewDomainName({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('renew this name', setRenewalError)) return
-  const feeLux = renewalQuote ? safeNumber(renewalQuote.total_lux) : registrationFeeLux(resultLabel, renewalYears, feeConfig)
+  // The renewal schedule prices renewals; a registration price, which a policy replacement changes, never does.
+  const feeLux = renewalQuote ? safeNumber(renewalQuote.total_lux) : renewalFeeLux(resultLabel, renewalYears, feeConfig ?? {})
+  if (feeLux === null) {
+    setRenewalError('The renewal price is unavailable right now. Try again in a moment.')
+    return
+  }
   if (!(await ensurePublicBalanceForLiveWrite(
     'renewing this name',
     message => { if (workspace()) setRenewalError(message) },

@@ -7,6 +7,7 @@ import type { DuskDomainTxState } from '../names/internal'
 import type { RegistrationCompletionState } from '../features/registration/registrationCompletionState'
 import type { RegistrationStepId } from '../features/registration/registrationSteps'
 import type { StrandedCommitment } from '../features/registration/pendingReservationTypes'
+import type { RegistrationPriceReview } from '../features/registration/reservationQuote'
 import type { PreparedRegistrationCommit } from '../features/registration/usePendingReservations'
 
 /** `address` is the connected wallet's address, which a primary-name choice belongs to. */
@@ -27,6 +28,8 @@ export function useRegistrationAppState(sessionKey = '', address = '') {
   const [registrationCompletion, setRegistrationCompletion] = useScopedState<RegistrationCompletionState | null>(sessionKey, null)
   // Register was pressed on a saved reservation: sign the reveal once this claim is ready.
   const [registerIntent, setRegisterIntent] = useScopedState<{ commitment: string, requestedAt: number } | null>(sessionKey, null)
+  // The registration price changed since it was shown or reserved; Register waits for the new one.
+  const [priceChange, setPriceChange] = useScopedState<RegistrationPriceReview | null>(sessionKey, null)
   // A saved commitment the reveal would not find on chain; see revealCommitmentMissing.
   const [strandedCommitment, setStrandedCommitment] = useState<StrandedCommitment | null>(null)
 
@@ -41,6 +44,7 @@ export function useRegistrationAppState(sessionKey = '', address = '') {
         setCommitTxState(null)
         setRegistrationCompletion(null)
         setRegisterIntent(null)
+        setPriceChange(null)
       },
       review: () => setRegistrationStep('review'),
       resume: (reservation: PendingNameReservation, options: { register?: boolean } = {}) => {
@@ -52,6 +56,7 @@ export function useRegistrationAppState(sessionKey = '', address = '') {
         setRegistrationStep('purchase')
         setCommitted(true)
         setRegisterIntent(options.register ? { commitment: reservation.commitment, requestedAt: Date.now() } : null)
+        setPriceChange(null)
         // The reveal goes to the store that took the commitment, saved with the reservation.
         setPreparedCommit({
           directory: reservation.directory,
@@ -69,6 +74,7 @@ export function useRegistrationAppState(sessionKey = '', address = '') {
         setCommitted(false)
         setPreparedCommit(null)
         setRegistrationCompletion(null)
+        setPriceChange(null)
       },
       updateCommit: (commit: PreparedRegistrationCommit) => setPreparedCommit(current => current?.commitment === commit.commitment
         && current.controller === commit.controller && current.ownerAddress === commit.ownerAddress && current.chainId === commit.chainId ? commit : current),
@@ -77,6 +83,7 @@ export function useRegistrationAppState(sessionKey = '', address = '') {
     committed,
     duration,
     preparedCommit,
+    priceChange,
     registerIntent,
     registerSetsPrimary,
     registrationCompletion,
@@ -85,6 +92,7 @@ export function useRegistrationAppState(sessionKey = '', address = '') {
     setCommitted,
     setDuration,
     setPreparedCommit,
+    setPriceChange,
     setRegisterIntent,
     setRegisterSetsPrimary,
     setRegistrationCompletion,

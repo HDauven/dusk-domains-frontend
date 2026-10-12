@@ -62,7 +62,7 @@ export function RenewalPanel({ managedName, renewal, clock }: RenewalPanelProps)
 
           <div className="renewal-summary">
             <span>New expiry <strong>{formatLifecycleDay(renewalPreviewExpiresAt, currentBlockHeight, nowSeconds)}</strong></span>
-            <span>Price <strong>{formatDusk(renewalFee)} DUSK</strong></span>
+            <span>Price <strong>{renewalFee === null ? '…' : `${formatDusk(renewalFee)} DUSK`}</strong></span>
             <Button variant="primary"
               className="compact"
               disabled={!canRenewName} loading={renewalBusy}

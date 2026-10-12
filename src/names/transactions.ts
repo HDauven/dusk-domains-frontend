@@ -33,6 +33,8 @@ export type DuskDomainTxState = {
   txId?: string
   message?: string
   result?: unknown
+  /** Why preparation failed, such as a registration price change, for callers that offer a next step. */
+  error?: unknown
   blockHeight?: number
 }
 export type SubmitDuskDomainWriteOptions = {
@@ -110,6 +112,7 @@ export async function submitDuskDomainWrite(
       context,
       call,
       message: errorMessage(error),
+      error,
     }
     options.onUpdate?.(state)
     return state

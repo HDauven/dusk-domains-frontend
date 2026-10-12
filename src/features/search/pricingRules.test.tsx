@@ -3,6 +3,7 @@ import { expect, it, vi } from 'vitest'
 import { DEFAULT_FEE_CONFIG, type CoreFeeConfig } from '../../names/internal'
 import { frozenView } from '../../names/http/frozenViews'
 import { feeConfigValuesMatch } from '../treasury/feeConfig'
+import * as pricing from './pricingRules'
 import { pricingRules } from './pricingRules'
 import { SearchHero } from './SearchHero'
 
@@ -40,4 +41,20 @@ it('offers the rules beside the price list before anyone searches or connects', 
   expect(hero(false)).toContain('<ul role="list">')
   expect(hero(false)).toContain('A name can be paid for up to 10 years ahead.')
   expect(hero(true)).not.toContain('Renewals and expiry')
+})
+
+// A replacement policy can raise the minimum name length; the price list then starts there.
+it.each([
+  [undefined, ['3 characters: 150', '4 characters: 50', '5+ characters: 10']],
+  [4, ['4 characters: 50', '5+ characters: 10']],
+  [6, ['6+ characters: 10']],
+])('lists yearly prices only for lengths the policy accepts (minimum %s)', (minimumRootBytes, tiers) => {
+  expect(pricing.priceTiers?.({ ...launch, minimumRootBytes }).map(tier => `${tier.label}: ${tier.price}`)).toEqual(tiers)
+})
+
+it('reads the selected policy’s minimum name length from the indexer', () => {
+  const view = frozenView({ ...DEFAULT_FEE_CONFIG, threeCharYearLux: '150000000000', fourCharYearLux: '50000000000', fivePlusYearLux: '10000000000',
+    premiumStartLux: '1000000000000000', policy: { version: '5', config: { minimum_root_bytes: 4, base_referral_bps: 2000, premium_referral_bps: 0 } },
+    renewalSchedule: null }, '/fee-config') as CoreFeeConfig
+  expect(view).toMatchObject({ version: 5, minimumRootBytes: 4 })
 })

@@ -23,7 +23,8 @@ to SDK `contractId`/`dataDriver` entries. It validates the configured chain and 
 ID, and the SDK verifies driver hashes and schemas before using them. SDK-format manifests
 are also accepted for reviewed releases containing multiple admitted implementations.
 The manifest must list every admitted store/resolver/market implementation the client
-may follow. Publish its reviewed update before enabling a shard destination; SDK reads
+may follow, and the policy a `SetPolicy` proposal selects ([Registration price changes](#registration-price-changes)).
+Publish its reviewed update before enabling a shard destination; SDK reads
 verify admission, binding, driver checksum and monotone forwarding. New name actions resolve
 the current home; saved reservations retain their original commitment store. Existing marketplace
 orders retain their marketplace, order ID and original store, including cancellation, expiry and returns.
@@ -103,8 +104,31 @@ This atomically exchanges the current release with the newest previous release,
 retains the displaced release as a new backup, and verifies the restored commit
 using its manifest. It does not rebuild or need the original env file.
 
+## Registration price changes
+
+Registration prices change through a new immutable policy contract, which a delayed directory
+`SetPolicy` proposal selects. Renewal prices follow the directory's renewal schedule instead and
+need no site update. Before the proposal executes, publish the reviewed manifest with the new
+policy listed beside the old one: add `{"key":"policy","id":"<new policy ID>","codeHash":"<its code hash>"}`
+to the handoff's `contracts` (SDK-format manifests take a second `policy` entry). It must use the
+reviewed policy driver pinned by `VITE_DUSK_DOMAINS_POLICY_DRIVER_URL`; a new driver needs a rebuild
+with new pins. Keep the configured policy's entry. The app reads the manifest again, revalidating
+any cached copy, when the chain selects a contract the loaded release lacks.
+
+Without that entry, once the proposal executes, pages loaded afterwards can't start wallet
+transactions and open pages can't quote or register; both say the site has not been updated for
+the new registration prices yet. A site configured without `VITE_DUSK_DOMAINS_MANIFEST_URL` can't
+list both policies: redeploy it with the new `VITE_DUSK_DOMAINS_POLICY_CONTRACT_ID` as the proposal
+executes, or give it a manifest URL.
+
+Reservations made under the old policy stay valid. Register shows the old and new price and
+registers the same reservation once the new price is confirmed. A registration the chain refuses
+because its price changed returns the payment; only the network fee is charged. The site reads the
+indexer's prices again every three minutes. While the indexer withholds a new policy it can't
+verify, the site shows no registration prices and registration stays paused.
+
 ## SDK dependency
 
-The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.3.1`,
+The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.3.2`,
 through the `@jsr` registry mapping in `.npmrc`. It never imports the removed
 `/internal` or `/writes` entry points. UI presentation helpers live in `src/names/ui`.

@@ -89,6 +89,8 @@ export async function checkOpenRenewal(page) {
               renewalFee: 10,
               renewalPreviewExpiresAt: 3_153_800,
               onRenewName: () => renewDomainName({ ...capabilities, managedName, displayName: 'alice.dusk', nodeHex: 'node',
+                // Without a live quote, the directory's renewal schedule prices the renewal.
+                feeConfig: { renewalYearLux: { threeChar: 150_000_000_000, fourChar: 50_000_000_000, fivePlus: 10_000_000_000 } },
                 selectedAuthority, resultLabel: 'alice', renewalYears: 1, currentBlockHeight: 250, nowSeconds: 1_790_000_000,
                 walletSetupState: 'connected', runtimeConfig: { contracts: {} }, setRenewalError: message => { window.renewalError = message },
                 setManagedName, appendActivity: event => { window.renewalActivity = event },

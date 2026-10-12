@@ -13,8 +13,10 @@ export function userFacingMessageFromText(
   if (!trimmed) return ''
   if (trimmed.startsWith('Insufficient public DUSK for ')) return trimmed
   const frozenMessages: Record<string, string> = {
-    QuoteChanged: 'The price or policy changed. Refresh and review the latest price.',
-    FeeMismatch: 'The fee changed. Refresh and review the latest price.',
+    // These codes also refuse read-only quotes, before any wallet request, so this copy never
+    // says a payment was returned. Registration says so only after a confirmed failed transaction.
+    QuoteChanged: 'The registration price changed. Review the new price and try again.',
+    FeeMismatch: 'The price changed. Review the new price and try again.',
     Stale: 'This name or order changed. Refresh and review it again.',
     WrongHome: 'The name moved to another shard. Refresh and try again.',
     Moved: 'The name moved to another shard. Refresh and try again.',
@@ -30,6 +32,9 @@ export function userFacingMessageFromText(
   for (const [code, text] of Object.entries(frozenMessages)) {
     if (new RegExp(`\\b${code}\\b`).test(trimmed)) return text
   }
+  // The SDK refuses a reveal from a quote that is closed or whose label is no longer public.
+  if (/Quote is not open for public registration/.test(trimmed))
+    return 'This name can’t be registered under the current registration rules.'
   if (/Reservation storage|Quota exceeded/.test(trimmed))
     return 'Cannot save the reservation. Enable browser storage and try again.'
   if (/^(ambiguous_principal|invalid_account|empty)$/.test(trimmed))

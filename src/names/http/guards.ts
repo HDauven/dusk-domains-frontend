@@ -28,9 +28,8 @@ export function isNameResult(value: unknown): value is NameResult {
     typeof value.displayName === 'string' &&
     typeof value.label === 'string' &&
     isNameStatus(value.status) &&
-    typeof value.price === 'number' &&
-    Number.isFinite(value.price) &&
-    value.price >= 0 &&
+    // Null while the indexer withholds the prices of a selected policy it has not verified.
+    (value.price === null || (typeof value.price === 'number' && Number.isFinite(value.price) && value.price >= 0)) &&
     Array.isArray(value.issues) &&
     value.issues.every(isSearchIssue) &&
     typeof value.transactionBlocked === 'boolean'

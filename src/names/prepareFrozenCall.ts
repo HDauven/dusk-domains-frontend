@@ -5,6 +5,7 @@ import { endpointBytes, local, requireName } from './reads'
 import { createDuskDomainsIndexerClient } from './http/client'
 import { namehashHex } from './hash'
 import { prepareRecordMutations } from './recordMutations'
+import { RegistrationPriceChangedError, registrationPolicyChanged, registrationQuoteBindingsDiffer } from './registrationQuote'
 import { walletExpiry, walletSaleAmounts, withWalletDetails, type WalletCallDetails } from './walletCallDetails'
 import type { WalletFrozenCall } from './transactions'
 const bytes = (v: string) => sdk.fromHex(v, 32)
@@ -64,6 +65,7 @@ export async function prepareFrozenCall(
     if (!pending) throw new Error('Reservation is missing or expired. Reserve this name again.')
     if (sdk.registrationCommitWindow(pending.created_at, height).status !== 'ready')
       throw new Error('Reservation is outside the reveal window')
+    // A fresh quote under the policy the directory selects now, for the same reservation.
     const priced = await client.prepareRegistration({
       actor,
       label: a.label,
@@ -75,17 +77,21 @@ export async function prepareFrozenCall(
       records: a.records.map((r) => sdk.createRecordInput(r.key, r.value, BigInt(r.ttlSeconds))),
       primary: a.primaryEndpoint ? endpointBytes(a.primaryEndpoint.endpointValue) : null,
     })
-    if (BigInt(priced.quote.total_lux) !== BigInt(a.feeLux)) throw changed()
-    if (request.quote && sdk.stringifyJson(request.quote) !== sdk.stringifyJson(priced.quote)) {
-      // The observation height may change; economic and policy bindings must not.
-      if (
-        request.quote.total_lux !== priced.quote.total_lux ||
-        request.quote.policy_version !== priced.quote.policy_version ||
-        request.quote.quote.config_version !== priced.quote.quote.config_version ||
-        sdk.hex(request.quote.policy) !== sdk.hex(priced.quote.policy)
-      )
-        throw changed()
-    }
+    // A policy replacement keeps the reservation but not its price. Sign only the price that was
+    // shown and, if the reservation was priced under another policy, only once the new one is confirmed.
+    // The observation height may change; economic and policy bindings must not.
+    const reserved = request.reservedQuote?.years === a.durationYears ? request.reservedQuote : undefined
+    const sinceReservation = Boolean(reserved && registrationPolicyChanged(reserved, priced.quote))
+    if (
+      sinceReservation ||
+      BigInt(priced.quote.total_lux) !== BigInt(a.feeLux) ||
+      (request.quote && registrationQuoteBindingsDiffer(request.quote, priced.quote))
+    )
+      throw new RegistrationPriceChangedError({
+        previousTotalLux: sinceReservation ? reserved!.totalLux : String(a.feeLux),
+        sinceReservation,
+        quote: priced.quote,
+      })
     const call = priced.calls.reveal
     return describe(call, `Register ${spelling} for ${years(a.durationYears)}: ${money(call.deposit)}`, {
       Duration: years(a.durationYears), Price: money(call.deposit),

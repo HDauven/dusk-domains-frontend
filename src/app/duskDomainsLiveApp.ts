@@ -1,4 +1,4 @@
-import { createClientFromManifest, contractId, WriteBalanceError } from '@duskdomains/sdk'
+import { createClientFromManifest, contractId, WriteBalanceError, type ContractRole } from '@duskdomains/sdk'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import type { DuskWallet } from '@dusk/connect'
 import { createSessionWriteWallet } from '../features/wallet/sessionWriteWallet'
@@ -12,6 +12,25 @@ import {
   type DuskConnectAppLike,
   type DuskDomainsRuntimeConfig,
 } from '../names/internal'
+const unlistedRoles: Partial<Record<ContractRole, string>> = {
+  policy: 'the new registration prices',
+  store: 'a new Dusk Domains shard',
+  resolver: 'a new Dusk Domains record shard',
+  marketplace: 'the new marketplace',
+}
+
+/** The chain uses a contract this site's deployment manifest does not list yet. */
+export class UnlistedContractError extends Error {
+  readonly role: ContractRole
+  readonly contractId: string
+  constructor(role: ContractRole, contractId: string) {
+    super(`This site has not been updated for ${unlistedRoles[role] ?? 'this Dusk Domains deployment'} yet. Try again later.`)
+    this.name = 'UnlistedContractError'
+    this.role = role
+    this.contractId = contractId
+  }
+}
+
 export function canUseLiveDuskDomainsWrites(config: DuskDomainsRuntimeConfig): boolean {
   return (
     config.liveWritesEnabled &&
@@ -37,13 +56,13 @@ export function createDuskDomainsLiveApp(options: {
           artifactBaseUrl: origin + '/',
           nodeUrl: config.nodeUrl,
           indexerUrl: new URL(config.indexerUrl!, origin).href,
+          // A contract admitted after this release, such as the policy a SetPolicy proposal selects,
+          // loads only once the operator republishes the reviewed manifest listing it (docs/deploy.md).
           resolveContract: async (role, id) => {
-            if (!config.manifestUrl)
-              throw new Error('This shard requires the updated deployment manifest.')
+            if (!config.manifestUrl) throw new UnlistedContractError(role, id)
             const manifest = await configuredReleaseManifest(config, origin)
             const artifact = manifest.contracts.find((c) => c.contractId === id)
-            if (!artifact || artifact.role !== role)
-              throw new Error('The deployment manifest does not include this admitted contract.')
+            if (!artifact || artifact.role !== role) throw new UnlistedContractError(role, id)
             return artifact
           },
         }),

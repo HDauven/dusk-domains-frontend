@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Follow a registration policy replacement without a reload: read the indexer's prices again every three minutes, and quote names again then and whenever the policy version changes.
+- Keep the price a reservation was made at with it. When a policy replacement changed the price, before signing or when the chain refuses the registration with QuoteChanged or FeeMismatch (also when the wallet's receipt carries that refusal as bytes), Register names the old and new price, says the reservation is still valid and, only after the chain refused the signed transaction, that the payment was returned. A quote that finds the price changed before any wallet request says only that the price changed. Register at the new price registers the same reservation, with no new commitment, and keeps that price for the next try. A name the new policy reserves or closes says so.
+- Estimate renewals from the renewal schedule, never from registration prices, and show no renewal price when neither a quote nor the schedule is known.
+- Keep search working while the indexer withholds a new policy it can't verify: show no registration prices and say why an available name can't be claimed. Say so plainly too when this site's manifest doesn't list the new policy yet, and revalidate the manifest whenever it is read again.
+
 - Say on every subname's page, to its holders and to visitors, that the owner or manager of a name above can take it back, give it to another wallet or remove it, and that its holder can't prevent this. Show a name's manager beside its owner, show holders by Dusk address where the names above or a registration prove it, and explain an account ID with no matching address.
 - Show the full manager address in a review step before creating a subname for another manager, and name the new owner and manager in the wallet details. A take-back's wallet details show the signer's address.
 - Name the subname, the action and, where the data proves it, who made it for subname changes in a parent's activity, Recent list and CSV, read from each subname's own activity. A count or a single subname is given only when every subname that could have changed was read and none can have left the namespace since. The CSV shows an account by its Dusk address when one is known.

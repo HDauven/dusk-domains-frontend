@@ -1,4 +1,5 @@
 import { clearReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { clearReservationQuote } from './reservationQuote'
 import {
   markRegistrationCompletionExecuted,
   markRegistrationCompletionFailed,
@@ -70,6 +71,7 @@ export async function applyCompleteRegistrationSuccess(
       commitment: preparedCommit.commitment,
     })
     clearReservationPrimaryChoice({ chainId: runtimeConfig.chainId, commitment: preparedCommit.commitment })
+    clearReservationQuote({ chainId: runtimeConfig.chainId, commitment: preparedCommit.commitment })
     loadPendingReservations()
   }
   if (!applyLocally) return

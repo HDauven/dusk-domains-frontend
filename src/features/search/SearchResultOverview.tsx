@@ -14,7 +14,7 @@ import {
 import { maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { TermPicker } from '../../components/ui/TermPicker'
 import { formatDusk, pluralize } from '../../utils/format'
-import { overviewCopyForIssues } from '../domains/domainFormat'
+import { isSubname, overviewCopyForIssues } from '../domains/domainFormat'
 import type { ReservationWindow } from './overviewTypes'
 import type { NameListingOffer } from '../marketplace/nameListing'
 import { followLink, navigateTo, routePath } from '../../app/routes'
@@ -22,9 +22,11 @@ import { followLink, navigateTo, routePath } from '../../app/routes'
 
 // The result for a name nobody holds: a claim card with the term, the price and one action.
 // A saved reservation or a name that cannot be claimed replaces it with the right next step.
-export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, listing = null, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
+export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, blockedReason = '', listing = null, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
   readOnly?: boolean
   registrationUnavailable?: boolean
+  /** Why an available name can't be claimed now, such as prices this site can't read yet. */
+  blockedReason?: string
   /** A taken name's price and market link, while it is listed. */
   listing?: NameListingOffer | null
   canRegister: boolean
@@ -94,7 +96,9 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
       <Panel className="claim-card blocked" aria-labelledby="overview-heading">
         <div className="claim-main">
           <h2 id="overview-heading">{resultStatus === 'registered' ? 'This name is taken' : 'This name can’t be claimed'}</h2>
-          {listing ? <p className="claim-listing"><strong>{listing.text}</strong></p> : <p>{overviewCopyForIssues(resultStatus, resultIssues)}</p>}
+          {listing ? <p className="claim-listing"><strong>{listing.text}</strong></p> : <p>{resultStatus === 'available' && (blockedReason || registrationUnavailable) && !isSubname(displayName)
+            ? blockedReason || 'Registration is paused right now. Try again later.'
+            : overviewCopyForIssues(resultStatus, resultIssues)}</p>}
           {resultStatus === 'registered' && onSuggestion ? <div className="name-suggestions"><p>Try another name</p>{suggestedNames(displayName).map(name => <Button key={name} onClick={() => onSuggestion(name)}>{name}</Button>)}</div> : null}
         </div>
         {resultStatus === 'registered' ? (

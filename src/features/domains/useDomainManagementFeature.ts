@@ -204,7 +204,8 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       },
       renewal: {
         canRenewName: derivedState.canRenewName && (!appRuntime.duskDomainsOnChainClient || Boolean(namePreview.renewalQuote)),
-        feeConfigError: namePreview.quoteError || economicsRuntime.feeConfigError,
+        // Renewals follow the renewal schedule, so withheld registration prices don't concern them.
+        feeConfigError: namePreview.quoteError || (economicsRuntime.registrationPricesUnavailable ? '' : economicsRuntime.feeConfigError),
         feeConfigLoading: namePreview.quoteLoading || economicsRuntime.feeConfigLoading,
         maxDurationYears: maxDurationYears,
         minDurationYears: minDurationYears,

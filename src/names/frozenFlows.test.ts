@@ -37,10 +37,10 @@ const id = (n: number) => n.toString(16).padStart(2, '0').repeat(32),
 const encode = (v: unknown) => new TextEncoder().encode(sdk.stringifyJson(v)),
   decode = (v: Uint8Array) => sdk.parseJson(new TextDecoder().decode(v))
 // Model the store's policy reply using the SDK's published pricing curve.
-function quotedPolicy(request: sdk.QuoteRequest) {
-  const { estimate, total_lux, ...quote } = sdk.estimateRegistrationQuote(sdk.launchPolicyConfig(), request)
+function quotedPolicy(request: sdk.QuoteRequest, config = sdk.launchPolicyConfig(), policy = bytes(2)) {
+  const { estimate, total_lux, ...quote } = sdk.estimateRegistrationQuote(config, request)
   expect(estimate).toBe(true)
-  return { height: request.height, policy: bytes(2), policy_version: request.policy_version, total_lux, quote }
+  return { height: request.height, policy, policy_version: request.policy_version, total_lux, quote }
 }
 const realDrivers = await handoffDrivers()
 const node = namehashHex('example.dusk')
@@ -104,7 +104,8 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
   name.active = !released
   name.counters!.generation = 7n
   name.counters!.next_custody = 8n
-  const policy = sdk.launchPolicyConfig()
+  // The selected policy's config; replacePolicy selects another, as a SetPolicy proposal does.
+  let policy = sdk.launchPolicyConfig()
   const quote = sample('RegistrationQuote')
   quote.policy = bytes(2)
   quote.quote.base_lux = '10000000000'
@@ -189,7 +190,7 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
           previous_grace_end: unseen ? null : name.name.grace_end,
           policy_version: directory.registration.policy_version,
         }
-        const estimated = quotedPolicy(quoteRequest)
+        const estimated = quotedPolicy(quoteRequest, policy, directory.registration.policy)
         if (policyQuotes) return encode(estimated)
         return encode({
           ...quote, height,
@@ -218,6 +219,15 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     admissions,
     setHeight: (n: bigint) => {
       height = n
+    },
+    // Governance deploys an immutable policy with the reviewed policy driver and selects it.
+    replacePolicy: (n: number, config: sdk.PolicyConfig) => {
+      const contractId = id(n)
+      release.contracts.set(contractId, { role: 'policy', contractId, dataDriver: { path: '/policy.wasm', sha256: '00'.repeat(32) } })
+      drivers.set(contractId, drivers.get(id(2))!)
+      directory.registration.policy = bytes(n)
+      directory.registration.policy_version += 1n
+      policy = config
     },
   }
 }
@@ -374,6 +384,85 @@ it('refuses a successor quote that drops the old generation and grace end', asyn
     node, label: 'example', durationYears: 1, feeLux: Number(estimated.total_lux), records: [],
   }), saved.name, account)).rejects.toThrow('Registration quote does not match placement and previous lifecycle')
 })
+// A reservation keeps its secret and age across a policy replacement, but not its price (spec §6.2).
+function policyReplacement(config?: (launch: sdk.PolicyConfig) => sdk.PolicyConfig) {
+  const h = fixture({ unseen: true, policyQuotes: true })
+  h.directory.registration.policy_version = 4n
+  const actor = '0x' + sdk.hex(h.name.name.owner)
+  const saved = reservation({ name: 'example.dusk', directory: id(1), controller: actor, commitmentStore: id(7) })
+  const register = (feeLux: number, extra: Record<string, unknown> = {}) => ({
+    ...intent.storeCompleteRegistrationRequest({
+      directory: id(1), commitmentStore: id(7), commitment: saved.commitment, secret: saved.secret,
+      node, label: 'example', durationYears: 1, feeLux, records: [],
+    }),
+    ...extra,
+  })
+  const onChain = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: vi.fn() } })
+  const replace = () => {
+    const launch = sdk.launchPolicyConfig()
+    // Five or more characters cost 15 DUSK a year instead of 10.
+    h.replacePolicy(9, config?.(launch) ?? { ...launch, annual_lux: [...launch.annual_lux.slice(0, 4), '15000000000'] })
+  }
+  return { h, actor, saved, register, onChain, replace }
+}
+
+it('refuses a reveal priced under the replaced policy with the fresh quote, then reveals the same reservation at the new price', async () => {
+  const { h, actor, saved, register, onChain, replace } = policyReplacement()
+  const reviewed = await onChain.getRegistrationQuote('example.dusk', 1, actor)
+  if (!reviewed.ok) throw new Error(reviewed.error.message)
+  expect(reviewed.value.quote).toMatchObject({ total_lux: '10000000000', policy_version: 4n, policy: bytes(2) })
+  // What the reservation was priced at, kept with it in this browser.
+  const reservedQuote = { years: 1, totalLux: '10000000000', policy: id(2), policyVersion: '4', configVersion: '1' }
+  replace()
+  const refused = await prepareFrozenCall(h.client, register(10e9, { quote: reviewed.value.quote, reservedQuote }), 'example.dusk', account)
+    .then(() => null, (error: unknown) => error)
+  expect(refused).toMatchObject({
+    name: 'RegistrationPriceChangedError',
+    change: { previousTotalLux: '10000000000', sinceReservation: true,
+      quote: { total_lux: '15000000000', policy_version: 5n, policy: bytes(9) } },
+  })
+  expect((refused as Error).message).not.toContain('On-chain terms changed')
+  // The failed write keeps the price change, so the claim can offer the new price.
+  const app = { prepareIntent: (request: intent.DuskDomainCallMetadata, name: string) => prepareFrozenCall(h.client, request, name, account),
+    readContract: vi.fn(), prepareContractCall: vi.fn(), writeContract: vi.fn() }
+  const state = await submitDuskDomainWrite(app, register(10e9, { quote: reviewed.value.quote, reservedQuote }), { name: 'example.dusk', contracts })
+  expect(state).toMatchObject({ status: 'failed', error: { name: 'RegistrationPriceChangedError' } })
+  expect(state.message).toContain('reservation is still valid')
+  expect(app.prepareContractCall).not.toHaveBeenCalled()
+  expect(app.writeContract).not.toHaveBeenCalled()
+  // Re-priced with the fresh quote, the same reservation reveals at the new price, with no new commitment.
+  const fresh = (refused as { change: { quote: sdk.RegistrationQuote } }).change.quote
+  const reveal = await prepareFrozenCall(h.client, register(15e9, {
+    quote: fresh, reservedQuote: { ...reservedQuote, totalLux: '15000000000', policy: id(9), policyVersion: '5' },
+  }), 'example.dusk', account)
+  expect(reveal).toMatchObject({
+    functionName: 'register', deposit: '15000000000',
+    args: { commitment: sdk.fromHex(saved.commitment, 32), secret: sdk.fromHex(saved.secret, 32), commitment_store: bytes(7),
+      expected_fee_lux: '15000000000', expected_policy_version: 5n, expected_policy_config_version: 1n },
+  })
+  expect(h.calls.filter(call => call.method === 'pending_commitment').map(call => call.target)).toEqual([id(7), id(7), id(7)])
+})
+
+it('refuses a reveal whose shown price is stale after a replacement even without a saved reservation price', async () => {
+  const { h, register, replace } = policyReplacement()
+  replace()
+  await expect(prepareFrozenCall(h.client, register(10e9), 'example.dusk', account)).rejects.toMatchObject({
+    name: 'RegistrationPriceChangedError',
+    change: { previousTotalLux: '10000000000', sinceReservation: false, quote: { total_lux: '15000000000' } },
+  })
+})
+
+it('says plainly when the replaced policy no longer lets a reserved-for name be registered', async () => {
+  const { h, register, replace } = policyReplacement(launch => ({ ...launch, reserved: [...launch.reserved, 'example'].sort() }))
+  replace()
+  const app = { prepareIntent: (request: intent.DuskDomainCallMetadata, name: string) => prepareFrozenCall(h.client, request, name, account),
+    readContract: vi.fn(), prepareContractCall: vi.fn(), writeContract: vi.fn() }
+  const state = await submitDuskDomainWrite(app, register(10e9), { name: 'example.dusk', contracts })
+  expect(state.status).toBe('failed')
+  expect(state.message).toBe('This name can’t be registered under the current registration rules.')
+  expect(app.writeContract).not.toHaveBeenCalled()
+})
+
 it('follows forwarded names for transfer and directory-priced renewal, preserving incarnation', async () => {
   const h = fixture()
   const transfer = await prepareFrozenCall(

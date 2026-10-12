@@ -40,7 +40,8 @@ export type NameResult = {
   displayName: string
   label: string
   status: NameStatus
-  price: number
+  /** The indexer's yearly estimate; null while it withholds the prices of a policy it has not verified. */
+  price: number | null
   issues: SearchIssue[]
   transactionBlocked: boolean
   premiumLux?: number
@@ -62,6 +63,8 @@ export type CoreFeeConfig = {
   premiumReferralRewardBps: number
   /** Yearly renewal prices from the directory's renewal schedule, when the indexer reports it. */
   renewalYearLux?: { threeChar: number; fourChar: number; fivePlus: number }
+  /** The selected policy's shortest registrable root label, when the indexer reports it. */
+  minimumRootBytes?: number
   version: number
   updatedAt: number
 }
@@ -237,6 +240,17 @@ export function registrationFeeLux(
   return total
 }
 
+/** The total a claim shows for a term: its live quote when there is one, else the price-list estimate. */
+export function registrationTotalLux(
+  result: Pick<NameResult, 'label' | 'premiumLux' | 'quotedYears' | 'totalFeeLux'>,
+  years: number,
+  feeConfig: CoreFeeConfig = DEFAULT_FEE_CONFIG,
+): number {
+  return result.quotedYears === years && result.totalFeeLux !== undefined
+    ? result.totalFeeLux
+    : registrationFeeLux(result.label, years, feeConfig, result.premiumLux ?? 0)
+}
+
 export function registrationPrice(
   label: string,
   years: number,
@@ -244,6 +258,22 @@ export function registrationPrice(
   premiumLux = 0,
 ): number {
   return registrationFeeLux(label, years, feeConfig, premiumLux) / LUX_PER_DUSK
+}
+
+/**
+ * A renewal's price from the directory's renewal schedule. Renewals never consult the registration
+ * policy, so a policy replacement leaves them alone. Null when the schedule, or its tier for this
+ * label, is not known: a registration price is never a renewal estimate.
+ */
+export function renewalFeeLux(
+  label: string,
+  years: number,
+  feeConfig: Pick<CoreFeeConfig, 'renewalYearLux'>,
+): number | null {
+  const schedule = feeConfig.renewalYearLux
+  if (!schedule || label.length < 3 || !Number.isInteger(years) || years < 1 || years > 10) return null
+  const total = (label.length === 3 ? schedule.threeChar : label.length === 4 ? schedule.fourChar : schedule.fivePlus) * years
+  return Number.isSafeInteger(total) ? total : null
 }
 
 export function referralRewardLux(

@@ -33,6 +33,8 @@ type UseSearchWorkspaceFeatureProps = {
   hasMoreActivity?: boolean
   onLoadMoreActivity?: () => void
   activityLoading: boolean
+  /** Why an available name can't be claimed now; empty for the default copy. */
+  blockedReason?: string
   canRegister: boolean
   /** The market takes offers on this network. */
   marketplaceOffers?: boolean
@@ -94,6 +96,7 @@ export function useSearchWorkspaceFeature({
   nowSeconds,
   hasMoreActivity,
   onLoadMoreActivity,
+  blockedReason = '',
   canRegister,
   marketplaceOffers = false,
   checked,
@@ -219,6 +222,7 @@ export function useSearchWorkspaceFeature({
       onResultViewChange,
       overviewProps: {
         listing,
+        blockedReason,
         canRegister,
         displayName,
         onContinueRegistration: onStartRegistration,

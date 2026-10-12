@@ -35,7 +35,8 @@ export async function configuredReleaseManifest(
 ): Promise<ReleaseManifest> {
   if (!config.manifestUrl) return manifestFromConfig(config, origin)
   const url = new URL(config.manifestUrl, origin)
-  const response = await fetch(url)
+  // Revalidate: an operator republishes it to list contracts admitted later, such as a replacement policy.
+  const response = await fetch(url, { cache: 'no-cache' })
   if (!response.ok) throw new Error(`Manifest fetch failed: HTTP ${response.status}`)
   const manifest = validateReleaseManifest(adaptDeploymentManifest(parseJson(await response.text())), {
     nodeUrl: config.nodeUrl,

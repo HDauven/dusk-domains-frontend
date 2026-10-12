@@ -51,6 +51,11 @@ Reservation secrets are saved in this browser before wallet approval. Reopen the
 name in Search or My Domains to recover an interrupted registration. Forgetting
 removes its local secret; it does not cancel a submitted transaction.
 
+A reservation keeps the price it was made at with it. If a governance policy change
+reprices it, the reservation stays valid: Register shows the old and new price and
+registers the same reservation once the new price is confirmed. Renewals follow the
+separate renewal schedule. See [registration price changes](docs/deploy.md#registration-price-changes).
+
 Projection reads require healthy indexer status. A wallet-confirmed transaction
 can precede finalized indexing; synchronization status distinguishes the two.
 Owner/subname lists use bounded complete-set reads. Marketplace and activity lists

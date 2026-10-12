@@ -28,7 +28,10 @@ export type DuskDomainCallMetadata<TArgs = unknown> = {
   /** Display only; removal always includes every descendant, even if not listed here. */
   knownDescendants?: string[]
   reviewedOrder?: import('@duskdomains/sdk').Order
+  /** The registration quote shown when Register was pressed; the reveal signs only this price. */
   quote?: import('@duskdomains/sdk').RegistrationQuote
+  /** What the reservation was priced at, kept with it; a policy replacement since then needs confirming. */
+  reservedQuote?: import('./registrationQuote').ReviewedRegistrationQuote
   nameRef?: import('@duskdomains/sdk').NameRef
   expectedFeeBps?: number
   expectedRecipient?: string

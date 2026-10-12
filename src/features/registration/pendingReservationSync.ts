@@ -11,6 +11,7 @@ import {
 import { inferredCommittedBlockHeightFromReservation } from './pendingReservationBlockRecovery'
 import type { PreparedRegistrationCommit } from './pendingReservationTypes'
 import { clearReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { clearReservationQuote } from './reservationQuote'
 
 // Commitments are kept per controller, so ask the indexer for this controller's commit. An
 // indexer that predates the controller parameter returns the latest commit for the hash, so a
@@ -163,6 +164,7 @@ export async function refreshPendingReservationsFromIndexer({
     if (registered) {
       removePendingNameReservation(reservation)
       clearReservationPrimaryChoice(reservation)
+      clearReservationQuote(reservation)
       changed = true
       continue
     }
