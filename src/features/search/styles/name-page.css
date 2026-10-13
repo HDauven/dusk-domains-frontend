@@ -86,6 +86,8 @@
 .name-hero-listing { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 14px; }
 .name-hero-listing strong { color: var(--ink); font-size: var(--text-base); }
 .claim-listing strong { color: var(--ink); }
+/* A reservation that can expire before it is registered, as during a registration pause. */
+.claim-warning { margin: 0; padding: var(--space-3) 14px; border-radius: var(--radius-sm); background: var(--warning-surface); color: var(--ink); font-size: var(--text-sm); }
 .profile-note { margin: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-sm); line-height: 1.5; }
 .name-hero-note { max-width: 34ch; margin: 10px 0 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.45; }
 
@@ -289,11 +291,20 @@
   font-style: normal;
 }
 
-.link-list span,
 .recent-list time {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: var(--text-sm);
+}
+
+/* A record's key takes at most part of the row and wraps, so its value keeps room beside it. */
+.link-list li > span:first-child {
+  flex: 0 0 auto;
+  max-width: 40%;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
 }
 
 .link-list p,
@@ -324,6 +335,11 @@
 
 .link-list a:hover {
   color: var(--muted);
+}
+
+.link-list .record-value {
+  flex: 1 1 0;
+  justify-items: end;
 }
 
 .chip-list {

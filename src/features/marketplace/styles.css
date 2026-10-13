@@ -45,6 +45,31 @@
   font: 400 var(--text-3xl)/1 var(--font-display);
 }
 
+/* A refund in each of several markets, withdrawn one market at a time. */
+.marketplace-refund-markets {
+  display: grid;
+  flex: 1 1 100%;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.marketplace-refund-markets li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px var(--space-4);
+}
+
+.marketplace-refund-markets li > span,
+.marketplace-refund-markets .marketplace-amount {
+  color: var(--ink);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
 /* Browse */
 .marketplace-browse,
 .marketplace-my-view,

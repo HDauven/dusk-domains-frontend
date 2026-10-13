@@ -7,6 +7,7 @@ import { RecordDraftEditor } from './RecordDraftEditor'
 import { RecordsView } from './RecordsView'
 import { isIdentifierRecord, recordLabel } from './recordPresentation'
 import { editableRecordKeys } from '../../app/appConstants'
+import { account } from '../../test/frozenFixtures'
 import { recordPlaceholder } from './domainFormat'
 
 const record = (key: ResolverRecordKey, value: string): ResolverRecord => ({
@@ -15,7 +16,7 @@ const record = (key: ResolverRecordKey, value: string): ResolverRecord => ({
 const records = [record('text.description', 'Building tools for Dusk.'), record('text.display_name', 'Aurora'),
 record('website', 'https://example.test'), record('avatar', 'ipfs://avatar'),
 record('service_endpoint.chat', 'https://example.test/chat'), record('attestation_ref', 'urn:example:123'),
-record('moonlight_address', 'dusk1abcdefghijklmnopqrst')]
+record('moonlight_address', account)]
 
 function profile(parentResolverRecords = records) {
   return renderToStaticMarkup(<DomainDetailsView displayName="aurora.dusk"
@@ -54,16 +55,20 @@ describe('record presentation', () => {
     }
   })
 
-  it('uses SDK labels for fixed keys and readable labels for dynamic keys', () => {
+  it('uses SDK labels for known keys and shows any other key as it is, marked', () => {
     for (const definition of STATIC_RECORD_DEFINITIONS) {
       expect(recordLabel(definition.key)).toBe(definition.key === 'moonlight_address' ? 'Dusk address' : definition.label)
     }
     const html = profile()
-    for (const label of ['Display name', 'Website', 'Chat endpoint', 'Attestation reference', 'Dusk address']) {
+    for (const label of ['Website', 'Attestation reference', 'Dusk address']) {
       expect(html).toContain(`<span>${label}</span>`)
     }
+    // A key this site doesn't know gets no label made from it, which could imitate a known one.
+    for (const key of ['text.display_name', 'service_endpoint.chat']) {
+      expect(html).toContain(`<code class="record-key-raw">${key}</code><small class="record-key-mark">Custom record</small>`)
+    }
+    expect(html).not.toContain('Display name')
     expect(html).not.toContain('text.description')
-    expect(html).not.toContain('service_endpoint.chat')
   })
 
   it('renders prose in full as text, identifiers as code, and HTTPS records as links', () => {
@@ -72,7 +77,9 @@ describe('record presentation', () => {
     expect(html).not.toContain('ipfs://avatar')
     expect(html).toContain('<code>urn:example:123</code>')
     expect(html).toContain('href="https://example.test"')
-    expect(html).toContain('href="https://example.test/chat"')
+    // Only a known key links: a custom key's HTTPS value is plain text.
+    expect(html).not.toContain('href="https://example.test/chat"')
+    expect(html).toContain('<p>https://example.test/chat</p>')
     expect(profile([record('text.description', 'https://example.test')])).not.toContain('https://example.test')
     expect(profile([record('website', 'javascript:alert(1)')])).not.toContain('href="javascript:')
   })
@@ -107,8 +114,8 @@ describe('record presentation', () => {
       wallet={{ onUseWalletPublicAddress: vi.fn(), onUseWalletShieldedAddress: vi.fn(), walletAddressAvailable: true }} />)
     expect(html).toContain('hello@example.test')
     expect(html).toContain('Read only')
-    expect(html).toContain('aria-label="Remove Email"')
-    expect(html).not.toContain('aria-label="Edit Email"')
+    expect(html).toContain('aria-label="Remove “text.email”"')
+    expect(html).not.toContain('aria-label="Edit “text.email”"')
     expect(html).toContain('aria-label="Edit Website"')
   })
 

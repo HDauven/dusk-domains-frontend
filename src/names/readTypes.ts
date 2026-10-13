@@ -11,6 +11,8 @@ export type DuskDomainsOnChainRecordKey = ResolverRecordKey | DuskDomainsRecordK
 export type DuskDomainsOnChainReadTransport = {
   client?: Promise<import('@duskdomains/sdk').FrozenClient>
   read: (call: DuskDomainCallMetadata) => Promise<unknown>
+  /** Whether `client` is still the one reads use: false once it was discarded, such as after a failed verification. */
+  isCurrentClient?: (client: unknown) => boolean
 }
 
 export type DuskDomainsOnChainClientOptions = {

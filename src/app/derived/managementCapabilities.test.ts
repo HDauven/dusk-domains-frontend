@@ -153,17 +153,20 @@ it('allows a connected wallet to renew a contract-owned root during grace withou
   ]) expect(deriveAppDerivedState({ ...ready, ...overrides } as never).canRenewName).toBe(false)
 })
 
-it('blocks escrow renewal for owners, managers and visiting contract payers', () => {
+it('lets the seller, the market’s manager or any other wallet renew a listed name before its grace ends', () => {
   for (const selectedAuthority of ['owner', 'manager', 'payer']) {
-    const ready = {
-      walletSigningReady: true, selectedAddress: 'wallet', selectedAuthority,
-      nodeHex: 'node', displayName: 'alice.dusk',
-      managedName: { node: 'node', owner: 'owner', manager: 'manager', ownerIsContract: true, inMarketplaceEscrow: true, expiresAt: 200, graceEndsAt: 300 },
-      currentBlockHeight: 100, nowSeconds: 0, subnameLabel: '', subnameManager: '', subnames: [],
-      recordDraftMutations: [], recordDraftErrors: [], pendingReservations: [], primaryEndpointValue: '', confirmationInput: '',
+    for (const inMarketplaceEscrow of [true, null, false]) {
+      const ready = {
+        walletSigningReady: true, selectedAddress: 'wallet', selectedAuthority,
+        nodeHex: 'node', displayName: 'alice.dusk',
+        managedName: { node: 'node', owner: 'owner', manager: 'manager', ownerIsContract: true, inMarketplaceEscrow, expiresAt: 200, graceEndsAt: 300 },
+        currentBlockHeight: 100, nowSeconds: 0, subnameLabel: '', subnameManager: '', subnames: [],
+        recordDraftMutations: [], recordDraftErrors: [], pendingReservations: [], primaryEndpointValue: '', confirmationInput: '',
+      }
+      expect(deriveAppDerivedState(ready as never).canRenewName).toBe(true)
+      // Not once its grace has ended.
+      expect(deriveAppDerivedState({ ...ready, currentBlockHeight: 300 } as never).canRenewName).toBe(false)
     }
-    expect(deriveAppDerivedState(ready as never).canRenewName).toBe(false)
-    expect(deriveAppDerivedState({ ...ready, managedName: { ...ready.managedName, inMarketplaceEscrow: false } } as never).canRenewName).toBe(true)
   }
 })
 
@@ -219,4 +222,15 @@ it('requires name authority to set primary but only endpoint control to clear it
   const after = deriveAppDerivedState({...ready,managedName:{...name,owner:'ancestor',manager:'ancestor'}} as never)
   expect(after.canSetPrimary).toBe(true)
   expect(after.canClearPrimary).toBe(true)
+})
+
+// Without the current block height, a block-height grace deadline can't be checked: renewal isn't offered.
+it('offers no renewal while the block height is unknown, unless the deadline is a date', () => {
+  const ready = { walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'node', displayName: 'alphavnuc.dusk',
+    managedName: { node: 'node', owner: 'owner', manager: 'manager', expiresAt: 200, graceEndsAt: 300 }, currentBlockHeight: 250, nowSeconds: 1_790_000_000,
+    subnameLabel: '', subnameManager: '', primaryEndpointErrors: [], recordDraftMutations: [], recordDraftErrors: [] }
+  expect(deriveRecordCapabilities(ready as never).canRenewName).toBe(true)
+  expect(deriveRecordCapabilities({ ...ready, currentBlockHeight: null } as never).canRenewName).toBe(false)
+  const dated = { ...ready, managedName: { ...ready.managedName, expiresAt: 1_790_100_000, graceEndsAt: 1_792_700_000 } }
+  expect(deriveRecordCapabilities({ ...dated, currentBlockHeight: null } as never).canRenewName).toBe(true)
 })

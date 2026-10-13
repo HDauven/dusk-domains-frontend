@@ -32,7 +32,9 @@ const tabs: Array<{ id: MarketplaceTab; label: string }> = [
 ]
 
 export function MarketplaceView(props: MarketplaceViewProps) {
-  const { wallet: { actionsAvailable }, feedback: { confirmation, error, txState }, market: { loading, marketplaceEnabled }, navigation: { onTabChange, tab }, withdrawal: { refund } } = props
+  const { wallet: { actionsAvailable }, feedback: { confirmation, error, txState }, market: { loading, marketplaceEnabled }, navigation: { onTabChange, tab } } = props
+  // Refunds in every market, each withdrawn from its own.
+  const refundLux = (props.withdrawal.refunds ?? []).reduce((total, refund) => total + BigInt(refund.amountLux), 0n)
   const networkNotice = useContext(NetworkFreshnessContext)
   const unread = props.market.hasData === false
   const readError = props.market.readError || networkNotice || ''
@@ -64,10 +66,10 @@ export function MarketplaceView(props: MarketplaceViewProps) {
         <PanelMessage icon={<Store size={18} />} tone="subtle">Connect a wallet to transact.</PanelMessage>
       ) : null}
 
-      {refund?.amountLux && tab !== 'activity' ? (
+      {refundLux > 0n && tab !== 'activity' ? (
         <Panel as="div" className="marketplace-refund-bar">
           <div>
-            <strong><MarketplaceAmount lux={refund.amountLux} /> ready to withdraw</strong>
+            <strong><MarketplaceAmount lux={refundLux} /> ready to withdraw</strong>
             <span>Refunds stay in marketplace escrow until you withdraw them to your wallet.</span>
           </div>
           <Button disabled={!actionsAvailable} type="button" onClick={() => onTabChange('activity')}>

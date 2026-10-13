@@ -8,6 +8,7 @@ import { LegalPage } from '../legal/LegalPage'
 import { DevelopersPage } from '../features/developers/DevelopersPage'
 import type { AppMainView } from './AppTypes'
 import { OwnershipConfirmationNotice } from './OwnershipConfirmationNotice'
+import { ViewErrorBoundary } from '../components/status/ViewErrorBoundary'
 
 export function AppMainContent({
   developersProps,
@@ -28,30 +29,33 @@ export function AppMainContent({
   searchProps: ComponentProps<typeof SearchWorkspace>
   treasuryProps: ComponentProps<typeof TreasuryView>
 }) {
+  // A view that fails to render leaves the header, footer and other pages working.
   return (
     <>
-      {mainView === 'terms' || mainView === 'privacy' ? <LegalPage page={mainView} /> : null}
-      {mainView === 'developers' && developersProps ? <DevelopersPage {...developersProps} /> : null}
       <OwnershipConfirmationNotice {...ownershipConfirmationProps} />
-      {mainView === 'search' ? (
-        <SearchWorkspace {...searchProps} />
-      ) : null}
+      <ViewErrorBoundary resetKey={mainView}>
+        {mainView === 'terms' || mainView === 'privacy' ? <LegalPage page={mainView} /> : null}
+        {mainView === 'developers' && developersProps ? <DevelopersPage {...developersProps} /> : null}
+        {mainView === 'search' ? (
+          <SearchWorkspace {...searchProps} />
+        ) : null}
 
-      {mainView === 'my-names' ? (
-        <MyDomainsView {...myDomainsProps} />
-      ) : null}
+        {mainView === 'my-names' ? (
+          <MyDomainsView {...myDomainsProps} />
+        ) : null}
 
-      {mainView === 'marketplace' ? (
-        <MarketplaceView {...marketplaceProps} />
-      ) : null}
+        {mainView === 'marketplace' ? (
+          <MarketplaceView {...marketplaceProps} />
+        ) : null}
 
-      {mainView === 'treasury' ? (
-        <TreasuryView {...treasuryProps} />
-      ) : null}
+        {mainView === 'treasury' ? (
+          <TreasuryView {...treasuryProps} />
+        ) : null}
 
-      {mainView === 'referrals' ? (
-        <ReferralsView {...referralsProps} />
-      ) : null}
+        {mainView === 'referrals' ? (
+          <ReferralsView {...referralsProps} />
+        ) : null}
+      </ViewErrorBoundary>
     </>
   )
 }

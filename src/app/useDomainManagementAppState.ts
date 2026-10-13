@@ -10,7 +10,7 @@ import type {
 import { createManagedNameState, isMarketplaceEscrow, type ManagedNameState } from './managedNameState'
 import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
 
-export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null, nodeUrl = '', marketplaceContractId: string | null = null) {
+export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null, nodeUrl = '', marketplaces: string | readonly string[] | null = null) {
   const [renewalYears, setRenewalYears] = useState(1)
   const [managementTxState, setManagementTxState] = useState<DuskDomainTxState | null>(null)
   const [renewalTxState, setRenewalTxState] = useState<DuskDomainTxState | null>(null)
@@ -87,7 +87,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     retryOwnershipConfirmation: ownership.retry,
     activeSubnames,
     confirmationInput,
-    managedName: { ...managedName, ownerIsContract, inMarketplaceEscrow: isMarketplaceEscrow(managedName, marketplaceContractId) },
+    managedName: { ...managedName, ownerIsContract, inMarketplaceEscrow: isMarketplaceEscrow(managedName, marketplaces) },
     managementError,
     managementTxState,
     primaryEndpointValue,

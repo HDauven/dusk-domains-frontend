@@ -1,17 +1,31 @@
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
 const defaultErrorMessage = 'The request could not be completed. Refresh and try again.'
 
-export function userFacingErrorMessage(error: unknown, fallback: string = defaultErrorMessage): string {
-  return userFacingMessageFromText(error instanceof Error ? error.message : String(error), fallback)
+/** The store's refusal while registrations are paused, suspended or closed by the policy. */
+export const REGISTRATIONS_CLOSED_MESSAGE = 'Registrations are closed right now. Try again when they reopen.'
+/** A market's refusal of a new order or bid while it is paused or no longer the listed market. */
+export const MARKET_CLOSED_MESSAGE = 'This market isn’t taking new orders right now. Existing orders can still be completed or cancelled.'
+// Calls a market refuses with Closed while it is paused or no longer the listed market.
+const marketOrderCalls = new Set(['escrow_fixed_sale', 'escrow_auction', 'place_offer', 'place_bid'])
+
+/** What the failed request was, where its refusal means different things for different calls. */
+export type ErrorContext = { functionName?: string }
+
+export function userFacingErrorMessage(error: unknown, fallback: string = defaultErrorMessage, context: ErrorContext = {}): string {
+  return userFacingMessageFromText(error instanceof Error ? error.message : String(error), fallback, context)
 }
 
 export function userFacingMessageFromText(
   message: string | undefined,
   fallback: string = defaultErrorMessage,
+  context: ErrorContext = {},
 ): string {
   const trimmed = String(message ?? '').trim()
   if (!trimmed) return ''
   if (trimmed.startsWith('Insufficient public DUSK for ')) return trimmed
+  // Closed, from a signed transaction or a read.
+  if (/\bDuskDS:v\d+:Closed\b/.test(trimmed))
+    return context.functionName && marketOrderCalls.has(context.functionName) ? MARKET_CLOSED_MESSAGE : REGISTRATIONS_CLOSED_MESSAGE
   const frozenMessages: Record<string, string> = {
     // These codes also refuse read-only quotes, before any wallet request, so this copy never
     // says a payment was returned. Registration says so only after a confirmed failed transaction.
@@ -25,6 +39,8 @@ export function userFacingMessageFromText(
     CommitmentAge: 'The reservation is outside its reveal window. Check its current status.',
     ForwardMismatch: 'The name’s public address must match this wallet before it can be primary.',
     CustodyActive: 'Return the name from marketplace custody before making this change.',
+    // A listed name's renewal through its market, after the name left that listing.
+    CustodyMismatch: 'This name isn’t listed anymore, so the renewal didn’t go through.',
     PolicyUnavailable: 'Registration pricing is unavailable. Try again later.',
     ExternalReadFailed: 'Name data could not be verified on-chain. Refresh and try again.',
     ReferralCapacity: 'Referral rewards are temporarily unavailable for new beneficiaries.',
@@ -35,6 +51,10 @@ export function userFacingMessageFromText(
   // The SDK refuses a reveal from a quote that is closed or whose label is no longer public.
   if (/Quote is not open for public registration/.test(trimmed))
     return 'This name can’t be registered under the current registration rules.'
+  // Blocks kept landing mid-read, after the read was tried again.
+  if (/Chain tip changed during read/.test(trimmed)) return 'New blocks kept arriving while this was read. Try again.'
+  if (/Registration quote does not match placement and previous lifecycle/.test(trimmed))
+    return 'New blocks kept arriving while the price was checked. Try again.'
   if (/Reservation storage|Quota exceeded/.test(trimmed))
     return 'Cannot save the reservation. Enable browser storage and try again.'
   if (/^(ambiguous_principal|invalid_account|empty)$/.test(trimmed))
@@ -50,8 +70,6 @@ export function userFacingMessageFromText(
   if (/owner or manager authorization required/i.test(trimmed))
     return 'Connect the owner or manager of this name.'
   if (/duplicate subname/i.test(trimmed)) return 'Select each subname only once.'
-  if (/close the marketplace listing before renewing/i.test(trimmed))
-    return 'Close the marketplace listing before renewing this name.'
   if (isPendingCommitmentLimitMessage(trimmed))
     return 'This wallet has 16 pending reservations. Open My names to finish a reservation, or wait for one to expire before reserving another.'
   if (isReadOnlyWalletMessage(trimmed))

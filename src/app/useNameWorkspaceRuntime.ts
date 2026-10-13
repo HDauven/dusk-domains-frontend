@@ -16,6 +16,7 @@ export function useNameWorkspaceRuntime(core: AppCoreRuntimes) {
   const renewalCap = renewalTermLimit(domainState.managedName.expiresAt, searchState.currentBlockHeight).maxYears
   const namePreview = useNamePreview({
     onChainClient: appRuntime.duskDomainsOnChainClient,
+    registrationsPaused: appRuntime.pause.registrationsPaused,
     selectedAuthority: walletRuntime.selectedAuthority,
     apiSearchResult: searchState.apiSearchResult,
     currentBlockHeight: searchState.currentBlockHeight,

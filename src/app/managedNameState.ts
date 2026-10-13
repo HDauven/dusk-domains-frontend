@@ -41,14 +41,16 @@ export function createManagedNameState(resolver: string): ManagedNameState {
   }
 }
 
-export function isMarketplaceEscrow(name: Pick<ManagedNameState, 'owner' | 'manager'>, marketplaceContractId: string | null) {
+/**
+ * Whether a market holds the name. Any market this site knows counts: the preferred one, and those
+ * its manifest lists, such as a draining market whose listings can still be settled or returned.
+ * Null when no market is known.
+ */
+export function isMarketplaceEscrow(name: Pick<ManagedNameState, 'owner' | 'manager'>, marketplaces: string | readonly string[] | null) {
   try {
-    const id = contractIdFromOutput(marketplaceContractId?.trim())
-    if (!id) return null
-    return [name.owner, name.manager].some(authority => sameAuthority(authority, id))
+    const ids = (typeof marketplaces === 'string' ? [marketplaces] : marketplaces ?? [])
+      .map(id => contractIdFromOutput(id?.trim())).filter((id): id is string => Boolean(id))
+    if (!ids.length) return null
+    return ids.some(id => [name.owner, name.manager].some(authority => sameAuthority(authority, id)))
   } catch { return null }
-}
-
-export function canRenewOutsideEscrow(name: Pick<ManagedNameState, 'ownerIsContract' | 'inMarketplaceEscrow'>) {
-  return !name.inMarketplaceEscrow && (!name.ownerIsContract || name.inMarketplaceEscrow === false)
 }

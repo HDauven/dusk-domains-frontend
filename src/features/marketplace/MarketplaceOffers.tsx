@@ -51,10 +51,11 @@ export function MarketplaceOffers(props: MarketplaceOffersProps) {
             </Select>
           </label>
         </div>
+        {props.selling.newOrdersRefusal ? <p className="field-note" role="status">{props.selling.newOrdersRefusal}</p> : null}
         {!props.wallet.selectedAddress ? (
           <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet to offer</Button>
         ) : (
-          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.offers.onPlaceOffer()}>Review offer</Button>
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || Boolean(props.selling.newOrdersRefusal)} type="button" onClick={() => props.offers.onPlaceOffer()}>Review offer</Button>
         )}
       </Panel>
 

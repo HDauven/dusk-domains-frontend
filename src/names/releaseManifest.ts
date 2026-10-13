@@ -7,7 +7,10 @@ function object(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>
 }
 
-/** Convert the deploy tool's handoff to the SDK schema, preserving reviewed IDs and driver hashes. */
+/**
+ * Convert the deploy tool's handoff to the SDK schema, preserving reviewed IDs, code and init
+ * commitments and driver hashes.
+ */
 export function adaptDeploymentManifest(value: unknown): unknown {
   const manifest = object(value)
   if (manifest.schema !== 'dusk-domains/frozen-release/v1') return value
@@ -23,7 +26,13 @@ export function adaptDeploymentManifest(value: unknown): unknown {
       const driver = object(object(artifacts[role]).driver)
       if (typeof driver.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(driver.sha256))
         throw new Error(`Missing deployment driver checksum for ${role}`)
-      return { role, contractId: entry.id, codeHash: entry.codeHash, dataDriver: driver }
+      return {
+        role,
+        contractId: entry.id,
+        codeHash: entry.codeHash,
+        ...(entry.initHash == null ? {} : { initHash: entry.initHash }),
+        dataDriver: driver,
+      }
     }),
   }
 }

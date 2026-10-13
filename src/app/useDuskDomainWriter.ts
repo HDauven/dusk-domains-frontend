@@ -2,7 +2,8 @@ import { captureWalletSession } from '../features/wallet/captureWalletSession'
 import { DuskWalletUserRejectedError } from '@dusk/connect'
 import { WriteBalanceError } from '@duskdomains/sdk'
 import { WalletSessionChangedError } from '../features/wallet/sessionWriteWallet'
-import { readTransactionReceipt, waitForConfirmation, type ConfirmationState, type PendingConfirmation } from './confirmationRead'
+import { ConfirmationPause, readTransactionReceipt, waitForConfirmation, type ConfirmationState, type PendingConfirmation } from './confirmationRead'
+import { staleIndexerData } from './indexerIdentity'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
 import { walletConnectionStatus } from '../features/wallet/walletStatus'
@@ -152,10 +153,17 @@ export function useDuskDomainWriter({
           if (!receipt || receipt.status === 'failed') return receipt
           if (indexerClient) {
             const health = await indexerClient.getHealth()
-            if (!health.ok || (health.finalizedBlockHeight ?? -1) < receipt.blockHeight) return null
+            if (!health.ok || (health.finalizedBlockHeight ?? -1) < receipt.blockHeight) {
+              // A blocked collector publishes nothing past its block until it is repaired, so the
+              // site can't show this change yet. Pause now and say why, instead of polling on.
+              const stale = staleIndexerData(health)
+              return stale?.code === 'collector_blocked'
+                ? new ConfirmationPause(`Confirmed on chain. Name data stopped updating at block ${stale.blockHeight}, so this page will show the change once it resumes.`)
+                : null
+            }
           }
           return receipt
-        }, retryConfirmation => update({ ...submitted, status: 'executing', message: 'Still confirming…', retryConfirmation }),
+        }, (retryConfirmation, pauseReason) => update({ ...submitted, status: 'executing', message: 'Still confirming…', retryConfirmation, ...(pauseReason ? { pauseReason } : {}) }),
         () => update({ ...submitted, status: 'executing', message: 'Still confirming…' }), controller.signal)
         state = { ...submitted, status: receipt.status, message: receipt.message, blockHeight: receipt.blockHeight }
         update(state)

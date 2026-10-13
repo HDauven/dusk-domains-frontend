@@ -1,4 +1,4 @@
-import { safeNumber } from '../../names/numbers'
+import { exactNumber, safeNumber } from '../../names/numbers'
 import {
   formatLifecycleDay,
   lifecycleHeightFromIndexed,
@@ -10,11 +10,11 @@ import {
   userFacingErrorMessage,
 } from '../../names/internal'
 import { guardDomainActionPrerequisite } from './domainActionGuards'
-import { canRenewOutsideEscrow } from '../../app/managedNameState'
+import { sameAuthority } from '../identity/ownerLabel'
 import type { UseDomainSettingsActionsProps } from './domainSettingsActionTypes'
 
 export async function renewDomainName({
-  renewalQuote, renewalNameRef,
+  renewalQuote, renewalNameRef, renewalListing = null,
   appendActivity,
   canRenewName,
   currentBlockHeight,
@@ -39,14 +39,7 @@ export async function renewDomainName({
 }: UseDomainSettingsActionsProps) {
   const workspace = submitNameWrite.captureWorkspace(displayName)
   setRenewalError('')
-  if (managedName?.inMarketplaceEscrow) {
-    setRenewalError('Close the marketplace listing before renewing this name.')
-    return
-  }
-  if (managedName && !canRenewOutsideEscrow(managedName)) {
-    setRenewalError('Renewal is unavailable until marketplace custody can be checked.')
-    return
-  }
+  // A listed name can be renewed too: the renewal leaves its listing, escrow and records as they are.
   if (!guardDomainActionPrerequisite({
     canContinue: canRenewName,
     setError: setRenewalError,
@@ -58,8 +51,21 @@ export async function renewDomainName({
     return
   }
   if (!ensureContractAuthorityForLiveWrite('renew this name', setRenewalError)) return
+  // Someone else's name is renewed only as reviewed: its owner and, if listed, the listing it is
+  // renewed by. Preparation reads both again before the wallet is asked.
+  const holder = [managedName.owner, managedName.manager].some(authority => sameAuthority(authority, selectedAuthority))
+  if (!holder && managedName.inMarketplaceEscrow && !renewalListing) {
+    setRenewalError('This name’s listing can’t be read right now. Try again in a moment.')
+    return
+  }
+  const reviewedRenewal = holder ? undefined : { owner: managedName.owner, listing: renewalListing }
   // The renewal schedule prices renewals; a registration price, which a policy replacement changes, never does.
-  const feeLux = renewalQuote ? safeNumber(renewalQuote.total_lux) : renewalFeeLux(resultLabel, renewalYears, feeConfig ?? {})
+  // A write carries the price as an exact number, so a larger quote is refused with a reason.
+  const feeLux = renewalQuote ? exactNumber(renewalQuote.total_lux) : renewalFeeLux(resultLabel, renewalYears, feeConfig ?? {})
+  if (renewalQuote && feeLux === null) {
+    setRenewalError('This renewal’s price is higher than this site can handle.')
+    return
+  }
   if (feeLux === null) {
     setRenewalError('The renewal price is unavailable right now. Try again in a moment.')
     return
@@ -82,7 +88,7 @@ export async function renewDomainName({
       durationYears: renewalYears,
       feeLux,
     })
-    const finalState = await submitNameWrite(displayName, {...call, nameRef: renewalNameRef,expectedScheduleVersion:renewalQuote?.schedule_version}, {
+    const finalState = await submitNameWrite(displayName, {...call, nameRef: renewalNameRef, expectedScheduleVersion: renewalQuote?.schedule_version, ...(reviewedRenewal ? { reviewedRenewal } : {})}, {
       workspace,
       contracts: runtimeConfig.contracts,
       onUpdate: setRenewalTxState,

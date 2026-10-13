@@ -170,6 +170,7 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
       onPrepareCommit: () => void withPrimaryChoiceLocked(handlePrepareCommit),
       onRestartReservation: () => void withPrimaryChoiceLocked(handleRestartReservation),
       reservationStranded: derivedState.reservationStranded,
+      registrationsPaused: Boolean(appRuntime.pause?.registrationsPaused),
     },
     purchase: {
       canRevealRegistration: derivedState.canRevealRegistration,

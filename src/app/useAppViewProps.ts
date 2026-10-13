@@ -4,14 +4,18 @@ import type { AppViewModelInputs } from './appViewTypes'
 import { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useAppSearchProps } from './useAppSearchProps'
+import { useHeldListing } from './useHeldListing'
 
 export function useAppViewProps(inputs: AppViewModelInputs) {
   const { registrationProps } = useRegistrationFeature(inputs)
-  const management = useDomainManagementFeature(inputs)
-  const { searchProps } = useAppSearchProps({ ...inputs, management, registrationProps })
+  // Read once for the name page and for renewing a listed name.
+  const heldListing = useHeldListing(inputs)
+  const management = useDomainManagementFeature({ ...inputs, heldListing })
+  const { searchProps } = useAppSearchProps({ ...inputs, management, registrationProps, heldListing })
   const { appRuntime, walletRuntime, searchState } = inputs
   const marketplace = useMarketplaceFeature({
     tradingPaused: appRuntime.pause.tradingPaused,
+    preferredMarketplace: appRuntime.marketplaceContractId,
     ensurePublicBalanceForLiveWrite: walletRuntime.ensurePublicBalanceForLiveWrite,
     duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
     indexerClient: appRuntime.indexerClient,
@@ -43,7 +47,7 @@ export function useAppViewProps(inputs: AppViewModelInputs) {
         }),
       },
       mainView: inputs.searchState.mainView,
-      myDomainsProps: inputs.mainViewRuntime.myDomainsProps,
+      myDomainsProps: { ...inputs.mainViewRuntime.myDomainsProps, registrationsPaused: appRuntime.pause.registrationsPaused },
       referralsProps: inputs.economicsRuntime.referralsProps,
       searchProps,
       treasuryProps: inputs.economicsRuntime.treasuryProps,

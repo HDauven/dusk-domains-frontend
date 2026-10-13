@@ -1,4 +1,5 @@
 import type { Order } from '@duskdomains/sdk'
+import { ALL_MARKETPLACES } from '../../names/internal'
 
 type OrderRow = {
   node: string
@@ -22,7 +23,8 @@ export function matchesAuctionSelection(row: OrderRow, selection: string) {
   return row.node === selection || marketplaceOrderKey(row) === selection
 }
 
+// A node-only selection, such as an auction link, finds the auction in whichever market holds it.
 export function auctionSelection(selection: string) {
   const [node, marketplace, orderId] = selection.split(':')
-  return { node, ...(marketplace && orderId ? { marketplace, orderId } : {}) }
+  return { node, ...(marketplace && orderId ? { marketplace, orderId } : { marketplace: ALL_MARKETPLACES }) }
 }

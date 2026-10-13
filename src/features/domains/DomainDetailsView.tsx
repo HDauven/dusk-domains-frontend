@@ -17,7 +17,10 @@ import {
 } from '../../names/internal'
 import { ActivityTime } from '../activity/ActivityHistoryView'
 import type { PrimaryVerificationSummary } from './details/primaryVerification'
-import { isIdentifierRecord, recordLabel } from './recordPresentation'
+import { addressRecordIssue, isIdentifierRecord, isKnownRecordKey, recordLabel } from './recordPresentation'
+import { trustedDuskAddresses } from '../identity/addressTrust'
+import { RecordKeyLabel } from './RecordKeyLabel'
+import { RecordValue } from './RecordValue'
 import { isSubname } from './domainFormat'
 import { nameControlCopy } from '../trust/trustCopy'
 
@@ -106,11 +109,14 @@ export function DomainDetailsView({ canEdit = false, isOwner = false, separateMa
   } = activity
   const recent = activityActions(activityEntries, {
     viewerAuthority, currentBlockHeight, nowSeconds, marketplaceContractId, subnames, holders, subnameActivity, partial: hasMore,
-    addresses: [...new Set([...parentResolverRecords.filter(record => record.key === 'moonlight_address').map(record => record.value), ...addresses])],
+    addresses: [...new Set([...trustedDuskAddresses(parentResolverRecords), ...addresses])],
   }).slice(0, 4)
-  const payable = payableKeys
+  const addressRecords = payableKeys
     .map((key) => parentResolverRecords.find((record) => record.key === key))
     .filter((record): record is ResolverRecord => Boolean(record))
+  // An address the resolver reports invalid, or that fails validation, is never offered to pay.
+  const payable = addressRecords.filter(record => !addressRecordIssue(record))
+  const invalid = addressRecords.filter(record => addressRecordIssue(record))
   // A wallet that sends to a name sends to its Dusk address; another chain's address is only to copy.
   const hasDuskAddress = payable.some(record => record.key === 'moonlight_address')
   const other = parentResolverRecords.filter((record) => !hiddenKeys.has(record.key))
@@ -133,11 +139,20 @@ export function DomainDetailsView({ canEdit = false, isOwner = false, separateMa
               </li>
             ))}
           </ul>
-        ) : (
+        ) : invalid.length ? null : (
           <p className="profile-empty">
             No addresses yet. {canEdit ? <Button type="button" onClick={onManageRecords}>Add an address</Button> : null}
           </p>
         )}
+        {invalid.map(record => (
+          <p className="primary-line warning" key={record.key}>
+            {canEdit ? <>
+              <strong>Your {recordLabel(record.key)} record isn’t valid, so it isn’t shown.</strong>{' '}
+              <Button variant="quiet" type="button" onClick={onManageRecords}>Update it under Records</Button>
+            </> : `This name’s ${recordLabel(record.key)} isn’t valid, so it isn’t shown.${record.key === 'moonlight_address'
+              ? ' Don’t send funds to this name until its owner fixes it.' : ''}`}
+          </p>
+        ))}
         {paysPreviousOwner ? (
           <p className="primary-line warning">
             <strong>This name pays another wallet.</strong> Payments go to {abbreviate(paysPreviousOwner)}, not the wallet you're using.{' '}
@@ -153,19 +168,19 @@ export function DomainDetailsView({ canEdit = false, isOwner = false, separateMa
             <h2 id="links-heading">Links and records</h2>
             <ul className="link-list">
               {other.map((record) => {
-                const social = socialRecordLink(record.key, record.value)
-                const href = social?.href ?? (record.key.startsWith('text.') ? null : safeLink(record.value))
+                // Only a known key links anywhere; a custom key's value is plain text.
+                const known = isKnownRecordKey(record.key)
+                const social = known ? socialRecordLink(record.key, record.value) : null
+                const href = social?.href ?? (known && !record.key.startsWith('text.') ? safeLink(record.value) : null)
                 return (
                   <li key={record.key}>
-                    <span>{recordLabel(record.key)}</span>
+                    <span><RecordKeyLabel recordKey={record.key} /></span>
                     {href ? (
                       <a href={href} target="_blank" rel="noreferrer nofollow">
                         {social?.text ?? record.value.replace(/^https:\/\//i, '').replace(/\/$/, '')} <ArrowUpRight size={14} />
                       </a>
-                    ) : isIdentifierRecord(record.key) ? (
-                      <code>{record.value}</code>
                     ) : (
-                      <p>{record.value}</p>
+                      <RecordValue value={record.value} code={known && isIdentifierRecord(record.key)} />
                     )}
                   </li>
                 )

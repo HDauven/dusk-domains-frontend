@@ -72,7 +72,7 @@ export async function submitDuskDomainWrite(
   const balanceAction = options.balanceAction ?? balanceActions[request.functionName] ?? request.functionName.replaceAll('_', ' ')
   const errorMessage = (error: unknown) => error instanceof WriteBalanceError
     ? balanceErrorMessage(error.details, balanceAction)
-    : userFacingErrorMessage(error)
+    : userFacingErrorMessage(error, undefined, { functionName: request.functionName })
   const context = {
       title: options.name ?? request.functionName,
       description: 'Confirm this action in your wallet.',

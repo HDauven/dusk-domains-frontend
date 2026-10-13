@@ -15,6 +15,8 @@ export async function checkIndexerSessionBudget(page) {
     const realFetch = window.fetch
     const parent = 'parent.dusk'
     const parentNode = safeNamehashHex(parent)
+    // A valid Dusk address: the name page checks it as the name's primary.
+    const wallet = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
     const nameRow = { node: parentNode, canonicalName: parent, owner: 'owner', manager: null, resolverId: null,
       expiresAt: null, graceEndsAt: null, status: 'active', lastEventType: 'name_registered', records: [],
       primaryName: null, primaryStatus: 'no_address', subnameCount: 20, activityCount: 0 }
@@ -37,7 +39,7 @@ export async function checkIndexerSessionBudget(page) {
         }
         case 'resolve': {
           const name = url.searchParams.get('name')
-          body = { canonicalName: name, node: safeNamehashHex(name), records: name === parent ? [{ key: 'moonlight_address', value: 'wallet' }] : [],
+          body = { canonicalName: name, node: safeNamehashHex(name), records: name === parent ? [{ key: 'moonlight_address', value: wallet }] : [],
             resolver: { health: 'ok' }, expiry: { status: 'active' }, cache: {}, warnings: [], errors: [], verificationStatus: 'forward_resolved' }
           break
         }
@@ -51,6 +53,7 @@ export async function checkIndexerSessionBudget(page) {
         })) : [], nextCursor: null }; break
         case 'marketplace/config': body = { initialized: true, router: null, treasuryContract: null, marketplaceAuthority: null, operator: null, feeBps: 250, updatedAtBlockHeight: null, txId: null, blockHeight: null }; break
         case 'marketplace/refund': body = null; break
+        case 'marketplace/refunds': body = { refunds: [], nextCursor: null }; break
         case 'marketplace/fixed-sales':
         case 'marketplace/auctions':
         case 'marketplace/offers': {
@@ -76,7 +79,7 @@ export async function checkIndexerSessionBudget(page) {
       const sky = useSkyNames(client)
       const fee = useFeeConfig(client)
       const market = useMarketplaceData({ accountScope: 'session', indexerClient: client, mainView: view, onLoaded: noop,
-        selectedAddress: '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc',
+        selectedAddress: wallet,
         selectedAuthority: `0x${'11'.repeat(32)}`, setError: message => { window.sessionError = message } })
       window.sessionMarket = market
       return React.createElement('output', { id: 'session' }, JSON.stringify({ sky: sky === null ? null : sky.length, feeLoading: fee.feeConfigLoading, feeError: fee.feeConfigError }))

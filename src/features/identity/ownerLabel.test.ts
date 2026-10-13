@@ -23,11 +23,13 @@ it('only identifies owners from addresses that derive to their authority', () =>
 })
 
 it('uses known primary endpoints without mistaking a different payment address for the owner', () => {
-  const candidates = ownerAddressCandidates([{ key: 'moonlight_address', value: 'another address' }], [
+  // Another account's valid Dusk address.
+  const another = '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r'
+  const candidates = ownerAddressCandidates([{ key: 'moonlight_address', value: another }], [
     { eventType: 'primary_name', target: `moonlight_address:${address}` },
     { eventType: 'record_update', target: address },
   ])
-  expect(candidates).toEqual(['another address', address])
+  expect(candidates).toEqual([another, address])
   expect(ownerLabel(authority, { addresses: candidates }).value).toBe(address)
 })
 

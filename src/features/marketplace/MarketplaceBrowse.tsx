@@ -103,7 +103,7 @@ function AuctionCard({ auction, props, watched }: { auction: IndexedMarketplaceA
       <NamespaceSummary namespace={auction.namespace} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={auction.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} compact /></div>
       {leading ? <p className="marketplace-personal-status leading">{status === 'settlement_expired' ? 'Close auction for refund' : status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
-      {ownAuction ? <><p className="marketplace-personal-status selling">Your auction</p><p>Renewal is available after the listing closes.</p></> : null}
+      {ownAuction ? <><p className="marketplace-personal-status selling">Your auction</p><p>You can still renew it while it’s listed. Renewing doesn’t change the listing.</p></> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>{auction.highestBid ? 'Current bid' : 'Reserve'}</dt><dd><MarketplaceAmount lux={amount} /></dd></div>
         <div>
@@ -140,7 +140,7 @@ function FixedSaleCard({ props, sale, watched }: { props: MarketplaceBrowseProps
       <ListingName name={sale.name} verification={sale.verification} />
       <NamespaceSummary namespace={sale.namespace} />
       <div className="marketplace-owner">Seller <OwnerLabel authority={sale.sellerAuthority} viewerAuthority={props.wallet.selectedAuthority} addresses={props.wallet.ownerAddresses} compact /></div>
-      {ownSale ? <><p className="marketplace-personal-status selling">Your listing</p><p>Renewal is available after the listing closes.</p></> : null}
+      {ownSale ? <><p className="marketplace-personal-status selling">Your listing</p><p>You can still renew it while it’s listed. Renewing doesn’t change the listing.</p></> : null}
       <dl className="marketplace-card-metrics">
         <div><dt>Price</dt><dd><MarketplaceAmount lux={sale.priceLux} /></dd></div>
         <div><dt><Clock3 aria-hidden="true" size={13} /> {expired ? 'Ended' : 'Expires'}</dt><dd>{expiryTimeLabel(sale.expiresAtBlockHeight, props.market.currentBlockHeight)}</dd></div>

@@ -18,7 +18,8 @@ async function setup() {
     reservePriceLux: 10_000_000_000, durationBlocks: 8640, startDeadlineBlockHeight: 1000,
     createdAtBlockHeight: 100, feeBps: 250, startBlockHeight: null, endBlockHeight: null,
     highestBid: null, bidCount: 0,
-  } as IndexedMarketplaceAuction
+    marketplaceContractId: `0x${'66'.repeat(32)}`, order: { terms: { id: 7n }, nonce: 1n, status: 'Open' },
+  } as unknown as IndexedMarketplaceAuction
   const live: DuskDomainsOnChainAuction = { ...auction, reservePriceLux: 10_000_000_000n, highestBid: null, startBlock: null, endBlock: null }
   const auctions = [auction]
   const submit = vi.fn(async () => null)

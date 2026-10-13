@@ -200,6 +200,23 @@ it.each(['QuoteChanged', 'FeeMismatch'])('reads a %s refusal from a receipt whos
   expect(state.registrationCompletion?.status).toBe('executed')
 })
 
+it('says the payment was returned when the wallet reports the chain’s refusal as an error, and registers at the new price', async () => {
+  const saved = await reserve()
+  // The wallet's wait for execution rejected with the node's error. The writer shows its own copy
+  // for it; the raw error still names the refusal.
+  const error = new Error(`Transaction failed: ${panic('QuoteChanged')}`)
+  outcomes.push(() => ({ status: 'failed', txId: 'refused-tx', message: userFacingErrorMessage(error), error }))
+  await register()
+  expect(chain.getRegistrationQuote).toHaveBeenCalledWith(displayName, 2, controller)
+  expect(host.textContent).toContain('The registration price changed from 20 DUSK to 30 DUSK before your registration was confirmed, so it was refused.')
+  expect(host.textContent).toContain('Your payment was returned; only the network fee was charged.')
+  expect(listPendingNameReservations()).toEqual([saved])
+  await register('Register at 30 DUSK')
+  expect(registrations()[1]).toMatchObject({ quote: after, args: { commitment: saved.commitment, feeLux: 30e9 } })
+  expect(commits()).toHaveLength(1)
+  expect(state.registrationCompletion?.status).toBe('executed')
+})
+
 it('says the price changed, without a refund, when preparation finds it before any wallet request', async () => {
   const saved = await reserve()
   // SetPolicy executed between preparation reading the registration context and quoting: the store

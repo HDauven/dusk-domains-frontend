@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { contractId, FrozenClient, type ContractRole } from '@duskdomains/sdk'
@@ -22,10 +22,13 @@ it('validates every real handoff filename and rejects changed driver bytes', () 
   mkdirSync(`${root}/public/contracts`, { recursive: true })
   for (const role of roles)
     writeFileSync(`${root}/public/${handoff.artifacts[role].driver.path}`, handoffDriver(role))
+  // A deploy serves the handoff's manifest, as deploy.sh --manifest copies it.
+  writeFileSync(`${root}/public/manifest.json`, JSON.stringify(handoff))
+  writeFileSync(`${root}/frontend.env`, `${readFileSync('src/test/handoff/frontend.env', 'utf8')}\nVITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json\n`)
   const run = () =>
     spawnSync(
       process.execPath,
-      [resolve('scripts/validate-deploy.mjs'), resolve('src/test/handoff/frontend.env')],
+      [resolve('scripts/validate-deploy.mjs'), `${root}/frontend.env`],
       { cwd: root, encoding: 'utf8' },
     )
   const valid = run()
@@ -75,6 +78,9 @@ it.each([false, true])(
       const id = contractId(runtimeConfig.contracts[role]!.contractId)
       expect(client.release.contracts.get(id)?.role).toBe(role)
       expect(client.release.drivers.get(id)?.version()).toBe('1.0.0')
+      // Each contract's init commitment comes only from the handoff manifest.
+      const entry = handoff.contracts.find((c: { key: string }) => c.key === role)
+      expect((client.release.contracts.get(id) as { initHash?: string }).initHash).toBe(useManifest ? entry.initHash : undefined)
     }
     expect(fetcher).toHaveBeenCalledTimes(useManifest ? 7 : 6)
   },

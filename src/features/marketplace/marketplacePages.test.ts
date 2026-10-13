@@ -12,8 +12,9 @@ it('loads first pages, then follows only the marketplace lists with remaining cu
   const next = await readMarketplacePage(client as never, first.cursors)
   expect(next.auctions).toEqual([])
   expect(client.getMarketplaceAuctionsPage).toHaveBeenCalledTimes(1)
-  expect(client.getMarketplaceFixedSalesPage).toHaveBeenLastCalledWith({ cursor: 'sales-next' })
-  expect(client.getMarketplaceOffersPage).toHaveBeenLastCalledWith({ cursor: 'offers-next' })
+  // Every market's orders: one no longer preferred still settles and cancels its own.
+  expect(client.getMarketplaceFixedSalesPage).toHaveBeenLastCalledWith({ cursor: 'sales-next', marketplace: 'all' })
+  expect(client.getMarketplaceOffersPage).toHaveBeenLastCalledWith({ cursor: 'offers-next', marketplace: 'all' })
 })
 
 it('merges overlapping pages by identity and keeps updated rows', () => {

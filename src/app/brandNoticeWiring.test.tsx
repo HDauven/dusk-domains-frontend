@@ -24,12 +24,13 @@ it.each(['none', 'checking', 'verified'] as const)('carries website verification
     const managedName = { node: namePreview.nodeHex, owner: 'owner', expiresAt: 200, graceEndsAt: 300, websiteVerification: verification }
     page = useAppSearchProps({
       namePreview,
-      appRuntime: { indexerClient: client, runtimeConfig: createDuskDomainsRuntimeConfig({ VITE_DUSK_DOMAINS_ABUSE_URL: destination }) },
+      appRuntime: { indexerClient: client, pause: { registrationsPaused: false, tradingPaused: false }, runtimeConfig: createDuskDomainsRuntimeConfig({ VITE_DUSK_DOMAINS_ABUSE_URL: destination }) },
       activityFeed: { activityEntries: [] }, domainRecordState: { parentResolverRecords: [{ key: 'website', value: website }] },
       domainState: { managedName }, economicsRuntime: { feeConfig: DEFAULT_FEE_CONFIG },
       mainViewRuntime: {}, registrationProps: { wizard: {} }, registrationState: {}, searchRuntime: {},
       searchState: { currentBlockHeight: 100, nowSeconds: 0 }, walletRuntime: { selectedAuthority: '' },
       derivedState: {}, management: { primaryProps: { primaryVerification: { verified: true } }, settingsProps: { managedName } },
+      heldListing: { heldByMarket: false, listing: null },
     } as never).searchProps.result
     return <NameHeader {...page.headerProps} />
   }

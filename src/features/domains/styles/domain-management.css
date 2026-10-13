@@ -118,3 +118,4 @@
   font-size: var(--text-sm);
   line-height: 1.5;
 }
+.renewal-listing-note { margin: 0; padding: var(--space-3) 14px; border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--muted); font-size: var(--text-sm); }

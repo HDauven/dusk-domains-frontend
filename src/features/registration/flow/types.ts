@@ -63,6 +63,8 @@ export type RegistrationStepPanelProps = {
     onPrepareCommit: () => void
     onRestartReservation: () => void
     reservationStranded: boolean
+    /** Registrations are paused, while the reservation keeps ageing toward its expiry. */
+    registrationsPaused?: boolean
   }
   purchase: {
     canRevealRegistration: boolean

@@ -14,8 +14,9 @@ cp .env.example .env.local
 npm run dev -- --host 127.0.0.1 --port 5217 --strictPort
 ```
 
-Fill [.env.local using the template](.env.example) with the deployed router, core,
-treasury and marketplace IDs, matching drivers, node/chain and indexer URL.
+Fill [.env.local using the template](.env.example) with the six deployed contract IDs
+(directory, policy, store, vault, resolver and marketplace), their pinned driver URLs,
+the node, chain and indexer URL, and for a production site the deployment manifest URL.
 `VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES` enables wallet transactions when the runtime
 is configured. Live writes require Dusk Wallet and browser-accessible node endpoints.
 Support/abuse/security/status URLs are optional; unset links are hidden.
@@ -56,8 +57,15 @@ reprices it, the reservation stays valid: Register shows the old and new price a
 registers the same reservation once the new price is confirmed. Renewals follow the
 separate renewal schedule. See [registration price changes](docs/deploy.md#registration-price-changes).
 
-Projection reads require healthy indexer status. A wallet-confirmed transaction
-can precede finalized indexing; synchronization status distinguishes the two.
+Projection reads require healthy status from an indexer that reports this site's
+network and contracts in a complete, conflict-free deployment record; any other indexer
+counts as unhealthy. While the
+indexer's collector is blocked or catching up, and nothing else is wrong, the indexer keeps
+serving its last complete publication: the site shows it, says name data stopped updating
+at that block (or is catching up), and pauses the write confirmations that wait for the
+indexer to reach the transaction's block. Any other unhealthy status shows no indexed data. A
+wallet-confirmed transaction can precede finalized indexing; synchronization status
+distinguishes the two.
 Owner/subname lists use bounded complete-set reads. Marketplace and activity lists
 provide Load more. Issued reserved names have normal owner controls; the SDK's
 `saleLocked` profile metadata is not enforced as a sale lock by this app.
@@ -68,9 +76,40 @@ highest bid and end time as information; intervening bids do not block submissio
 The contract checks the chosen amount against the current minimum and applies
 bounded late-bid extensions.
 
-Healthy pause status is polled every ten seconds. The app disables affected
-registration/trading actions and keeps claims, refunds, settlement and ordinary
-name management available. Contracts enforce pause permissions independently.
+The app reads the pause from the indexer's status every minute, and checks the
+directory's registration context before every quote, reservation and registration.
+While registrations are paused it reads no registration quotes, disables reservations
+and registrations, and says when each saved reservation expires: a reservation still
+expires 8,640 blocks (about a day) after it was made. Claims, refunds, settlement,
+renewals and ordinary name management stay available. Contracts enforce pause
+permissions independently.
+
+New listings and offers go to the market the directory prefers now, which the app
+reads again every three minutes and after each confirmed write. Existing orders keep the
+market they were placed at and are acted on only there; an order listed without its market
+and order can't be acted on. The market, My names and the name page list orders and refunds
+in every market the directory admitted, so a market that is draining, or no longer
+preferred, still lets its orders be bought, settled, cancelled or returned and its refunds
+withdrawn, each from that market. A market that is paused, draining or retired, or whose
+deployment or configuration the indexer hasn't authenticated, takes no new bid; while the
+preferred market's fee is unknown, the site shows it as unknown and takes no new listing or
+offer. Before a new order or bid is signed, the market's own config and the directory's record
+of it are read from the chain. Anyone can renew a listed name: the renewal goes through its
+market with the reviewed order, which the chain refuses once the name has left that listing,
+and leaves the listing, its escrow and its records as they are. Any other name renews through
+its store, after a check that its owner is still the one reviewed. The store doesn't bind the
+owner, so a name that changes hands between that check and execution is renewed for its new
+owner.
+
+Only record keys this app knows get a label or a link. Any other key is shown exactly,
+with invisible characters spelled out, and marked as a custom record. An address the
+indexer reports invalid, or that fails the SDK's validation, is never offered as a
+payment target, nor shown or copied as anyone's Dusk address. Long records show their
+first lines until expanded.
+
+After a failed client creation or a failed contract verification, the app discards the
+client and its release and builds a fresh one on the next read, so a fixed manifest
+takes effect without a reload.
 
 ## Documentation
 

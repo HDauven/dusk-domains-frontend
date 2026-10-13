@@ -5,7 +5,6 @@ import { canControlThroughAncestor } from '../../app/derived/managementCapabilit
 import { sameAuthority } from '../identity/ownerLabel'
 import { Tabs, TabPanel } from '../../components/ui/Tabs'
 import { Button } from '../../components/ui/Button'
-import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import type { ComponentProps } from 'react'
 import { ActivityHistoryView } from '../activity/ActivityHistoryView'
 import { DomainDetailsView } from '../domains/DomainDetailsView'
@@ -66,7 +65,8 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
     holder: !ancestorControl && [managedName.owner, managedName.manager].some(authority => sameAuthority(authority, headerProps.viewerAuthority)),
     expiresWithParent: managedName.expiryPolicy === 'inherits_parent',
   }) : null
-  const canPayRenewal = Boolean(managedName?.ownerIsContract && canRenewOutsideEscrow(managedName) && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
+  // Anyone can pay to renew a name a contract holds, such as a listed one.
+  const canPayRenewal = Boolean(managedName?.ownerIsContract && headerProps.viewerAuthority && !isSubname(headerProps.displayName))
   const tabs = nameSections(canEdit, Boolean(subdomainsProps?.subnames.length), canPayRenewal)
   const tabbed = headerProps.status === 'registered' && nodeHex && resultView !== 'overview' && resultView !== 'register'
   // A wallet can disconnect while an owner tab is selected. Never retain those controls.

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Every mainnet and testnet deploy gives the network's manifest. Only a local chain whose env file
+# sets DUSK_DOMAINS_DEPLOY_WITHOUT_MANIFEST=true deploys without one.
 usage() {
-  echo 'Usage: scripts/deploy.sh <env-file> [--contracts <dir>] | --rollback' >&2
+  echo 'Usage: scripts/deploy.sh <env-file> --manifest <file> [--contracts <dir>] | --rollback' >&2
   exit 1
 }
 [[ $# -gt 0 ]] || usage
@@ -15,6 +17,7 @@ DEPLOY_DIR=${DEPLOY_DIR%/}
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 rollback=false
 contracts=
+manifest=
 if [[ "$1" == --rollback ]]; then
   [[ $# == 1 ]] || usage
   rollback=true
@@ -22,10 +25,14 @@ else
   [[ -f "$1" ]] || { echo 'Env file not found' >&2; exit 1; }
   env_file=$(realpath -- "$1")
   shift
-  if [[ $# != 0 ]]; then
-    [[ $# == 2 && "$1" == --contracts && -d "$2" ]] || usage
-    contracts=$(realpath -- "$2")
-  fi
+  while [[ $# != 0 ]]; do
+    case "$1" in
+      --contracts) [[ $# -ge 2 && -d "$2" && -z "$contracts" ]] || usage; contracts=$(realpath -- "$2"); shift 2 ;;
+      # The network's reviewed manifest, served at /manifest.json.
+      --manifest) [[ $# -ge 2 && -f "$2" && -z "$manifest" ]] || usage; manifest=$(realpath -- "$2"); shift 2 ;;
+      *) usage ;;
+    esac
+  done
 fi
 cd "$repo"
 [[ -z "$(git status --porcelain)" ]] || { echo 'Refusing to deploy a dirty worktree' >&2; exit 1; }
@@ -52,7 +59,8 @@ else
     cd "$work"
     npm ci --include=dev
     if [[ -n "$contracts" ]]; then cp -a -- "$contracts/." public/contracts/; fi
-    node scripts/validate-deploy.mjs .env.production.local
+    if [[ -n "$manifest" ]]; then cp -- "$manifest" public/manifest.json; fi
+    DUSK_DOMAINS_DEPLOY_MANIFEST_GIVEN=$([[ -n "$manifest" ]] && echo true || echo false) node scripts/validate-deploy.mjs .env.production.local
     # The selected file must win over variables from another build in this shell.
     for name in ${!VITE_@}; do unset "$name"; done
     NODE_ENV=production DUSK_DOMAINS_FRONTEND_COMMIT="$commit" npm run build

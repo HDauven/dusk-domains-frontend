@@ -36,6 +36,7 @@ import {
   isIndexedMarketplaceAuction,
   isIndexedMarketplaceOffer,
   isIndexedMarketplaceRefund,
+  isIndexedMarketplaceSummary,
   isIndexedNameSummary,
   isIndexedReferralState,
   isIndexedRegistrationCommitment,
@@ -56,6 +57,16 @@ export type DuskDomainsIndexerClientOptions = {
   baseUrl: string
   fetch?: typeof fetch
 }
+
+/**
+ * `marketplace=all` reads every market the directory admitted: after a SetPreferredMarketplace, or
+ * while a market drains, its orders and refunds still settle, cancel and pay out. Without it the
+ * indexer answers for the preferred market only.
+ */
+export const ALL_MARKETPLACES = 'all'
+/** A market's contract ID, or ALL_MARKETPLACES for order and refund lists. */
+export type MarketplaceScope = { marketplace?: string }
+export type IndexedOrderQuery = MarketplaceScope & { orderId?: string }
 
 export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
   verifyWebsite: (canonicalName: string) => Promise<WebsiteVerification>
@@ -84,20 +95,27 @@ export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
     params?: IndexerPageParams,
   ) => Promise<IndexerPage<IndexedSubname, 'subnames'>>
   getMarketplaceFixedSalesPage: (
-    params?: IndexerPageParams,
+    params?: IndexerPageParams & MarketplaceScope,
   ) => Promise<IndexerPage<IndexedMarketplaceFixedSale, 'fixedSales'>>
   getMarketplaceAuctionsPage: (
-    params?: IndexerPageParams,
+    params?: IndexerPageParams & MarketplaceScope,
   ) => Promise<IndexerPage<IndexedMarketplaceAuction, 'auctions'>>
   getMarketplaceOffersPage: (
-    filters?: { node?: string; buyerAuthority?: string } & IndexerPageParams,
+    filters?: { node?: string; buyerAuthority?: string } & IndexerPageParams & MarketplaceScope,
   ) => Promise<IndexerPage<IndexedMarketplaceOffer, 'offers'>>
+  /** The authority's refund row in each market, which names that market. */
+  getMarketplaceRefundsPage: (
+    authority: string,
+    params?: IndexerPageParams & MarketplaceScope,
+  ) => Promise<IndexerPage<IndexedMarketplaceRefund & { marketplaceContractId: string }, 'refunds'>>
   getAllNames: (params: { owner: string; maxItems?: number }) => Promise<IndexedNameSummary[]>
   getAllHoldings: (params: { authority: string; maxItems?: number }) => Promise<IndexedHolding[]>
   getAllSubnames: (parentNode: string, maxItems?: number) => Promise<IndexedSubname[]>
   /** Every open fixed-price listing and auction; the API has no seller filter. */
-  getAllMarketplaceFixedSales: (maxItems?: number) => Promise<IndexedMarketplaceFixedSale[]>
-  getAllMarketplaceAuctions: (maxItems?: number) => Promise<IndexedMarketplaceAuction[]>
+  getAllMarketplaceFixedSales: (maxItems?: number, scope?: MarketplaceScope) => Promise<IndexedMarketplaceFixedSale[]>
+  getAllMarketplaceAuctions: (maxItems?: number, scope?: MarketplaceScope) => Promise<IndexedMarketplaceAuction[]>
+  /** The authority's refunds in every market. */
+  getAllMarketplaceRefunds: (authority: string, maxItems?: number) => Promise<Array<IndexedMarketplaceRefund & { marketplaceContractId: string }>>
   /** Every activity row for a name, newest first, for exports. */
   getAllActivity: (node: string, maxItems?: number) => Promise<ActivityEntry[]>
   getHealth: (params?: IndexerPageParams) => Promise<DuskDomainsIndexerHealth>
@@ -127,15 +145,17 @@ export type DuskDomainsIndexerClient = DuskDomainsReadTransport & {
   getActivity: (node: string, params?: IndexerPageParams) => Promise<ActivityEntry[]>
   getSubnames: (parentNode: string, params?: IndexerPageParams) => Promise<IndexedSubname[]>
   getSubname: (node: string) => Promise<IndexedSubname | null>
-  getMarketplaceConfig: () => Promise<IndexedMarketplaceConfig>
-  getMarketplaceFixedSales: (params?: IndexerPageParams) => Promise<IndexedMarketplaceFixedSale[]>
-  getMarketplaceFixedSale: (node: string) => Promise<IndexedMarketplaceFixedSale | null>
-  getMarketplaceAuctions: (params?: IndexerPageParams) => Promise<IndexedMarketplaceAuction[]>
-  getMarketplaceAuction: (node: string, identity?: { marketplace?: string; orderId?: string }) => Promise<IndexedMarketplaceAuction | null>
+  /** One market's config: the one named, or the preferred one. Never every market's. */
+  getMarketplaceConfig: (scope?: MarketplaceScope) => Promise<IndexedMarketplaceConfig>
+  getMarketplaceFixedSales: (params?: IndexerPageParams & MarketplaceScope) => Promise<IndexedMarketplaceFixedSale[]>
+  /** With `marketplace: ALL_MARKETPLACES`, the latest of the name's orders in any market. */
+  getMarketplaceFixedSale: (node: string, identity?: IndexedOrderQuery) => Promise<IndexedMarketplaceFixedSale | null>
+  getMarketplaceAuctions: (params?: IndexerPageParams & MarketplaceScope) => Promise<IndexedMarketplaceAuction[]>
+  getMarketplaceAuction: (node: string, identity?: IndexedOrderQuery) => Promise<IndexedMarketplaceAuction | null>
   getMarketplaceOffers: (
-    filters?: { node?: string; buyerAuthority?: string } & IndexerPageParams,
+    filters?: { node?: string; buyerAuthority?: string } & IndexerPageParams & MarketplaceScope,
   ) => Promise<IndexedMarketplaceOffer[]>
-  getMarketplaceOffer: (node: string, buyerAuthority: string) => Promise<IndexedMarketplaceOffer | null>
+  getMarketplaceOffer: (node: string, buyerAuthority: string, identity?: IndexedOrderQuery) => Promise<IndexedMarketplaceOffer | null>
   getMarketplaceRefund: (authority: string) => Promise<IndexedMarketplaceRefund | null>
   getTreasury: () => Promise<IndexedTreasuryState>
   getReferralState: (referrer: string) => Promise<IndexedReferralState>
@@ -155,8 +175,27 @@ export type DuskDomainsIndexerHealth = {
   readModelSchemaVersion?: string | number
   currentBlockHeight: number | null
   finalizedBlockHeight?: number | null
+  /** The block the published projection reflects; null while there is no complete publication. */
+  projectionBlockHeight?: number | null
   lagBlocks?: number | null
   eventCount?: number
+  /** Why `ok` is false, such as `collector_blocked`. */
+  degradedReason?: { code?: string; message?: string; step?: string; error?: string }
+  /** The archive collector. While it is blocked, nothing at or after `stuckAtBlockHeight` is published. */
+  collector?: {
+    status?: string | null
+    blocked?: boolean
+    stuckAtBlockHeight?: number | null
+    scannedBlockHeight?: number | null
+    reason?: { code?: string; role?: string | null; emitter?: string | null; topic?: string | null; txId?: string | null } | null
+    since?: string | null
+    attempts?: number | null
+    /**
+     * Per marketplace the indexer hasn't authenticated, the events the collector set aside. None of
+     * that market's data is served, and collection goes on, so it changes nothing shown here.
+     */
+    quarantine?: Record<string, { events?: number | null; code?: string | null; topic?: string | null; firstBlockHeight?: number | null; lastBlockHeight?: number | null; lastTxId?: string | null }>
+  }
   lastEvent?: {
     eventName: string | null
     blockHeight: number | null
@@ -210,6 +249,9 @@ export type DuskDomainsIndexerHealth = {
     currentBlockHeight?: number | null
     scannedBlockHeight?: number | null
     eventCount?: number
+    /** The collector's state: running, catching-up, blocked (at an event it can't read) or stopped. */
+    status?: string
+    updatedAt?: string
   }
   checkpoint?: {
     lastBlockHeight?: number | null
@@ -223,6 +265,29 @@ export class RegistrationPricesUnavailableError extends Error {
     super('Registration prices are unavailable right now.')
     this.name = 'RegistrationPricesUnavailableError'
   }
+}
+
+// A market's contract ID as the indexer keys it, or `all` where every market can be read.
+function marketplaceKey(marketplace: string, allowAll = true) {
+  if (marketplace === ALL_MARKETPLACES) {
+    if (!allowAll) throw new Error('One market must be named here.')
+    return ALL_MARKETPLACES
+  }
+  return normalizeIndexerKey(marketplace)
+}
+
+function scoped<T extends MarketplaceScope>({ marketplace, ...params }: T) {
+  return { ...params, ...(marketplace === undefined ? {} : { marketplace: marketplaceKey(marketplace) }) }
+}
+
+function orderQuery({ marketplace, orderId }: IndexedOrderQuery) {
+  return { ...(marketplace === undefined ? {} : { marketplace: marketplaceKey(marketplace) }), ...(orderId === undefined ? {} : { orderId }) }
+}
+
+// A singular order read answers for the market and order asked for; under `all`, for any market.
+function matchesOrderIdentity(marketplaceContractId: string | null, orderId: number | string | undefined, query: { marketplace?: string; orderId?: string }) {
+  return (!query.marketplace || query.marketplace === ALL_MARKETPLACES || matchesIndexerKey(marketplaceContractId, query.marketplace))
+    && (!query.orderId || String(orderId) === query.orderId)
 }
 
 export function createDuskDomainsIndexerClient(
@@ -435,49 +500,56 @@ export function createDuskDomainsIndexerClient(
     return payload
   }
 
-  async function getMarketplaceConfig() {
-    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/config', {}))
+  async function getMarketplaceConfig(scope: MarketplaceScope = {}) {
+    // The indexer refuses `marketplace=all` here: one config names one market.
+    const marketplace = scope.marketplace === undefined ? undefined : marketplaceKey(scope.marketplace, false)
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/config', pageQuery({ marketplace })))
     if (!isIndexedMarketplaceConfig(payload)) {
       throw new Error('Dusk Domains indexer returned an invalid marketplace config response.')
     }
-    return payload
+    if (marketplace) assertRequestMatch(!payload.marketplaceContractId || matchesIndexerKey(payload.marketplaceContractId, marketplace), 'marketplace config')
+    // One malformed market summary drops that row, not the config.
+    return payload.marketplaces ? { ...payload, marketplaces: payload.marketplaces.filter(isIndexedMarketplaceSummary) } : payload
   }
 
-  async function getMarketplaceFixedSalesPage(params: IndexerPageParams = {}) {
-    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/fixed-sales', pageQuery(params)))
+  async function getMarketplaceFixedSalesPage(params: IndexerPageParams & MarketplaceScope = {}) {
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/fixed-sales', pageQuery(scoped(params))))
     return parsePage(payload, 'fixedSales', isIndexedMarketplaceFixedSale, 'marketplace fixed-sale')
   }
 
-  async function getMarketplaceFixedSales(params: IndexerPageParams = {}) {
+  async function getMarketplaceFixedSales(params: IndexerPageParams & MarketplaceScope = {}) {
     return (await getMarketplaceFixedSalesPage(params)).fixedSales
   }
 
-  async function getMarketplaceFixedSale(node: string) {
+  async function getMarketplaceFixedSale(node: string, identity: IndexedOrderQuery = {}) {
     node = normalizeIndexerKey(node)
-    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/fixed-sale', { node }))
+    const query = orderQuery(identity)
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/fixed-sale', { node, ...query }))
     if (payload === null) return null
     if (!isIndexedMarketplaceFixedSale(payload)) {
       throw new Error('Dusk Domains indexer returned an invalid marketplace fixed-sale response.')
     }
     assertRequestMatch(
-      matchesIndexerKey(payload.node, node) && matchesIndexedName(payload.name, node),
+      matchesIndexerKey(payload.node, node) && matchesIndexedName(payload.name, node) &&
+        matchesOrderIdentity(payload.marketplaceContractId, payload.saleId, query),
       'marketplace fixed-sale',
     )
     return payload
   }
 
-  async function getMarketplaceAuctionsPage(params: IndexerPageParams = {}) {
-    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/auctions', pageQuery(params)))
+  async function getMarketplaceAuctionsPage(params: IndexerPageParams & MarketplaceScope = {}) {
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/auctions', pageQuery(scoped(params))))
     return parsePage(payload, 'auctions', isIndexedMarketplaceAuction, 'marketplace auction')
   }
 
-  async function getMarketplaceAuctions(params: IndexerPageParams = {}) {
+  async function getMarketplaceAuctions(params: IndexerPageParams & MarketplaceScope = {}) {
     return (await getMarketplaceAuctionsPage(params)).auctions
   }
 
-  async function getMarketplaceAuction(node: string, identity: { marketplace?: string; orderId?: string } = {}) {
+  async function getMarketplaceAuction(node: string, identity: IndexedOrderQuery = {}) {
     node = normalizeIndexerKey(node)
-    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/auction', { node, ...identity }))
+    const query = orderQuery(identity)
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/auction', { node, ...query }))
     if (payload === null) return null
 
     if (!isIndexedMarketplaceAuction(payload)) {
@@ -486,32 +558,32 @@ export function createDuskDomainsIndexerClient(
 
     assertRequestMatch(
       matchesIndexerKey(payload.node, node) && matchesIndexedName(payload.name, node) &&
-        (!identity.marketplace || (payload.marketplaceContractId !== null && matchesIndexerKey(payload.marketplaceContractId, identity.marketplace))) &&
-        (!identity.orderId || String(payload.auctionId) === identity.orderId),
+        matchesOrderIdentity(payload.marketplaceContractId, payload.auctionId, query),
       'marketplace auction',
     )
     return payload
   }
 
   async function getMarketplaceOffersPage(
-    filters: { node?: string; buyerAuthority?: string } & IndexerPageParams = {},
+    filters: { node?: string; buyerAuthority?: string } & IndexerPageParams & MarketplaceScope = {},
   ) {
-    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/offers', pageQuery(filters)))
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/offers', pageQuery(scoped(filters))))
     return parsePage(payload, 'offers', isIndexedMarketplaceOffer, 'marketplace offer')
   }
 
   async function getMarketplaceOffers(
-    filters: { node?: string; buyerAuthority?: string } & IndexerPageParams = {},
+    filters: { node?: string; buyerAuthority?: string } & IndexerPageParams & MarketplaceScope = {},
   ) {
     return (await getMarketplaceOffersPage(filters)).offers
   }
 
-  async function getMarketplaceOffer(node: string, buyerAuthority: string) {
+  async function getMarketplaceOffer(node: string, buyerAuthority: string, identity: IndexedOrderQuery = {}) {
     node = normalizeIndexerKey(node)
     buyerAuthority = normalizeIndexerKey(buyerAuthority)
+    const query = orderQuery(identity)
     const payload = await getJson(
       fetcher,
-      endpointUrl(baseUrl, 'marketplace/offer', { node, buyerAuthority }),
+      endpointUrl(baseUrl, 'marketplace/offer', { node, buyerAuthority, ...query }),
     )
     if (payload === null) return null
     if (!isIndexedMarketplaceOffer(payload)) {
@@ -520,7 +592,8 @@ export function createDuskDomainsIndexerClient(
     assertRequestMatch(
       matchesIndexerKey(payload.node, node) &&
         matchesIndexedName(payload.name, node) &&
-        matchesIndexerKey(payload.buyerAuthority, buyerAuthority),
+        matchesIndexerKey(payload.buyerAuthority, buyerAuthority) &&
+        matchesOrderIdentity(payload.marketplaceContractId ?? null, payload.order ? String(payload.order.terms.id) : undefined, query),
       'marketplace offer',
     )
     return payload
@@ -535,6 +608,23 @@ export function createDuskDomainsIndexerClient(
     }
     assertRequestMatch(matchesIndexerKey(payload.authority, authority), 'marketplace refund')
     return payload
+  }
+
+  async function getMarketplaceRefundsPage(authority: string, params: IndexerPageParams & MarketplaceScope = {}) {
+    authority = normalizeIndexerKey(authority)
+    const payload = await getJson(fetcher, endpointUrl(baseUrl, 'marketplace/refunds', pageQuery({ authority, ...scoped(params) })))
+    // A refund is claimed at its own market, so each row must name the market and the account.
+    const page = parsePage(payload, 'refunds', (row: unknown): row is IndexedMarketplaceRefund & { marketplaceContractId: string } =>
+      isIndexedMarketplaceRefund(row) && typeof row.marketplaceContractId === 'string', 'marketplace refund')
+    assertRequestMatch(page.refunds.every(refund => matchesIndexerKey(refund.authority, authority)), 'marketplace refund')
+    return page
+  }
+
+  async function getAllMarketplaceRefunds(authority: string, maxItems?: number) {
+    return collectPages(async (params) => {
+      const page = await getMarketplaceRefundsPage(authority, params)
+      return { items: page.refunds, nextCursor: page.nextCursor }
+    }, maxItems)
   }
 
   async function getTreasury() {
@@ -593,16 +683,16 @@ export function createDuskDomainsIndexerClient(
     }, maxItems)
   }
 
-  async function getAllMarketplaceFixedSales(maxItems?: number) {
+  async function getAllMarketplaceFixedSales(maxItems?: number, scope: MarketplaceScope = {}) {
     return collectPages(async (params) => {
-      const page = await getMarketplaceFixedSalesPage(params)
+      const page = await getMarketplaceFixedSalesPage({ ...params, ...scope })
       return { items: page.fixedSales, nextCursor: page.nextCursor }
     }, maxItems)
   }
 
-  async function getAllMarketplaceAuctions(maxItems?: number) {
+  async function getAllMarketplaceAuctions(maxItems?: number, scope: MarketplaceScope = {}) {
     return collectPages(async (params) => {
-      const page = await getMarketplaceAuctionsPage(params)
+      const page = await getMarketplaceAuctionsPage({ ...params, ...scope })
       return { items: page.auctions, nextCursor: page.nextCursor }
     }, maxItems)
   }
@@ -630,6 +720,8 @@ export function createDuskDomainsIndexerClient(
     getAllActivity,
     getAllMarketplaceFixedSales,
     getAllMarketplaceAuctions,
+    getAllMarketplaceRefunds,
+    getMarketplaceRefundsPage,
     getHealth,
     searchName,
     getCommitment,

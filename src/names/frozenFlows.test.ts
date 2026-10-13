@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { beforeEach, afterEach, expect, it, vi } from 'vitest'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import * as sdk from '@duskdomains/sdk'
 import * as projection from '@duskdomains/sdk/projection'
 import { handoff, handoffDrivers } from '../test/handoffFixtures'
@@ -90,6 +90,9 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
   directory.resolver_count = 1
   directory.registration.policy = bytes(2)
   directory.registration.newest_store = bytes(7)
+  // Registration is open; the wire sample sets every flag.
+  directory.registration.operator_paused = false
+  directory.registration.guardian_suspended = false
   directory.preferred_marketplace = bytes(6)
   directory.operator_epoch = 9n
   const name = sample('NameView')
@@ -121,6 +124,10 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
   const market = sample('Config')
   market.fee_bps = 250
   market.next_order_id = 12n
+  // The market takes new orders; the wire sample sets every flag.
+  market.new_orders_disabled = false
+  // The directory's record of each market. A market it doesn't name is Listed.
+  const marketStates = new Map<string, sdk.MarketState>()
   let height = 106n
   const responses = new Map<string, unknown>(),
     calls: Array<{ target: string; method: string; args: unknown }> = []
@@ -159,6 +166,10 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
           role === 'directory' ? directory : role === 'policy' ? policy : market,
         )
       if (method === 'registration_context') return encode(directory.registration)
+      if (method === 'market' && role === 'directory') {
+        const market = (args as { id: number[] }).id
+        return encode({ id: market, state: marketStates.get(sdk.contractId(market)) ?? 'Listed', version: 1n, interface_version: 1, code_hash: bytes(0), init_hash: bytes(0) })
+      }
       if (method === 'home')
         return encode(
           unseen ? 'Absent' : target === id(3)
@@ -215,6 +226,7 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     quote,
     renewal,
     market,
+    marketStates,
     directory,
     admissions,
     setHeight: (n: bigint) => {
@@ -289,6 +301,25 @@ it('reveals using the original commitment store and SDK deadline, never the poli
     'reveal window',
   )
 })
+// SDK 0.3.2 refuses a quote taken at another height than the preparation that asked for it.
+it('prepares a reveal again when a block lands while it is being priced', async () => {
+  const h = fixture({ released: true })
+  const saved = reservation({ name: 'example.dusk', directory: id(1), commitmentStore: id(3) })
+  const transport = h.client.transport as { read: sdk.ReadTransport['read'] }
+  const read = transport.read.bind(transport)
+  let quotes = 0
+  transport.read = async (target, method, b) => {
+    if (method === 'quote_registration' && ++quotes === 1) h.setHeight(107n)
+    return read(target, method, b)
+  }
+  const reveal = await prepareFrozenCall(h.client, intent.storeCompleteRegistrationRequest({
+    directory: id(1), commitmentStore: id(3), commitment: saved.commitment, secret: saved.secret,
+    node, label: 'example', durationYears: 1, feeLux: 10e9, records: [], primaryEndpoint: null,
+  }), 'example.dusk', account)
+  expect(reveal).toMatchObject({ contractId: id(7), functionName: 'register', deposit: '10000000000' })
+  expect(quotes).toBeGreaterThan(1)
+})
+
 it.each([
   { scenario: 'released root on a retiring store', retiring: true, unseen: false, saved: false, target: 7 },
   { scenario: 'saved reservation on a retiring store', retiring: true, unseen: false, saved: true, target: 7 },
@@ -1647,8 +1678,243 @@ it('restores primary resolution when a listing is cancelled without replacing it
   expect(h.primary.primary.mapping_id).toBe(42n)
 })
 
+// The node answers at its tip. A block that lands mid-read makes a snapshot read again, three
+// times at most, so a read across every store must be short. Each request takes one round trip,
+// requests sent together share it, and a block lands every `trips` round trips.
+function blocksEvery(h: ReturnType<typeof primaryFixture>, trips: number) {
+  const transport = h.sdkClient.transport as { -readonly [K in keyof sdk.ReadTransport]: sdk.ReadTransport[K] }
+  const read = transport.read.bind(transport), tip = transport.currentBlockHeight.bind(transport)
+  let elapsed = 0, height = 106n, pending: Array<() => void> = []
+  const roundTrip = () => new Promise<void>(resolve => {
+    pending.push(resolve)
+    if (pending.length === 1) setTimeout(() => {
+      if (++elapsed % trips === 0) h.setHeight(++height)
+      const batch = pending
+      pending = []
+      batch.forEach(done => done())
+    }, 0)
+  })
+  transport.read = async (...args) => { await roundTrip(); return read(...args) }
+  transport.currentBlockHeight = async () => { await roundTrip(); return tip() }
+}
+
+it('reads a primary name across every store while blocks keep landing', async () => {
+  const h = primaryFixture()
+  h.publish()
+  blocksEvery(h, 10)
+  for (let refresh = 0; refresh < 3; refresh++) {
+    expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+    expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
+  }
+})
+
+it('reads a primary only at the store its name lives in, not one it moved on from', async () => {
+  const h = primaryFixture()
+  h.publish()
+  // The first store still answers for the name that moved from it to the second, mapping and record.
+  h.responses.set(`${id(3)}:resolve_primary`, h.primary)
+  h.responses.set(`${id(3)}:resolve_record`, h.responses.get(`${id(7)}:resolve_record`))
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+})
+
+// A SetPolicy can select a policy this site's manifest doesn't list yet. Only registration uses it.
+it('reads primary names while the directory selects a policy this release doesn’t list', async () => {
+  const h = primaryFixture()
+  h.publish()
+  h.directory.registration.policy = bytes(0x0b)
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+  expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
+  const clear = await prepareFrozenCall(h.sdkClient, intent.storeClearPrimaryNameRequest({ endpointType: 'moonlight_address', endpointValue: account }), 'example.dusk', account)
+  expect(clear).toMatchObject({ contractId: id(7), functionName: 'clear_primary' })
+  expect(h.calls.some(call => call.target === id(0x0b))).toBe(false)
+})
+
+it('reads again when a block lands during a read, and only then', async () => {
+  const h = primaryFixture()
+  const getName = h.sdkClient.getName.bind(h.sdkClient)
+  const reads = vi.spyOn(h.sdkClient, 'getName')
+  reads.mockRejectedValueOnce(new Error('Chain tip changed during read; retry the snapshot')).mockImplementation(getName)
+  expect(await h.client.getName('example.dusk')).toMatchObject({ ok: true, value: { canonicalName: 'example.dusk' } })
+  expect(reads).toHaveBeenCalledTimes(2)
+  reads.mockReset()
+  reads.mockRejectedValue(new Error('Unexpected read'))
+  expect(await h.client.getName('example.dusk')).toMatchObject({ ok: false, error: { message: 'Unexpected read' } })
+  expect(reads).toHaveBeenCalledTimes(1)
+})
+
 it('does not turn a failed resolve_primary read into a missing primary', async () => {
   const h = primaryFixture()
   h.responses.delete(`${id(3)}:resolve_primary`)
   expect(await h.client.getPrimaryName(h.endpoint)).toMatchObject({ ok: false, error: { code: 'contract_read_failed' } })
+})
+
+// While registrations are paused, or the policy is suspended, the store refuses quotes and commits
+// with Closed, and Rusk answers that read-only trap with HTTP 500. The directory's registration
+// context says so first, so nothing calls the store, and the reason is plain.
+it.each(['operator_paused', 'guardian_suspended'] as const)('says registrations are closed, without quoting or signing, while %s', async flag => {
+  const h = fixture({ unseen: true })
+  h.directory.registration[flag] = true
+  const actor = '0x' + sdk.hex(h.name.name.owner)
+  const onChain = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: vi.fn() } })
+  expect(await onChain.getRegistrationQuote('example.dusk', 1, actor)).toEqual({
+    ok: false, error: { code: 'contract_read_failed', message: 'Registrations are closed right now. Try again when they reopen.' },
+  })
+  const saved = reservation({ name: 'example.dusk', directory: id(1), controller: actor, commitmentStore: id(7) })
+  const commit = { ...intent.storeCommitRequest({ commitment: saved.commitment }), contractId: id(7) }
+  const register = intent.storeCompleteRegistrationRequest({
+    directory: id(1), commitmentStore: id(7), commitment: saved.commitment, secret: saved.secret,
+    node, label: 'example', durationYears: 1, feeLux: 10e9, records: [],
+  })
+  for (const request of [commit, register]) {
+    await expect(prepareFrozenCall(h.client, request, 'example.dusk', account)).rejects.toThrow('Registrations are closed right now. Try again when they reopen.')
+  }
+  expect(h.calls.map(call => call.method)).not.toContain('quote_registration')
+  expect(h.calls.map(call => call.method)).not.toContain('pending_commitment')
+})
+
+// A SetPreferredMarketplace can execute between review and signing, and anyone can execute it once
+// it is ready. A new order reviewed for the previous market is refused with that reason.
+it.each(['fixed', 'auction', 'offer'] as const)('refuses a %s order reviewed for a market that is no longer preferred, and says why', async kind => {
+  const h = fixture()
+  const previous = id(9)
+  const request = kind === 'fixed'
+    ? intent.storeEscrowFixedSaleRequest({ node, marketplaceContract: previous, name: 'example.dusk', sellerRecipient: account, priceLux: 10e9, expiresAt: 900 })
+    : kind === 'auction'
+      ? intent.storeEscrowAuctionRequest({ node, marketplaceContract: previous, name: 'example.dusk', sellerRecipient: account, reservePriceLux: 10e9, durationBlocks: 8640 })
+      : { ...intent.marketplacePlaceOfferRequest({ node, amountLux: 10e9, expiresAt: 900, buyerManager: null }), contractId: previous }
+  await expect(prepareFrozenCall(h.client, { ...request, expectedFeeBps: 250 }, 'example.dusk', account))
+    .rejects.toThrow('The market moved to a new contract after you reviewed this. Review it again before signing.')
+})
+
+// A stuck indexer keeps serving the pause flags of its last publication, so a new order or bid is
+// checked against the market's own config and the directory's record of the market, read live.
+it.each([
+  ['pauses new orders', (h: ReturnType<typeof fixture>) => { h.market.new_orders_disabled = true }],
+  ['is draining', (h: ReturnType<typeof fixture>) => { h.marketStates.set(id(6), 'Draining') }],
+  ['is retired', (h: ReturnType<typeof fixture>) => { h.marketStates.set(id(6), 'Retired') }],
+])('refuses a new order or bid at a market that %s, before the wallet', async (_, close) => {
+  const common = { node, marketplaceContract: id(6), name: 'example.dusk', sellerRecipient: account }
+  const requests = (h: ReturnType<typeof fixture>) => [
+    { ...intent.storeEscrowFixedSaleRequest({ ...common, priceLux: 10e9, expiresAt: 900 }), expectedFeeBps: 250 },
+    { ...intent.storeEscrowAuctionRequest({ ...common, reservePriceLux: 10e9, durationBlocks: 8640 }), expectedFeeBps: 250 },
+    { ...intent.marketplacePlaceOfferRequest({ node, amountLux: 10e9, expiresAt: 900, buyerManager: null }), contractId: id(6), expectedFeeBps: 250 },
+    { ...intent.marketplacePlaceBidRequest({ node, expectedAuctionId: 12, amountLux: 11e9 }), contractId: id(6), reviewedOrder: reviewedOrder(h, 'Auction') },
+  ]
+  for (const request of requests(fixture())) {
+    const h = fixture()
+    if ('reviewedOrder' in request) reviewedOrder(h, 'Auction')
+    close(h)
+    await expect(prepareFrozenCall(h.client, request, 'example.dusk', account), request.functionName)
+      .rejects.toThrow('This market isn’t taking new orders right now. Existing orders can still be completed or cancelled.')
+  }
+})
+
+it('still settles, buys and cancels at a market that is draining', async () => {
+  const h = fixture()
+  h.marketStates.set(id(6), 'Draining')
+  h.market.new_orders_disabled = true
+  const auction = reviewedOrder(h, 'Auction')
+  await expect(prepareFrozenCall(h.client, { ...intent.marketplaceCancelAuctionRequest({ node, expectedAuctionId: 12 }), contractId: id(6), reviewedOrder: auction },
+    'example.dusk', account)).resolves.toMatchObject({ functionName: 'cancel_order' })
+  const sale = reviewedOrder(h, 'Fixed')
+  await expect(prepareFrozenCall(h.client, { ...intent.marketplaceBuyFixedSaleRequest({ node, expectedSaleId: 12, priceLux: 10e9 }), contractId: id(6), reviewedOrder: sale },
+    'example.dusk', account)).resolves.toMatchObject({ functionName: 'buy_fixed' })
+})
+
+// A renewal for a name someone else holds is bound to what was reviewed. A sale or a return between
+// review and signing changes the owner, not the name's incarnation, so it is caught only by reading
+// the owner, the custody and the order again.
+describe('renewing a name someone else holds', () => {
+  // A market holds the name another account listed; the signer is neither.
+  const marketOwned = (h: ReturnType<typeof fixture>) => {
+    const market = bytes(6)
+    const seller = bytes(12)
+    h.name.name.owner = market
+    h.name.name.manager = market
+    h.name.name.custody = { nonce: 8n, incarnation: h.name.name.incarnation, custodian: market, origin_owner: seller, origin_manager: seller }
+    reviewedOrder(h, 'Fixed')
+    return { market, seller }
+  }
+  const renew = (h: ReturnType<typeof fixture>, reviewedRenewal?: unknown) => prepareFrozenCall(h.client,
+    { ...intent.storeRenewRequest({ node, durationYears: 1, feeLux: 17e9 }), ...(reviewedRenewal ? { reviewedRenewal } : {}) } as never, 'example.dusk', account)
+  const listing = { marketplace: id(6), orderId: '12' }
+  const notListed = 'This name isn’t listed anymore, so only its owner or manager can renew it.'
+
+  // The market's renew_escrow takes the complete order, so the chain itself refuses the renewal if
+  // the name sells, returns or is relisted between review and execution.
+  it('renews a listed name through its market, bound to the reviewed order', async () => {
+    const h = fixture()
+    marketOwned(h)
+    const order = reviewedOrder(h, 'Fixed')
+    const call = await renew(h, { owner: `0x${id(6)}`, listing })
+    expect(call).toMatchObject({
+      contractId: id(6), functionName: 'renew_escrow', deposit: '17000000000',
+      args: { order: { terms: { id: 12n }, nonce: 8n, status: 'Open' },
+        renewal: { name: { key: h.name.name.key, incarnation: h.name.name.incarnation }, years: 1, expected_fee_lux: '17000000000', valid_until: 226n } },
+    })
+    expect(sdk.stringifyJson((call.args as { order: sdk.Order }).order)).toBe(sdk.stringifyJson(order))
+    expect(call.display).toMatchObject({ Listing: 'Stays listed as it is' })
+  })
+
+  // A SetPolicy can select a policy this site's manifest doesn't list yet. Only registration uses it.
+  it('renews, edits records and transfers while the directory selects a policy this release doesn’t list', async () => {
+    const h = fixture()
+    h.directory.registration.policy = bytes(0x0b)
+    expect(await renew(h)).toMatchObject({ contractId: id(7), functionName: 'renew' })
+    const records = await prepareFrozenCall(h.client, intent.storeMutateRecordsSenderRequest({ node, mutations: [{ action: 'set', key: 'website', value: 'https://example.test', ttlSeconds: 60 }] }), 'example.dusk', account)
+    expect(records).toMatchObject({ contractId: id(7) })
+    const transfer = await prepareFrozenCall(h.client, intent.storeUpdateAuthoritiesRequest({ node, owner: '0x' + id(9), manager: '0x' + id(9), clearRecords: true }), 'example.dusk', account)
+    expect(transfer).toMatchObject({ contractId: id(7) })
+    expect(h.calls.some(call => call.target === id(0x0b))).toBe(false)
+  })
+
+  it('renews the holder’s own name and a contract-owned one through the store', async () => {
+    const own = await renew(fixture())
+    expect(own).toMatchObject({ contractId: id(7), functionName: 'renew' })
+    const h = fixture()
+    h.name.name.owner = bytes(10)
+    h.name.name.manager = bytes(10)
+    expect(await renew(h, { owner: `0x${id(10)}`, listing: null })).toMatchObject({ contractId: id(7), functionName: 'renew' })
+  })
+
+  it.each([
+    ['the name sold after review', (h: ReturnType<typeof fixture>) => { h.name.name.owner = bytes(9); h.name.name.manager = bytes(9); h.name.name.custody = null }],
+    ['the listing was cancelled and the name returned', (h: ReturnType<typeof fixture>, seller: number[]) => { h.name.name.owner = seller; h.name.name.manager = seller; h.name.name.custody = null }],
+    ['the reviewed order is gone', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(6)}:read_order`, null) }],
+    ['the reviewed order is waiting to return the name', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(6)}:read_order`, { ...reviewedOrder(h, 'Fixed'), status: 'ReturnPending' }) }],
+    ['the reviewed order is another custody episode', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(6)}:read_order`, { ...reviewedOrder(h, 'Fixed'), nonce: 7n }) }],
+  ] as const)('refuses a listed renewal once %s', async (_, change) => {
+    const h = fixture()
+    const { seller } = marketOwned(h)
+    change(h, seller)
+    await expect(renew(h, { owner: `0x${id(6)}`, listing })).rejects.toThrow(/isn’t listed anymore|changed owners/)
+  })
+
+  it('refuses a renewal for a name held by a contract this release doesn’t list as a market', async () => {
+    const h = fixture()
+    marketOwned(h)
+    h.name.name.owner = bytes(9)
+    h.name.name.manager = bytes(9)
+    h.name.name.custody = { ...h.name.name.custody!, custodian: bytes(9) }
+    await expect(renew(h, { owner: `0x${id(9)}`, listing: { marketplace: id(9), orderId: '12' } })).rejects.toThrow(notListed)
+  })
+
+  it('refuses a renewal for someone else’s name without a reviewed basis', async () => {
+    const h = fixture()
+    marketOwned(h)
+    await expect(renew(h)).rejects.toThrow(/isn’t listed anymore|changed owners/)
+  })
+
+  it('renews a contract-owned name only while the reviewed contract still owns it', async () => {
+    const h = fixture()
+    h.name.name.owner = bytes(10)
+    h.name.name.manager = bytes(10)
+    await expect(renew(h, { owner: `0x${id(10)}`, listing: null })).resolves.toMatchObject({ functionName: 'renew' })
+    h.name.name.owner = bytes(11)
+    await expect(renew(h, { owner: `0x${id(10)}`, listing: null })).rejects.toThrow('This name changed owners since you reviewed it, so only its owner or manager can renew it.')
+  })
+
+  it('still renews the holder’s own name without a reviewed basis', async () => {
+    await expect(renew(fixture())).resolves.toMatchObject({ functionName: 'renew' })
+  })
 })

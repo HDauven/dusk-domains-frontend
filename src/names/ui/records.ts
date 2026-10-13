@@ -38,6 +38,8 @@ export type ResolverRecord = {
   visibility: RecordVisibility
   updatedAt: string
   ttlSeconds: number
+  /** Why the indexer's resolver reports this record invalid, such as a malformed address. */
+  resolverIssue?: string
 }
 
 export type RecordDefinition = {

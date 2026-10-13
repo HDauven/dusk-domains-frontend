@@ -23,9 +23,10 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
   const envKey = JSON.stringify(env)
   const runtimeConfig = useMemo(() => createDuskDomainsRuntimeConfig(JSON.parse(envKey) as DuskDomainsRuntimeEnv), [envKey])
   const recordSourceContractId = runtimeConfig.contracts.resolver.contractId
+  // The indexer must report this site's network and contracts to be trusted.
   const indexerClient = useMemo(() => (
-    runtimeConfig.indexerUrl ? createHealthyIndexerClient(runtimeConfig.indexerUrl) : null
-  ), [runtimeConfig.indexerUrl])
+    runtimeConfig.indexerUrl ? createHealthyIndexerClient(runtimeConfig.indexerUrl, runtimeConfig) : null
+  ), [runtimeConfig])
   const pause = useOperatorPause(indexerClient, `${runtimeConfig.chainId}:${runtimeConfig.contracts.directory.contractId}`)
   const getCurrentBlockHeight = useMemo(() => (
     createDuskNodeBlockHeightReader(runtimeConfig.nodeUrl)
@@ -51,7 +52,11 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
       ? createDuskDomainsOnChainReadTransport(liveDuskDomainsApp, runtimeConfig.contracts)
       : null
   ), [liveDuskDomainsApp, runtimeConfig.contracts])
-  const marketplaceContractId = usePoolMarketplace(onChainReadTransport)
+  // The market new orders go to, read from the directory, and the markets whose orders the site still serves.
+  const market = usePoolMarketplace(onChainReadTransport)
+  const marketplaceContractId = market.preferred
+  const configuredMarketplace = runtimeConfig.contracts.marketplace?.contractId
+  const knownMarketplaces = useMemo(() => [...new Set([...market.known, ...(configuredMarketplace ? [configuredMarketplace] : [])])], [market.known, configuredMarketplace])
   const marketplaceOnChainClient = useMemo(() => {
     if (!onChainReadTransport || !runtimeConfig.contracts.marketplace) return null
     return createDuskDomainsMarketplaceOnChainClient(onChainReadTransport)
@@ -74,6 +79,7 @@ export function useAppRuntime(env: DuskDomainsRuntimeEnv) {
     indexerClient,
     liveDuskDomainsApp,
     marketplaceContractId,
+    knownMarketplaces,
     marketplaceOnChainClient,
     recordSourceContractId,
     runtimeConfig,

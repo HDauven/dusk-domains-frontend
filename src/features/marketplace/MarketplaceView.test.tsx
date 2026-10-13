@@ -24,6 +24,7 @@ type MarketplaceOverrides = { [K in Exclude<keyof MarketplaceViewProps, 'takeBac
 const seller = `0x${'22'.repeat(32)}`
 const buyer = `0x${'33'.repeat(32)}`
 const outsider = `0x${'44'.repeat(32)}`
+const market = `0x${'55'.repeat(32)}`
 
 describe('MarketplaceView listing links', () => {
   it('opens a listing link in Browse with the search set to its name', () => {
@@ -66,8 +67,9 @@ describe('MarketplaceView actions', () => {
     const selected = auction()
     const listing = kind === 'fixed sale' ? { listings: { fixedSales: [fixedSale()] } }
       : { listings: { auctions: [selected] }, auction: { selectedAuctionNode: kind === 'auction detail' ? selected.node : '' } }
-    expect(render({ ...listing, wallet: { selectedAuthority: seller } })).toContain('Renewal is available after the listing closes.')
-    expect(render({ ...listing, wallet: { selectedAuthority: buyer } })).not.toContain('Renewal is available after the listing closes.')
+    expect(render({ ...listing, wallet: { selectedAuthority: seller } })).toContain('You can still renew it while it’s listed. Renewing doesn’t change the listing.')
+    expect(render({ ...listing, wallet: { selectedAuthority: seller } })).not.toContain('after the listing closes')
+    expect(render({ ...listing, wallet: { selectedAuthority: buyer } })).not.toContain('You can still renew it while it’s listed.')
   })
 
   it('offers more marketplace results and auction activity only when cursors remain', () => {
@@ -325,7 +327,7 @@ function props(overrides: MarketplaceOverrides): MarketplaceViewProps {
     ...overrides.offers,
   },
   withdrawal: {
-    refund: null,
+    refunds: [],
     onClaimRefund: noop,
     ...overrides.withdrawal,
   },
@@ -439,7 +441,7 @@ it('disables only new orders while paused and keeps custody release and refunds 
   expect(button(render({ ...paused, listings: { auctions: [dormant] }, auction: { selectedAuctionNode: dormant.node }, wallet: { ...paused.wallet, selectedAuthority: seller } }), 'Cancel auction')).not.toContain('disabled')
   const ended = auction({ startBlockHeight: 800, endBlockHeight: 1000, highestBid: { bidderAuthority: buyer, amountLux: 40_000_000_000, placedAtBlockHeight: 800 }, bidCount: 1 })
   expect(button(render({ ...paused, listings: { auctions: [ended] }, auction: { selectedAuctionNode: ended.node } }), 'Finalize auction')).not.toContain('disabled')
-  expect(button(render({ ...paused, navigation: { tab: 'activity' }, withdrawal: { refund: { authority: buyer, recipient: null, amountLux: 20_000_000_000, txId: 'refund', blockHeight: 1000, lastEventType: 'domain_offer_closed' } } }), 'Withdraw to wallet')).not.toContain('disabled')
+  expect(button(render({ ...paused, navigation: { tab: 'activity' }, withdrawal: { refunds: [{ marketplaceContractId: market, authority: buyer, recipient: null, amountLux: 20_000_000_000, txId: 'refund', blockHeight: 1000, lastEventType: 'domain_offer_closed' }] } }), 'Withdraw to wallet')).not.toContain('disabled')
   expect(button(render({ ...paused, auction: { bidReview: { amountDusk: '40', amountLux: 40_000_000_000n, minimumBidLux: 40_000_000_000n, auction: dormant } } }), 'Confirm in wallet')).toContain('disabled')
 })
 
@@ -679,4 +681,50 @@ it.each(['read', 'network'])('keeps bid errors and confirmations visible alongsi
   expect(html).toContain('Retrying…')
   expect(html).toContain('Bid at least 50 DUSK.')
   expect(html).toContain('Bid placed.')
+})
+
+describe('MarketplaceView after a market replacement', () => {
+  const earlier = `0x${'06'.repeat(32)}`
+  const button = (html: string, label: string) => {
+    const match = html.match(new RegExp(`<button[^>]*>${label}</button>`))
+    expect(match, label).not.toBeNull()
+    return match![0]
+  }
+
+  it('shows the fee as unknown and says why new listings and offers can’t be placed', () => {
+    const refusal = 'This market’s fee can’t be read right now, so it isn’t taking new listings or offers. Try again later.'
+    const sell = render({ navigation: { tab: 'sell' }, selling: { feeBps: null, newOrdersRefusal: refusal, sellableNames: [ownedName()] }, wallet: { selectedAuthority: seller } })
+    expect(sell).toContain(refusal)
+    expect(sell).toContain('Marketplace fee unknown')
+    expect(sell).not.toContain('2.50%')
+    expect(sell).not.toContain('Loading marketplace fee')
+    expect(button(sell, 'List for sale')).toContain('disabled')
+    const offers = render({ navigation: { tab: 'offers' }, selling: { feeBps: null, newOrdersRefusal: refusal } })
+    expect(offers).toContain(refusal)
+    expect(button(offers, 'Review offer')).toContain('disabled')
+  })
+
+  it('takes no bid on an auction whose market isn’t taking new orders, and still finalizes one there', () => {
+    const refusal = 'This auction’s market isn’t taking new bids. The auction can still be finalized or closed.'
+    const open = auction({ marketplaceContractId: earlier })
+    const detail = render({ listings: { auctions: [open] }, auction: { selectedAuctionNode: open.node, bidRefusal: () => refusal } })
+    expect(detail).toContain(refusal)
+    expect(button(detail, 'Review bid')).toContain('disabled')
+    const ended = auction({ marketplaceContractId: earlier, startBlockHeight: 800, endBlockHeight: 1000, highestBid: { bidderAuthority: buyer, amountLux: 40_000_000_000, placedAtBlockHeight: 800 }, bidCount: 1 })
+    expect(button(render({ listings: { auctions: [ended] }, auction: { selectedAuctionNode: ended.node, bidRefusal: () => refusal } }), 'Finalize auction')).not.toContain('disabled')
+  })
+
+  it('lists a refund in each market, each withdrawn on its own', () => {
+    const refunds = [
+      { marketplaceContractId: earlier, authority: buyer, recipient: null, amountLux: 5_000_000_000, txId: null, blockHeight: null, lastEventType: 'marketplace_refund_claimed' as const },
+      { marketplaceContractId: market, authority: buyer, recipient: null, amountLux: 2_000_000_000, txId: null, blockHeight: null, lastEventType: 'marketplace_refund_claimed' as const },
+    ]
+    const browse = render({ withdrawal: { refunds } })
+    expect(browse).toContain('7 DUSK</span> ready to withdraw')
+    const yours = render({ navigation: { tab: 'activity' }, withdrawal: { refunds } })
+    expect(yours.match(/<button[^>]*>Withdraw to wallet<\/button>/g)).toHaveLength(2)
+    expect(yours).toContain('5 DUSK')
+    expect(yours).toContain('2 DUSK')
+    expect(yours).toContain('Each market pays out its own refunds.')
+  })
 })

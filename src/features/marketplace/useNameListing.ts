@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { DuskDomainsIndexerClient } from '../../names/internal'
+import { ALL_MARKETPLACES, type DuskDomainsIndexerClient } from '../../names/internal'
 import type { HeldListing } from '../domains/myDomainsData'
 
 const REFRESH_MS = 60_000
 
-/** The open fixed-price listing or auction of a name the market holds; null otherwise. */
+/** The open fixed-price listing or auction of a name a market holds, in any market; null otherwise. */
 export function useNameListing({ indexerClient, node, escrowed }: {
   indexerClient: Pick<DuskDomainsIndexerClient, 'getMarketplaceFixedSale' | 'getMarketplaceAuction'> | null
   node: string
@@ -15,9 +15,10 @@ export function useNameListing({ indexerClient, node, escrowed }: {
     if (!indexerClient || !node || !escrowed) return
     let active = true
     const read = async () => {
+      const anyMarket = { marketplace: ALL_MARKETPLACES }
       const [sale, auction] = await Promise.all([
-        indexerClient.getMarketplaceFixedSale(node).catch(() => null),
-        indexerClient.getMarketplaceAuction(node).catch(() => null),
+        indexerClient.getMarketplaceFixedSale(node, anyMarket).catch(() => null),
+        indexerClient.getMarketplaceAuction(node, anyMarket).catch(() => null),
       ])
       if (!active) return
       setState({ node, listing: sale ? { kind: 'fixed', name: sale.name, node, listing: sale }

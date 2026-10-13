@@ -35,6 +35,10 @@ type UseSearchWorkspaceFeatureProps = {
   activityLoading: boolean
   /** Why an available name can't be claimed now; empty for the default copy. */
   blockedReason?: string
+  /** Registrations are paused, as the banner says. */
+  registrationsPaused?: boolean
+  /** The live quote is still being read. */
+  quoteLoading?: boolean
   canRegister: boolean
   /** The market takes offers on this network. */
   marketplaceOffers?: boolean
@@ -97,6 +101,8 @@ export function useSearchWorkspaceFeature({
   hasMoreActivity,
   onLoadMoreActivity,
   blockedReason = '',
+  registrationsPaused = false,
+  quoteLoading = false,
   canRegister,
   marketplaceOffers = false,
   checked,
@@ -223,6 +229,8 @@ export function useSearchWorkspaceFeature({
       overviewProps: {
         listing,
         blockedReason,
+        registrationsPaused,
+        quoteLoading,
         canRegister,
         displayName,
         onContinueRegistration: onStartRegistration,

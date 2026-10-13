@@ -1,4 +1,6 @@
 import { boundWebsiteVerification } from '../../names/http/verification'
+import { trustedDuskAddresses } from '../identity/addressTrust'
+import { reviewedListing } from '../../app/useHeldListing'
 import { useCallback, useLayoutEffect, useRef } from 'react'
 import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { canControlSubname } from './namespaceActions'
@@ -9,7 +11,7 @@ import { useDomainRecordActions } from './useDomainRecordActions'
 import { useDomainSettingsActions } from './useDomainSettingsActions'
 import { useSubdomainActions } from './useSubdomainActions'
 
-export function useDomainManagementFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, namePreview, searchRuntime, searchState, walletRuntime }: UseDomainManagementFeatureProps): DomainManagementFeatureProps {
+export function useDomainManagementFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, heldListing, namePreview, searchRuntime, searchState, walletRuntime }: UseDomainManagementFeatureProps): DomainManagementFeatureProps {
   const addressRequest = useRef({ generation: 0 })
   useLayoutEffect(() => {
     addressRequest.current.generation++
@@ -71,6 +73,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
     ...useDomainSettingsActions({
       renewalQuote: namePreview.renewalQuote,
       renewalNameRef: namePreview.renewalNameRef,
+      renewalListing: reviewedListing(heldListing),
       ...writes,
       indexerClient: appRuntime.indexerClient,
       canManageName: derivedState.canManageName,
@@ -198,7 +201,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         managementTxState: domainState.managementTxState,
         onConfirmationInputChange: domainState.setConfirmationInput,
         viewerAuthority: walletRuntime.selectedAuthority,
-        ownerAddresses: domainRecordState.moonlightRecord ? [domainRecordState.moonlightRecord.value] : [],
+        ownerAddresses: trustedDuskAddresses(domainRecordState.moonlightRecord ? [domainRecordState.moonlightRecord] : []),
         onResolveRecipient: input => resolveRecipient(input, appRuntime.indexerClient),
         onOwnershipUpdate: change => actions.handleOwnershipUpdate(change),
       },

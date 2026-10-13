@@ -14,6 +14,7 @@ const props = {
   },
   overviewProps: {
     canRegister:false,
+    displayName:'alpha.dusk',
     quote: {  },
     reservation: {  },
   },
@@ -94,7 +95,7 @@ it('shows visiting payers only renewal controls for confirmed contract-owned roo
         managedName: { ...contractProps.management.settingsProps.managedName, ownerIsContract: false } } }} />)).not.toContain('aria-label="Renewal controls"')
 })
 
-it('offers no Renew tab or controls for marketplace escrow even when the owner is a deployed contract', () => {
+it('offers the Renew tab and controls for a listed name, and says renewing leaves the listing as it is', () => {
   const html = renderToStaticMarkup(<SearchResultPanel {...props}
     resultView="manage"
     headerProps={{ ...props.headerProps, viewerAuthority: 'seller' }}
@@ -116,9 +117,8 @@ it('offers no Renew tab or controls for marketplace escrow even when the owner i
           renewalPreviewExpiresAt: 3_153_800,
         },
       } }} />)
-  expect(html).not.toContain('>Renew</')
-  expect(html).not.toContain('aria-label="Renewal controls"')
-  expect(html).toContain('Send to alpha.dusk')
+  expect(html).toContain('aria-label="Renewal controls"')
+  expect(html).toContain('Renewing it doesn’t change the listing')
 })
 
 it.each(['details', 'records', 'subnames'] as const)('shows ancestor actions without holder editing on %s', resultView => {

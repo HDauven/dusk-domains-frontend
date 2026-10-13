@@ -61,15 +61,17 @@ describe('who controls a name', () => {
     expect(terms).toContain('We may use the protocol\'s share of the treasury as we see fit')
     // Reserving a name affects who can register it, not renewals.
     expect(terms).toContain('Which names are reserved is set by the protocol and may change for future registrations. Prices are also set by the protocol and may change for future registrations and renewals.')
-    // Anyone can pay to renew a listed name on chain. This website lets a name's owner or manager renew it, and a listed one only after it leaves the market.
+    // Anyone can pay to renew a listed name, on chain and on this website; the listing stays as it is.
     expect(terms).not.toContain('can\'t be renewed until the listing ends')
     expect(terms).not.toContain('This website renews')
-    expect(terms).toContain('On this website, a name\'s owner or manager can renew it, and a listed name only after it leaves the market.')
+    expect(terms).not.toContain('only after it leaves the market')
+    expect(terms).toContain('On this website, a name\'s owner or manager can renew it, and anyone can renew a listed name, which leaves the listing unchanged.')
     expect(terms).not.toMatch(/move anyone's funds/)
     const llms = readFileSync('scripts/site/llms.txt', 'utf8')
     expect(llms).not.toContain('unless it is listed in the market')
     expect(llms).not.toContain('This site renews')
-    expect(llms.split('On this site, a name\'s owner or manager can renew it, and a listed name only after it leaves the market.')).toHaveLength(3)
+    expect(llms).not.toContain('only after it leaves the market')
+    expect(llms.split('On this site, a name\'s owner or manager can renew it, and anyone can renew a listed name, which leaves the listing unchanged.')).toHaveLength(3)
     expect(llms).toContain('The owner or manager of alice.dusk can reassign or take back its subnames at any time')
   })
 })

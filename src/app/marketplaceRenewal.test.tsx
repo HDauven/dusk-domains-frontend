@@ -74,7 +74,7 @@ function renderRenewal() {
   return { canRenew, escrow, html }
 }
 
-it('hides Renew for marketplace custody with marketplace UI disabled, then permits renewal outside escrow', async () => {
+it('offers Renew for a listed name, saying the listing stays as it is, and for a name outside escrow', async () => {
   expect(runtime.runtimeConfig.capabilities.marketplace).toBe(false)
   expect(runtime.runtimeConfig.capabilities.marketplace).toBe(false)
   const readContract = vi.fn().mockResolvedValue({ output: { marketplace: Array(32).fill(0xab) }, fnName: 'config' })
@@ -82,21 +82,20 @@ it('hides Renew for marketplace custody with marketplace UI disabled, then permi
   expect(readContract).toHaveBeenCalledWith(expect.objectContaining({ contract: runtime.runtimeConfig.contracts.directory, functionName: 'config' }))
   owner = marketplace
   const escrowed = renderRenewal()
-  expect(escrowed.canRenew).toBe(false)
+  expect(escrowed.canRenew).toBe(true)
   expect(escrowed.escrow).toBe(true)
-  expect(escrowed.html).not.toContain('>Renew</')
-  expect(escrowed.html).not.toContain('aria-label="Renewal controls"')
+  expect(escrowed.html).toContain('aria-label="Renewal controls"')
+  expect(escrowed.html).toContain('Renewing it doesn’t change the listing: the name stays listed at the same price, until the same end date.')
   owner = `0x${'cd'.repeat(32)}`
   const closed = renderRenewal()
   expect(closed.canRenew).toBe(true)
   expect(closed.html).toContain('aria-label="Renewal controls"')
 })
 
-it('hides Renew for a contract-owned name while the pool identity is unknown', () => {
+it('offers Renew for a contract-owned name while the pool identity is unknown', () => {
   runtime.marketplaceContractId = null
   owner = `0x${'cd'.repeat(32)}`
   const pending = renderRenewal()
-  expect(pending.canRenew).toBe(false)
-  expect(pending.html).not.toContain('>Renew</')
-  expect(pending.html).not.toContain('aria-label="Renewal controls"')
+  expect(pending.canRenew).toBe(true)
+  expect(pending.html).toContain('aria-label="Renewal controls"')
 })

@@ -24,6 +24,7 @@ import {
   canonicalOfferAbsent,
   canonicalOfferTarget,
   canonicalOwnedName,
+  recordedMarketplace,
 } from './canonicalMarketplaceState'
 import type { MarketplaceWrites } from './useMarketplaceWrites'
 
@@ -33,6 +34,7 @@ export function useOffers({
   initialOfferName = '',
   marketplaceContractId,
   marketplaceOnChainClient,
+  newOrdersRefusal = null,
   ownedNames,
   selectedAddress,
   selectedAuthority,
@@ -43,6 +45,8 @@ export function useOffers({
   initialOfferName?: string
   marketplaceContractId: string
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
+  /** Why the preferred market takes no new offer now, such as an unknown fee. */
+  newOrdersRefusal?: string | null
   ownedNames: IndexedNameSummary[]
   selectedAddress: string
   selectedAuthority: string
@@ -71,6 +75,15 @@ export function useOffers({
     }
     if (![1, 3, 7, 14, 30].includes(days)) {
       setError('Choose a valid offer duration.')
+      return
+    }
+    // A new offer goes to the market the directory prefers now.
+    if (newOrdersRefusal) {
+      setError(newOrdersRefusal)
+      return
+    }
+    if (!marketplaceContractId) {
+      setError('The market can’t be reached right now. Try again in a moment.')
       return
     }
     const canonicalName = normalizeNameInput(offerName)
@@ -112,7 +125,7 @@ export function useOffers({
       }), contractId: marketplaceContractId, nameRef: currentRef },
       `Offer placed. ${formatLuxAsDusk(amountLux)} DUSK moved into escrow.`,
     )
-  }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
+  }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, newOrdersRefusal, offerAmountDusk, offerDurationDays, offerName, selectedAddress, selectedAuthority, setError, writes])
 
   const acceptOffer = useCallback(async function acceptOffer(offer: IndexedMarketplaceOffer, reviewed?: DuskDomainsOnChainOffer) {
     if (!marketplaceOnChainClient || !duskDomainsOnChainClient) return
@@ -122,8 +135,10 @@ export function useOffers({
       return
     }
     let current: DuskDomainsOnChainOffer
+    let market: string
     try {
       current = await canonicalOffer(marketplaceOnChainClient, offer)
+      market = recordedMarketplace(offer)
       if (reviewed && (current.offerId !== reviewed.offerId || current.feeBps !== reviewed.feeBps || current.amountLux !== reviewed.amountLux)) {
         throw new Error('Marketplace state changed on-chain. Review the latest terms before trying again.')
       }
@@ -153,34 +168,36 @@ export function useOffers({
       offer.name,
       { ...storeAcceptMarketplaceOfferRequest({
         node: offer.node,
-        marketplaceContract: offer.marketplaceContractId ?? marketplaceContractId,
+        marketplaceContract: market,
         buyerAuthority: offer.buyerAuthority,
         // Bind the placement and financial terms captured by the review.
         expectedAmountLux: Number(reviewed.amountLux),
         expectedOfferId: reviewed.offerId,
         expectedFeeBps: reviewed.feeBps,
         sellerRecipient: selectedAddress,
-      }), reviewedOrder: reviewed.order, contractId: offer.marketplaceContractId ?? marketplaceContractId },
+      }), reviewedOrder: reviewed.order, contractId: market },
       `Offer accepted. ${formatLuxAsDusk(BigInt(offer.amountLux))} DUSK paid from escrow.`,
     )
-  }, [duskDomainsOnChainClient, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes])
+  }, [duskDomainsOnChainClient, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes])
 
   const cancelOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
     let offerId = 0
     let reviewedOrder: DuskDomainsOnChainOffer['order']
-    if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order })) return
-    await writes.submit('cancelling this offer', offer.name, { ...marketplaceCancelOfferRequest({ node: offer.node, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId },
+    let market = ''
+    if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order; market = recordedMarketplace(offer) })) return
+    await writes.submit('cancelling this offer', offer.name, { ...marketplaceCancelOfferRequest({ node: offer.node, expectedOfferId: offerId }), reviewedOrder, contractId: market },
       'Offer canceled. Claim the refund when ready.')
-  }, [marketplaceContractId, writes])
+  }, [writes])
 
   const expireOffer = useCallback(async (offer: IndexedMarketplaceOffer) => {
     let offerId = 0
     let reviewedOrder: DuskDomainsOnChainOffer['order']
-    if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order })) return
+    let market = ''
+    if (!await writes.guardCanonicalRead(async (client) => { const canonical = await canonicalOffer(client, offer); offerId = canonical.offerId; reviewedOrder = canonical.order; market = recordedMarketplace(offer) })) return
     await writes.submit('closing this expired offer', offer.name,
-      { ...marketplaceExpireOfferRequest({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), reviewedOrder, contractId: offer.marketplaceContractId ?? marketplaceContractId },
+      { ...marketplaceExpireOfferRequest({ node: offer.node, buyerAuthority: offer.buyerAuthority, expectedOfferId: offerId }), reviewedOrder, contractId: market },
       'Offer closed. The buyer can claim the refund.')
-  }, [marketplaceContractId, writes])
+  }, [writes])
 
   return {
     acceptOffer,

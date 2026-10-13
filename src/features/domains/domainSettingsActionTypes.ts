@@ -23,6 +23,8 @@ export type AppendDomainSettingsActivity = (input: {
 export type UseDomainSettingsActionsProps = {
   renewalQuote?: import('@duskdomains/sdk').RenewalQuote
   renewalNameRef?: import('@duskdomains/sdk').NameRef
+  /** The listing the page shows for a name a market holds: the market and the order it is listed by. */
+  renewalListing?: { marketplace: string; orderId: string } | null
   indexerClient: DuskDomainsIndexerClient | null
   appendActivity: AppendDomainSettingsActivity
   canManageName: boolean

@@ -21,6 +21,9 @@ function fixture() {
   for (const file of ['deploy.sh', 'deploy-release.py', 'validate-deploy.mjs']) {
     if (existsSync(`scripts/${file}`)) cpSync(`scripts/${file}`, `${repo}/scripts/${file}`)
   }
+  // Validation reads the env with the site's own reader.
+  mkdirSync(`${repo}/src/names`, { recursive: true })
+  cpSync('src/names/runtimeEnv.js', `${repo}/src/names/runtimeEnv.js`)
   writeFileSync(`${repo}/public/contracts/.keep`, '')
   writeFileSync(`${repo}/release`, 'initial')
   const roles = ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE']
@@ -32,6 +35,7 @@ function fixture() {
   writeFileSync(envFile, [
     'VITE_DUSK_DOMAINS_SITE_URL=https://site.example',
     'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2',
+    'VITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json',
     ...roles.flatMap(role => [
       `VITE_DUSK_DOMAINS_${role}_CONTRACT_ID=0x${'11'.repeat(32)}`,
       `VITE_DUSK_DOMAINS_${role}_DRIVER_URL=${driverPath(role)}`,
@@ -48,7 +52,7 @@ if (process.env.FAIL_BUILD) process.exit(1)
 if (process.env.VITE_DUSK_DOMAINS_SITE_URL) throw new Error('Ambient env leaked into build')
 const env = parseEnv(fs.readFileSync('.env.production.local', 'utf8'))
 fs.mkdirSync('dist')
-fs.cpSync('public/contracts', 'dist/contracts', { recursive: true })
+fs.cpSync('public', 'dist', { recursive: true })
 fs.writeFileSync('dist/version.json', JSON.stringify({frontendCommit: process.env.DUSK_DOMAINS_FRONTEND_COMMIT, siteUrl: env.VITE_DUSK_DOMAINS_SITE_URL, chainId: env.VITE_DUSK_DOMAINS_CHAIN_ID}))
 fs.writeFileSync('dist/index.html', fs.readFileSync('release'))
 `)
@@ -75,7 +79,7 @@ console.log(JSON.stringify(version))
     DEPLOY_HOST: 'fixture', DEPLOY_DIR: `${root}/server/dist`, MOCK_LOG: `${root}/calls`,
     VITE_DUSK_DOMAINS_SITE_URL: 'https://wrong.example',
   }
-  const run = (args = [envFile, '--contracts', `${root}/drivers`], extra = {}) => spawnSync('bash', [`${repo}/scripts/deploy.sh`, ...args], { cwd: repo, env: { ...env, ...extra }, encoding: 'utf8' })
+  const run = (args = [envFile, '--contracts', `${root}/drivers`, '--manifest', `${root}/manifest.json`], extra = {}) => spawnSync('bash', [`${repo}/scripts/deploy.sh`, ...args], { cwd: repo, env: { ...env, ...extra }, encoding: 'utf8' })
   const commit = () => git('rev-parse', 'HEAD')
   const release = name => {
     writeFileSync(`${repo}/release`, name)
@@ -86,7 +90,9 @@ console.log(JSON.stringify(version))
   const version = () => JSON.parse(readFileSync(`${env.DEPLOY_DIR}/version.json`, 'utf8'))
   const backups = () => readdirSync(`${root}/server`).filter(name => name.startsWith('dist.prev-')).sort().reverse()
   const failed = () => readdirSync(`${root}/server`).filter(name => name.startsWith('dist.failed-'))
-  return { root, repo, env, envFile, git, run, release, version, backups, failed, commit, driver }
+  const f = { root, repo, env, envFile, git, run, release, version, backups, failed, commit, driver }
+  manifest(f)
+  return f
 }
 
 it('builds a clean commit with selected env and drivers, uploads, verifies and cleans up', () => {
@@ -197,3 +203,98 @@ it('rolls back through consecutive hand-deployed backups named prev-YYYYMMDD-N',
     expect(f.version()).toMatchObject({ frontendCommit: `handdeployed-${n}`, siteUrl: 'https://site.example' })
   }
 }, 30_000)
+
+// The network's reviewed manifest lists every contract the site may follow, including those admitted
+// after launch. Each must use the driver its role pins, so the deploy checks it before uploading.
+function manifest(f, change = m => m) {
+  const roles = ['directory', 'policy', 'store', 'vault', 'resolver', 'marketplace']
+  const hash = f.driver.match(/\.([a-f0-9]{64})\.data-driver\.wasm$/)[1]
+  const artifact = role => `contracts/dusk-domains-${({ resolver: 'frozen-resolver', marketplace: 'marketplace-v1' })[role] ?? role}.${hash}.data-driver.wasm`
+  const value = change({
+    schema: 'dusk-domains/frozen-release/v1', chainId: 'dusk:2',
+    contracts: roles.map(key => ({ key, id: `0x${'11'.repeat(32)}`, codeHash: '22'.repeat(32) })),
+    artifacts: Object.fromEntries(roles.map(role => [role, { driver: { path: artifact(role), sha256: hash } }])),
+  })
+  const path = `${f.root}/manifest.json`
+  writeFileSync(path, JSON.stringify(value))
+  return path
+}
+// The env file with its manifest setting replaced, or removed, and other lines added.
+function withEnv(f, manifestUrl, ...lines) {
+  const kept = readFileSync(f.envFile, 'utf8').split('\n').filter(line => !line.startsWith('VITE_DUSK_DOMAINS_MANIFEST_URL=') && !line.startsWith('VITE_DUSK_DOMAINS_CHAIN_ID='))
+  writeFileSync(f.envFile, [...kept, ...(manifestUrl === null ? [] : [`VITE_DUSK_DOMAINS_MANIFEST_URL=${manifestUrl}`]), ...lines].join('\n'))
+}
+
+it('serves the reviewed manifest given with --manifest, beside the drivers it names', () => {
+  const f = fixture()
+  // A replacement policy admitted after launch, with the reviewed policy driver.
+  const file = manifest(f, m => ({ ...m, contracts: [...m.contracts, { key: 'policy', id: `0x${'0b'.repeat(32)}`, codeHash: '33'.repeat(32) }] }))
+  const result = f.run([f.envFile, '--contracts', `${f.root}/drivers`, '--manifest', file])
+  expect(result.status, result.stderr).toBe(0)
+  expect(readFileSync(`${f.env.DEPLOY_DIR}/manifest.json`, 'utf8')).toBe(readFileSync(file, 'utf8'))
+  expect(f.git('status', '--porcelain')).toBe('')
+})
+
+it.each([
+  ['the env names a manifest it wasn’t given', () => [], 'manifest'],
+  ['the manifest is for another network', f => ['--manifest', manifest(f, m => ({ ...m, chainId: 'dusk:1' }))], 'dusk:1'],
+  ['the manifest leaves out a configured contract', f => ['--manifest', manifest(f, m => ({ ...m, contracts: m.contracts.filter(c => c.key !== 'store') }))], 'store'],
+  ['the manifest pins a driver this build doesn’t', f => ['--manifest', manifest(f, m => ({ ...m, artifacts: { ...m.artifacts, policy: { driver: { path: 'contracts/other.wasm', sha256: '44'.repeat(32) } } } }))], 'policy'],
+  // A mainnet or testnet site follows governance through its manifest, so a deploy without one is refused.
+  ['a testnet env sets no manifest URL and none is given', f => { withEnv(f, null, 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2'); return [] }, 'VITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json'],
+  ['a mainnet env sets no manifest URL, though one is given', f => { withEnv(f, null, 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:1'); return ['--manifest', manifest(f, m => ({ ...m, chainId: 'dusk:1' }))] }, 'VITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json'],
+  ['the manifest URL is relative', f => { withEnv(f, 'manifest.json', 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2'); return [] }, 'must be /manifest.json'],
+  ['the manifest URL is another path', f => { withEnv(f, '/release/manifest.json', 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2'); return [] }, 'must be /manifest.json'],
+  ['the manifest URL is external', f => { withEnv(f, 'https://cdn.example/manifest.json', 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2'); return [] }, 'must be /manifest.json'],
+  ['a testnet env opts out of the manifest', f => { withEnv(f, null, 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:2', 'DUSK_DOMAINS_DEPLOY_WITHOUT_MANIFEST=true'); return [] }, 'local chains only'],
+])('refuses to deploy when %s', (_, setup, reason) => {
+  const f = fixture()
+  const args = setup(f)
+  const result = f.run([f.envFile, '--contracts', `${f.root}/drivers`, ...args])
+
+  expect(result.status).not.toBe(0)
+  expect(result.stderr).toContain(reason)
+  expect(existsSync(f.env.DEPLOY_DIR)).toBe(false)
+})
+
+it('deploys a local chain without a manifest only when its env opts out explicitly', () => {
+  const f = fixture()
+  withEnv(f, null, 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:0')
+  const refused = f.run([f.envFile, '--contracts', `${f.root}/drivers`])
+  expect(refused.status).not.toBe(0)
+  expect(refused.stderr).toContain('VITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json')
+  withEnv(f, null, 'VITE_DUSK_DOMAINS_CHAIN_ID=dusk:0', 'DUSK_DOMAINS_DEPLOY_WITHOUT_MANIFEST=true')
+  const result = f.run([f.envFile, '--contracts', `${f.root}/drivers`])
+  expect(result.status, result.stderr).toBe(0)
+  expect(existsSync(`${f.env.DEPLOY_DIR}/manifest.json`)).toBe(false)
+})
+
+// Validation reads the chain ID as the built site does: trimmed, and testnet when it isn't one of
+// dusk:0-3. A value that only looks local to a raw comparison can't skip the manifest.
+it.each([
+  ['a mainnet chain ID with a trailing space', '"dusk:1 "'],
+  ['a quoted testnet chain ID with spaces', '" dusk:2 "'],
+  ['a chain ID the site doesn’t know, which it builds as testnet', 'dusk:9'],
+  ['no chain ID, which the site builds as testnet', ''],
+])('refuses to skip the manifest for %s', (_, chainId) => {
+  const f = fixture()
+  withEnv(f, null, `VITE_DUSK_DOMAINS_CHAIN_ID=${chainId}`, 'DUSK_DOMAINS_DEPLOY_WITHOUT_MANIFEST=true')
+  const result = f.run([f.envFile, '--contracts', `${f.root}/drivers`])
+  expect(result.status).not.toBe(0)
+  expect(result.stderr).toContain('local chains only')
+  expect(existsSync(f.env.DEPLOY_DIR)).toBe(false)
+})
+
+it('refuses a mainnet or testnet deploy that leans on a tracked manifest instead of --manifest', () => {
+  const f = fixture()
+  // A manifest committed to the repository would otherwise be served without being given.
+  writeFileSync(`${f.repo}/public/manifest.json`, readFileSync(`${f.root}/manifest.json`))
+  f.git('add', 'public/manifest.json')
+  f.git('commit', '--quiet', '-m', 'Track a manifest')
+  const result = f.run([f.envFile, '--contracts', `${f.root}/drivers`])
+  expect(result.status).not.toBe(0)
+  expect(result.stderr).toContain('--manifest')
+  expect(existsSync(f.env.DEPLOY_DIR)).toBe(false)
+  // Given with --manifest, the reviewed one is served.
+  expect(f.run().status).toBe(0)
+})

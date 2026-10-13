@@ -1,3 +1,4 @@
+import { indexerReadable } from '../../app/indexerIdentity'
 import { readSharedHealth } from '../../app/sharedIndexerHealth'
 import { createSingleFlight, type RefreshOptions } from '../../app/singleFlight'
 import { useSingleFlight } from '../../app/useSingleFlight'
@@ -17,7 +18,8 @@ import type { UseIndexedNameHydrationProps } from './indexedNameHydrationTypes'
 
 async function readNameSnapshot(client: DuskDomainsIndexerClient, searchResult: NameResult, selectedAddress: string, onChainClient: DuskDomainsOnChainClient | null, fresh = false) {
   const health = await readSharedHealth(client, fresh)
-  if (!health.ok) throw new Error('Name data is still syncing. It will update automatically.')
+  // A stuck collector's last publication is shown, marked stale; anything else unhealthy is not.
+  if (!indexerReadable(health)) throw new Error('Name data is still syncing. It will update automatically.')
   const nowSeconds = Math.floor(Date.now() / 1000)
   const reads = await readIndexedName(client, searchResult, selectedAddress, onChainClient)
   if (searchResult.status === 'registered' && !reads?.stateRead.value) throw new Error('Name data is unavailable right now.')

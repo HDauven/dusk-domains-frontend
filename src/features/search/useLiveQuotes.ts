@@ -8,6 +8,8 @@ import type { RegistrationQuote, RenewalQuote, NameRef } from '@duskdomains/sdk'
  * Fresh SDK quotes for the name shown. They are read again when the block height or `refreshKey`
  * changes (the indexer's policy version, for one) and at the app's normal refresh cadence, so a
  * governance SetPolicy shows its prices without a reload. The last quote stays shown meanwhile.
+ * While registrations are paused the store refuses registration quotes, and Rusk answers that with
+ * HTTP 500, so none is read; renewals ignore the pause and are still quoted.
  */
 export function useLiveQuotes(
   client: DuskDomainsOnChainClient | null | undefined,
@@ -17,10 +19,12 @@ export function useLiveQuotes(
   actor: string,
   height: number | null,
   refreshKey?: unknown,
+  registrationsPaused = false,
 ) {
   const name = result?.canonical ?? '',
     status = result?.status
-  const scope = `${name}:${years}:${renewalYears}:${actor}:${status}`
+  // A pause makes the registration quote on screen stale: it leaves with it, and a reopening quotes again.
+  const scope = `${name}:${years}:${renewalYears}:${actor}:${status}:${status === 'available' && registrationsPaused}`
   const [state, setState] = useState<{
     scope: string
     client?: DuskDomainsOnChainClient
@@ -29,7 +33,7 @@ export function useLiveQuotes(
     ref?: NameRef
     error?: string
   }>({ scope: '' })
-  const quotable = Boolean(client && name && name.split('.').length === 2 && ['available', 'registered'].includes(status ?? ''))
+  const quotable = Boolean(client && name && name.split('.').length === 2 && (status === 'registered' || (status === 'available' && !registrationsPaused)))
   const [refreshes, setRefreshes] = useState(0)
   const refresh = useCallback(() => setRefreshes(count => count + 1), [])
   useAutoRefresh(refresh, quotable)

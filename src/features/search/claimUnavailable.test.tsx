@@ -15,7 +15,7 @@ const overview = (props: Partial<Parameters<typeof SearchResultOverview>[0]>) =>
 it.each([
   ['the reason the claim gives', { blockedReason: 'This site has not been updated for the new registration prices yet. Try again later.' },
     'This site has not been updated for the new registration prices yet. Try again later.'],
-  ['a registration pause', { registrationUnavailable: true }, 'Registration is paused right now. Try again later.'],
+  ['a registration pause', { registrationsPaused: true, registrationUnavailable: true }, 'New reservations and registrations will resume when the operator reopens them.'],
 ])('says why an available name can’t be claimed: %s', (_, props, copy) => {
   const html = overview(props)
   expect(html).toContain(copy)
@@ -56,6 +56,44 @@ it.each([
     // No quote read sends a transaction, so no reason may speak of a refused or returned payment.
     expect(preview.registrationBlockedReason).not.toMatch(/payment|returned|refused|refund/i)
     expect(preview.registrationBlockedReason).toBe(reason)
+  } finally {
+    await act(async () => root.unmount())
+    vi.unstubAllGlobals()
+  }
+})
+
+// Rusk answers the store's Closed trap in a read-only quote with HTTP 500, so a known pause means
+// no registration quote is read at all. Renewals ignore the pause and are still quoted.
+it.each(['available', 'registered'] as const)('while registrations are paused, reads no registration quote for a %s name', async status => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  const client = {
+    getRegistrationQuote: vi.fn(async () => ({ ok: true, value: { store: 'store', quote: quote('Public') } })),
+    getRenewalQuote: vi.fn(async () => ({ ok: false, error: { code: 'contract_read_failed', message: 'unused' } })),
+  } as unknown as DuskDomainsOnChainClient
+  let preview!: ReturnType<typeof useNamePreview>
+  function Probe({ paused }: { paused: boolean }) {
+    const value = useNamePreview({ onChainClient: client, apiSearchResult: { ...analyzeName('aurora.dusk'), status }, currentBlockHeight: 100, duration: 1,
+      feeConfig: DEFAULT_FEE_CONFIG, managedNameExpiresAt: 0, nowSeconds: 1_790_000_000, query: 'aurora.dusk', renewalYears: 1, registrationsPaused: paused })
+    useLayoutEffect(() => { preview = value })
+    return null
+  }
+  const root = createRoot(document.createElement('div'))
+  const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+  try {
+    await act(async () => root.render(<Probe paused />))
+    await settle()
+    expect(client.getRegistrationQuote).not.toHaveBeenCalled()
+    expect(preview.canRegister).toBe(false)
+    // Nothing is loading: the pause is the answer.
+    expect(preview.quoteLoading).toBe(false)
+    if (status === 'registered') expect(client.getRenewalQuote).toHaveBeenCalled()
+    else {
+      // Once registrations reopen, the name is quoted again.
+      await act(async () => root.render(<Probe paused={false} />))
+      await settle()
+      expect(client.getRegistrationQuote).toHaveBeenCalled()
+      expect(preview.canRegister).toBe(true)
+    }
   } finally {
     await act(async () => root.unmount())
     vi.unstubAllGlobals()

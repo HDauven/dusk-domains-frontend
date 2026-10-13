@@ -1,4 +1,5 @@
 import type { ContractRole, ReleaseManifest } from '@duskdomains/sdk'
+import { runtimeChainId, runtimeEnvValue } from './runtimeEnv'
 import type { DuskDomainContractMap } from './commandTypes'
 export type DuskDomainsRuntimeEnv = Record<string, string | boolean | undefined>
 /** An app that supports .dusk names, with an optional https link. */
@@ -45,7 +46,7 @@ function nameIntegrations(value: string): NameIntegration[] {
   })
 }
 export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}): DuskDomainsRuntimeConfig {
-  const get = (key: string) => String(env[`VITE_DUSK_DOMAINS_${key}`] ?? '').trim()
+  const get = (key: string) => runtimeEnvValue(env, key)
   const flag = (key: string) => /^(true|1|yes|on)$/i.test(get(key))
   const missingLiveInputs: string[] = [],
     warnings: string[] = []
@@ -62,7 +63,7 @@ export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}):
   ) as DuskDomainContractMap
   const indexerUrl = validUrl(get('INDEXER_URL')) ? get('INDEXER_URL') : null
   if (!indexerUrl) missingLiveInputs.push('VITE_DUSK_DOMAINS_INDEXER_URL')
-  const chainId = /^dusk:[0-3]$/.test(get('CHAIN_ID')) ? get('CHAIN_ID') : 'dusk:2'
+  const chainId = runtimeChainId(env)
   const nodeUrl = get('NODE_URL') || 'https://testnet.nodes.dusk.network'
   const launchLinks = Object.fromEntries(
     ['support', 'abuse', 'security', 'status'].map((key) => [

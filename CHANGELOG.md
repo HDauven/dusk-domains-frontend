@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+- Never offer an address the indexer reports invalid, or that fails validation, as a payment target.
+- Give only known record keys a label or link; show any other key exactly, marked as a custom record.
+- Show the first lines of a long record, with Show all, on every view that lists records.
+- Read no registration quotes while registrations are paused, and explain a `Closed` refusal plainly.
+- Say on the claim card that registrations are paused, as the banner does, and who creates a subname.
+- Warn when a saved reservation can expire before registrations reopen, or within the hour.
+- Let anyone renew a listed name, and say that renewing doesn't change the listing.
+- Place new listings and offers at the market the directory prefers now, read every three minutes.
+- Treat an indexer that reports another network or contracts as unhealthy.
+- Build a fresh client after a failed creation or contract verification, without a reload.
+- Price names exactly at any size, and keep the app running when one view fails to render.
+- Accept new activity and treasury event types, and say when name data stopped updating.
+- Deploy the network's manifest with `--manifest`, and refuse one that doesn't match the build.
+- Require `--manifest` for mainnet and testnet deploys, reading the chain ID as the site does; only a local chain may opt out, explicitly.
+- Show a market fee the indexer can't authenticate as unknown, and take no new listing or offer then.
+- List orders and refunds in every admitted market, and withdraw each refund from its own market.
+- Take no bid at a paused, draining, retired, unconfigured or unauthenticated market; read the market live before each new order or bid.
+- Keep showing name data while the indexer's collector is stuck, marked as stopped at its block, and pause write confirmations.
+- Show or copy a Dusk address only from a record "Send to" would offer, in headers, owner labels, primary names and My names too.
+- Trust an indexer only when its deployment record is complete, conflict-free and names this site's contracts first.
+- Never count a market whose verification failed, the preferred one included, or one a discarded client listed, as known.
+- Renew a listed name through its market, bound to the reviewed order, and someone else's name only while the reviewed owner holds it.
+- Offer no renewal while the block height is unknown, and refuse a renewal price too large to handle exactly.
+- Drop the registration quote on screen and turn Claim off when registrations pause.
+- Act on an order only at the market and order it was listed with.
+- Keep renewals, records, transfers and the market working while the manifest doesn't list a newly selected policy.
+- Load name pages and confirm writes while blocks land fast: read primary names in one short read, and read again when a block lands mid-read.
+- Say a refused registration's payment was returned when the wallet reports the refusal as an error, and price it again when a block lands meanwhile.
+
 - Follow a registration policy replacement without a reload: read the indexer's prices again every three minutes, and quote names again then and whenever the policy version changes.
 - Keep the price a reservation was made at with it. When a policy replacement changed the price, before signing or when the chain refuses the registration with QuoteChanged or FeeMismatch (also when the wallet's receipt carries that refusal as bytes), Register names the old and new price, says the reservation is still valid and, only after the chain refused the signed transaction, that the payment was returned. A quote that finds the price changed before any wallet request says only that the price changed. Register at the new price registers the same reservation, with no new commitment, and keeps that price for the next try. A name the new policy reserves or closes says so.
 - Estimate renewals from the renewal schedule, never from registration prices, and show no renewal price when neither a quote nor the schedule is known.

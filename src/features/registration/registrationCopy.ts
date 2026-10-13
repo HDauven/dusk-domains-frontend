@@ -66,6 +66,21 @@ export function pendingReservationNextStepCopy(status: CommitWindowStatus) {
   return 'Ready to register.'
 }
 
+// About an hour of blocks: little enough time left to say so.
+const EXPIRES_SOON_BLOCKS = 360
+
+/**
+ * A reservation expires 8,640 blocks after it was made, about a day, and a registration pause
+ * doesn't stop that clock. While registrations are paused, say when it expires; otherwise say so
+ * once little time is left, as it can be soon after a pause ends. Null when there is nothing to add.
+ */
+export function reservationExpiryWarning(status: CommitWindowStatus, staleInBlocks: number | undefined, registrationsPaused = false) {
+  if (status === 'missing' || status === 'stale' || !staleInBlocks || staleInBlocks <= 0) return null
+  if (registrationsPaused) return `Registrations are paused, so this reservation can’t be registered now. It expires in about ${formatWait(staleInBlocks)}; if registrations haven’t reopened by then, reserve the name again.`
+  if (status === 'ready' && staleInBlocks <= EXPIRES_SOON_BLOCKS) return `Register soon: this reservation expires in about ${formatWait(staleInBlocks)}.`
+  return null
+}
+
 export function savedReservationOverviewCopy(
   status: CommitWindowStatus = 'missing',
   waitBlocks = 0,

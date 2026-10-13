@@ -142,7 +142,8 @@ export function frozenView(input: unknown, path: string): unknown {
       txId: null,
       blockHeight: null,
     })
-  if (path.endsWith('/marketplace/refund') && 'authority' in v)
+  // A refund row, from /marketplace/refund or each market's row in /marketplace/refunds.
+  if (/\/marketplace\/refunds?$/.test(path) && 'authority' in v)
     Object.assign(v, {
       recipient: null,
       lastEventType: 'marketplace_refund_claimed',

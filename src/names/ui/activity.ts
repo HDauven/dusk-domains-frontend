@@ -83,7 +83,16 @@ export const ACTIVITY_EVENT_TYPES = [
   'domain_offer_accepted',
 ] as const
 
-export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number]
+/**
+ * An event type. A newer indexer can report one this site doesn't know yet: it is kept, as long as
+ * it is a plain identifier, and shown by its name.
+ */
+export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number] | (string & { readonly unknownEventType?: never })
+
+/** Whether an indexer value can be an event type: a lowercase identifier, such as root_registered. */
+export function isActivityEventType(value: unknown): value is ActivityEventType {
+  return typeof value === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(value)
+}
 
 export type ActivityEntry = {
   marketplaceOrderId?: string
@@ -165,7 +174,8 @@ export function activityLabel(eventType: ActivityEventType): string {
     root_forwarded: 'Moved to a new shard',
     resolver_slot_written: 'Records updated',
   }
-  return labels[eventType] ?? eventType.replaceAll('_', ' ')
+  const words = eventType.replaceAll('_', ' ')
+  return labels[eventType] ?? words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 export function activityDescription(entry: ActivityEntry): string {

@@ -17,6 +17,7 @@ import {
   pendingReservationStatusCopy,
   priceChangeCopy,
   priceChangeTitle,
+  reservationExpiryWarning,
   strandedReservationCopy,
   type PriceChangeView,
 } from './registrationCopy'
@@ -30,6 +31,8 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
     commitWindow: CommitWindow
     onRestartReservation: () => void
     reservationStranded: boolean
+    /** Registrations are paused: Register waits, and the reservation keeps ageing toward its expiry. */
+    registrationsPaused?: boolean
   }
   purchase: {
     canRevealRegistration: boolean
@@ -56,6 +59,7 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
     commitWindow,
     onRestartReservation,
     reservationStranded,
+    registrationsPaused = false,
   } = reservation
   const {
     canRevealRegistration,
@@ -92,12 +96,13 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
   const actionTitle = walletReady
     ? reservationStranded ? 'Reserve again' : commitWindow.status === 'stale' ? 'Reservation expired' : showPriceChange ? priceChangeTitle(priceChange) : 'Register'
     : walletSetupActionTitle(walletSetupState)
+  const expiry = reservationExpiryWarning(commitWindow.status, commitWindow.staleInBlocks, registrationsPaused)
   const actionCopy = walletReady
     ? reservationStranded
       ? strandedReservationCopy()
       : showPriceChange
         ? priceChangeCopy(priceChange, commitWindow.staleInBlocks)
-        : commitWindowCopy(commitWindow.status, commitWindow.staleInBlocks)
+        : expiry ?? commitWindowCopy(commitWindow.status, commitWindow.staleInBlocks)
     : walletSetupActionCopy(walletSetupState)
 
   return (

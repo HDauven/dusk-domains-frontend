@@ -48,8 +48,9 @@ const isBytes = (value: unknown): value is ArrayBuffer | ArrayBufferView =>
   ArrayBuffer.isView(value) || Object.prototype.toString.call(value) === '[object ArrayBuffer]'
 
 // What a failed transaction says about why it failed: the node receipt's error, which the writer
-// puts in its message, and the wallet's receipt. Dusk Connect can pass the node's execution event
-// payload on as bytes; read any bytes as text, at any depth, so the failure code stays visible.
+// puts in its message, the error the wallet's wait for execution rejected with, which the writer
+// replaces with its own copy, and the wallet's receipt. Dusk Connect can pass the node's execution
+// event payload on as bytes; read any bytes as text, at any depth, so the failure code stays visible.
 function failureText(state: DuskDomainTxState) {
   let result = ''
   try {
@@ -57,7 +58,8 @@ function failureText(state: DuskDomainTxState) {
       : JSON.stringify(state.result ?? null, (_, value: unknown) => typeof value === 'bigint' ? String(value)
         : isBytes(value) ? new TextDecoder().decode(value) : value) ?? ''
   } catch { /* A receipt that can't be read carries no failure code. */ }
-  return `${state.message ?? ''} ${result}`
+  const error = state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : ''
+  return `${state.message ?? ''} ${error} ${result}`
 }
 
 // Only a transaction the chain executed and refused had its payment returned: a failed state with

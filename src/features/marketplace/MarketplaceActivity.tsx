@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { PanelMessage } from '../../components/ui/PanelMessage'
 import { MarketplaceAmount } from './MarketplaceAmount'
 import { auctionStatus, auctionTimeLabel, expiryTimeLabel, sameAuthority } from './marketplacePresentation'
+import { abbreviate } from '../../utils/format'
 import type { MarketplaceActivityProps } from './marketplaceTypes'
 
 export function MarketplaceActivity(props: MarketplaceActivityProps) {
@@ -20,7 +21,9 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
     ...props.listings.auctions.filter((auction) => props.watchlist.watchedNodes.includes(auction.node)),
     ...props.listings.fixedSales.filter((sale) => props.watchlist.watchedNodes.includes(sale.node)),
   ]
-  const hasActivity = leading.length || won.length || expired.length || sellingAuctions.length || sellingFixed.length || sentOffers.length || props.withdrawal.refund || watchedOrders.length
+  const refunds = (props.withdrawal.refunds ?? []).filter(refund => BigInt(refund.amountLux) > 0n)
+  const refundLux = refunds.reduce((total, refund) => total + BigInt(refund.amountLux), 0n)
+  const hasActivity = leading.length || won.length || expired.length || sellingAuctions.length || sellingFixed.length || sentOffers.length || refunds.length || watchedOrders.length
 
   if (!props.wallet.selectedAddress) {
     return (
@@ -41,14 +44,25 @@ export function MarketplaceActivity(props: MarketplaceActivityProps) {
         <div><Eye aria-hidden="true" size={18} /><strong>{watchedOrders.length}</strong><span>Watching</span></div>
       </div> : null}
 
-      {props.withdrawal.refund?.amountLux ? (
+      {refunds.length ? (
         <Panel className="marketplace-balance-card" aria-labelledby="marketplace-balance-heading">
           <div>
             <span>Refund ready to withdraw</span>
-            <strong id="marketplace-balance-heading">{<MarketplaceAmount lux={props.withdrawal.refund.amountLux} />}</strong>
-            <p>Funds from an outbid or closed offer stay in marketplace escrow until you withdraw them.</p>
+            <strong id="marketplace-balance-heading">{<MarketplaceAmount lux={refundLux} />}</strong>
+            <p>Funds from an outbid or closed offer stay in marketplace escrow until you withdraw them.{refunds.length > 1 ? ' Each market pays out its own refunds.' : ''}</p>
           </div>
-          <Button variant="primary" className="compact" disabled={!props.wallet.actionsAvailable} type="button" onClick={props.withdrawal.onClaimRefund}>Withdraw to wallet</Button>
+          {refunds.length === 1 ? (
+            <Button variant="primary" className="compact" disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.withdrawal.onClaimRefund(refunds[0])}>Withdraw to wallet</Button>
+          ) : (
+            <ul className="marketplace-refund-markets">
+              {refunds.map(refund => (
+                <li key={refund.marketplaceContractId ?? refund.authority}>
+                  <span><MarketplaceAmount lux={refund.amountLux} /> {refundMarketLabel(refund.marketplaceContractId, props.withdrawal.currentMarketplace)}</span>
+                  <Button variant="primary" className="compact" disabled={!props.wallet.actionsAvailable} type="button" onClick={() => props.withdrawal.onClaimRefund(refund)}>Withdraw to wallet</Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
       ) : null}
 
@@ -160,4 +174,10 @@ function PositionRow({ action, label, meta, onOpen, value }: { action: string; l
       <Button type="button" onClick={onOpen}>{action}</Button>
     </article>
   )
+}
+
+// Which market holds a refund: the one the directory prefers now, or an earlier one by its ID.
+function refundMarketLabel(marketplaceContractId: string | null | undefined, current: string | null | undefined) {
+  if (!marketplaceContractId) return ''
+  return sameAuthority(marketplaceContractId, current) ? 'in the current market' : `in the earlier market ${abbreviate(marketplaceContractId)}`
 }

@@ -219,25 +219,47 @@ export function durationPrice(basePrice: number, years: number): number {
   return basePrice * years
 }
 
+/**
+ * The exact price in Lux of registering `label` for `years`, with the dropped-name premium.
+ * Exact at any size: a policy's prices can add up past 2^53 - 1 Lux.
+ */
+export function registrationFeeLuxExact(
+  label: string,
+  years: number,
+  feeConfig: CoreFeeConfig = DEFAULT_FEE_CONFIG,
+  premiumLux: number | bigint = 0,
+): bigint {
+  const annual = annualFeeLux(label, feeConfig)
+  if (
+    !Number.isInteger(years) ||
+    years < 1 ||
+    years > 10 ||
+    !Number.isSafeInteger(annual) ||
+    annual < 0 ||
+    !(typeof premiumLux === 'bigint' || Number.isSafeInteger(premiumLux)) ||
+    premiumLux < 0
+  ) {
+    throw new RangeError('Invalid registration quote.')
+  }
+  return BigInt(annual) * BigInt(years) + BigInt(premiumLux)
+}
+
+/** The same price as a Lux number, for signing and comparison; refused when it can't be exact. */
 export function registrationFeeLux(
   label: string,
   years: number,
   feeConfig: CoreFeeConfig = DEFAULT_FEE_CONFIG,
   premiumLux = 0,
 ): number {
-  validateFeeConfigPrices(feeConfig)
-  if (
-    !Number.isInteger(years) ||
-    years < 1 ||
-    years > 10 ||
-    !Number.isSafeInteger(premiumLux) ||
-    premiumLux < 0
-  ) {
-    throw new RangeError('Invalid registration quote.')
-  }
-  const total = annualFeeLux(label, feeConfig) * years + premiumLux
-  if (!Number.isSafeInteger(total)) throw new RangeError('Registration quote exceeds the maximum.')
-  return total
+  const total = registrationFeeLuxExact(label, years, feeConfig, premiumLux)
+  if (total > BigInt(Number.MAX_SAFE_INTEGER)) throw new RangeError('Registration quote exceeds the maximum.')
+  return Number(total)
+}
+
+/** Lux as a DUSK number for display: whole DUSK and the fraction converted apart, so neither rounds. */
+export function duskFromLux(lux: bigint) {
+  const per = BigInt(LUX_PER_DUSK)
+  return Number(lux / per) + Number(lux % per) / LUX_PER_DUSK
 }
 
 /** The total a claim shows for a term: its live quote when there is one, else the price-list estimate. */
@@ -251,13 +273,14 @@ export function registrationTotalLux(
     : registrationFeeLux(result.label, years, feeConfig, result.premiumLux ?? 0)
 }
 
+/** The price in DUSK, for display. It never fails for a large price; signing uses the SDK quote. */
 export function registrationPrice(
   label: string,
   years: number,
   feeConfig: CoreFeeConfig = DEFAULT_FEE_CONFIG,
   premiumLux = 0,
 ): number {
-  return registrationFeeLux(label, years, feeConfig, premiumLux) / LUX_PER_DUSK
+  return duskFromLux(registrationFeeLuxExact(label, years, feeConfig, premiumLux))
 }
 
 /**

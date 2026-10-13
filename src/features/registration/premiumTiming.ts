@@ -21,6 +21,12 @@ export function premiumConfirmationQuote(result: NameResult, years: number, conf
   const nextStepAt = height != null && nextHeight != null
     ? new Date(Date.now() + (nextHeight - height) * 10_000).toISOString()
     : result.premiumNextStepAt!
-  const totalLux = registrationTotalLux(result, years, config)
+  let totalLux: number
+  try {
+    totalLux = registrationTotalLux(result, years, config)
+  } catch {
+    // A price past 2^53 - 1 Lux can't be confirmed exactly; the claim doesn't offer it.
+    return null
+  }
   return { totalLux, nextTotalLux: totalLux - (result.premiumLux ?? 0) + nextPremium, nextStepAt }
 }
