@@ -7,6 +7,7 @@ import { canControlSubname } from './namespaceActions'
 import { resolveRecipient } from '../identity/resolveRecipient'
 import type { DomainManagementFeatureProps, UseDomainManagementFeatureProps } from './domainManagementFeatureTypes'
 import { usePrimaryDomainActions } from './usePrimaryDomainActions'
+import { primarySwitchFor } from './setPrimaryDomainName'
 import { useDomainRecordActions } from './useDomainRecordActions'
 import { useDomainSettingsActions } from './useDomainSettingsActions'
 import { useSubdomainActions } from './useSubdomainActions'
@@ -42,8 +43,11 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       canClearPrimary: derivedState.canClearPrimary,
       canSetPrimary: derivedState.canSetPrimary,
       displayName: namePreview.displayName,
+      duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
       nodeHex: namePreview.nodeHex,
       primaryEndpoint: derivedState.primaryEndpoint,
+      primarySwitch: domainState.primarySwitch,
+      setPrimarySwitch: domainState.setPrimarySwitch,
       moonlightRecord: domainRecordState.moonlightRecord,
       selectedAddress: walletRuntime.selectedAddress,
       setPrimaryEndpointValue: domainState.setPrimaryEndpointValue,
@@ -123,6 +127,9 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       error: domainState.primaryError,
       onClearPrimary: () => void actions.handleClearPrimaryName(),
       onSetPrimary: () => void actions.handleSetPrimaryName(),
+      primarySwitch: primarySwitchFor(domainState.primarySwitch, namePreview.displayName, walletRuntime.selectedAddress),
+      onConfirmPrimarySwitch: () => void actions.handleConfirmPrimarySwitch(),
+      onCancelPrimarySwitch: actions.handleCancelPrimarySwitch,
       primaryVerification: derivedState.primaryVerification,
       txState: domainState.primaryTxState,
     },

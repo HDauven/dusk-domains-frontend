@@ -3,7 +3,7 @@ import { SETTLEMENT_WINDOW_BLOCKS } from './marketplaceProtocol'
 import type * as T from './commandTypes'
 import { endpointBytes, local, openRegistrationContext, requireName } from './reads'
 import { createDuskDomainsIndexerClient } from './http/client'
-import { admittedStores } from './directoryMembers'
+import { PrimaryElsewhereError, PrimaryTargetError, primaryLinkMoving, primaryLinks, primaryTarget } from './primaryLinks'
 import { retryReadRace } from './readRace'
 import { namehashHex } from './hash'
 import { prepareRecordMutations } from './recordMutations'
@@ -133,6 +133,12 @@ async function prepareOnce(
       records: a.records.map((r) => sdk.createRecordInput(r.key, r.value, BigInt(r.ttlSeconds))),
       primary: a.primaryEndpoint ? endpointBytes(a.primaryEndpoint.endpointValue) : null,
     })
+    // Registration sets a primary name as set_primary does: never while another store holds the link.
+    if (a.primaryEndpoint) {
+      const elsewhere = (await primaryLinks(client, endpointBytes(a.primaryEndpoint.endpointValue)))
+        .find(link => link.store !== sdk.contractId(priced.store))
+      if (elsewhere) throw new PrimaryElsewhereError(elsewhere, spelling)
+    }
     // A policy replacement keeps the reservation but not its price. Sign only the price that was
     // shown and, if the reservation was priced under another policy, only once the new one is confirmed.
     // The observation height may change; economic and policy bindings must not.
@@ -193,15 +199,19 @@ async function prepareOnce(
     throw new Error('Pricing changes require a reviewed directory proposal or a replacement policy.')
   if (op === 'clear_primary_name') {
     const a = request.args as T.CoreClearPrimaryNameRuntimeArgs,
-      endpoint = endpointBytes(a.endpointValue)
-    for (const s of await admittedStores(client)) {
-      const store = sdk.contractId(s.id),
-        p = await client.store(store).read_primary({ endpoint })
-      if (p)
-        return withWalletDetails(sdk.storeClearPrimaryCall(store, { endpoint, expected_mapping_id: p.primary.mapping_id }),
-          `Clear ${p.spelling} as your primary name`, { Name: p.spelling, 'Dusk address': a.endpointValue })
-    }
-    throw new Error('Primary name is already cleared.')
+      endpoint = endpointBytes(a.endpointValue),
+      reviewed = request.reviewedPrimary,
+      links = await primaryLinks(client, endpoint),
+      link = reviewed ? links.find(link => link.store === sdk.contractId(reviewed.store)) : links[0]
+    if (!link) throw new Error('Primary name is already cleared.')
+    // Only the mapping reviewed is cleared: another, even for the same name, is never adopted.
+    if (reviewed && (link.view.spelling !== reviewed.name || String(link.view.primary.mapping_id) !== reviewed.mappingId))
+      throw new Error('Your primary name changed since you reviewed it. Check it again before continuing.')
+    // clear_primary refuses while the link's name has moved on from its store or is being moved.
+    if (await primaryLinkMoving(client, link))
+      throw new Error(`${link.view.spelling} is moving between shards, so it can’t be cleared as your primary name until the move finishes. Try again after it.`)
+    return withWalletDetails(sdk.storeClearPrimaryCall(link.store, { endpoint, expected_mapping_id: reviewed ? BigInt(reviewed.mappingId) : link.view.primary.mapping_id }),
+      `Clear ${link.view.spelling} as your primary name`, { Name: link.view.spelling, 'Dusk address': a.endpointValue })
   }
   const config = await client.directory.config()
   if (op === 'claim_refund') {
@@ -410,11 +420,20 @@ async function prepareOnce(
         Records: a.mutations.map(mutation => `${mutation.action === 'set' ? 'Set' : 'Clear'} ${mutation.key}`).join('; '),
       })
     }
-    case 'set_primary_name':
-      return describe(sdk.storeSetPrimaryCall(n.store, {
-        name: n.ref,
-        endpoint: endpointBytes((request.args as T.CoreSetPrimaryNameRuntimeArgs).endpointValue),
-      }), `Set ${spelling} as your primary name`, { 'Dusk address': (request.args as T.CoreSetPrimaryNameRuntimeArgs).endpointValue })
+    case 'set_primary_name': {
+      const a = request.args as T.CoreSetPrimaryNameRuntimeArgs
+      // Every precondition is read from the chain: the address set is the name's own record, which
+      // the connected wallet must be, and the signer its owner or manager, for a current name.
+      const target = await primaryTarget(client, spelling, sender)
+      if (sdk.hex(endpointBytes(a.endpointValue)) !== sdk.hex(sender))
+        throw new PrimaryTargetError(`${spelling}’s Dusk address record isn’t the address this was reviewed for. Refresh and check it again.`)
+      if (request.nameRef && sdk.stringifyJson(request.nameRef) !== sdk.stringifyJson(target.ref)) throw changed()
+      // set_primary refuses while another store holds the address's primary link (PrimaryAlreadySet);
+      // only the address can clear that one, in its own store. A link in this store it replaces.
+      const elsewhere = target.links.find(link => link.store !== target.store)
+      if (elsewhere) throw new PrimaryElsewhereError(elsewhere, spelling)
+      return describe(sdk.storeSetPrimaryCall(target.store, { name: target.ref, endpoint: sender }), `Set ${spelling} as your primary name`, { 'Dusk address': account })
+    }
     case 'remove_subname':
       return describe(sdk.storeRemoveSubnameCall(n.store, { name: n.ref }), `Remove ${spelling} and all its descendants`, {
         Records: 'Clear records and primary names of this name and every subname beneath it',

@@ -2,6 +2,7 @@ import {
   storeClearPrimaryNameRequest,
   userFacingErrorMessage,
 } from '../../names/internal'
+import { refusalReason } from '../../names/ui/txFailure'
 import { guardDomainActionPrerequisite } from './domainActionGuards'
 import type { UsePrimaryDomainActionsProps } from './usePrimaryDomainActions'
 
@@ -50,6 +51,11 @@ export async function clearPrimaryDomainName({
     })
     if (!workspace()) return
 
+    // A transaction the chain refused says why, also when only its receipt names the reason.
+    if (finalState.status === 'failed' && finalState.txId) {
+      const reason = refusalReason(finalState, 'clear_primary_name')
+      if (reason) setPrimaryError(reason)
+    }
     if (finalState.status === 'executed') {
       if (!(await shouldApplyPreviewWriteFallback('cleared primary name', async (client) => {
         const indexed = await client.getPrimaryName({

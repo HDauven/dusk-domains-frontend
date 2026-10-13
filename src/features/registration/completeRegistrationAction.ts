@@ -19,6 +19,8 @@ import {
 import { safeNumber } from '../../names/numbers'
 import { formatLifecycleDay } from '../domains/domainFormat'
 import { createCompleteRegistrationRequest } from './completeRegistrationCall'
+import { primaryElsewhere } from '../../names/primaryLinks'
+import { failureText } from '../../names/ui/txFailure'
 import { handleCompleteRegistrationEarlyReveal } from './completeRegistrationEarlyReveal'
 import { completeRegistrationPreflight } from './completeRegistrationPreflight'
 import { applyCompleteRegistrationSuccess } from './completeRegistrationSuccess'
@@ -42,24 +44,6 @@ function offerNewPrice(props: UseRegistrationActionsProps, commitment: string, r
   props.setRegistrationCompletion(null)
   props.setPriceChange({ commitment, ...review })
   props.refreshQuotes()
-}
-
-const isBytes = (value: unknown): value is ArrayBuffer | ArrayBufferView =>
-  ArrayBuffer.isView(value) || Object.prototype.toString.call(value) === '[object ArrayBuffer]'
-
-// What a failed transaction says about why it failed: the node receipt's error, which the writer
-// puts in its message, the error the wallet's wait for execution rejected with, which the writer
-// replaces with its own copy, and the wallet's receipt. Dusk Connect can pass the node's execution
-// event payload on as bytes; read any bytes as text, at any depth, so the failure code stays visible.
-function failureText(state: DuskDomainTxState) {
-  let result = ''
-  try {
-    result = typeof state.result === 'string' ? state.result
-      : JSON.stringify(state.result ?? null, (_, value: unknown) => typeof value === 'bigint' ? String(value)
-        : isBytes(value) ? new TextDecoder().decode(value) : value) ?? ''
-  } catch { /* A receipt that can't be read carries no failure code. */ }
-  const error = state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : ''
-  return `${state.message ?? ''} ${error} ${result}`
 }
 
 // Only a transaction the chain executed and refused had its payment returned: a failed state with
@@ -185,6 +169,14 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
       offerNewPrice(props, preparedCommit.commitment, {
         previousLux: safeNumber(change.previousTotalLux), quote: change.quote, sinceReservation: change.sinceReservation, refused: false,
       })
+      return
+    }
+    // Another shard keeps the wallet's primary name, which the reveal can't replace: nothing was sent.
+    const elsewhere = primaryElsewhere(finalState.error)
+    if (elsewhere) {
+      const message = `${elsewhere.current} is your primary name, kept in a different shard, so registering can’t also make ${elsewhere.target} your primary name. Turn off Primary name to register; you can make it your primary from its page afterwards, with two wallet approvals.`
+      setWalletError(message)
+      setRegistrationCompletion((current) => markRegistrationCompletionFailed(current, message))
       return
     }
     // The chain refused it for a changed policy or fee. The host returned the payment; gas was charged.

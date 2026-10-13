@@ -209,6 +209,7 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
         })
       }
       if (method === 'quote_renewal') return encode({ Local: renewal })
+      if (method === 'read_primary') return encode(null)
       if (method === 'read_refund') return encode({ authority: name.name.owner, amount_lux: '25000000000' })
       if (method === 'read_state') return encode({ protocol_lux: '30000000000', liability_lux: '40000000000', accounted_lux: '70000000000', reserved_beneficiaries: 1, max_beneficiaries: 100, source_version: 1n })
       if (method === 'read_referral') return encode({ beneficiary: { kind: 'Moonlight', bytes: endpointBytes(account) }, claimable_lux: '40000000000' })
@@ -737,7 +738,8 @@ it('places an offer with an owner-verified payout and claims refunds from the pr
   })
 })
 it('edits records, sets primary and creates subnames at the forwarded home', async () => {
-  const h = fixture()
+  // The name's Dusk address record is the connected wallet's, as set_primary needs.
+  const h = forwardTo(fixture(), account)
   expect(
     await prepareFrozenCall(
       h.client,
@@ -1191,7 +1193,9 @@ it.each(writeCases)(
       updated_at: 100n,
     }
     h.responses.set(`${id(7)}:resolve_record`, { Local: record })
-    h.responses.set(`${id(3)}:read_primary`, {
+    // The address's primary link is to example.dusk, in the store that name lives in, which no move holds.
+    h.name.move_pending = null
+    h.responses.set(`${id(7)}:read_primary`, {
       spelling: 'example.dusk',
       primary: {
         endpoint: endpointBytes(account),
@@ -1600,6 +1604,9 @@ it.each(['place_bid', 'expire_auction', 'settle_auction'] as const)('describes t
 
 it('names the primary mapping being cleared even when a different name page requested it', async () => {
   const h = fixture()
+  // actual.dusk lives in the first store, which no move holds.
+  h.responses.set(`${id(3)}:home`, 'Local')
+  h.name.move_pending = null
   h.responses.set(`${id(3)}:read_primary`, {
     spelling: 'actual.dusk', primary: { endpoint: endpointBytes(account),
       name: { key: sdk.nameKey('actual.dusk'), incarnation: h.name.name.incarnation }, mapping_id: 42n, updated_at: 100n },
@@ -1609,6 +1616,138 @@ it('names the primary mapping being cleared even when a different name page requ
   }), 'example.dusk', account)
   expect(call.display).toMatchObject({ Summary: 'Clear actual.dusk as your primary name', Name: 'actual.dusk' })
   expect(JSON.stringify(call.display)).not.toContain('example.dusk')
+})
+
+// A Dusk address's stored primary link, as a store's read_primary returns it.
+const primaryLink = (h: ReturnType<typeof fixture>, spelling: string, mappingId = 42n): sdk.PrimaryView => ({
+  spelling, primary: { endpoint: endpointBytes(account), name: { key: sdk.nameKey(spelling), incarnation: h.name.name.incarnation }, mapping_id: mappingId, updated_at: 100n },
+})
+const setPrimary = intent.storeSetPrimaryNameRequest({ node, name: 'example.dusk', endpointType: 'moonlight_address', endpointValue: account })
+// example.dusk's Dusk address record, as its store resolves it, and no move holding the name.
+function forwardTo(h: ReturnType<typeof fixture>, address: string) {
+  h.responses.set(`${id(7)}:resolve_record`, { Local: { key: 'moonlight_address', value: endpointBytes(address), ttl_seconds: 60n, updated_at: 100n } })
+  h.name.move_pending = null
+  return h
+}
+const ready = (h = fixture()) => forwardTo(h, account)
+const short = (address: string) => `${address.slice(0, 10)}...${address.slice(-6)}`
+
+// example.dusk lives in the second store (7). set_primary there refuses while another store holds the
+// address's primary link (PrimaryAlreadySet), and replaces a link of its own.
+describe('a primary name in another store', () => {
+  it('is never set over: preparation names it and builds no call', async () => {
+    const h = ready()
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk'))
+    const refused = prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)
+    await expect(refused).rejects.toMatchObject({ name: 'PrimaryElsewhereError', current: 'other.dusk', store: id(3), target: 'example.dusk' })
+    await expect(refused).rejects.toThrow('other.dusk is your primary name, kept in a different shard from example.dusk. Clear it first, then set example.dusk.')
+  })
+
+  it('is replaced in one call when it is kept in the same store', async () => {
+    const h = ready()
+    h.responses.set(`${id(7)}:read_primary`, primaryLink(h, 'old.dusk'))
+    expect(await prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).toMatchObject({ contractId: id(7), functionName: 'set_primary' })
+  })
+
+  it('needs nothing cleared when the address has no primary name', async () => {
+    const h = ready()
+    expect(await prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).toMatchObject({ contractId: id(7), functionName: 'set_primary' })
+  })
+
+  it('is cleared in its own store, bound to the link and mapping reviewed', async () => {
+    const h = fixture()
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk', 41n))
+    h.responses.set(`${id(3)}:home`, 'Local')
+    h.name.move_pending = null
+    const clear = { ...intent.storeClearPrimaryNameRequest({ endpointType: 'moonlight_address', endpointValue: account }), reviewedPrimary: { name: 'other.dusk', store: id(3), mappingId: '41' } }
+    expect(await prepareFrozenCall(h.client, clear, 'example.dusk', account)).toMatchObject({
+      contractId: id(3), functionName: 'clear_primary', args: { expected_mapping_id: 41n },
+      display: { Summary: 'Clear other.dusk as your primary name' },
+    })
+    // The same name's link was set again since the review: another mapping, never adopted.
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk', 43n))
+    await expect(prepareFrozenCall(h.client, clear, 'example.dusk', account)).rejects.toThrow('Your primary name changed since you reviewed it')
+    // Another name's link replaced it.
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'third.dusk', 41n))
+    await expect(prepareFrozenCall(h.client, clear, 'example.dusk', account)).rejects.toThrow('Your primary name changed since you reviewed it')
+  })
+
+  it.each([
+    ['has moved on from its store', (h: ReturnType<typeof fixture>) => { h.name.move_pending = null }],
+    ['is staged in its store', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(3)}:home`, { Staged: bytes(5) }); h.name.move_pending = null }],
+    ['is being moved', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(3)}:home`, 'Local') }],
+  ] as const)('can’t be cleared while its name %s, and says why', async (_, state) => {
+    const h = fixture()
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk'))
+    state(h)
+    const clear = intent.storeClearPrimaryNameRequest({ endpointType: 'moonlight_address', endpointValue: account })
+    await expect(prepareFrozenCall(h.client, clear, 'example.dusk', account)).rejects.toThrow('other.dusk is moving between shards, so it can’t be cleared as your primary name until the move finishes.')
+  })
+
+  it('stops a registration from setting the primary name too', async () => {
+    const h = fixture({ released: true })
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk'))
+    const saved = reservation({ name: 'example.dusk', directory: id(1), commitmentStore: id(3) })
+    const register = (primary: boolean) => prepareFrozenCall(h.client, intent.storeCompleteRegistrationRequest({
+      directory: id(1), commitmentStore: id(3), commitment: saved.commitment, secret: saved.secret,
+      node, label: 'example', durationYears: 1, feeLux: 10e9, records: [],
+      primaryEndpoint: primary ? { endpointType: 'moonlight_address', endpointValue: account } : null,
+    }), 'example.dusk', account)
+    await expect(register(true)).rejects.toMatchObject({ name: 'PrimaryElsewhereError', current: 'other.dusk', target: 'example.dusk' })
+    expect(await register(false)).toMatchObject({ contractId: id(7), functionName: 'register' })
+  })
+})
+
+// set_primary takes a direct transaction from the address it sets, signed by the name's owner or
+// manager, for a current name whose Dusk address record is that address. Preparation reads all of it
+// from the chain, before any wallet request.
+describe('set_primary’s preconditions', () => {
+  const sam = sdk.encodeBase58(Uint8Array.from(handoff.roles.payout))
+  const samAuthority = sdk.authority({ kind: 'Moonlight', bytes: endpointBytes(sam) })
+
+  it('refuses the connected manager when the name’s Dusk address is the owner’s, and builds nothing', async () => {
+    // Noah owns example.dusk and its record is Noah's address; Sam manages it and is connected.
+    const h = ready()
+    h.name.name.manager = samAuthority
+    const asSam = intent.storeSetPrimaryNameRequest({ node, name: 'example.dusk', endpointType: 'moonlight_address', endpointValue: sam })
+    await expect(prepareFrozenCall(h.client, asSam, 'example.dusk', sam)).rejects.toThrow(
+      `example.dusk points to another Dusk address, ${short(account)}. Only that address’s wallet can make example.dusk its primary name.`)
+  })
+
+  it('refuses a request for another address than the name’s record', async () => {
+    const h = ready()
+    const other = intent.storeSetPrimaryNameRequest({ node, name: 'example.dusk', endpointType: 'moonlight_address', endpointValue: sam })
+    await expect(prepareFrozenCall(h.client, other, 'example.dusk', account)).rejects.toThrow(
+      'example.dusk’s Dusk address record isn’t the address this was reviewed for. Refresh and check it again.')
+  })
+
+  it.each([
+    ['has expired', (h: ReturnType<typeof fixture>) => { h.name.active = false }, 'example.dusk has expired, so it can’t be a primary name. Renew it first.'],
+    ['is being moved', (h: ReturnType<typeof fixture>) => { h.name.move_pending = bytes(5) }, 'example.dusk is moving between shards, so it can’t be set as a primary name until the move finishes.'],
+    ['has no Dusk address record', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(7)}:resolve_record`, { Local: null }) }, 'example.dusk has no Dusk address record, so it can’t be a primary name. Add your Dusk address under Records first.'],
+    ['is held by others', (h: ReturnType<typeof fixture>) => { h.name.name.owner = bytes(9); h.name.name.manager = bytes(9) }, 'Only the owner or manager of example.dusk can make it a primary name.'],
+  ] as const)('refuses a name that %s', async (_, state, reason) => {
+    const h = ready()
+    state(h)
+    await expect(prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).rejects.toThrow(reason)
+  })
+
+  it('tells the page whether the chain would set it, and why not', async () => {
+    const h = ready()
+    const client = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: vi.fn() } })
+    expect(await client.checkPrimaryTarget('example.dusk', account)).toMatchObject({ ok: true,
+      value: { store: id(7), nameRef: { key: h.name.name.key, incarnation: h.name.name.incarnation }, links: [] } })
+    expect(await client.checkPrimaryTarget('example.dusk', sam)).toEqual({ ok: false, error: { code: 'not_primary_eligible',
+      message: `example.dusk points to another Dusk address, ${short(account)}. Only that address’s wallet can make example.dusk its primary name.` } })
+  })
+
+  it('binds the name’s incarnation, and refuses another than the one reviewed', async () => {
+    const h = ready()
+    expect(await prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).toMatchObject({ contractId: id(7), functionName: 'set_primary',
+      args: { name: { key: h.name.name.key, incarnation: h.name.name.incarnation }, endpoint: endpointBytes(account) } })
+    const reviewed = { key: h.name.name.key, incarnation: { generation: 6n, serial: 1n } }
+    await expect(prepareFrozenCall(h.client, { ...setPrimary, nameRef: reviewed }, 'example.dusk', account)).rejects.toThrow('On-chain terms changed')
+  })
 })
 
 // resolve_primary replies follow the SDK projection, while read_primary retains
@@ -1721,6 +1860,7 @@ it('reads a primary only at the store its name lives in, not one it moved on fro
 it('reads primary names while the directory selects a policy this release doesn’t list', async () => {
   const h = primaryFixture()
   h.publish()
+  h.name.move_pending = null
   h.directory.registration.policy = bytes(0x0b)
   expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
   expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
@@ -1740,6 +1880,16 @@ it('reads again when a block lands during a read, and only then', async () => {
   reads.mockRejectedValue(new Error('Unexpected read'))
   expect(await h.client.getName('example.dusk')).toMatchObject({ ok: false, error: { message: 'Unexpected read' } })
   expect(reads).toHaveBeenCalledTimes(1)
+})
+
+it('reads every store’s stored primary link for an address, with the store that keeps it', async () => {
+  const h = primaryFixture()
+  h.publish()
+  h.responses.set(`${id(3)}:read_primary`, null)
+  expect(await h.client.readPrimaryLinks(h.endpoint)).toEqual({ ok: true, value: [
+    { store: id(7), name: 'example.dusk', node: '0x' + sdk.hex(h.name.name.key.node), mappingId: '42', updatedAtBlock: 100 },
+  ] })
+  expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk', store: id(7), mappingId: '42' } })
 })
 
 it('does not turn a failed resolve_primary read into a missing primary', async () => {

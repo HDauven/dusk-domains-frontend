@@ -27,7 +27,8 @@ export async function checkRecordLayout(page) {
     const noop = () => {}
     const record = (key, value) => ({ key, value, visibility: 'public', ttlSeconds: 3600, updatedAt: '' })
     const records = [record('website', 'https://example.test'), record(longKey, longValue), record('text.description', 'Short'), record('url', `https://${'u'.repeat(500)}`)]
-    window.renderRecordLayout = view => root.render(el('main', { className: 'page-main', id: 'record-layout' }, view === 'profile'
+    // The view rendered is named on the page, so a check waits for that render, not the last one.
+    window.renderRecordLayout = view => root.render(el('main', { className: 'page-main', id: 'record-layout', 'data-view': view }, view === 'profile'
       ? el(DomainDetailsView, { displayName: 'noahedge.dusk', parentResolverRecords: records, onManageRecords: noop, onSubdomains: noop, paysPreviousOwner: null,
         primaryVerification: { tone: 'neutral', title: '', description: '', displayValue: '' }, subnames: [], viewerAuthority: '',
         activity: { activityEntries: [], currentBlockHeight: null, formatActivityTime: noop, onActivity: noop } })
@@ -41,7 +42,8 @@ export async function checkRecordLayout(page) {
     await page.setViewportSize({ width, height: 900 })
     for (const [view, selector] of [['profile', '.link-list li'], ['records', '.record-entry, .record-draft-review > div']]) {
       await page.evaluate(view => window.renderRecordLayout(view), view)
-      await page.locator('#record-layout').waitFor()
+      // React commits a render after the call returns: wait for this view's, not the one before.
+      await page.locator(`#record-layout[data-view="${view}"]`).waitFor()
       const measured = await rows(page, selector)
       assert.ok(measured.length >= 3, `${view} at ${width}px lists its records`)
       for (const row of measured) {
@@ -52,7 +54,7 @@ export async function checkRecordLayout(page) {
       const row = page.locator(selector.split(',')[0]).filter({ hasText: longKey })
       const toggle = row.locator('.record-value-toggle')
       await toggle.click()
-      assert.equal(await toggle.getAttribute('aria-expanded'), 'true')
+      await row.locator('.record-value-toggle[aria-expanded="true"]').waitFor()
       const shown = await row.locator('.record-value > :is(p, code)').evaluate(value =>
         ({ full: value.textContent.length, clipped: value.scrollHeight > value.clientHeight + 1 }))
       assert.equal(shown.full, 512)

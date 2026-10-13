@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Change a primary name kept in another shard with two named wallet approvals, clearing it there first, and never send a set the chain refuses.
+- Check a primary name on chain before each wallet request, and say why when its Dusk address isn’t the wallet’s, the wallet doesn’t control it, or it expired or is moving.
 - Never offer an address the indexer reports invalid, or that fails validation, as a payment target.
 - Give only known record keys a label or link; show any other key exactly, marked as a custom record.
 - Show the first lines of a long record, with Show all, on every view that lists records.

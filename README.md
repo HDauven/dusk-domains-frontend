@@ -101,6 +101,16 @@ its store, after a check that its owner is still the one reviewed. The store doe
 owner, so a name that changes hands between that check and execution is renewed for its new
 owner.
 
+A Dusk address has one primary name, kept by the shard its name lives in. A name becomes the primary
+name of the Dusk address its own record holds, set from that address's wallet by the name's owner or
+manager while it hasn't expired and isn't being moved. The site reads all of this from the chain
+before any wallet request, and again before each one, and otherwise says why and sends nothing. A
+shard sets a new primary name only while no other shard keeps a link for the address, even one that
+no longer resolves, and only the address's own wallet can clear a link. Making a name in another
+shard primary therefore takes two wallet approvals: the site names both names, clears the current
+link in its shard first, then sets the new name once the chain has confirmed the clear. A
+registration sets its name as primary only when no other shard keeps a link.
+
 Only record keys this app knows get a label or a link. Any other key is shown exactly,
 with invisible characters spelled out, and marked as a custom record. An address the
 indexer reports invalid, or that fails the SDK's validation, is never offered as a

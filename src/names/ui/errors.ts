@@ -11,6 +11,29 @@ const marketOrderCalls = new Set(['escrow_fixed_sale', 'escrow_auction', 'place_
 /** What the failed request was, where its refusal means different things for different calls. */
 export type ErrorContext = { functionName?: string }
 
+// set_primary and clear_primary refusals, in the words of the call that met them.
+const primaryRefusals: Record<string, Record<string, string>> = {
+  set_primary_name: {
+    ForwardMismatch: 'This name’s Dusk address record isn’t this wallet’s address, so it can’t be this wallet’s primary name.',
+    Unauthorized: 'Only the owner or manager of this name, connected with the wallet for its Dusk address, can make it a primary name.',
+    Expired: 'This name has expired, so it can’t be a primary name. Renew it first.',
+    NotFound: 'This name or its Dusk address record isn’t there anymore. Refresh and check it again.',
+    Stale: 'This name changed since you reviewed it. Refresh and check it again.',
+    MovePending: 'This name is moving between shards. Try again after the move finishes.',
+    Moved: 'This name moved to another shard. Refresh and check it again.',
+    WrongHome: 'This name moved to another shard. Refresh and check it again.',
+    Capacity: 'This shard can’t keep another primary name right now. Try again later.',
+  },
+  clear_primary_name: {
+    Unauthorized: 'Only the wallet for this Dusk address can clear its primary name.',
+    NotFound: 'This Dusk address has no primary name to clear.',
+    Stale: 'Your primary name changed since you reviewed it. Check it again before continuing.',
+    MovePending: 'Your primary name is moving between shards. Clear it after the move finishes.',
+    Moved: 'Your primary name moved to another shard. Refresh and check it again.',
+    WrongHome: 'Your primary name moved to another shard. Refresh and check it again.',
+  },
+}
+
 export function userFacingErrorMessage(error: unknown, fallback: string = defaultErrorMessage, context: ErrorContext = {}): string {
   return userFacingMessageFromText(error instanceof Error ? error.message : String(error), fallback, context)
 }
@@ -23,6 +46,9 @@ export function userFacingMessageFromText(
   const trimmed = String(message ?? '').trim()
   if (!trimmed) return ''
   if (trimmed.startsWith('Insufficient public DUSK for ')) return trimmed
+  const refusal = /\bDuskDS:v\d+:(\w+)\b/.exec(trimmed)?.[1]
+  const primary = refusal && context.functionName ? primaryRefusals[context.functionName]?.[refusal] : undefined
+  if (primary) return primary
   // Closed, from a signed transaction or a read.
   if (/\bDuskDS:v\d+:Closed\b/.test(trimmed))
     return context.functionName && marketOrderCalls.has(context.functionName) ? MARKET_CLOSED_MESSAGE : REGISTRATIONS_CLOSED_MESSAGE
@@ -41,6 +67,8 @@ export function userFacingMessageFromText(
     CustodyActive: 'Return the name from marketplace custody before making this change.',
     // A listed name's renewal through its market, after the name left that listing.
     CustodyMismatch: 'This name isn’t listed anymore, so the renewal didn’t go through.',
+    // set_primary, or a registration setting a primary, while another store holds the address's link.
+    PrimaryAlreadySet: 'Your Dusk address already has a primary name, kept in another shard. Clear that one first, then set this one.',
     PolicyUnavailable: 'Registration pricing is unavailable. Try again later.',
     ExternalReadFailed: 'Name data could not be verified on-chain. Refresh and try again.',
     ReferralCapacity: 'Referral rewards are temporarily unavailable for new beneficiaries.',

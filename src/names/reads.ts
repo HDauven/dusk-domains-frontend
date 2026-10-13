@@ -17,6 +17,7 @@ import { safeNumber } from './numbers'
 import { success, failure } from './http/resultHelpers'
 import { listPendingNameReservations } from './reservations'
 import { admittedStores, rawRead } from './directoryMembers'
+import { PrimaryTargetError, primaryLinks, primaryTarget, type PrimaryLink } from './primaryLinks'
 import { retryReadRace } from './readRace'
 export function contractIdFromOutput(value: unknown): string | null {
   try {
@@ -185,6 +186,16 @@ export function createDuskDomainsOnChainClient(
     )
     return (local(r.value)?.records ?? []).map(recordView).filter((r) => !keys || keys.includes(r.key))
   }
+  const linkView = ({ store, view }: PrimaryLink) => ({
+    store,
+    node: '0x' + sdk.hex(view.primary.name.key.node),
+    name: view.spelling,
+    mappingId: String(view.primary.mapping_id),
+    updatedAtBlock: safeNumber(view.primary.updated_at),
+  })
+  // Every store's stored link for the address, in admission order, as set_primary's uniqueness check reads them.
+  const storedPrimaryLinks = async (endpoint: import('./http/results').DuskEndpoint) =>
+    (await primaryLinks(await getClient(), endpointBytes(endpoint.value))).map(linkView)
   const primary = async (endpoint: import('./http/results').DuskEndpoint) => {
     if (endpoint.type !== 'moonlight_address')
       throw new Error('Only public Dusk addresses support primary names.')
@@ -274,22 +285,20 @@ export function createDuskDomainsOnChainClient(
         if (expectedName && expectedName !== p.primaryName) throw new Error('Primary name mismatch')
         return p
       }),
+    readPrimaryLinks: (endpoint) => wrapped(async () => storedPrimaryLinks(endpoint)),
+    checkPrimaryTarget: async (name, address) => {
+      try {
+        const target = await retryReadRace(async () =>
+          primaryTarget(await getClient(), sdk.normalizeNameInput(name), endpointBytes(address)))
+        return success({ store: target.store, nameRef: target.ref, links: target.links.map(linkView) })
+      } catch (e) {
+        return failure(e instanceof PrimaryTargetError ? 'not_primary_eligible' : 'contract_read_failed', e instanceof Error ? e.message : String(e))
+      }
+    },
     readPrimaryName: (endpoint) =>
       wrapped(async () => {
-        const c = await getClient(),
-          bytes = endpointBytes(endpoint.value)
-        await admittedStores(c)
-        const mappings = await c.snapshot(async () => Promise.all((await admittedStores(c))
-          .map((store) => rawRead(c, 'store', sdk.contractId(store.id), 'read_primary', { endpoint: bytes }))))
-        const p = mappings.find((mapping) => mapping !== null)
-        return p
-          ? {
-              endpoint,
-              node: '0x' + sdk.hex(p.primary.name.key.node),
-              name: p.spelling,
-              updatedAtBlock: safeNumber(p.primary.updated_at),
-            }
-          : null
+        const link = (await storedPrimaryLinks(endpoint))[0]
+        return link ? { endpoint, ...link } : null
       }),
     getPendingCommitment: (controller, commitment) =>
       wrapped(async () => {

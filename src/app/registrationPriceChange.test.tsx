@@ -13,6 +13,7 @@ import { findSavedReservation } from './derived/reservationState'
 import { useRegistrationAppState } from './useRegistrationAppState'
 import { useRegistrationRuntime } from './useRegistrationRuntime'
 import { useSearchAppState } from './useSearchAppState'
+import { PrimaryElsewhereError } from '../names/primaryLinks'
 
 // A reservation made under one policy, registered after a governance SetPolicy selected another.
 const account = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
@@ -215,6 +216,19 @@ it('says the payment was returned when the wallet reports the chain’s refusal 
   expect(registrations()[1]).toMatchObject({ quote: after, args: { commitment: saved.commitment, feeLux: 30e9 } })
   expect(commits()).toHaveLength(1)
   expect(state.registrationCompletion?.status).toBe('executed')
+})
+
+it('says plainly why Register can’t also set the primary name while another shard keeps the wallet’s, and sends nothing', async () => {
+  const saved = await reserve()
+  await act(async () => { state.setRegisterSetsPrimary(true) })
+  // Preparation read every store: the wallet's primary link is kept in another one, so the reveal
+  // would be refused with PrimaryAlreadySet. It stops before the wallet.
+  const error = new PrimaryElsewhereError({ store: '0a'.repeat(32), view: { spelling: 'noahcandidate.dusk', primary: { mapping_id: 6n } } } as never, displayName)
+  outcomes.push(() => ({ status: 'failed', message: error.message, error }))
+  await register()
+  expect(registrations()[0]).toMatchObject({ args: { primaryEndpoint: { endpointValue: account } } })
+  expect(host.textContent).toContain(`noahcandidate.dusk is your primary name, kept in a different shard, so registering can’t also make ${displayName} your primary name. Turn off Primary name to register; you can make it your primary from its page afterwards, with two wallet approvals.`)
+  expect(listPendingNameReservations()).toEqual([saved])
 })
 
 it('says the price changed, without a refund, when preparation finds it before any wallet request', async () => {

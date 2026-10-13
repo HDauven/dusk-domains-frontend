@@ -514,6 +514,10 @@
 .primary-control-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .primary-control-row label { font-weight: 600; cursor: pointer; }
 .primary-control-row p { margin: 4px 0 0; color: var(--muted); font-size: var(--text-sm); }
+.primary-switch { display: grid; gap: 12px; margin: 12px 0 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); overflow-wrap: anywhere; }
+.primary-switch p { margin: 0; }
+p.primary-switch { color: var(--muted); font-size: var(--text-sm); }
+.primary-switch-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .name-section-select { display: none; }
 @media (max-width: 600px) {
   .name-hero { flex-direction: column; align-items: stretch; }

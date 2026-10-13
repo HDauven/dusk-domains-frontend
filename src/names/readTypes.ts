@@ -66,11 +66,28 @@ export type DuskDomainsOnChainPrimaryNameVerification = {
   verified: true
 }
 
-export type DuskDomainsOnChainPrimaryRecord = {
-  endpoint: DuskEndpoint
+/** A Dusk address's stored primary link in one store: the name it is to, whether or not that resolves. */
+export type DuskDomainsOnChainPrimaryLink = {
+  /** The store keeping it; only the address can clear it there. */
+  store: string
   node: string
   name: string
+  mappingId: string
   updatedAtBlock: number
+}
+
+export type DuskDomainsOnChainPrimaryRecord = DuskDomainsOnChainPrimaryLink & {
+  endpoint: DuskEndpoint
+}
+
+/** A name set_primary would set for a Dusk address now, every precondition but uniqueness met. */
+export type DuskDomainsOnChainPrimaryTarget = {
+  /** The store the name lives in. */
+  store: string
+  /** Its key and incarnation, which the set is bound to. */
+  nameRef: import('@duskdomains/sdk').NameRef
+  /** The address's stored links in every store. */
+  links: DuskDomainsOnChainPrimaryLink[]
 }
 
 export type DuskDomainsOnChainPendingCommitment = {
@@ -115,6 +132,13 @@ export type DuskDomainsOnChainClient = {
   ) => Promise<DuskDomainsResult<DuskDomainsOnChainResolvedName>>
   /** Authority-gated resolution, including incarnation, lifecycle and forward verification. */
   getPrimaryName: (endpoint: DuskEndpoint) => Promise<DuskDomainsResult<string | null>>
+  /** Every store's stored link for the endpoint. A store sets a primary only while no other store has one. */
+  readPrimaryLinks: (endpoint: DuskEndpoint) => Promise<DuskDomainsResult<DuskDomainsOnChainPrimaryLink[]>>
+  /**
+   * Whether set_primary would set a name for a Dusk address, the connected wallet's, read from the
+   * chain at one height: a refusal is `not_primary_eligible`, with the reason in plain words.
+   */
+  checkPrimaryTarget: (name: string, address: string) => Promise<DuskDomainsResult<DuskDomainsOnChainPrimaryTarget>>
   /** Read the stored mapping for endpoint cleanup, without lifecycle or forward verification. */
   readPrimaryName: (
     endpoint: DuskEndpoint,

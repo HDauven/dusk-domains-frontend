@@ -9,6 +9,7 @@ import type {
 } from '../names/internal'
 import { createManagedNameState, isMarketplaceEscrow, type ManagedNameState } from './managedNameState'
 import { createOwnershipConfirmation, type PendingOwnership } from './ownershipConfirmation'
+import type { PrimarySwitch } from '../features/domains/setPrimaryDomainName'
 
 export function useDomainManagementAppState(recordSourceContractId: string, indexerClient: DuskDomainsIndexerClient | null, onChainClient: DuskDomainsOnChainClient | null, nodeUrl = '', marketplaces: string | readonly string[] | null = null) {
   const [renewalYears, setRenewalYears] = useState(1)
@@ -28,6 +29,8 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
   const [primaryName, setPrimaryName] = useState<string | null>(null)
   // Cleanup mapping for the connected wallet, including unresolved raw primaries.
   const [connectedPrimaryName, setConnectedPrimaryName] = useState<string | null>(null)
+  // A primary name change that takes two approvals, while it is reviewed or under way.
+  const [primarySwitch, setPrimarySwitch] = useState<PrimarySwitch | null>(null)
   const [subnameLabel, setSubnameLabel] = useState('')
   const [subnameManager, setSubnameManager] = useState('')
   const [subnameExpiryPolicy, setSubnameExpiryPolicy] = useState<SubnameExpiryPolicy>('inherits_parent')
@@ -61,6 +64,8 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
         setPrimaryEndpointValue('')
         setPrimaryName(null)
         setConnectedPrimaryName(null)
+        // A primary name change left mid-way belongs to the page it started on.
+        setPrimarySwitch(null)
         setSubnames([])
         setSubnameLabel('')
         setSubnameManager('')
@@ -94,6 +99,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     primaryError,
     primaryName,
     connectedPrimaryName,
+    primarySwitch,
     primaryTxState,
     recordError,
     recordTxState,
@@ -108,6 +114,7 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
     setPrimaryError,
     setPrimaryName,
     setConnectedPrimaryName,
+    setPrimarySwitch,
     setPrimaryTxState,
     setRecordError,
     setRecordTxState,

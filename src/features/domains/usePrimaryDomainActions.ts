@@ -2,10 +2,10 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
 import type { ConfirmedWriteFallback } from '../../app/useIndexerWriteFallback'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
-import type { DuskDomainTxState, DuskDomainsRuntimeConfig, ResolverRecord } from '../../names/internal'
+import type { DuskDomainTxState, DuskDomainsOnChainClient, DuskDomainsRuntimeConfig, ResolverRecord } from '../../names/internal'
 import type { WalletConnectionStatus } from '../wallet/walletStatus'
 import { clearPrimaryDomainName } from './clearPrimaryDomainName'
-import { setPrimaryDomainName } from './setPrimaryDomainName'
+import { setPrimaryDomainName, switchPrimaryDomainName, type PrimarySwitch } from './setPrimaryDomainName'
 
 type AppendActivity = (input: {
   eventType: 'primary_name_set' | 'primary_name_cleared'
@@ -19,8 +19,13 @@ export type UsePrimaryDomainActionsProps = {
   canClearPrimary: boolean
   canSetPrimary: boolean
   displayName: string
+  /** Checks a primary name change on chain before any wallet request; null in preview. */
+  duskDomainsOnChainClient: Pick<DuskDomainsOnChainClient, 'checkPrimaryTarget'> | null
   nodeHex: string
   primaryEndpoint: string
+  /** A primary name change waiting for, or going through, its two approvals. */
+  primarySwitch: PrimarySwitch | null
+  setPrimarySwitch: Dispatch<SetStateAction<PrimarySwitch | null>>
   moonlightRecord: ResolverRecord | undefined
   selectedAddress: string
   runtimeConfig: DuskDomainsRuntimeConfig
@@ -39,5 +44,7 @@ export function usePrimaryDomainActions(props: UsePrimaryDomainActionsProps) {
   return {
     handleClearPrimaryName: () => clearPrimaryDomainName(props),
     handleSetPrimaryName: () => setPrimaryDomainName(props),
+    handleConfirmPrimarySwitch: () => switchPrimaryDomainName(props),
+    handleCancelPrimarySwitch: () => props.setPrimarySwitch(null),
   }
 }

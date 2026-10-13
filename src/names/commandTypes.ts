@@ -40,6 +40,8 @@ export type DuskDomainCallMetadata<TArgs = unknown> = {
    * name, the market holding it and the order it is listed by. The holder's own renewal has none.
    */
   reviewedRenewal?: ReviewedRenewal
+  /** The primary link a clear was reviewed for: the name it is to, the store holding it and its mapping. */
+  reviewedPrimary?: { name: string; store: string; mappingId: string }
   expectedFeeBps?: number
   expectedRecipient?: string
   expectedScheduleVersion?: bigint
