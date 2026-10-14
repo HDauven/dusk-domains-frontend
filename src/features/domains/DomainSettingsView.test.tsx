@@ -141,18 +141,18 @@ it('links List for sale to the current name in the Sell tab', () => {
   expect(settings({})).toContain('href="/market/sell/alphavnuc.dusk"')
 })
 
-it('hides renewal controls for marketplace escrow even when settings are already open', () => {
+it('offers renewal for a listed name and says the listing stays as it is', () => {
   const html = settings({ managedName: { ...managedName, ownerIsContract: true, inMarketplaceEscrow: true } })
-  expect(html).not.toContain('Renewal controls')
-  expect(html).not.toContain('>Renew</')
-  expect(html).toContain('Renewal is available after the listing closes.')
+  expect(html).toContain('Renewal controls')
+  expect(html).toContain('Renewing it doesn’t change the listing: the name stays listed at the same price, until the same end date.')
+  expect(html).not.toContain('after the listing closes')
 })
 
-it('hides renewal controls in open settings until contract custody is known', () => {
+it('offers renewal for a contract-held name before its custody is known', () => {
   const html = settings({ managedName: { ...managedName, ownerIsContract: true, inMarketplaceEscrow: null } })
-  expect(html).not.toContain('Renewal controls')
-  expect(html).not.toContain('>Renew</')
-  expect(html).toContain('Renewal is unavailable until marketplace custody can be checked.')
+  expect(html).toContain('Renewal controls')
+  expect(html).not.toContain('custody can be checked')
+  expect(html).not.toContain('doesn’t change the listing')
 })
 
 it('shows website verification setup only to the owner', () => {

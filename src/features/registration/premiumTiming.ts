@@ -1,4 +1,4 @@
-import { registrationFeeLux, registrationPremiumSchedule, PREMIUM_WINDOW_DAYS, type CoreFeeConfig, type NameResult } from '../../names/internal'
+import { registrationPremiumSchedule, registrationTotalLux, PREMIUM_WINDOW_DAYS, type CoreFeeConfig, type NameResult } from '../../names/internal'
 
 export function premiumDropsSoon(result: NameResult, currentBlockHeight?: number | null, nowSeconds = Date.now() / 1_000) {
   if (!(result.premiumLux && result.premiumLux > 0)) return false
@@ -21,7 +21,12 @@ export function premiumConfirmationQuote(result: NameResult, years: number, conf
   const nextStepAt = height != null && nextHeight != null
     ? new Date(Date.now() + (nextHeight - height) * 10_000).toISOString()
     : result.premiumNextStepAt!
-  const totalLux = result.quotedYears === years && result.totalFeeLux !== undefined
-    ? result.totalFeeLux : registrationFeeLux(result.label, years, config, result.premiumLux ?? 0)
+  let totalLux: number
+  try {
+    totalLux = registrationTotalLux(result, years, config)
+  } catch {
+    // A price past 2^53 - 1 Lux can't be confirmed exactly; the claim doesn't offer it.
+    return null
+  }
   return { totalLux, nextTotalLux: totalLux - (result.premiumLux ?? 0) + nextPremium, nextStepAt }
 }

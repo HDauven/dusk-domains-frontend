@@ -70,6 +70,8 @@ export type MarketplaceViewProps = {
     onReviewBid: (auction: IndexedMarketplaceAuction) => void
     onSettleAuction: (auction: IndexedMarketplaceAuction) => void
     onCloseAuction: () => void
+    /** Why an auction's market takes no bid now, or null while it does. */
+    bidRefusal?: (auction: IndexedMarketplaceAuction) => string | null
   }
   market: {
     hasData?: boolean
@@ -85,6 +87,8 @@ export type MarketplaceViewProps = {
   selling: {
     durationDays: string
     feeBps?: number | null
+    /** Why the preferred market takes no new listing or offer now, such as an unknown fee. */
+    newOrdersRefusal?: string | null
     fixedPriceDusk: string
     privateBuyer: string
     reserveDusk: string
@@ -113,8 +117,11 @@ export type MarketplaceViewProps = {
     onPlaceOffer: () => void
   }
   withdrawal: {
-    refund: IndexedMarketplaceRefund | null
-    onClaimRefund: () => void
+    /** The account's refunds, one per market. Each market pays out its own. */
+    refunds: IndexedMarketplaceRefund[]
+    onClaimRefund: (refund: IndexedMarketplaceRefund) => void
+    /** The market the directory prefers now, to tell its refunds from an earlier market's. */
+    currentMarketplace?: string | null
   }
   navigation: {
     tab: MarketplaceTab
@@ -144,7 +151,7 @@ export type MarketplaceAuctionDetailProps = {
   feedback: Pick<MarketplaceViewProps['feedback'], 'error'>
   wallet: Pick<MarketplaceViewProps['wallet'], 'ownerAddresses' | 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'selectedAuthority' | 'tradingPaused'>
   market: Pick<MarketplaceViewProps['market'], 'updatedAt' | 'currentBlockHeight'>
-  auction: Pick<MarketplaceViewProps['auction'], 'auctionActivity' | 'auctionActivityHasMore' | 'auctionActivityLoading' | 'bidDrafts' | 'onBidDraftChange' | 'onCancelAuction' | 'onCloseAuction' | 'onExpireAuction' | 'onLoadMoreAuctionActivity' | 'onReviewBid' | 'onSettleAuction'>
+  auction: Pick<MarketplaceViewProps['auction'], 'auctionActivity' | 'auctionActivityHasMore' | 'auctionActivityLoading' | 'bidDrafts' | 'bidRefusal' | 'onBidDraftChange' | 'onCancelAuction' | 'onCloseAuction' | 'onExpireAuction' | 'onLoadMoreAuctionActivity' | 'onReviewBid' | 'onSettleAuction'>
   watchlist: Pick<MarketplaceViewProps['watchlist'], 'onToggleWatch' | 'watchedNodes'>
 }
 
@@ -152,12 +159,12 @@ export type MarketplaceOffersProps = {
   wallet: Pick<MarketplaceViewProps['wallet'], 'ownerAddresses' | 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'selectedAuthority' | 'tradingPaused'>
   market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
   offers: Pick<MarketplaceViewProps['offers'], 'offerAmountDusk' | 'offerDurationDays' | 'offerName' | 'offers' | 'onAcceptOffer' | 'onCancelOffer' | 'onExpireOffer' | 'onOfferAmountDuskChange' | 'onOfferDurationDaysChange' | 'onOfferNameChange' | 'onPlaceOffer'>
-  selling: Pick<MarketplaceViewProps['selling'], 'sellableNames'>
+  selling: Pick<MarketplaceViewProps['selling'], 'newOrdersRefusal' | 'sellableNames'>
 }
 
 export type MarketplaceSellProps = {
   wallet: Pick<MarketplaceViewProps['wallet'], 'actionsAvailable' | 'onOpenWalletConnection' | 'selectedAddress' | 'tradingPaused'>
-  selling: Pick<MarketplaceViewProps['selling'], 'durationDays' | 'feeBps' | 'fixedPriceDusk' | 'onCreateListing' | 'onDurationDaysChange' | 'onFixedPriceDuskChange' | 'onPrivateBuyerChange' | 'onReserveDuskChange' | 'onSaleModeChange' | 'onSelectedNodeChange' | 'privateBuyer' | 'reserveDusk' | 'saleMode' | 'selectedNode' | 'sellableNames'>
+  selling: Pick<MarketplaceViewProps['selling'], 'durationDays' | 'feeBps' | 'fixedPriceDusk' | 'newOrdersRefusal' | 'onCreateListing' | 'onDurationDaysChange' | 'onFixedPriceDuskChange' | 'onPrivateBuyerChange' | 'onReserveDuskChange' | 'onSaleModeChange' | 'onSelectedNodeChange' | 'privateBuyer' | 'reserveDusk' | 'saleMode' | 'selectedNode' | 'sellableNames'>
 }
 
 export type MarketplaceActivityProps = {
@@ -165,7 +172,7 @@ export type MarketplaceActivityProps = {
   listings: Pick<MarketplaceViewProps['listings'], 'auctions' | 'fixedSales'>
   market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
   offers: Pick<MarketplaceViewProps['offers'], 'offers'>
-  withdrawal: Pick<MarketplaceViewProps['withdrawal'], 'onClaimRefund' | 'refund'>
+  withdrawal: Pick<MarketplaceViewProps['withdrawal'], 'currentMarketplace' | 'onClaimRefund' | 'refunds'>
   auction: Pick<MarketplaceViewProps['auction'], 'onOpenAuction'>
   navigation: Pick<MarketplaceViewProps['navigation'], 'onTabChange'>
   watchlist: Pick<MarketplaceViewProps['watchlist'], 'watchedNodes'>
@@ -173,6 +180,6 @@ export type MarketplaceActivityProps = {
 
 export type MarketplaceBidReviewProps = {
   wallet: Pick<MarketplaceViewProps['wallet'], 'actionsAvailable' | 'selectedAddress' | 'tradingPaused'>
-  auction: Pick<MarketplaceViewProps['auction'], 'bidReview' | 'onCancelBidReview' | 'onPlaceBid'>
+  auction: Pick<MarketplaceViewProps['auction'], 'bidRefusal' | 'bidReview' | 'onCancelBidReview' | 'onPlaceBid'>
   market: Pick<MarketplaceViewProps['market'], 'currentBlockHeight'>
 }

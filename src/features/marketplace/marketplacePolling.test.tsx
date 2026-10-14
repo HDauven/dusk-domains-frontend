@@ -22,7 +22,7 @@ function setup() {
     getMarketplaceOffersPage: vi.fn(async () => ({ offers: [], nextCursor: null })),
     getMarketplaceConfig: vi.fn(async () => ({ feeBps: 100 })),
     getAllNames: vi.fn(async () => []),
-    getMarketplaceRefund: vi.fn(async () => null),
+    getAllMarketplaceRefunds: vi.fn(async () => []),
   }
   return client
 }
@@ -45,7 +45,7 @@ it('refreshes listings every minute while staying below six idle reads per minut
   expect(Object.values(client).reduce((sum, method) => sum + method.mock.calls.length, 0)).toBeLessThanOrEqual(36)
   expect(client.getMarketplaceConfig).toHaveBeenCalledTimes(2)
   expect(client.getAllNames).toHaveBeenCalledTimes(2)
-  expect(client.getMarketplaceRefund).toHaveBeenCalledTimes(2)
+  expect(client.getAllMarketplaceRefunds).toHaveBeenCalledTimes(2)
 })
 
 it.each(['refresh', 'pagination'])('recovers a pending %s invalidated by a hidden wallet change', async kind => {
@@ -212,7 +212,7 @@ it('reads a linked listing directly, whichever page it is on', async () => {
     return null
   }
   await act(async () => root.render(<Probe listingName="later.dusk" />))
-  expect(getMarketplaceFixedSale).toHaveBeenCalledWith(namehashHex('later.dusk'))
+  expect(getMarketplaceFixedSale).toHaveBeenCalledWith(namehashHex('later.dusk'), { marketplace: 'all' })
   expect(data!.fixedSales.map(item => item.name)).toEqual(['first.dusk', 'later.dusk'])
   // A link opened while the market is showing is read the same way, and stays through refreshes.
   await act(async () => root.render(<Probe listingName="next.dusk" />))

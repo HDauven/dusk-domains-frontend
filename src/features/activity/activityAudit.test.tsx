@@ -66,8 +66,10 @@ it('exports the full history as CSV, oldest first, with full values and safe cel
   expect(lines[1]).toBe(`"2026-10-11T12:47:13Z","443","Registered for 1 year · 10 DUSK","","${payer}","${txId}","https://explorer.dusk.network/transactions/transaction/?id=${txId}"`)
   expect(lines[2]).toContain('"Primary name set"')
   const injected = { ...registered, id: 'x', eventType: 'unknown_topic' as ActivityEntry['eventType'], data: {}, txId: undefined }
-  expect(activityCsv([{ ...injected, eventType: 'record_update', data: undefined, target: '=HYPERLINK("x")', actor: '' } as ActivityEntry], {}))
-    .toContain(`"'=HYPERLINK(""x"")"`)
+  // A custom record key is quoted as it is, and no cell starts a spreadsheet formula.
+  const injectedCsv = activityCsv([{ ...injected, eventType: 'record_update', data: undefined, target: '=HYPERLINK("x")', actor: '' } as ActivityEntry], {})
+  expect(injectedCsv).toContain(`"“=HYPERLINK(""x"")”"`)
+  expect(injectedCsv).not.toMatch(/(^|,)"[=+\-@]/m)
 })
 
 it('downloads every page of the history, not only the loaded one', async () => {

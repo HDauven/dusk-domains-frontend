@@ -63,7 +63,7 @@ it.each([
     ...ready, primaryEndpoint: address, canSetPrimary: true, canClearPrimary: true,
     moonlightRecord: { key: 'moonlight_address', value: matchesForward ? address : 'another-address' },
     runtimeConfig: { contracts: {} }, walletSetupState: 'connected', submitNameWrite, setPrimaryName, setConnectedPrimaryName,
-    setPrimaryEndpointValue: vi.fn(), setPrimaryError: vi.fn(), setPrimaryTxState: vi.fn(), appendActivity,
+    setPrimaryEndpointValue: vi.fn(), setPrimaryError: vi.fn(), setPrimaryTxState: vi.fn(), setPrimarySwitch: vi.fn(), appendActivity,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
     shouldApplyPreviewWriteFallback: async () => true,
   } as never)
@@ -75,4 +75,17 @@ it.each([
   if (matchesForward) expect(setPrimaryName).toHaveBeenCalledWith(primary)
   else expect(setPrimaryName).not.toHaveBeenCalled()
   expect(setConnectedPrimaryName).toHaveBeenCalledWith(primary)
+})
+
+it('names the chain’s refusal of a clear, read from the receipt', async () => {
+  const receipt = { hash: 'clear-tx', status: 'executed', ok: true, event: { headers: { 'content-type': 'application/octet-stream' },
+    payload: new TextEncoder().encode(JSON.stringify({ err: 'Panic { msg: "DuskDS:v1:Unauthorized" }' })) } }
+  const setPrimaryError = vi.fn()
+  const submitNameWrite = Object.assign(vi.fn(async () => ({ status: 'failed', txId: 'clear-tx', result: receipt })), { captureWorkspace: () => () => true })
+  await clearPrimaryDomainName({
+    ...ready, primaryEndpoint: address, canClearPrimary: true, runtimeConfig: { contracts: {} }, walletSetupState: 'connected', submitNameWrite,
+    setPrimaryName: vi.fn(), setConnectedPrimaryName: vi.fn(), setPrimaryError, setPrimaryTxState: vi.fn(), appendActivity: vi.fn(),
+    ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true, shouldApplyPreviewWriteFallback: async () => true,
+  } as never)
+  expect(setPrimaryError).toHaveBeenLastCalledWith('Only the wallet for this Dusk address can clear its primary name.')
 })

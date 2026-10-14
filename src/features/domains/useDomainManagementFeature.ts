@@ -1,15 +1,18 @@
 import { boundWebsiteVerification } from '../../names/http/verification'
+import { trustedDuskAddresses } from '../identity/addressTrust'
+import { reviewedListing } from '../../app/useHeldListing'
 import { useCallback, useLayoutEffect, useRef } from 'react'
 import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { canControlSubname } from './namespaceActions'
 import { resolveRecipient } from '../identity/resolveRecipient'
 import type { DomainManagementFeatureProps, UseDomainManagementFeatureProps } from './domainManagementFeatureTypes'
 import { usePrimaryDomainActions } from './usePrimaryDomainActions'
+import { primarySwitchFor } from './setPrimaryDomainName'
 import { useDomainRecordActions } from './useDomainRecordActions'
 import { useDomainSettingsActions } from './useDomainSettingsActions'
 import { useSubdomainActions } from './useSubdomainActions'
 
-export function useDomainManagementFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, namePreview, searchRuntime, searchState, walletRuntime }: UseDomainManagementFeatureProps): DomainManagementFeatureProps {
+export function useDomainManagementFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, heldListing, namePreview, searchRuntime, searchState, walletRuntime }: UseDomainManagementFeatureProps): DomainManagementFeatureProps {
   const addressRequest = useRef({ generation: 0 })
   useLayoutEffect(() => {
     addressRequest.current.generation++
@@ -40,8 +43,11 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       canClearPrimary: derivedState.canClearPrimary,
       canSetPrimary: derivedState.canSetPrimary,
       displayName: namePreview.displayName,
+      duskDomainsOnChainClient: appRuntime.duskDomainsOnChainClient,
       nodeHex: namePreview.nodeHex,
       primaryEndpoint: derivedState.primaryEndpoint,
+      primarySwitch: domainState.primarySwitch,
+      setPrimarySwitch: domainState.setPrimarySwitch,
       moonlightRecord: domainRecordState.moonlightRecord,
       selectedAddress: walletRuntime.selectedAddress,
       setPrimaryEndpointValue: domainState.setPrimaryEndpointValue,
@@ -71,6 +77,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
     ...useDomainSettingsActions({
       renewalQuote: namePreview.renewalQuote,
       renewalNameRef: namePreview.renewalNameRef,
+      renewalListing: reviewedListing(heldListing),
       ...writes,
       indexerClient: appRuntime.indexerClient,
       canManageName: derivedState.canManageName,
@@ -120,6 +127,9 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       error: domainState.primaryError,
       onClearPrimary: () => void actions.handleClearPrimaryName(),
       onSetPrimary: () => void actions.handleSetPrimaryName(),
+      primarySwitch: primarySwitchFor(domainState.primarySwitch, namePreview.displayName, walletRuntime.selectedAddress),
+      onConfirmPrimarySwitch: () => void actions.handleConfirmPrimarySwitch(),
+      onCancelPrimarySwitch: actions.handleCancelPrimarySwitch,
       primaryVerification: derivedState.primaryVerification,
       txState: domainState.primaryTxState,
     },
@@ -198,13 +208,14 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         managementTxState: domainState.managementTxState,
         onConfirmationInputChange: domainState.setConfirmationInput,
         viewerAuthority: walletRuntime.selectedAuthority,
-        ownerAddresses: domainRecordState.moonlightRecord ? [domainRecordState.moonlightRecord.value] : [],
+        ownerAddresses: trustedDuskAddresses(domainRecordState.moonlightRecord ? [domainRecordState.moonlightRecord] : []),
         onResolveRecipient: input => resolveRecipient(input, appRuntime.indexerClient),
         onOwnershipUpdate: change => actions.handleOwnershipUpdate(change),
       },
       renewal: {
         canRenewName: derivedState.canRenewName && (!appRuntime.duskDomainsOnChainClient || Boolean(namePreview.renewalQuote)),
-        feeConfigError: namePreview.quoteError || economicsRuntime.feeConfigError,
+        // Renewals follow the renewal schedule, so withheld registration prices don't concern them.
+        feeConfigError: namePreview.quoteError || (economicsRuntime.registrationPricesUnavailable ? '' : economicsRuntime.feeConfigError),
         feeConfigLoading: namePreview.quoteLoading || economicsRuntime.feeConfigLoading,
         maxDurationYears: maxDurationYears,
         minDurationYears: minDurationYears,

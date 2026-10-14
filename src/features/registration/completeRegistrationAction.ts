@@ -1,3 +1,4 @@
+import type { RegistrationQuote } from '@duskdomains/sdk'
 import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
 import { premiumDropsSoon } from './premiumTiming'
 import {
@@ -5,16 +6,27 @@ import {
   markRegistrationCompletionFailed,
 } from './registrationCompletionState'
 import {
-  registrationFeeLux,
+  isRegistrationQuoteRefusal,
+  registrableQuote,
+  registrationPriceChange,
+  registrationQuoteBlockedReason,
+  registrationTotalLux,
+  reviewedRegistrationQuote,
   userFacingErrorMessage,
+  userFacingMessageFromText,
+  type DuskDomainTxState,
 } from '../../names/internal'
+import { safeNumber } from '../../names/numbers'
 import { formatLifecycleDay } from '../domains/domainFormat'
 import { createCompleteRegistrationRequest } from './completeRegistrationCall'
+import { primaryElsewhere } from '../../names/primaryLinks'
+import { failureText } from '../../names/ui/txFailure'
 import { handleCompleteRegistrationEarlyReveal } from './completeRegistrationEarlyReveal'
 import { completeRegistrationPreflight } from './completeRegistrationPreflight'
 import { applyCompleteRegistrationSuccess } from './completeRegistrationSuccess'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import { updateRegistrationCompletion } from './registrationTxProgress'
+import { readReservationQuote, saveReservationQuote, type RegistrationPriceReview } from './reservationQuote'
 import { revealCommitmentMissing } from './strandedReservation'
 import { revealSetsPrimary, type PrimaryShown } from './walletPrimary'
 
@@ -25,13 +37,52 @@ async function revealPrimary({ displayName, primaryChoice, readWalletPrimary }: 
   return revealSetsPrimary(primaryChoice, await readWalletPrimary(), displayName, shown)
 }
 
-/** `shown` is what the person saw as they pressed Register; Register on a saved reservation shows nothing first. */
-export async function completeRegistration(props: UseRegistrationActionsProps, confirmedTotalLux?: number, shown?: PrimaryShown) {
+// Show the new price in place of the failed attempt. The reservation is untouched: Register at the
+// new price reveals it as it is, with no new commitment, while its window lasts.
+function offerNewPrice(props: UseRegistrationActionsProps, commitment: string, review: Omit<RegistrationPriceReview, 'commitment'>) {
+  props.setTxState(null)
+  props.setRegistrationCompletion(null)
+  props.setPriceChange({ commitment, ...review })
+  props.refreshQuotes()
+}
+
+// Only a transaction the chain executed and refused had its payment returned: a failed state with
+// a transaction ID whose own receipt names the refusal. A read before signing fails without a
+// transaction, and a timeout proves nothing about execution.
+function refusedForPrice(state: DuskDomainTxState) {
+  return state.status === 'failed' && Boolean(state.txId) && isRegistrationQuoteRefusal(failureText(state))
+}
+
+const refusedCopy = 'The registration price changed before your registration was confirmed, so it was refused. Your payment was returned; only the network fee was charged.'
+
+// The chain refused the reveal because a policy replacement changed its price after signing. Quote
+// again under the current policy and offer that price for the same reservation.
+async function offerPriceAfterRefusal(props: UseRegistrationActionsProps, commitment: string, signedLux: number, workspace: () => boolean) {
+  const read = props.duskDomainsOnChainClient
+    ? await props.duskDomainsOnChainClient.getRegistrationQuote(props.displayName, props.duration, props.selectedAuthority)
+    : null
+  if (!workspace()) return
+  if (read?.ok && registrableQuote(read.value.quote)) {
+    offerNewPrice(props, commitment, { previousLux: signedLux, quote: read.value.quote, sinceReservation: false, refused: true })
+    return
+  }
+  const reason = read?.ok ? registrationQuoteBlockedReason(read.value.quote)
+    : read ? userFacingMessageFromText(read.error.message) : ''
+  props.setRegistrationCompletion(current => markRegistrationCompletionFailed(current, `${refusedCopy} ${reason || 'Try again in a moment.'}`))
+}
+
+/**
+ * `shown` is what the person saw as they pressed Register; Register on a saved reservation shows
+ * nothing first. `confirmedQuote` is a new price the person confirmed after a policy change: it
+ * becomes the reservation's price and the reveal signs exactly it.
+ */
+export async function completeRegistration(props: UseRegistrationActionsProps, confirmedTotalLux?: number, shown?: PrimaryShown, confirmedQuote?: RegistrationQuote) {
   const {
     displayName,
     preparedCommit,
     runtimeConfig,
     selectedAuthority,
+    setPriceChange,
     setRegistrationCompletion,
     setRegistrationStep,
     setStrandedCommitment,
@@ -49,13 +100,16 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
     return
   }
   if (!preparedCommit) return
-  if (premiumDropsSoon(props.result, props.lifecycleBaseBlockHeight)
-    && confirmedTotalLux !== registrationFeeLux(props.result.label, props.duration, props.feeConfig, props.result.premiumLux ?? 0)) return
+  // Near a premium step only the total the confirmation showed may be signed; a confirmed new price is its own.
+  if (!confirmedQuote && premiumDropsSoon(props.result, props.lifecycleBaseBlockHeight)
+    && confirmedTotalLux !== registrationTotalLux(props.result, props.duration, props.feeConfig)) return
 
   const session = submitNameWrite.captureSession(props.selectedAddress)
   const checkSession = () => { if (!session()) throw new WalletSessionChangedError() }
   setWalletError('')
   setRegistrationCompletion(null)
+  // A new attempt answers a shown price change; detecting another change shows it again.
+  if (props.priceChange) setPriceChange(null)
   try {
     checkSession()
     if (!ensureContractAuthorityForLiveWrite('register this name', setWalletError)) return
@@ -72,10 +126,15 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
       setWalletError(primary.ask)
       return
     }
+    // A confirmed new price becomes the price this reservation was made at, so another try won't ask again.
+    const reservation = { chainId: runtimeConfig.chainId, commitment: preparedCommit.commitment }
+    if (confirmedQuote) saveReservationQuote(reservation, reviewedRegistrationQuote(confirmedQuote, props.duration))
     const request = createCompleteRegistrationRequest({
       ...props,
       preparedCommit,
       registerSetsPrimary: primary.setsPrimary,
+      quote: confirmedQuote,
+      reservedQuote: readReservationQuote(reservation),
     })
     if (!(await ensurePublicBalanceForLiveWrite(
       'registering this name',
@@ -102,9 +161,30 @@ export async function completeRegistration(props: UseRegistrationActionsProps, c
         request,
         workspace,
       })
-    } else {
-      await handleCompleteRegistrationEarlyReveal(props, finalState)
+      return
     }
+    // Preparation quoted again and found the price changed: nothing reached the wallet.
+    const change = registrationPriceChange(finalState.error)
+    if (change) {
+      offerNewPrice(props, preparedCommit.commitment, {
+        previousLux: safeNumber(change.previousTotalLux), quote: change.quote, sinceReservation: change.sinceReservation, refused: false,
+      })
+      return
+    }
+    // Another shard keeps the wallet's primary name, which the reveal can't replace: nothing was sent.
+    const elsewhere = primaryElsewhere(finalState.error)
+    if (elsewhere) {
+      const message = `${elsewhere.current} is your primary name, kept in a different shard, so registering can’t also make ${elsewhere.target} your primary name. Turn off Primary name to register; you can make it your primary from its page afterwards, with two wallet approvals.`
+      setWalletError(message)
+      setRegistrationCompletion((current) => markRegistrationCompletionFailed(current, message))
+      return
+    }
+    // The chain refused it for a changed policy or fee. The host returned the payment; gas was charged.
+    if (refusedForPrice(finalState)) {
+      await offerPriceAfterRefusal(props, preparedCommit.commitment, request.feeLux, workspace)
+      return
+    }
+    await handleCompleteRegistrationEarlyReveal(props, finalState)
   } catch (error) {
     if (!workspace()) return
     const message = userFacingErrorMessage(error)

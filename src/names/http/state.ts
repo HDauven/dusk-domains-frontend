@@ -55,9 +55,10 @@ export type IndexedTreasuryState = {
   referralClaimedLux: number | string
   referralCount: number
   lastFeeSourceContract: string | null
-  lastFeeReason: TreasuryFeeReason | null
+  /** A newer indexer can report a reason or event this site doesn't know; each is a plain identifier. */
+  lastFeeReason: TreasuryFeeReason | (string & {}) | null
   lastFeeNode: string | null
-  lastEventType: TreasuryEvent['type'] | null
+  lastEventType: TreasuryEvent['type'] | (string & {}) | null
   txId: string | null
   blockHeight: number | null
   claims: IndexedTreasuryClaim[]
@@ -232,14 +233,40 @@ export type IndexedMarketplaceConfig = {
   tradingPaused: boolean
   pendingOperator: string | null
   initialized: boolean
+  /** The market this config describes: the one asked for, or the preferred one. */
+  marketplaceContractId?: string | null
   router: string | null
   treasuryContract: string | null
   marketplaceAuthority: string | null
   operator: string | null
-  feeBps: number
+  /** Null while the indexer hasn't authenticated the market's configuration. It is never assumed. */
+  feeBps: number | null
   updatedAtBlockHeight: number | null
   txId: string | null
   blockHeight: number | null
+  /** Every market the directory has admitted, in admission order. */
+  marketplaces?: IndexedMarketplaceSummary[]
+}
+
+/** One admitted market as /marketplace/config summarizes it. */
+export type IndexedMarketplaceSummary = {
+  marketplaceContractId: string
+  /** The directory's state for it: Listed, Draining or Retired. */
+  state: string
+  preferred: boolean
+  /**
+   * False for a market whose deployment the indexer hasn't authenticated: it serves none of its
+   * configuration, orders or refunds, and what it holds is null.
+   */
+  authenticated?: boolean
+  initialized: boolean
+  /** True while it takes no new orders or bids: paused, unconfigured, unauthenticated or no longer listed. */
+  tradingPaused: boolean
+  feeBps: number | null
+  unsettledOrders: number | null
+  refundAccounts: number | null
+  refundableLux: string | null
+  holdsObligations: boolean | null
 }
 
 export type IndexedMarketplaceFixedSale = {

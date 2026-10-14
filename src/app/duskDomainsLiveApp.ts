@@ -1,10 +1,11 @@
-import { createClientFromManifest, contractId, WriteBalanceError } from '@duskdomains/sdk'
+import { createClientFromManifest, contractId, FrozenClient, loadReleaseManifest, WriteBalanceError, type ContractRole } from '@duskdomains/sdk'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import type { DuskWallet } from '@dusk/connect'
 import { createSessionWriteWallet } from '../features/wallet/sessionWriteWallet'
 import type { DuskWalletLike } from '../features/wallet/walletSessionTypes'
 import { roles } from '../names/config'
 import { configuredReleaseManifest } from '../names/releaseManifest'
+import { discoverWithoutPolicy } from '../names/directoryMembers'
 import { prepareFrozenCall } from '../names/prepareFrozenCall'
 import { checkPublicBalanceForWrite, frozenPayload } from '../names/transactions'
 import {
@@ -12,6 +13,28 @@ import {
   type DuskConnectAppLike,
   type DuskDomainsRuntimeConfig,
 } from '../names/internal'
+const unlistedRoles: Partial<Record<ContractRole, string>> = {
+  policy: 'the new registration prices',
+  store: 'a new Dusk Domains shard',
+  resolver: 'a new Dusk Domains record shard',
+  marketplace: 'the new marketplace',
+}
+
+/** The chain uses a contract this site's deployment manifest does not list yet. */
+export class UnlistedContractError extends Error {
+  readonly role: ContractRole
+  readonly contractId: string
+  constructor(role: ContractRole, contractId: string) {
+    super(`This site has not been updated for ${unlistedRoles[role] ?? 'this Dusk Domains deployment'} yet. Try again later.`)
+    this.name = 'UnlistedContractError'
+    this.role = role
+    this.contractId = contractId
+  }
+}
+
+/** Dispatched on the window when the live app discards its client, so readers drop what it gave them. */
+export const CLIENT_RESET_EVENT = 'dusk-domains:client-reset'
+
 export function canUseLiveDuskDomainsWrites(config: DuskDomainsRuntimeConfig): boolean {
   return (
     config.liveWritesEnabled &&
@@ -29,25 +52,49 @@ export function createDuskDomainsLiveApp(options: {
     throw new Error('Dusk Domains live writes require configured contract IDs and live writes enabled.')
   const config = options.runtimeConfig,
     origin = globalThis.location?.origin ?? 'http://localhost'
-  let pending: ReturnType<typeof createClientFromManifest> | undefined
-  const client = () =>
-    (pending ??= configuredReleaseManifest(config, origin)
-      .then((manifest) =>
-        createClientFromManifest(manifest, {
+  type ClientPromise = ReturnType<typeof createClientFromManifest>
+  type Created = { promise: ClientPromise; client?: Awaited<ClientPromise> }
+  let current: Created | undefined
+  // A client is created again after a failure, so a fixed manifest or contract takes effect without a
+  // reload. A contract that fails verification can leave its descriptor and driver in the client's
+  // release, which signing trusts, so the whole client and release are discarded then too. Readers
+  // that still hold it are told, and drop what they read from it.
+  const discard = (created: ClientPromise) => {
+    if (current?.promise !== created) return
+    current = undefined
+    globalThis.dispatchEvent?.(new Event(CLIENT_RESET_EVENT))
+  }
+  const client = (): ClientPromise => {
+    if (current) return current.promise
+    const entry: Created = { promise: undefined as unknown as ClientPromise }
+    const created: ClientPromise = configuredReleaseManifest(config, origin)
+      .then(async (manifest) => {
+        const clientOptions = {
           artifactBaseUrl: origin + '/',
           nodeUrl: config.nodeUrl,
           indexerUrl: new URL(config.indexerUrl!, origin).href,
-          resolveContract: async (role, id) => {
-            if (!config.manifestUrl)
-              throw new Error('This shard requires the updated deployment manifest.')
+          // A contract admitted after this release, such as the policy a SetPolicy proposal selects,
+          // loads only once the operator republishes the reviewed manifest listing it (docs/deploy.md).
+          resolveContract: async (role: ContractRole, id: string) => {
+            if (!config.manifestUrl) throw new UnlistedContractError(role, id)
             const manifest = await configuredReleaseManifest(config, origin)
             const artifact = manifest.contracts.find((c) => c.contractId === id)
-            if (!artifact || artifact.role !== role)
-              throw new Error('The deployment manifest does not include this admitted contract.')
+            if (!artifact || artifact.role !== role) throw new UnlistedContractError(role, id)
             return artifact
           },
-        }),
-      )
+        }
+        try {
+          return await createClientFromManifest(manifest, clientOptions)
+        } catch (error) {
+          // SDK 0.3.2 discovers the policy the directory selects too, and only registration uses it.
+          // Until the manifest lists a policy a SetPolicy selected, everything else is discovered
+          // without it, and registration refuses with UnlistedContractError when it quotes.
+          if (!(error instanceof UnlistedContractError && error.role === 'policy')) throw error
+          const client = new FrozenClient(await loadReleaseManifest(manifest, clientOptions), clientOptions)
+          await discoverWithoutPolicy(client)
+          return client
+        }
+      })
       .then((client) => {
         if (
           client.release.manifest.chainId !== config.chainId ||
@@ -58,12 +105,27 @@ export function createDuskDomainsLiveApp(options: {
           )
         )
           throw new Error('Deployment manifest does not match the configured network and contracts.')
+        const verify = client.verifyContract.bind(client)
+        client.verifyContract = async (...args) => {
+          try {
+            return await verify(...args)
+          } catch (error) {
+            // A contract the manifest doesn't list never enters the release, so the client stays.
+            if (!(error instanceof UnlistedContractError)) discard(created)
+            throw error
+          }
+        }
+        entry.client = client
         return client
       })
       .catch((e) => {
-        pending = undefined
+        discard(created)
         throw e
-      }))
+      })
+    entry.promise = created
+    current = entry
+    return created
+  }
   const names: DuskConnectAppLike = {
     get chainId() {
       return options.wallet.state.chainId ?? undefined
@@ -71,6 +133,7 @@ export function createDuskDomainsLiveApp(options: {
     get client() {
       return client()
     },
+    isCurrentClient: (candidate) => Boolean(current?.client && current.client === candidate),
     async readContract(params) {
       const c = await client()
       if (params.functionName === 'config') {

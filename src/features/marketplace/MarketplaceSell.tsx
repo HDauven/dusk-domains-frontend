@@ -75,7 +75,9 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
             </label>
           </div>
 
-          {props.selling.feeBps != null && amount !== null ? <MarketplaceReviewSummary ariaLabel="Seller proceeds" rows={proceedsRows(amount, props.selling.feeBps)} /> : <p className="field-note">{props.selling.feeBps == null ? 'Loading marketplace fee…' : 'Enter an amount to see the fee and proceeds.'}</p>}
+          {props.selling.newOrdersRefusal && props.selling.feeBps == null ? <p className="field-note">Marketplace fee unknown</p>
+            : props.selling.feeBps != null && amount !== null ? <MarketplaceReviewSummary ariaLabel="Seller proceeds" rows={proceedsRows(amount, props.selling.feeBps)} />
+              : <p className="field-note">{props.selling.feeBps == null ? 'Loading marketplace fee…' : 'Enter an amount to see the fee and proceeds.'}</p>}
           {props.selling.saleMode === 'auction' ? <>
             <p className="field-note">Proceeds shown at the minimum bid.</p>
             <AuctionRules duration={`${props.selling.durationDays} ${props.selling.durationDays === '1' ? 'day' : 'days'}`} feeBps={props.selling.feeBps} startWindow="within 7 days of listing" />
@@ -87,7 +89,8 @@ export function MarketplaceSell(props: MarketplaceSellProps) {
 
           <NamespaceTransferWarning namespace={selectedName?.namespace} />
 
-          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || props.selling.feeBps == null || !selectedName} type="button" onClick={() => props.selling.onCreateListing()}>
+          {props.selling.newOrdersRefusal ? <p className="field-note" role="status">{props.selling.newOrdersRefusal}</p> : null}
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || props.selling.feeBps == null || Boolean(props.selling.newOrdersRefusal) || !selectedName} type="button" onClick={() => props.selling.onCreateListing()}>
             {props.selling.saleMode === 'auction' ? 'List for auction' : 'List for sale'}
           </Button>
         </Panel>

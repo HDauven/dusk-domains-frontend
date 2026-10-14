@@ -20,11 +20,14 @@ import { canonicalAuction, minimumCanonicalBidLux } from './canonicalMarketplace
 import type { MarketplaceViewProps } from './marketplaceTypes'
 import type { MarketplaceWrites } from './useMarketplaceWrites'
 
+const takesBids = () => null
+
 // An auction's page: its bid history, the bid draft, the review step and the auction's
 // lifecycle actions.
 export function useAuctions({
   accountScope,
   auctions,
+  bidRefusal = takesBids,
   indexerClient,
   marketplaceOnChainClient,
   marketScope,
@@ -39,6 +42,8 @@ export function useAuctions({
 }: {
   accountScope: string
   auctions: IndexedMarketplaceAuction[]
+  /** Why an auction's market takes no bid now, or null while it does. */
+  bidRefusal?: (auction: IndexedMarketplaceAuction) => string | null
   indexerClient: DuskDomainsIndexerClient | null
   marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient | null
   marketScope: string
@@ -115,6 +120,11 @@ export function useAuctions({
   }, [marketplaceOnChainClient, setError])
 
   const reviewBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
+    const refusal = bidRefusal(auction)
+    if (refusal) {
+      setError(refusal)
+      return
+    }
     const amountLux = validLuxAmount(bidDrafts[auction.node] ?? '')
     if (amountLux === null) {
       setError('Enter a valid bid.')
@@ -145,7 +155,7 @@ export function useAuctions({
         } : null,
       },
     })
-  }, [bidDrafts, readCanonicalAuction, setBidReview, setConfirmation, setError])
+  }, [bidDrafts, bidRefusal, readCanonicalAuction, setBidReview, setConfirmation, setError])
 
   const placeBid = useCallback(async (auction: IndexedMarketplaceAuction) => {
     setBidReview(null)
@@ -155,6 +165,11 @@ export function useAuctions({
       return
     }
     auction = reviewed.auction
+    const refusal = bidRefusal(auction)
+    if (refusal) {
+      setError(refusal)
+      return
+    }
     const amountLux = reviewed.amountLux
     const canonical = await readCanonicalAuction(auction)
     if (!canonical) return
@@ -173,7 +188,7 @@ export function useAuctions({
       onBidPlaced(auction.node)
       await loadAuctionActivity(auction.node)
     }
-  }, [bidReview, readCanonicalAuction, loadAuctionActivity, onBidPlaced, selectedAuthority, setBidReview, setError, writes])
+  }, [bidReview, bidRefusal, readCanonicalAuction, loadAuctionActivity, onBidPlaced, selectedAuthority, setBidReview, setError, writes])
 
   const lifecycleAction = useCallback(async (
     auction: IndexedMarketplaceAuction,

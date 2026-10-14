@@ -133,7 +133,7 @@ it.each([null, {}, { value: 'bad' }, { value: '-1' }, { value: '1.5' }])('blocks
 async function fixture(chainId = 'dusk:2') {
   vi.stubGlobal('window', new EventTarget())
   const release = {manifest:{chainId},contracts:new Map(Object.entries(contracts).map(([role,c])=>[c.contractId,{role}])),drivers:new Map(Object.values(contracts).map(c=>[c.contractId,{encodeInput:()=>new Uint8Array([1,2,3])}]))}
-  vi.mocked(createClientFromManifest).mockResolvedValue({release} as never)
+  vi.mocked(createClientFromManifest).mockResolvedValue({release,verifyContract:vi.fn()} as never)
   const listeners = new Map<string, Set<(value: unknown) => void>>()
   const provider = {
     isDusk: true, isAuthorized: true, chainId, profiles: [{ account: 'A', profileId: 'primary' }],
@@ -227,7 +227,7 @@ it.each(['lock', 'disconnect', 'network', 'account', 'profile', 'authorization',
     emit(change === 'lock' ? 'lock' : 'profilesChanged', provider.profiles)
   }
   await session.refresh()
-  if (change === 'encoding') delayed.resolve({release})
+  if (change === 'encoding') delayed.resolve({release,verifyContract:vi.fn()})
   else delayed.resolve({median:'1'})
   await result
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
@@ -250,7 +250,7 @@ it.each(['profiles', 'encoding'])('rejects a return to the same account during i
     emit('profilesChanged', provider.profiles)
     await session.refresh()
   }
-  delayed.resolve(stage === 'encoding' ? {release} : {median:'1'})
+  delayed.resolve(stage === 'encoding' ? {release,verifyContract:vi.fn()} : {median:'1'})
   expect(await outcome).toContain('wallet session changed')
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
 })

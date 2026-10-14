@@ -1,5 +1,6 @@
-import { contractPrincipalFromWalletAccount, encodeBase58 } from '../../names/internal'
+import { contractPrincipalFromWalletAccount, encodeBase58, type ResolverRecord } from '../../names/internal'
 import { abbreviate } from '../../utils/format'
+import { trustedDuskAddress, trustedDuskAddresses } from './addressTrust'
 
 function authorityKey(value: string) {
   const trimmed = value.trim()
@@ -49,11 +50,13 @@ function activityAddresses(entry: ActivityAddressSource) {
   return endpoints.filter(isEndpoint).map(bytes => encodeBase58(Uint8Array.from(bytes)))
 }
 
-/** Address candidates already present in the loaded name records or activity. */
-export function ownerAddressCandidates(records: readonly { key: string; value: string }[], activity: readonly ActivityAddressSource[] = []) {
+/** Address candidates already present in the loaded name records or activity, each one "Send to" would offer. */
+export function ownerAddressCandidates(records: readonly Pick<ResolverRecord, 'key' | 'value' | 'resolverIssue'>[], activity: readonly ActivityAddressSource[] = []) {
   return [...new Set([
-    ...records.filter(record => record.key === 'moonlight_address').map(record => record.value),
-    ...activity.filter(entry => ['primary_name', 'primary_name_set', 'primary_name_cleared'].includes(entry.eventType) && entry.target?.startsWith('moonlight_address:')).map(entry => entry.target!.slice('moonlight_address:'.length)),
-    ...activity.flatMap(activityAddresses),
+    ...trustedDuskAddresses(records),
+    ...[
+      ...activity.filter(entry => ['primary_name', 'primary_name_set', 'primary_name_cleared'].includes(entry.eventType) && entry.target?.startsWith('moonlight_address:')).map(entry => entry.target!.slice('moonlight_address:'.length)),
+      ...activity.flatMap(activityAddresses),
+    ].map(trustedDuskAddress).filter((address): address is string => Boolean(address)),
   ])]
 }

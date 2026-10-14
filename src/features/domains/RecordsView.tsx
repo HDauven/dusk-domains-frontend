@@ -6,6 +6,8 @@ import { type CoreRecordMutationInput, type DuskDomainTxState, type ResolverReco
 import { RecordDraftEditor } from './RecordDraftEditor'
 import { ManagementFeedback } from './ManagementFeedback'
 import { recordLabel, isIdentifierRecord } from './recordPresentation'
+import { RecordKeyLabel } from './RecordKeyLabel'
+import { RecordValue } from './RecordValue'
 
 // Changes are staged here and saved together: one wallet approval writes them all. Staged
 // changes belong to the name, not this panel, so they stay when the panel closes.
@@ -77,7 +79,7 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
   function chooseType(key: ResolverRecordKey) { onDiscardDraft(editing); setEditing(key) }
 
   const review = count ? <dl className="record-draft-review" aria-label="Record changes to save">{recordDraftMutations.map(mutation => <div key={mutation.key}>
-    <dt>{recordLabel(mutation.key as ResolverRecordKey)}</dt><dd>{mutation.action === 'clear' ? 'Remove' : <code>{mutation.value}</code>}</dd>
+    <dt><RecordKeyLabel recordKey={mutation.key as ResolverRecordKey} /></dt><dd>{mutation.action === 'clear' ? 'Remove' : <RecordValue value={mutation.value} code />}</dd>
   </div>)}</dl> : null
   const notes = <>
     {criticalRecordChange ? <p className="secure-note">Payments will use this address. Check it before saving.</p> : null}
@@ -119,7 +121,7 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
         const shown = (status === 'set' || status === 'invalid') && record.key !== editing ? stagedValue(record.key) : record.value
         return <div className={`record-entry${status && record.key !== editing ? ` staged ${status}` : ''}`} key={record.key}>
           {!adding && editing === record.key ? editor : <>
-            <div><strong>{recordLabel(record.key)}</strong>{isIdentifierRecord(record.key) ? <code>{shown}</code> : <p>{shown}</p>}{stagedNote(record.key)}</div>
+            <div><strong><RecordKeyLabel recordKey={record.key} /></strong><RecordValue value={shown} code={isIdentifierRecord(record.key)} />{stagedNote(record.key)}</div>
             <div className="record-actions">
               {editableRecordKeys.includes(record.key) ? <Button disabled={!canRemoveRecords || Boolean(editing)} onClick={() => startEditing(record.key)} aria-label={`Edit ${recordLabel(record.key)}`}>Edit</Button> : <span className="muted">Read only</span>}
               {undo(record.key) ?? <Button variant="quiet" disabled={!canRemoveRecords || recordBusy || Boolean(editing)} onClick={() => onDraftValueChange(record.key, '')} aria-label={`Remove ${recordLabel(record.key)}`}>Remove</Button>}
@@ -129,7 +131,7 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
       })}
       {additions.map(key => <div className={`record-entry${key === editing ? '' : ` staged ${invalid.has(key) ? 'invalid' : 'set'}`}`} key={key}>
         {key === editing ? editor : <>
-          <div><strong>{recordLabel(key)}</strong>{isIdentifierRecord(key) ? <code>{stagedValue(key)}</code> : <p>{stagedValue(key)}</p>}{stagedNote(key)}</div>
+          <div><strong><RecordKeyLabel recordKey={key} /></strong><RecordValue value={stagedValue(key)} code={isIdentifierRecord(key)} />{stagedNote(key)}</div>
           <div className="record-actions">
             <Button disabled={!canRemoveRecords || Boolean(editing)} onClick={() => startEditing(key)} aria-label={`Edit ${recordLabel(key)}`}>Edit</Button>
             {undo(key)}

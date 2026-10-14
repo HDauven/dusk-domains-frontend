@@ -49,7 +49,7 @@ export function MarketplaceBidReview(props: MarketplaceBidReviewProps) {
 
         <div className="marketplace-review-actions">
           <Button type="button" onClick={props.auction.onCancelBidReview}>Go back</Button>
-          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable} type="button" onClick={() => props.auction.onPlaceBid(auction)}>Confirm in wallet</Button>
+          <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || Boolean(props.auction.bidRefusal?.(auction))} type="button" onClick={() => props.auction.onPlaceBid(auction)}>Confirm in wallet</Button>
         </div>
       </section>
     </Dialog>

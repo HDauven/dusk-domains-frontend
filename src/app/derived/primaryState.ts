@@ -1,4 +1,5 @@
 import { lifecycleHeightReached } from '../../features/domains/domainFormat'
+import { addressRecordIssue, trustedDuskAddressOf } from '../../features/identity/addressTrust'
 import { sameAuthority } from '../../features/identity/ownerLabel'
 import type { ManagedNameState } from '../managedNameState'
 import {
@@ -29,7 +30,7 @@ export function derivePrimaryState({
   connectedPrimaryName: string | null
   selectedAddress: string
 }) {
-  const primaryEndpoint = primaryEndpointValue.trim() || selectedAddress || moonlightRecord?.value || ''
+  const primaryEndpoint = primaryEndpointValue.trim() || selectedAddress || trustedDuskAddressOf(moonlightRecord ? [moonlightRecord] : [])
   const primaryEndpointErrors = primaryEndpoint ? validateRecordValue('moonlight_address', primaryEndpoint) : []
   const forwardAddress = moonlightRecord?.value ?? ''
   const expired = Boolean(managedName && lifecycleHeightReached(managedName.expiresAt, currentBlockHeight, nowSeconds))
@@ -38,7 +39,9 @@ export function derivePrimaryState({
   const primaryVerification = primaryNameStatus({
     abbreviate,
     displayName,
-    endpointErrors: forwardAddress ? validateRecordValue('moonlight_address', forwardAddress) : [],
+    // The address the name points to, by the rule "Send to" uses: a record the indexer reports
+    // invalid isn't verified as this name's primary address either.
+    endpointErrors: moonlightRecord && forwardAddress ? [addressRecordIssue(moonlightRecord)].filter((issue): issue is string => Boolean(issue)) : [],
     endpointValue: forwardAddress,
     forwardRecordValue: moonlightRecord?.value ?? null,
     primaryName: active && authorized ? primaryName : null,

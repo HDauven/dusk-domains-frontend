@@ -14,7 +14,7 @@ exports[`round-trips the wallet signing bytes for cancel_fixed through the real 
 
 exports[`round-trips the wallet signing bytes for cancel_offer through the real handoff drivers 1`] = `"0ce1e90fe1e10757462a5442618918bed90982929b75a268bdb13bbd781987d5"`;
 
-exports[`round-trips the wallet signing bytes for clear_primary through the real handoff drivers 1`] = `"9d4f8d2937dc81b387d3abdfe681203b4db2053a978e67b39d1cc8bfae75446c"`;
+exports[`round-trips the wallet signing bytes for clear_primary through the real handoff drivers 1`] = `"72dca7777d9d3c1092ec55e75cb6d3ffef8ac42791f09b685040c2c0708d2207"`;
 
 exports[`round-trips the wallet signing bytes for clear_record through the real handoff drivers 1`] = `"735c49aba0ba60c92b334a50d0e167fee408f113ff64c8cef872e6598c57fb3a"`;
 

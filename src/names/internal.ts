@@ -21,6 +21,7 @@ export * from './marketTypes'
 export * from './reads'
 export * from './transactions'
 export * from './reservations'
+export * from './registrationQuote'
 export {
   contractPrincipalFromWalletAccount,
   typedPrincipalFromWalletAccount,

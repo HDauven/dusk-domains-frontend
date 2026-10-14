@@ -78,6 +78,9 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
     model.domain.setPrimaryName('alpha.dusk')
     model.domain.setConnectedPrimaryName('alpha.dusk')
     model.domain.setPrimaryEndpointValue('old-address')
+    // Left in the middle of a primary name change that takes two approvals.
+    model.domain.setPrimarySwitch({ endpoint: 'old-address', current: 'old.dusk', store: '01'.repeat(32), mappingId: '6', target: 'alpha.dusk',
+      targetRef: { key: { root: [1], node: [1] }, incarnation: { generation: 1n, serial: 1n } }, step: 'clearing' })
     model.domain.setRenewalYears(7)
     model.domain.setSubnameLabel('old-child')
     model.domain.setSubnameManager('old-manager')
@@ -103,7 +106,7 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
     // A new search forgets the primary choice; the next claim follows the wallet's primary name again.
     registerSetsPrimary: null, registrationStep: 'review', registrationCompletion: null })
   expect(model.domain).toMatchObject({ managedName: createManagedNameState('resolver'), managementError: '', recordError: '',
-    primaryName: null, connectedPrimaryName: null, primaryEndpointValue: '', renewalYears: 1, subnames: [],
+    primaryName: null, connectedPrimaryName: null, primaryEndpointValue: '', primarySwitch: null, renewalYears: 1, subnames: [],
     subnameLabel: '', subnameManager: '', subnameExpiryPolicy: 'inherits_parent', subnameExpiryDate: '' })
   expect(model.records).toMatchObject({ recordDrafts: {}, resolverRecordSets: {} })
   expect(model.activity).toMatchObject({ activityEntries: [], activityLoading: false, hasMoreActivity: false })

@@ -1,3 +1,4 @@
+import { indexerReadable } from './indexerIdentity'
 import { createSingleFlight } from './singleFlight'
 import type { DuskDomainsIndexerClient } from '../names/internal'
 
@@ -14,7 +15,7 @@ function createStore(client: DuskDomainsIndexerClient) {
   let stop: (() => void) | undefined
   const read = (fresh = false, afterWrite = false) => {
     if (pending && !afterWrite) return pending
-    if (!fresh && snapshot.health?.ok && !snapshot.error && Date.now() - snapshot.updatedAt < HEALTH_INTERVAL_MS) return Promise.resolve(snapshot.health)
+    if (!fresh && snapshot.health && indexerReadable(snapshot.health) && !snapshot.error && Date.now() - snapshot.updatedAt < HEALTH_INTERVAL_MS) return Promise.resolve(snapshot.health)
     const next = flight(() => client.getHealth(), client, afterWrite).then(health => {
       snapshot = { health, error: false, updatedAt: Date.now() }
       return health

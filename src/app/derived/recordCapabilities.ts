@@ -1,5 +1,5 @@
-import { isSubname, lifecycleHeightReached, renewalDeadline } from '../../features/domains/domainFormat'
-import { canRenewOutsideEscrow, type ManagedNameState } from '../managedNameState'
+import { isSubname, renewalOpen } from '../../features/domains/domainFormat'
+import type { ManagedNameState } from '../managedNameState'
 import type { RecordTargetOption } from '../../features/domains/recordTypes'
 
 export function deriveRecordCapabilities({
@@ -47,17 +47,16 @@ export function deriveRecordCapabilities({
   return {
     canClearPrimary: Boolean(walletAuthorized && selectedAddress && primaryEndpoint === selectedAddress && connectedPrimaryName && connectedPrimaryName === displayName && !primaryBusy),
     canCreateSubname: Boolean(walletAuthorized && selectedAddress && nodeHex && subnameLabel.trim() && !subnameBusy),
-    // Marketplace escrow must close before any payer can renew.
+    // Anyone can pay to renew a name a contract holds, a listed one too: renewal leaves the listing as it is.
     canRenewName: Boolean(
       walletAuthorized
       && selectedAddress
       && nodeHex
       && !isSubname(displayName)
-      && canRenewOutsideEscrow(managedName)
       && selectedAuthority
       && (managedName.ownerIsContract || [managedName.owner, managedName.manager].some(value => value.toLowerCase() === selectedAuthority.toLowerCase()))
       && managedName.expiresAt > 0
-      && !lifecycleHeightReached(renewalDeadline(managedName), currentBlockHeight, nowSeconds)
+      && renewalOpen(managedName, currentBlockHeight, nowSeconds)
       && !renewalBusy,
     ),
     canSaveRecords: Boolean(

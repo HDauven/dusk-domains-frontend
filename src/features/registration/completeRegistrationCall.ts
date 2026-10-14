@@ -1,11 +1,14 @@
 import { registrationCommitMatchesSession } from './pendingReservationTypes'
 import { WalletSessionChangedError } from '../wallet/sessionWriteWallet'
+import type { RegistrationQuote } from '@duskdomains/sdk'
+import { safeNumber } from '../../names/numbers'
 import {
   storeCompleteRegistrationRequest,
   createRegistrationLifecycle,
   createResolverRecord,
   namehashHex,
-  registrationFeeLux,
+  registrationTotalLux,
+  type ReviewedRegistrationQuote,
 } from '../../names/internal'
 import type { ReferralState } from '../referrals/referralState'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
@@ -18,8 +21,10 @@ export function createCompleteRegistrationRequest({
   feeConfig,
   lifecycleBaseBlockHeight,
   preparedCommit,
+  quote,
   registerSetsPrimary,
   registrationTargetAddress,
+  reservedQuote,
   result,
   selectedAddress,
   selectedAuthority,
@@ -39,9 +44,13 @@ export function createCompleteRegistrationRequest({
   preparedCommit: PreparedRegistrationCommit
   /** Whether the reveal also makes the name primary, as decided from a read made for it. */
   registerSetsPrimary: boolean
+  /** A new price the person confirmed after a policy change; otherwise the claim's own quote. */
+  quote?: RegistrationQuote
+  /** What the reservation was priced at, if saved with it. */
+  reservedQuote?: ReviewedRegistrationQuote | null
 }) {
   if (!registrationCommitMatchesSession(preparedCommit, selectedAuthority, selectedAddress, runtimeConfig.chainId)) throw new WalletSessionChangedError()
-  const feeLux = result.quotedYears === duration && result.totalFeeLux !== undefined ? result.totalFeeLux : registrationFeeLux(result.label, duration, feeConfig, result.premiumLux ?? 0)
+  const feeLux = quote ? safeNumber(quote.total_lux) : registrationTotalLux(result, duration, feeConfig)
   const lifecycle = createRegistrationLifecycle({
     startsAt: lifecycleBaseBlockHeight,
     years: duration,
@@ -69,7 +78,7 @@ export function createCompleteRegistrationRequest({
   })
 
   return {
-    call: { ...call, quote: result.policyQuote },
+    call: { ...call, quote: quote ?? result.policyQuote, ...(reservedQuote ? { reservedQuote } : {}) },
     feeLux,
     initialMoonlightRecord,
     lifecycle,

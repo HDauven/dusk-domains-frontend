@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { readPoolMarketplace } from './poolMarketplace'
-import { canRenewOutsideEscrow, isMarketplaceEscrow } from './managedNameState'
+import { isMarketplaceEscrow } from './managedNameState'
 
 it.each([
   { marketplace: Array(32).fill(0xab) },
@@ -20,10 +20,8 @@ it('keeps read failures unknown', async () => {
   expect(await readPoolMarketplace({ read: async () => { throw new Error('offline') } })).toBeNull()
 })
 
-it.each([new Array(32), Object.assign(new Array(32), { 0: 1 }), Array(32).fill('1'), Array(32).fill(-1), Array(32).fill(1.5), Array(32).fill(0), '00'.repeat(32), `0x${'00'.repeat(32)}`])('blocks contract-owned renewal with an invalid marketplace ID: %j', async marketplace => {
+it.each([new Array(32), Object.assign(new Array(32), { 0: 1 }), Array(32).fill('1'), Array(32).fill(-1), Array(32).fill(1.5), Array(32).fill(0), '00'.repeat(32), `0x${'00'.repeat(32)}`])('leaves marketplace custody unknown with an invalid marketplace ID: %j', async marketplace => {
   const id = await readPoolMarketplace({ read: async () => ({ marketplace }) })
   expect(id).toBeNull()
-  const inMarketplaceEscrow = isMarketplaceEscrow({ owner: `0x${'ab'.repeat(32)}`, manager: 'seller' }, id)
-  expect(inMarketplaceEscrow).toBeNull()
-  expect(canRenewOutsideEscrow({ ownerIsContract: true, inMarketplaceEscrow })).toBe(false)
+  expect(isMarketplaceEscrow({ owner: `0x${'ab'.repeat(32)}`, manager: 'seller' }, id)).toBeNull()
 })

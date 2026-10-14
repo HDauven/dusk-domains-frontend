@@ -1,4 +1,5 @@
 import { indexedSubnameToState, indexerRead, type IndexerReadResult } from '../../app/indexerReadHelpers'
+import { trustedDuskAddressOf } from '../identity/addressTrust'
 import type {
   ActivityEntry,
   DuskDomainsIndexerClient,
@@ -7,6 +8,7 @@ import type {
   IndexedLifecycleName,
   IndexedSubname,
   NameResult,
+  ResolverRecord,
   SubnameState,
 } from '../../names/internal'
 import { isSubname, safeNamehashHex } from '../domains/domainFormat'
@@ -28,6 +30,17 @@ export type IndexedNameReadBundle = {
   readErrors: string[]
   stateRead: IndexerReadResult<IndexedLifecycleName | null>
   subnameRead: IndexerReadResult<IndexedSubname[]>
+}
+
+// The indexer's resolver names each record it finds invalid as "<key>: <reason>". The finding stays
+// with the record shown, also when the record shown was read from the chain.
+function withResolverIssues(records: ResolverRecord[], errors: ForwardResolutionResponse['errors'] | undefined): ResolverRecord[] {
+  const issues = (Array.isArray(errors) ? errors : []).filter(error => error?.code === 'invalid_record' && typeof error.message === 'string')
+  if (!issues.length) return records
+  return records.map(record => {
+    const issue = issues.find(error => error.message.startsWith(`${record.key}: `))
+    return issue ? { ...record, resolverIssue: issue.message } : record
+  })
 }
 
 export async function readIndexedName(
@@ -66,10 +79,12 @@ export async function readIndexedName(
       stateRead.value.graceEndsAtBlockHeight=name.value.record.lifecycle.graceEndsAtBlock
     }
   }
+  if (forwardRead.value) forwardRead.value.records = withResolverIssues(forwardRead.value.records, forwardRead.value.errors)
   // The holders of the names above usually point those names at their own address. A failed read only leaves an ID unexplained.
   const ancestorAddressReads = Promise.all((stateRead.value?.namespace?.ancestors ?? []).map(ancestor =>
-    client.getNodeRecord(ancestor.node, 'moonlight_address').then(record => record?.value ?? null, () => null)))
-  const forwardAddress = forwardRead.value?.records.find(record => record.key === 'moonlight_address')?.value || ''
+    client.getNodeRecord(ancestor.node, 'moonlight_address').then(record => trustedDuskAddressOf(record ? [record] : []) || null, () => null)))
+  // Only an address "Send to" would offer is checked as this name's primary.
+  const forwardAddress = trustedDuskAddressOf(forwardRead.value?.records ?? [])
   const forwardVerified = forwardRead.value?.verificationStatus === 'forward_resolved'
     && forwardRead.value.expiry?.status === 'active' && forwardRead.value.resolver?.health === 'ok'
   const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(onChainClient

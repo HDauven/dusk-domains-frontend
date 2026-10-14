@@ -7,6 +7,13 @@ import {
 import { deriveAppDerivedState } from '../../app/derived/deriveAppDerivedState'
 import { readIndexedName } from './indexedNameReads'
 
+// The fake client below stands in for the SDK's reads: the stores it lists, and each store's reads.
+vi.mock('../../names/directoryMembers', () => ({
+  admittedStores: async (client: { discover: () => Promise<{ stores: unknown[] }> }) => (await client.discover()).stores,
+  rawRead: (client: Record<string, (id: string) => Record<string, (args: unknown) => unknown>>, role: string, id: string, method: string, args: unknown) =>
+    client[role](id)[method](args),
+}))
+
 const address = '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r'
 const node = namehashHex('alice.dusk')
 const registry = `0x${'ab'.repeat(32)}`
@@ -23,7 +30,7 @@ function setup(primary: string | null = null, payload: unknown = { endpoint, rec
     getPrimaryName: vi.fn(async () => primary),
   }
   const readContract = vi.fn(async () => payload && (payload as {record:unknown}).record ? {spelling:'alice.dusk',primary:{name:{key:{node:fromHex(node,32)}},updated_at:90n}} : null)
-  const onChainClient = createDuskDomainsOnChainClient({read:{read:async()=>null,client:Promise.resolve({discover:async()=>({stores:[{id:fromHex(registry,32)}]}),store:()=>({read_primary:readContract})} as never)}})
+  const onChainClient = createDuskDomainsOnChainClient({read:{read:async()=>null,client:Promise.resolve({discover:async()=>({stores:[{id:fromHex(registry,32)}]}),snapshot:(read:(height:bigint)=>unknown)=>read(100n),store:()=>({read_primary:readContract})} as never)}})
   return { client: client as unknown as DuskDomainsIndexerClient, readContract, onChainClient }
 }
 
@@ -136,4 +143,29 @@ it.each(['owner', 'website', 'unchanged'])('keeps website verification bound whe
   const reads = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
   expect(reads?.forwardRead.value?.verification).toEqual(change === 'unchanged' ? verification : undefined)
   expect(reads?.stateRead.value?.verification).toEqual(change === 'unchanged' ? verification : undefined)
+})
+
+// The indexer's /resolve names each record it finds invalid, such as noahedge.dusk's malformed
+// moonlight_address. The name page must keep that finding even when it shows the chain's records.
+it.each([false, true])('keeps the resolver’s invalid-record findings on the records it shows (records from chain: %s)', async fromChain => {
+  const { client } = setup()
+  const issue = 'moonlight_address: Moonlight addresses must use a dusk1-prefixed address or Dusk account address form.'
+  vi.mocked(client.resolveForward).mockResolvedValue({
+    canonicalName: 'alice.dusk', node, records: [{ key: 'moonlight_address', value: address }, { key: 'website', value: 'https://alice.example' }],
+    errors: [{ code: 'invalid_record', message: issue }, { code: 'invalid_record', message: 'avatar: URLs must use HTTPS.' }],
+    verificationStatus: 'unverified', expiry: { status: 'active' }, resolver: { health: 'invalid' },
+  } as never)
+  const chain = {
+    getName: vi.fn(async () => ({ ok: true, value: { record: { owner: 'alice', manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } } })),
+    getRecords: vi.fn(async () => ({ ok: true, value: [
+      { key: 'moonlight_address', value: address, visibility: 'public', ttlSeconds: 300 },
+      { key: 'website', value: 'https://alice.example', visibility: 'public', ttlSeconds: 3600 },
+    ] })),
+    readPrimaryName: vi.fn(async () => ({ ok: true, value: null })),
+  }
+  const reads = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', fromChain ? chain as never : null)
+  const records = reads?.forwardRead.value?.records ?? []
+  expect(fromChain ? chain.getRecords : client.resolveForward).toHaveBeenCalled()
+  expect(records.find(record => record.key === 'moonlight_address')?.resolverIssue).toBe(issue)
+  expect(records.find(record => record.key === 'website')?.resolverIssue).toBeUndefined()
 })

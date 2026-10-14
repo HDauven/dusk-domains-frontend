@@ -1,4 +1,5 @@
 import { clearReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { clearReservationQuote } from './reservationQuote'
 import { listPendingNameReservations, removePendingNameReservation } from '../../names/internal'
 import { prepareRegistrationCommit } from './prepareRegistrationCommit'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
@@ -41,6 +42,7 @@ export async function restartStrandedReservation(props: UseRegistrationActionsPr
     commitment: reservation.commitment,
   })
   clearReservationPrimaryChoice(reservation)
+  clearReservationQuote(reservation)
   loadPendingReservations()
   setStrandedCommitment(null)
   setPreparedCommit(null)

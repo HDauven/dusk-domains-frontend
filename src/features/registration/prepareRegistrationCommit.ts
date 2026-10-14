@@ -9,11 +9,13 @@ import {
   registrationCommitmentHex,
   registrationRegistry,
   removePendingNameReservation,
+  reviewedRegistrationQuote,
   upsertPendingNameReservation,
   userFacingErrorMessage,
 } from '../../names/internal'
 import type { UseRegistrationActionsProps } from './registrationActionTypes'
 import { clearReservationPrimaryChoice, saveReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { clearReservationQuote, saveReservationQuote } from './reservationQuote'
 
 export async function prepareRegistrationCommit({
   canPrepareCommit,
@@ -25,6 +27,7 @@ export async function prepareRegistrationCommit({
   nodeHex,
   primaryChoice,
   refreshCommitBlockState,
+  result,
   runtimeConfig,
   selectedAddress,
   selectedAuthority,
@@ -81,6 +84,9 @@ export async function prepareRegistrationCommit({
       committedBlockHeight: null, committedTxId: null,
       createdAt: reservationTimestamp, updatedAt: reservationTimestamp,
     }
+    // The price shown as the person reserves, kept with the reservation: Register compares it with
+    // a fresh quote, so a policy replacement in between is named, old price and new.
+    const reviewedQuote = result?.policyQuote && result.quotedYears === duration ? reviewedRegistrationQuote(result.policyQuote, duration) : null
     const call = { ...storeCommitRequest({ commitment }), ...(registry ? { contractId: registry } : {}) }
     const finalState = await submitNameWrite(displayName, call, {
       workspace,
@@ -97,11 +103,13 @@ export async function prepareRegistrationCommit({
         }
         // Only a choice the person made; a default is worked out again at Register.
         saveReservationPrimaryChoice(reservation, primaryChoice)
+        saveReservationQuote(reservation, reviewedQuote)
         loadPendingReservations()
       },
       onNotBroadcast: () => {
         removePendingNameReservation({ chainId: reservation.chainId, controller: reservation.controller, commitment })
         clearReservationPrimaryChoice(reservation)
+        clearReservationQuote(reservation)
         loadPendingReservations()
       },
       onBroadcast: state => {

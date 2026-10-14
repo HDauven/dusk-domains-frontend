@@ -1,4 +1,5 @@
 import { clearReservationPrimaryChoice } from './reservationPrimaryChoice'
+import { clearReservationQuote } from './reservationQuote'
 import {
   removePendingNameReservation,
   type PendingNameReservation,
@@ -26,6 +27,7 @@ export function clearRegisteredPendingReservations({
       commitment: reservation.commitment,
     })
     clearReservationPrimaryChoice(reservation)
+    clearReservationQuote(reservation)
     removed = true
   }
 

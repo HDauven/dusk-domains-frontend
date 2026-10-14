@@ -17,6 +17,8 @@ export function RegistrationSummary({ committed, registrationComplete, selectedA
     duration: number
     expiryDate: string
     feeConfigError: string
+    /** Why the price can't be registered now, shown in place of the general pricing note. */
+    priceNote?: string
     onChangeTerm: () => void
     registrationFee: number
     registrationTargetAddress: string
@@ -39,6 +41,7 @@ export function RegistrationSummary({ committed, registrationComplete, selectedA
     duration,
     expiryDate,
     feeConfigError,
+    priceNote = '',
     onChangeTerm,
     registrationFee,
     registrationTargetAddress,
@@ -104,7 +107,7 @@ export function RegistrationSummary({ committed, registrationComplete, selectedA
       <div className="claim-price">
         <strong>{formatDusk(registrationFee)} <small>DUSK</small></strong>
         <span>{registrationComplete ? 'Paid.' : 'Paid when you register.'} Network fees show in your wallet.</span>
-        {feeConfigError ? <span>Live pricing is unavailable, so this uses the default price list.</span> : null}
+        {priceNote ? <span>{priceNote}</span> : feeConfigError ? <span>Live pricing is unavailable right now, so this price is an estimate.</span> : null}
       </div>
     </aside>
   )

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { beforeEach, afterEach, expect, it, vi } from 'vitest'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import * as sdk from '@duskdomains/sdk'
 import * as projection from '@duskdomains/sdk/projection'
 import { handoff, handoffDrivers } from '../test/handoffFixtures'
@@ -37,10 +37,10 @@ const id = (n: number) => n.toString(16).padStart(2, '0').repeat(32),
 const encode = (v: unknown) => new TextEncoder().encode(sdk.stringifyJson(v)),
   decode = (v: Uint8Array) => sdk.parseJson(new TextDecoder().decode(v))
 // Model the store's policy reply using the SDK's published pricing curve.
-function quotedPolicy(request: sdk.QuoteRequest) {
-  const { estimate, total_lux, ...quote } = sdk.estimateRegistrationQuote(sdk.launchPolicyConfig(), request)
+function quotedPolicy(request: sdk.QuoteRequest, config = sdk.launchPolicyConfig(), policy = bytes(2)) {
+  const { estimate, total_lux, ...quote } = sdk.estimateRegistrationQuote(config, request)
   expect(estimate).toBe(true)
-  return { height: request.height, policy: bytes(2), policy_version: request.policy_version, total_lux, quote }
+  return { height: request.height, policy, policy_version: request.policy_version, total_lux, quote }
 }
 const realDrivers = await handoffDrivers()
 const node = namehashHex('example.dusk')
@@ -90,6 +90,9 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
   directory.resolver_count = 1
   directory.registration.policy = bytes(2)
   directory.registration.newest_store = bytes(7)
+  // Registration is open; the wire sample sets every flag.
+  directory.registration.operator_paused = false
+  directory.registration.guardian_suspended = false
   directory.preferred_marketplace = bytes(6)
   directory.operator_epoch = 9n
   const name = sample('NameView')
@@ -104,7 +107,8 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
   name.active = !released
   name.counters!.generation = 7n
   name.counters!.next_custody = 8n
-  const policy = sdk.launchPolicyConfig()
+  // The selected policy's config; replacePolicy selects another, as a SetPolicy proposal does.
+  let policy = sdk.launchPolicyConfig()
   const quote = sample('RegistrationQuote')
   quote.policy = bytes(2)
   quote.quote.base_lux = '10000000000'
@@ -120,6 +124,10 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
   const market = sample('Config')
   market.fee_bps = 250
   market.next_order_id = 12n
+  // The market takes new orders; the wire sample sets every flag.
+  market.new_orders_disabled = false
+  // The directory's record of each market. A market it doesn't name is Listed.
+  const marketStates = new Map<string, sdk.MarketState>()
   let height = 106n
   const responses = new Map<string, unknown>(),
     calls: Array<{ target: string; method: string; args: unknown }> = []
@@ -158,6 +166,10 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
           role === 'directory' ? directory : role === 'policy' ? policy : market,
         )
       if (method === 'registration_context') return encode(directory.registration)
+      if (method === 'market' && role === 'directory') {
+        const market = (args as { id: number[] }).id
+        return encode({ id: market, state: marketStates.get(sdk.contractId(market)) ?? 'Listed', version: 1n, interface_version: 1, code_hash: bytes(0), init_hash: bytes(0) })
+      }
       if (method === 'home')
         return encode(
           unseen ? 'Absent' : target === id(3)
@@ -189,7 +201,7 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
           previous_grace_end: unseen ? null : name.name.grace_end,
           policy_version: directory.registration.policy_version,
         }
-        const estimated = quotedPolicy(quoteRequest)
+        const estimated = quotedPolicy(quoteRequest, policy, directory.registration.policy)
         if (policyQuotes) return encode(estimated)
         return encode({
           ...quote, height,
@@ -197,6 +209,7 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
         })
       }
       if (method === 'quote_renewal') return encode({ Local: renewal })
+      if (method === 'read_primary') return encode(null)
       if (method === 'read_refund') return encode({ authority: name.name.owner, amount_lux: '25000000000' })
       if (method === 'read_state') return encode({ protocol_lux: '30000000000', liability_lux: '40000000000', accounted_lux: '70000000000', reserved_beneficiaries: 1, max_beneficiaries: 100, source_version: 1n })
       if (method === 'read_referral') return encode({ beneficiary: { kind: 'Moonlight', bytes: endpointBytes(account) }, claimable_lux: '40000000000' })
@@ -214,10 +227,20 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     quote,
     renewal,
     market,
+    marketStates,
     directory,
     admissions,
     setHeight: (n: bigint) => {
       height = n
+    },
+    // Governance deploys an immutable policy with the reviewed policy driver and selects it.
+    replacePolicy: (n: number, config: sdk.PolicyConfig) => {
+      const contractId = id(n)
+      release.contracts.set(contractId, { role: 'policy', contractId, dataDriver: { path: '/policy.wasm', sha256: '00'.repeat(32) } })
+      drivers.set(contractId, drivers.get(id(2))!)
+      directory.registration.policy = bytes(n)
+      directory.registration.policy_version += 1n
+      policy = config
     },
   }
 }
@@ -279,6 +302,25 @@ it('reveals using the original commitment store and SDK deadline, never the poli
     'reveal window',
   )
 })
+// SDK 0.3.2 refuses a quote taken at another height than the preparation that asked for it.
+it('prepares a reveal again when a block lands while it is being priced', async () => {
+  const h = fixture({ released: true })
+  const saved = reservation({ name: 'example.dusk', directory: id(1), commitmentStore: id(3) })
+  const transport = h.client.transport as { read: sdk.ReadTransport['read'] }
+  const read = transport.read.bind(transport)
+  let quotes = 0
+  transport.read = async (target, method, b) => {
+    if (method === 'quote_registration' && ++quotes === 1) h.setHeight(107n)
+    return read(target, method, b)
+  }
+  const reveal = await prepareFrozenCall(h.client, intent.storeCompleteRegistrationRequest({
+    directory: id(1), commitmentStore: id(3), commitment: saved.commitment, secret: saved.secret,
+    node, label: 'example', durationYears: 1, feeLux: 10e9, records: [], primaryEndpoint: null,
+  }), 'example.dusk', account)
+  expect(reveal).toMatchObject({ contractId: id(7), functionName: 'register', deposit: '10000000000' })
+  expect(quotes).toBeGreaterThan(1)
+})
+
 it.each([
   { scenario: 'released root on a retiring store', retiring: true, unseen: false, saved: false, target: 7 },
   { scenario: 'saved reservation on a retiring store', retiring: true, unseen: false, saved: true, target: 7 },
@@ -374,6 +416,85 @@ it('refuses a successor quote that drops the old generation and grace end', asyn
     node, label: 'example', durationYears: 1, feeLux: Number(estimated.total_lux), records: [],
   }), saved.name, account)).rejects.toThrow('Registration quote does not match placement and previous lifecycle')
 })
+// A reservation keeps its secret and age across a policy replacement, but not its price (spec §6.2).
+function policyReplacement(config?: (launch: sdk.PolicyConfig) => sdk.PolicyConfig) {
+  const h = fixture({ unseen: true, policyQuotes: true })
+  h.directory.registration.policy_version = 4n
+  const actor = '0x' + sdk.hex(h.name.name.owner)
+  const saved = reservation({ name: 'example.dusk', directory: id(1), controller: actor, commitmentStore: id(7) })
+  const register = (feeLux: number, extra: Record<string, unknown> = {}) => ({
+    ...intent.storeCompleteRegistrationRequest({
+      directory: id(1), commitmentStore: id(7), commitment: saved.commitment, secret: saved.secret,
+      node, label: 'example', durationYears: 1, feeLux, records: [],
+    }),
+    ...extra,
+  })
+  const onChain = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: vi.fn() } })
+  const replace = () => {
+    const launch = sdk.launchPolicyConfig()
+    // Five or more characters cost 15 DUSK a year instead of 10.
+    h.replacePolicy(9, config?.(launch) ?? { ...launch, annual_lux: [...launch.annual_lux.slice(0, 4), '15000000000'] })
+  }
+  return { h, actor, saved, register, onChain, replace }
+}
+
+it('refuses a reveal priced under the replaced policy with the fresh quote, then reveals the same reservation at the new price', async () => {
+  const { h, actor, saved, register, onChain, replace } = policyReplacement()
+  const reviewed = await onChain.getRegistrationQuote('example.dusk', 1, actor)
+  if (!reviewed.ok) throw new Error(reviewed.error.message)
+  expect(reviewed.value.quote).toMatchObject({ total_lux: '10000000000', policy_version: 4n, policy: bytes(2) })
+  // What the reservation was priced at, kept with it in this browser.
+  const reservedQuote = { years: 1, totalLux: '10000000000', policy: id(2), policyVersion: '4', configVersion: '1' }
+  replace()
+  const refused = await prepareFrozenCall(h.client, register(10e9, { quote: reviewed.value.quote, reservedQuote }), 'example.dusk', account)
+    .then(() => null, (error: unknown) => error)
+  expect(refused).toMatchObject({
+    name: 'RegistrationPriceChangedError',
+    change: { previousTotalLux: '10000000000', sinceReservation: true,
+      quote: { total_lux: '15000000000', policy_version: 5n, policy: bytes(9) } },
+  })
+  expect((refused as Error).message).not.toContain('On-chain terms changed')
+  // The failed write keeps the price change, so the claim can offer the new price.
+  const app = { prepareIntent: (request: intent.DuskDomainCallMetadata, name: string) => prepareFrozenCall(h.client, request, name, account),
+    readContract: vi.fn(), prepareContractCall: vi.fn(), writeContract: vi.fn() }
+  const state = await submitDuskDomainWrite(app, register(10e9, { quote: reviewed.value.quote, reservedQuote }), { name: 'example.dusk', contracts })
+  expect(state).toMatchObject({ status: 'failed', error: { name: 'RegistrationPriceChangedError' } })
+  expect(state.message).toContain('reservation is still valid')
+  expect(app.prepareContractCall).not.toHaveBeenCalled()
+  expect(app.writeContract).not.toHaveBeenCalled()
+  // Re-priced with the fresh quote, the same reservation reveals at the new price, with no new commitment.
+  const fresh = (refused as { change: { quote: sdk.RegistrationQuote } }).change.quote
+  const reveal = await prepareFrozenCall(h.client, register(15e9, {
+    quote: fresh, reservedQuote: { ...reservedQuote, totalLux: '15000000000', policy: id(9), policyVersion: '5' },
+  }), 'example.dusk', account)
+  expect(reveal).toMatchObject({
+    functionName: 'register', deposit: '15000000000',
+    args: { commitment: sdk.fromHex(saved.commitment, 32), secret: sdk.fromHex(saved.secret, 32), commitment_store: bytes(7),
+      expected_fee_lux: '15000000000', expected_policy_version: 5n, expected_policy_config_version: 1n },
+  })
+  expect(h.calls.filter(call => call.method === 'pending_commitment').map(call => call.target)).toEqual([id(7), id(7), id(7)])
+})
+
+it('refuses a reveal whose shown price is stale after a replacement even without a saved reservation price', async () => {
+  const { h, register, replace } = policyReplacement()
+  replace()
+  await expect(prepareFrozenCall(h.client, register(10e9), 'example.dusk', account)).rejects.toMatchObject({
+    name: 'RegistrationPriceChangedError',
+    change: { previousTotalLux: '10000000000', sinceReservation: false, quote: { total_lux: '15000000000' } },
+  })
+})
+
+it('says plainly when the replaced policy no longer lets a reserved-for name be registered', async () => {
+  const { h, register, replace } = policyReplacement(launch => ({ ...launch, reserved: [...launch.reserved, 'example'].sort() }))
+  replace()
+  const app = { prepareIntent: (request: intent.DuskDomainCallMetadata, name: string) => prepareFrozenCall(h.client, request, name, account),
+    readContract: vi.fn(), prepareContractCall: vi.fn(), writeContract: vi.fn() }
+  const state = await submitDuskDomainWrite(app, register(10e9), { name: 'example.dusk', contracts })
+  expect(state.status).toBe('failed')
+  expect(state.message).toBe('This name can’t be registered under the current registration rules.')
+  expect(app.writeContract).not.toHaveBeenCalled()
+})
+
 it('follows forwarded names for transfer and directory-priced renewal, preserving incarnation', async () => {
   const h = fixture()
   const transfer = await prepareFrozenCall(
@@ -617,7 +738,8 @@ it('places an offer with an owner-verified payout and claims refunds from the pr
   })
 })
 it('edits records, sets primary and creates subnames at the forwarded home', async () => {
-  const h = fixture()
+  // The name's Dusk address record is the connected wallet's, as set_primary needs.
+  const h = forwardTo(fixture(), account)
   expect(
     await prepareFrozenCall(
       h.client,
@@ -1071,7 +1193,9 @@ it.each(writeCases)(
       updated_at: 100n,
     }
     h.responses.set(`${id(7)}:resolve_record`, { Local: record })
-    h.responses.set(`${id(3)}:read_primary`, {
+    // The address's primary link is to example.dusk, in the store that name lives in, which no move holds.
+    h.name.move_pending = null
+    h.responses.set(`${id(7)}:read_primary`, {
       spelling: 'example.dusk',
       primary: {
         endpoint: endpointBytes(account),
@@ -1480,6 +1604,9 @@ it.each(['place_bid', 'expire_auction', 'settle_auction'] as const)('describes t
 
 it('names the primary mapping being cleared even when a different name page requested it', async () => {
   const h = fixture()
+  // actual.dusk lives in the first store, which no move holds.
+  h.responses.set(`${id(3)}:home`, 'Local')
+  h.name.move_pending = null
   h.responses.set(`${id(3)}:read_primary`, {
     spelling: 'actual.dusk', primary: { endpoint: endpointBytes(account),
       name: { key: sdk.nameKey('actual.dusk'), incarnation: h.name.name.incarnation }, mapping_id: 42n, updated_at: 100n },
@@ -1489,6 +1616,138 @@ it('names the primary mapping being cleared even when a different name page requ
   }), 'example.dusk', account)
   expect(call.display).toMatchObject({ Summary: 'Clear actual.dusk as your primary name', Name: 'actual.dusk' })
   expect(JSON.stringify(call.display)).not.toContain('example.dusk')
+})
+
+// A Dusk address's stored primary link, as a store's read_primary returns it.
+const primaryLink = (h: ReturnType<typeof fixture>, spelling: string, mappingId = 42n): sdk.PrimaryView => ({
+  spelling, primary: { endpoint: endpointBytes(account), name: { key: sdk.nameKey(spelling), incarnation: h.name.name.incarnation }, mapping_id: mappingId, updated_at: 100n },
+})
+const setPrimary = intent.storeSetPrimaryNameRequest({ node, name: 'example.dusk', endpointType: 'moonlight_address', endpointValue: account })
+// example.dusk's Dusk address record, as its store resolves it, and no move holding the name.
+function forwardTo(h: ReturnType<typeof fixture>, address: string) {
+  h.responses.set(`${id(7)}:resolve_record`, { Local: { key: 'moonlight_address', value: endpointBytes(address), ttl_seconds: 60n, updated_at: 100n } })
+  h.name.move_pending = null
+  return h
+}
+const ready = (h = fixture()) => forwardTo(h, account)
+const short = (address: string) => `${address.slice(0, 10)}...${address.slice(-6)}`
+
+// example.dusk lives in the second store (7). set_primary there refuses while another store holds the
+// address's primary link (PrimaryAlreadySet), and replaces a link of its own.
+describe('a primary name in another store', () => {
+  it('is never set over: preparation names it and builds no call', async () => {
+    const h = ready()
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk'))
+    const refused = prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)
+    await expect(refused).rejects.toMatchObject({ name: 'PrimaryElsewhereError', current: 'other.dusk', store: id(3), target: 'example.dusk' })
+    await expect(refused).rejects.toThrow('other.dusk is your primary name, kept in a different shard from example.dusk. Clear it first, then set example.dusk.')
+  })
+
+  it('is replaced in one call when it is kept in the same store', async () => {
+    const h = ready()
+    h.responses.set(`${id(7)}:read_primary`, primaryLink(h, 'old.dusk'))
+    expect(await prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).toMatchObject({ contractId: id(7), functionName: 'set_primary' })
+  })
+
+  it('needs nothing cleared when the address has no primary name', async () => {
+    const h = ready()
+    expect(await prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).toMatchObject({ contractId: id(7), functionName: 'set_primary' })
+  })
+
+  it('is cleared in its own store, bound to the link and mapping reviewed', async () => {
+    const h = fixture()
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk', 41n))
+    h.responses.set(`${id(3)}:home`, 'Local')
+    h.name.move_pending = null
+    const clear = { ...intent.storeClearPrimaryNameRequest({ endpointType: 'moonlight_address', endpointValue: account }), reviewedPrimary: { name: 'other.dusk', store: id(3), mappingId: '41' } }
+    expect(await prepareFrozenCall(h.client, clear, 'example.dusk', account)).toMatchObject({
+      contractId: id(3), functionName: 'clear_primary', args: { expected_mapping_id: 41n },
+      display: { Summary: 'Clear other.dusk as your primary name' },
+    })
+    // The same name's link was set again since the review: another mapping, never adopted.
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk', 43n))
+    await expect(prepareFrozenCall(h.client, clear, 'example.dusk', account)).rejects.toThrow('Your primary name changed since you reviewed it')
+    // Another name's link replaced it.
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'third.dusk', 41n))
+    await expect(prepareFrozenCall(h.client, clear, 'example.dusk', account)).rejects.toThrow('Your primary name changed since you reviewed it')
+  })
+
+  it.each([
+    ['has moved on from its store', (h: ReturnType<typeof fixture>) => { h.name.move_pending = null }],
+    ['is staged in its store', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(3)}:home`, { Staged: bytes(5) }); h.name.move_pending = null }],
+    ['is being moved', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(3)}:home`, 'Local') }],
+  ] as const)('can’t be cleared while its name %s, and says why', async (_, state) => {
+    const h = fixture()
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk'))
+    state(h)
+    const clear = intent.storeClearPrimaryNameRequest({ endpointType: 'moonlight_address', endpointValue: account })
+    await expect(prepareFrozenCall(h.client, clear, 'example.dusk', account)).rejects.toThrow('other.dusk is moving between shards, so it can’t be cleared as your primary name until the move finishes.')
+  })
+
+  it('stops a registration from setting the primary name too', async () => {
+    const h = fixture({ released: true })
+    h.responses.set(`${id(3)}:read_primary`, primaryLink(h, 'other.dusk'))
+    const saved = reservation({ name: 'example.dusk', directory: id(1), commitmentStore: id(3) })
+    const register = (primary: boolean) => prepareFrozenCall(h.client, intent.storeCompleteRegistrationRequest({
+      directory: id(1), commitmentStore: id(3), commitment: saved.commitment, secret: saved.secret,
+      node, label: 'example', durationYears: 1, feeLux: 10e9, records: [],
+      primaryEndpoint: primary ? { endpointType: 'moonlight_address', endpointValue: account } : null,
+    }), 'example.dusk', account)
+    await expect(register(true)).rejects.toMatchObject({ name: 'PrimaryElsewhereError', current: 'other.dusk', target: 'example.dusk' })
+    expect(await register(false)).toMatchObject({ contractId: id(7), functionName: 'register' })
+  })
+})
+
+// set_primary takes a direct transaction from the address it sets, signed by the name's owner or
+// manager, for a current name whose Dusk address record is that address. Preparation reads all of it
+// from the chain, before any wallet request.
+describe('set_primary’s preconditions', () => {
+  const sam = sdk.encodeBase58(Uint8Array.from(handoff.roles.payout))
+  const samAuthority = sdk.authority({ kind: 'Moonlight', bytes: endpointBytes(sam) })
+
+  it('refuses the connected manager when the name’s Dusk address is the owner’s, and builds nothing', async () => {
+    // Noah owns example.dusk and its record is Noah's address; Sam manages it and is connected.
+    const h = ready()
+    h.name.name.manager = samAuthority
+    const asSam = intent.storeSetPrimaryNameRequest({ node, name: 'example.dusk', endpointType: 'moonlight_address', endpointValue: sam })
+    await expect(prepareFrozenCall(h.client, asSam, 'example.dusk', sam)).rejects.toThrow(
+      `example.dusk points to another Dusk address, ${short(account)}. Only that address’s wallet can make example.dusk its primary name.`)
+  })
+
+  it('refuses a request for another address than the name’s record', async () => {
+    const h = ready()
+    const other = intent.storeSetPrimaryNameRequest({ node, name: 'example.dusk', endpointType: 'moonlight_address', endpointValue: sam })
+    await expect(prepareFrozenCall(h.client, other, 'example.dusk', account)).rejects.toThrow(
+      'example.dusk’s Dusk address record isn’t the address this was reviewed for. Refresh and check it again.')
+  })
+
+  it.each([
+    ['has expired', (h: ReturnType<typeof fixture>) => { h.name.active = false }, 'example.dusk has expired, so it can’t be a primary name. Renew it first.'],
+    ['is being moved', (h: ReturnType<typeof fixture>) => { h.name.move_pending = bytes(5) }, 'example.dusk is moving between shards, so it can’t be set as a primary name until the move finishes.'],
+    ['has no Dusk address record', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(7)}:resolve_record`, { Local: null }) }, 'example.dusk has no Dusk address record, so it can’t be a primary name. Add your Dusk address under Records first.'],
+    ['is held by others', (h: ReturnType<typeof fixture>) => { h.name.name.owner = bytes(9); h.name.name.manager = bytes(9) }, 'Only the owner or manager of example.dusk can make it a primary name.'],
+  ] as const)('refuses a name that %s', async (_, state, reason) => {
+    const h = ready()
+    state(h)
+    await expect(prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).rejects.toThrow(reason)
+  })
+
+  it('tells the page whether the chain would set it, and why not', async () => {
+    const h = ready()
+    const client = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: vi.fn() } })
+    expect(await client.checkPrimaryTarget('example.dusk', account)).toMatchObject({ ok: true,
+      value: { store: id(7), nameRef: { key: h.name.name.key, incarnation: h.name.name.incarnation }, links: [] } })
+    expect(await client.checkPrimaryTarget('example.dusk', sam)).toEqual({ ok: false, error: { code: 'not_primary_eligible',
+      message: `example.dusk points to another Dusk address, ${short(account)}. Only that address’s wallet can make example.dusk its primary name.` } })
+  })
+
+  it('binds the name’s incarnation, and refuses another than the one reviewed', async () => {
+    const h = ready()
+    expect(await prepareFrozenCall(h.client, setPrimary, 'example.dusk', account)).toMatchObject({ contractId: id(7), functionName: 'set_primary',
+      args: { name: { key: h.name.name.key, incarnation: h.name.name.incarnation }, endpoint: endpointBytes(account) } })
+    const reviewed = { key: h.name.name.key, incarnation: { generation: 6n, serial: 1n } }
+    await expect(prepareFrozenCall(h.client, { ...setPrimary, nameRef: reviewed }, 'example.dusk', account)).rejects.toThrow('On-chain terms changed')
+  })
 })
 
 // resolve_primary replies follow the SDK projection, while read_primary retains
@@ -1558,8 +1817,254 @@ it('restores primary resolution when a listing is cancelled without replacing it
   expect(h.primary.primary.mapping_id).toBe(42n)
 })
 
+// The node answers at its tip. A block that lands mid-read makes a snapshot read again, three
+// times at most, so a read across every store must be short. Each request takes one round trip,
+// requests sent together share it, and a block lands every `trips` round trips.
+function blocksEvery(h: ReturnType<typeof primaryFixture>, trips: number) {
+  const transport = h.sdkClient.transport as { -readonly [K in keyof sdk.ReadTransport]: sdk.ReadTransport[K] }
+  const read = transport.read.bind(transport), tip = transport.currentBlockHeight.bind(transport)
+  let elapsed = 0, height = 106n, pending: Array<() => void> = []
+  const roundTrip = () => new Promise<void>(resolve => {
+    pending.push(resolve)
+    if (pending.length === 1) setTimeout(() => {
+      if (++elapsed % trips === 0) h.setHeight(++height)
+      const batch = pending
+      pending = []
+      batch.forEach(done => done())
+    }, 0)
+  })
+  transport.read = async (...args) => { await roundTrip(); return read(...args) }
+  transport.currentBlockHeight = async () => { await roundTrip(); return tip() }
+}
+
+it('reads a primary name across every store while blocks keep landing', async () => {
+  const h = primaryFixture()
+  h.publish()
+  blocksEvery(h, 10)
+  for (let refresh = 0; refresh < 3; refresh++) {
+    expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+    expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
+  }
+})
+
+it('reads a primary only at the store its name lives in, not one it moved on from', async () => {
+  const h = primaryFixture()
+  h.publish()
+  // The first store still answers for the name that moved from it to the second, mapping and record.
+  h.responses.set(`${id(3)}:resolve_primary`, h.primary)
+  h.responses.set(`${id(3)}:resolve_record`, h.responses.get(`${id(7)}:resolve_record`))
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+})
+
+// A SetPolicy can select a policy this site's manifest doesn't list yet. Only registration uses it.
+it('reads primary names while the directory selects a policy this release doesn’t list', async () => {
+  const h = primaryFixture()
+  h.publish()
+  h.name.move_pending = null
+  h.directory.registration.policy = bytes(0x0b)
+  expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: 'example.dusk' })
+  expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
+  const clear = await prepareFrozenCall(h.sdkClient, intent.storeClearPrimaryNameRequest({ endpointType: 'moonlight_address', endpointValue: account }), 'example.dusk', account)
+  expect(clear).toMatchObject({ contractId: id(7), functionName: 'clear_primary' })
+  expect(h.calls.some(call => call.target === id(0x0b))).toBe(false)
+})
+
+it('reads again when a block lands during a read, and only then', async () => {
+  const h = primaryFixture()
+  const getName = h.sdkClient.getName.bind(h.sdkClient)
+  const reads = vi.spyOn(h.sdkClient, 'getName')
+  reads.mockRejectedValueOnce(new Error('Chain tip changed during read; retry the snapshot')).mockImplementation(getName)
+  expect(await h.client.getName('example.dusk')).toMatchObject({ ok: true, value: { canonicalName: 'example.dusk' } })
+  expect(reads).toHaveBeenCalledTimes(2)
+  reads.mockReset()
+  reads.mockRejectedValue(new Error('Unexpected read'))
+  expect(await h.client.getName('example.dusk')).toMatchObject({ ok: false, error: { message: 'Unexpected read' } })
+  expect(reads).toHaveBeenCalledTimes(1)
+})
+
+it('reads every store’s stored primary link for an address, with the store that keeps it', async () => {
+  const h = primaryFixture()
+  h.publish()
+  h.responses.set(`${id(3)}:read_primary`, null)
+  expect(await h.client.readPrimaryLinks(h.endpoint)).toEqual({ ok: true, value: [
+    { store: id(7), name: 'example.dusk', node: '0x' + sdk.hex(h.name.name.key.node), mappingId: '42', updatedAtBlock: 100 },
+  ] })
+  expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk', store: id(7), mappingId: '42' } })
+})
+
 it('does not turn a failed resolve_primary read into a missing primary', async () => {
   const h = primaryFixture()
   h.responses.delete(`${id(3)}:resolve_primary`)
   expect(await h.client.getPrimaryName(h.endpoint)).toMatchObject({ ok: false, error: { code: 'contract_read_failed' } })
+})
+
+// While registrations are paused, or the policy is suspended, the store refuses quotes and commits
+// with Closed, and Rusk answers that read-only trap with HTTP 500. The directory's registration
+// context says so first, so nothing calls the store, and the reason is plain.
+it.each(['operator_paused', 'guardian_suspended'] as const)('says registrations are closed, without quoting or signing, while %s', async flag => {
+  const h = fixture({ unseen: true })
+  h.directory.registration[flag] = true
+  const actor = '0x' + sdk.hex(h.name.name.owner)
+  const onChain = createDuskDomainsOnChainClient({ read: { client: Promise.resolve(h.client), read: vi.fn() } })
+  expect(await onChain.getRegistrationQuote('example.dusk', 1, actor)).toEqual({
+    ok: false, error: { code: 'contract_read_failed', message: 'Registrations are closed right now. Try again when they reopen.' },
+  })
+  const saved = reservation({ name: 'example.dusk', directory: id(1), controller: actor, commitmentStore: id(7) })
+  const commit = { ...intent.storeCommitRequest({ commitment: saved.commitment }), contractId: id(7) }
+  const register = intent.storeCompleteRegistrationRequest({
+    directory: id(1), commitmentStore: id(7), commitment: saved.commitment, secret: saved.secret,
+    node, label: 'example', durationYears: 1, feeLux: 10e9, records: [],
+  })
+  for (const request of [commit, register]) {
+    await expect(prepareFrozenCall(h.client, request, 'example.dusk', account)).rejects.toThrow('Registrations are closed right now. Try again when they reopen.')
+  }
+  expect(h.calls.map(call => call.method)).not.toContain('quote_registration')
+  expect(h.calls.map(call => call.method)).not.toContain('pending_commitment')
+})
+
+// A SetPreferredMarketplace can execute between review and signing, and anyone can execute it once
+// it is ready. A new order reviewed for the previous market is refused with that reason.
+it.each(['fixed', 'auction', 'offer'] as const)('refuses a %s order reviewed for a market that is no longer preferred, and says why', async kind => {
+  const h = fixture()
+  const previous = id(9)
+  const request = kind === 'fixed'
+    ? intent.storeEscrowFixedSaleRequest({ node, marketplaceContract: previous, name: 'example.dusk', sellerRecipient: account, priceLux: 10e9, expiresAt: 900 })
+    : kind === 'auction'
+      ? intent.storeEscrowAuctionRequest({ node, marketplaceContract: previous, name: 'example.dusk', sellerRecipient: account, reservePriceLux: 10e9, durationBlocks: 8640 })
+      : { ...intent.marketplacePlaceOfferRequest({ node, amountLux: 10e9, expiresAt: 900, buyerManager: null }), contractId: previous }
+  await expect(prepareFrozenCall(h.client, { ...request, expectedFeeBps: 250 }, 'example.dusk', account))
+    .rejects.toThrow('The market moved to a new contract after you reviewed this. Review it again before signing.')
+})
+
+// A stuck indexer keeps serving the pause flags of its last publication, so a new order or bid is
+// checked against the market's own config and the directory's record of the market, read live.
+it.each([
+  ['pauses new orders', (h: ReturnType<typeof fixture>) => { h.market.new_orders_disabled = true }],
+  ['is draining', (h: ReturnType<typeof fixture>) => { h.marketStates.set(id(6), 'Draining') }],
+  ['is retired', (h: ReturnType<typeof fixture>) => { h.marketStates.set(id(6), 'Retired') }],
+])('refuses a new order or bid at a market that %s, before the wallet', async (_, close) => {
+  const common = { node, marketplaceContract: id(6), name: 'example.dusk', sellerRecipient: account }
+  const requests = (h: ReturnType<typeof fixture>) => [
+    { ...intent.storeEscrowFixedSaleRequest({ ...common, priceLux: 10e9, expiresAt: 900 }), expectedFeeBps: 250 },
+    { ...intent.storeEscrowAuctionRequest({ ...common, reservePriceLux: 10e9, durationBlocks: 8640 }), expectedFeeBps: 250 },
+    { ...intent.marketplacePlaceOfferRequest({ node, amountLux: 10e9, expiresAt: 900, buyerManager: null }), contractId: id(6), expectedFeeBps: 250 },
+    { ...intent.marketplacePlaceBidRequest({ node, expectedAuctionId: 12, amountLux: 11e9 }), contractId: id(6), reviewedOrder: reviewedOrder(h, 'Auction') },
+  ]
+  for (const request of requests(fixture())) {
+    const h = fixture()
+    if ('reviewedOrder' in request) reviewedOrder(h, 'Auction')
+    close(h)
+    await expect(prepareFrozenCall(h.client, request, 'example.dusk', account), request.functionName)
+      .rejects.toThrow('This market isn’t taking new orders right now. Existing orders can still be completed or cancelled.')
+  }
+})
+
+it('still settles, buys and cancels at a market that is draining', async () => {
+  const h = fixture()
+  h.marketStates.set(id(6), 'Draining')
+  h.market.new_orders_disabled = true
+  const auction = reviewedOrder(h, 'Auction')
+  await expect(prepareFrozenCall(h.client, { ...intent.marketplaceCancelAuctionRequest({ node, expectedAuctionId: 12 }), contractId: id(6), reviewedOrder: auction },
+    'example.dusk', account)).resolves.toMatchObject({ functionName: 'cancel_order' })
+  const sale = reviewedOrder(h, 'Fixed')
+  await expect(prepareFrozenCall(h.client, { ...intent.marketplaceBuyFixedSaleRequest({ node, expectedSaleId: 12, priceLux: 10e9 }), contractId: id(6), reviewedOrder: sale },
+    'example.dusk', account)).resolves.toMatchObject({ functionName: 'buy_fixed' })
+})
+
+// A renewal for a name someone else holds is bound to what was reviewed. A sale or a return between
+// review and signing changes the owner, not the name's incarnation, so it is caught only by reading
+// the owner, the custody and the order again.
+describe('renewing a name someone else holds', () => {
+  // A market holds the name another account listed; the signer is neither.
+  const marketOwned = (h: ReturnType<typeof fixture>) => {
+    const market = bytes(6)
+    const seller = bytes(12)
+    h.name.name.owner = market
+    h.name.name.manager = market
+    h.name.name.custody = { nonce: 8n, incarnation: h.name.name.incarnation, custodian: market, origin_owner: seller, origin_manager: seller }
+    reviewedOrder(h, 'Fixed')
+    return { market, seller }
+  }
+  const renew = (h: ReturnType<typeof fixture>, reviewedRenewal?: unknown) => prepareFrozenCall(h.client,
+    { ...intent.storeRenewRequest({ node, durationYears: 1, feeLux: 17e9 }), ...(reviewedRenewal ? { reviewedRenewal } : {}) } as never, 'example.dusk', account)
+  const listing = { marketplace: id(6), orderId: '12' }
+  const notListed = 'This name isn’t listed anymore, so only its owner or manager can renew it.'
+
+  // The market's renew_escrow takes the complete order, so the chain itself refuses the renewal if
+  // the name sells, returns or is relisted between review and execution.
+  it('renews a listed name through its market, bound to the reviewed order', async () => {
+    const h = fixture()
+    marketOwned(h)
+    const order = reviewedOrder(h, 'Fixed')
+    const call = await renew(h, { owner: `0x${id(6)}`, listing })
+    expect(call).toMatchObject({
+      contractId: id(6), functionName: 'renew_escrow', deposit: '17000000000',
+      args: { order: { terms: { id: 12n }, nonce: 8n, status: 'Open' },
+        renewal: { name: { key: h.name.name.key, incarnation: h.name.name.incarnation }, years: 1, expected_fee_lux: '17000000000', valid_until: 226n } },
+    })
+    expect(sdk.stringifyJson((call.args as { order: sdk.Order }).order)).toBe(sdk.stringifyJson(order))
+    expect(call.display).toMatchObject({ Listing: 'Stays listed as it is' })
+  })
+
+  // A SetPolicy can select a policy this site's manifest doesn't list yet. Only registration uses it.
+  it('renews, edits records and transfers while the directory selects a policy this release doesn’t list', async () => {
+    const h = fixture()
+    h.directory.registration.policy = bytes(0x0b)
+    expect(await renew(h)).toMatchObject({ contractId: id(7), functionName: 'renew' })
+    const records = await prepareFrozenCall(h.client, intent.storeMutateRecordsSenderRequest({ node, mutations: [{ action: 'set', key: 'website', value: 'https://example.test', ttlSeconds: 60 }] }), 'example.dusk', account)
+    expect(records).toMatchObject({ contractId: id(7) })
+    const transfer = await prepareFrozenCall(h.client, intent.storeUpdateAuthoritiesRequest({ node, owner: '0x' + id(9), manager: '0x' + id(9), clearRecords: true }), 'example.dusk', account)
+    expect(transfer).toMatchObject({ contractId: id(7) })
+    expect(h.calls.some(call => call.target === id(0x0b))).toBe(false)
+  })
+
+  it('renews the holder’s own name and a contract-owned one through the store', async () => {
+    const own = await renew(fixture())
+    expect(own).toMatchObject({ contractId: id(7), functionName: 'renew' })
+    const h = fixture()
+    h.name.name.owner = bytes(10)
+    h.name.name.manager = bytes(10)
+    expect(await renew(h, { owner: `0x${id(10)}`, listing: null })).toMatchObject({ contractId: id(7), functionName: 'renew' })
+  })
+
+  it.each([
+    ['the name sold after review', (h: ReturnType<typeof fixture>) => { h.name.name.owner = bytes(9); h.name.name.manager = bytes(9); h.name.name.custody = null }],
+    ['the listing was cancelled and the name returned', (h: ReturnType<typeof fixture>, seller: number[]) => { h.name.name.owner = seller; h.name.name.manager = seller; h.name.name.custody = null }],
+    ['the reviewed order is gone', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(6)}:read_order`, null) }],
+    ['the reviewed order is waiting to return the name', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(6)}:read_order`, { ...reviewedOrder(h, 'Fixed'), status: 'ReturnPending' }) }],
+    ['the reviewed order is another custody episode', (h: ReturnType<typeof fixture>) => { h.responses.set(`${id(6)}:read_order`, { ...reviewedOrder(h, 'Fixed'), nonce: 7n }) }],
+  ] as const)('refuses a listed renewal once %s', async (_, change) => {
+    const h = fixture()
+    const { seller } = marketOwned(h)
+    change(h, seller)
+    await expect(renew(h, { owner: `0x${id(6)}`, listing })).rejects.toThrow(/isn’t listed anymore|changed owners/)
+  })
+
+  it('refuses a renewal for a name held by a contract this release doesn’t list as a market', async () => {
+    const h = fixture()
+    marketOwned(h)
+    h.name.name.owner = bytes(9)
+    h.name.name.manager = bytes(9)
+    h.name.name.custody = { ...h.name.name.custody!, custodian: bytes(9) }
+    await expect(renew(h, { owner: `0x${id(9)}`, listing: { marketplace: id(9), orderId: '12' } })).rejects.toThrow(notListed)
+  })
+
+  it('refuses a renewal for someone else’s name without a reviewed basis', async () => {
+    const h = fixture()
+    marketOwned(h)
+    await expect(renew(h)).rejects.toThrow(/isn’t listed anymore|changed owners/)
+  })
+
+  it('renews a contract-owned name only while the reviewed contract still owns it', async () => {
+    const h = fixture()
+    h.name.name.owner = bytes(10)
+    h.name.name.manager = bytes(10)
+    await expect(renew(h, { owner: `0x${id(10)}`, listing: null })).resolves.toMatchObject({ functionName: 'renew' })
+    h.name.name.owner = bytes(11)
+    await expect(renew(h, { owner: `0x${id(10)}`, listing: null })).rejects.toThrow('This name changed owners since you reviewed it, so only its owner or manager can renew it.')
+  })
+
+  it('still renews the holder’s own name without a reviewed basis', async () => {
+    await expect(renew(fixture())).resolves.toMatchObject({ functionName: 'renew' })
+  })
 })

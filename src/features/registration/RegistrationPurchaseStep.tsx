@@ -15,7 +15,11 @@ import {
   commitWindowCopy,
   completeRegistrationButtonCopy,
   pendingReservationStatusCopy,
+  priceChangeCopy,
+  priceChangeTitle,
+  reservationExpiryWarning,
   strandedReservationCopy,
+  type PriceChangeView,
 } from './registrationCopy'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 import { RegistrationCompletionProgress } from './RegistrationCompletionProgress'
@@ -27,10 +31,13 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
     commitWindow: CommitWindow
     onRestartReservation: () => void
     reservationStranded: boolean
+    /** Registrations are paused: Register waits, and the reservation keeps ageing toward its expiry. */
+    registrationsPaused?: boolean
   }
   purchase: {
     canRevealRegistration: boolean
     onRegisterName: (confirmedTotalLux?: number) => void
+    onConfirmNewPrice?: () => void
     onSetAddress: () => void
     registrationCompletion: RegistrationCompletionState | null
     txBusy: boolean
@@ -44,6 +51,7 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
   quote?: {
     onWaitForPremium?: () => void
     premiumConfirmation?: PremiumConfirmationQuote | null
+    priceChange?: PriceChangeView | null
   }
 }) {
   const {
@@ -51,10 +59,12 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
     commitWindow,
     onRestartReservation,
     reservationStranded,
+    registrationsPaused = false,
   } = reservation
   const {
     canRevealRegistration,
     onRegisterName,
+    onConfirmNewPrice,
     onSetAddress,
     registrationCompletion,
     txBusy,
@@ -68,8 +78,11 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
   const {
     onWaitForPremium,
     premiumConfirmation,
+    priceChange,
   } = quote
-  const showPremiumConfirmation = premiumConfirmation && canRevealRegistration && !reservationStranded && commitWindow.status === 'ready'
+  // A changed price comes first: the reservation still holds, and Register waits for the new price.
+  const showPriceChange = priceChange && !reservationStranded && commitWindow.status === 'ready'
+  const showPremiumConfirmation = !showPriceChange && premiumConfirmation && canRevealRegistration && !reservationStranded && commitWindow.status === 'ready'
   const walletReady = walletSetupState === 'connected'
   const registrationComplete = registrationCompletion?.status === 'executed'
   // While the second signature runs, or once it has, the progress card is the only thing to show.
@@ -81,12 +94,15 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
     ? Math.min(1, Math.max(0.04, 1 - commitWindow.waitBlocks / REGISTRATION_MIN_REVEAL_WAIT_BLOCKS))
     : 1
   const actionTitle = walletReady
-    ? reservationStranded ? 'Reserve again' : commitWindow.status === 'stale' ? 'Reservation expired' : 'Register'
+    ? reservationStranded ? 'Reserve again' : commitWindow.status === 'stale' ? 'Reservation expired' : showPriceChange ? priceChangeTitle(priceChange) : 'Register'
     : walletSetupActionTitle(walletSetupState)
+  const expiry = reservationExpiryWarning(commitWindow.status, commitWindow.staleInBlocks, registrationsPaused)
   const actionCopy = walletReady
     ? reservationStranded
       ? strandedReservationCopy()
-      : commitWindowCopy(commitWindow.status, commitWindow.staleInBlocks)
+      : showPriceChange
+        ? priceChangeCopy(priceChange, commitWindow.staleInBlocks)
+        : expiry ?? commitWindowCopy(commitWindow.status, commitWindow.staleInBlocks)
     : walletSetupActionCopy(walletSetupState)
 
   return (
@@ -106,7 +122,7 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
       {actionDone ? null : (
         <div className="register-action">
           <div className="register-action-copy">
-            {!walletReady || reservationStranded || commitWindow.status === 'stale' ? <strong>{actionTitle}</strong> : null}
+            {!walletReady || reservationStranded || commitWindow.status === 'stale' || showPriceChange ? <strong>{actionTitle}</strong> : null}
             {showPremiumConfirmation ? <span>The price drops to {formatLuxNumberAsDusk(premiumConfirmation.nextTotalLux)} at <time dateTime={premiumConfirmation.nextStepAt}>{new Date(premiumConfirmation.nextStepAt).toLocaleString()}</time>.</span> : <span>{actionCopy}</span>}
           </div>
           {walletReady && (reservationStranded || commitWindow.status === 'stale') ? (
@@ -119,6 +135,9 @@ export function RegistrationPurchaseStep({ reservation, purchase, wallet, quote 
               Reserve again
               <ArrowRight size={17} />
             </Button>
+          ) : walletReady && showPriceChange ? (
+            <Button variant="primary" type="button" disabled={!canRevealRegistration} loading={txBusy}
+              onClick={() => onConfirmNewPrice?.()}>Register at {formatLuxNumberAsDusk(priceChange.totalLux)}</Button>
           ) : walletReady && showPremiumConfirmation ? (
             <div className="register-wallet-actions">
               <Button variant="secondary" type="button" disabled={txBusy} onClick={onWaitForPremium}>Wait</Button>

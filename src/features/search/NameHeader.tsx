@@ -7,6 +7,7 @@ import { NameAvatar } from '../../components/brand/NameAvatar'
 import { NameSignature } from '../../components/ui/NameChip'
 import { OwnerLabel } from '../identity/OwnerLabel'
 import { sameAuthority } from '../identity/ownerLabel'
+import { trustedDuskAddresses } from '../identity/addressTrust'
 import type { NameStatus, ResolverRecord } from '../../names/internal'
 import { statusCopy } from '../domains/domainFormat'
 import { followLink, navigateTo, routePath } from '../../app/routes'
@@ -39,7 +40,8 @@ export function NameHeader({ canMakeOffer = false, heldByMarket = false, listing
   const websiteVerified = isWebsiteVerification(verification) && verification.status === 'verified'
   const avatar = records.find(record => record.key === 'avatar')?.value
   const description = records.find(record => record.key === 'text.description')?.value
-  const addresses = [...ownerAddresses, ...records.filter(record => record.key === 'moonlight_address').map(record => record.value)]
+  // Only an address "Send to" would offer is shown or copied as the owner's.
+  const addresses = [...ownerAddresses, ...trustedDuskAddresses(records)]
   const separateManager = Boolean(owner && manager && !sameAuthority(owner, manager))
   return <header className={`name-hero ${status}`}>
     {registered && avatar ? <NameAvatar key={avatar} name={displayName} src={avatar} size={48} /> : null}

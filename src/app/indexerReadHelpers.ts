@@ -1,25 +1,34 @@
 import { readSharedHealth, sharedIndexerHealth } from './sharedIndexerHealth'
 import { unixSecondsFromIso } from '../features/domains/domainFormat'
+import { indexerReadable, isDeploymentMismatch, staleIndexerData, UNVERIFIED_INDEXER, verifiedHealth } from './indexerIdentity'
 import {
   createDuskDomainsIndexerClient,
   type DuskDomainsIndexerClient,
+  type DuskDomainsRuntimeConfig,
   type IndexedSubname,
   type SubnameState,
   userFacingErrorMessage,
   waitForIndexerConfirmation,
 } from '../names/internal'
 
-export function createHealthyIndexerClient(baseUrl: string) {
+/**
+ * An indexer client whose projection reads wait for healthy status. With `deployment`, the site's
+ * network and contracts, an indexer reporting another deployment counts as unhealthy. While its
+ * collector is blocked or catching up, the indexer keeps serving its last complete publication,
+ * which is read and shown as stale.
+ */
+export function createHealthyIndexerClient(baseUrl: string, deployment?: Pick<DuskDomainsRuntimeConfig, 'chainId' | 'contracts'>) {
   const healthUrl = `${baseUrl.trim().replace(/\/+$/u, '')}/health`
   let healthyUntil = 0
   let pendingHealth: ReturnType<DuskDomainsIndexerClient['getHealth']> | null = null
   const client = createDuskDomainsIndexerClient({
     baseUrl,
     fetch: async (input, init) => {
-      // A reachable API can still be serving an incomplete or stale projection.
+      // A reachable API can still be serving an incomplete or stale projection, or another deployment's.
       if (String(input).split('?')[0] !== healthUrl && Date.now() >= healthyUntil) {
         try {
-          if (!(await readSharedHealth(healthyClient)).ok) throw new Error('Domain data is still syncing. It will update automatically.')
+          const health = await readSharedHealth(healthyClient)
+          if (!indexerReadable(health)) throw new Error(isDeploymentMismatch(health) ? UNVERIFIED_INDEXER : 'Domain data is still syncing. It will update automatically.')
         } catch (error) {
           // The health read already owns its retry; do not retry it again as a projection.
           throw new Error(error instanceof Error ? error.message : 'Name data is unavailable.', { cause: error })
@@ -33,12 +42,13 @@ export function createHealthyIndexerClient(baseUrl: string) {
     if (params && Object.keys(params).length) {
       healthyUntil = 0
       sharedIndexerHealth(healthyClient).invalidate()
-      return client.getHealth(params)
+      return client.getHealth(params).then(health => verifiedHealth(health, deployment))
     }
     if (pendingHealth) return pendingHealth
     healthyUntil = 0
-    pendingHealth = client.getHealth(params).then((health) => {
-      if (health.ok) healthyUntil = Date.now() + 5_000
+    pendingHealth = client.getHealth(params).then((reported) => {
+      const health = verifiedHealth(reported, deployment)
+      if (indexerReadable(health)) healthyUntil = Date.now() + 5_000
       return health
     }).finally(() => { pendingHealth = null })
     return pendingHealth
@@ -49,10 +59,15 @@ export function createHealthyIndexerClient(baseUrl: string) {
 
 export async function waitForIndexerBlock(client: DuskDomainsIndexerClient | null, height: number | null) {
   if (!client || height === null) return false
+  // A blocked collector publishes nothing past its block until it is repaired, so stop asking.
+  let blocked = false
   return (await waitForIndexerConfirmation({
     description: 'marketplace update', attempts: 15, delayMs: 1_000,
+    wait: delayMs => blocked ? Promise.resolve() : new Promise(resolve => setTimeout(resolve, delayMs)),
     check: async () => {
+      if (blocked) return false
       const health = await client.getHealth()
+      blocked = staleIndexerData(health)?.code === 'collector_blocked'
       return health.ok && (health.finalizedBlockHeight ?? -1) >= height
     },
   })).confirmed

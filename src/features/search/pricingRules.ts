@@ -1,8 +1,17 @@
-import { BLOCKS_PER_DAY, DEFAULT_GRACE_PERIOD_BLOCKS, PREMIUM_WINDOW_DAYS, type CoreFeeConfig } from '../../names/internal'
+import { BLOCKS_PER_DAY, DEFAULT_GRACE_PERIOD_BLOCKS, PREMIUM_WINDOW_DAYS, registrationPrice, type CoreFeeConfig } from '../../names/internal'
 import { maxDurationYears } from '../../app/appConstants'
 import { formatDusk } from '../../utils/format'
 
 const dusk = (lux: number) => `${formatDusk(lux / 1e9)} DUSK`
+
+/** The yearly price by name length, from the length the selected policy accepts; the last tier covers longer names. */
+export function priceTiers(config: CoreFeeConfig) {
+  const minimum = Math.max(3, config.minimumRootBytes ?? 3)
+  return [3, 4, 5].filter(length => length >= minimum || length === 5).map(length => ({
+    label: length === 5 ? `${Math.max(5, minimum)}+ characters` : `${length} characters`,
+    price: formatDusk(registrationPrice('a'.repeat(length), 1, config)),
+  }))
+}
 
 /**
  * What a name costs beyond its first year, from the live policy and renewal schedule: the renewal

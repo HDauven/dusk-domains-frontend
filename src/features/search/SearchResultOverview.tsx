@@ -10,11 +10,12 @@ import {
   pendingReservationActionCopy,
   pendingReservationNextStepCopy,
   pendingReservationStatusCopy,
+  reservationExpiryWarning,
 } from '../registration/registrationCopy'
 import { maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { TermPicker } from '../../components/ui/TermPicker'
 import { formatDusk, pluralize } from '../../utils/format'
-import { overviewCopyForIssues } from '../domains/domainFormat'
+import { claimBlockedCopy } from './claimBlockedCopy'
 import type { ReservationWindow } from './overviewTypes'
 import type { NameListingOffer } from '../marketplace/nameListing'
 import { followLink, navigateTo, routePath } from '../../app/routes'
@@ -22,9 +23,15 @@ import { followLink, navigateTo, routePath } from '../../app/routes'
 
 // The result for a name nobody holds: a claim card with the term, the price and one action.
 // A saved reservation or a name that cannot be claimed replaces it with the right next step.
-export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, listing = null, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
+export function SearchResultOverview({ readOnly = false, registrationUnavailable = readOnly, registrationsPaused = false, quoteLoading = false, blockedReason = '', listing = null, canRegister, displayName, onContinueRegistration, onViewDetails, onSuggestion, resultIssues, resultStatus, quote, reservation }: {
   readOnly?: boolean
   registrationUnavailable?: boolean
+  /** Registrations are paused, as the banner says. */
+  registrationsPaused?: boolean
+  /** The live quote is still being read. */
+  quoteLoading?: boolean
+  /** Why an available name can't be claimed now, such as prices this site can't read yet. */
+  blockedReason?: string
   /** A taken name's price and market link, while it is listed. */
   listing?: NameListingOffer | null
   canRegister: boolean
@@ -68,12 +75,14 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
   if (savedReservation) {
     const status = savedReservationWindow?.status ?? 'missing'
     const waitBlocks = savedReservationWindow?.waitBlocks ?? 0
+    const expiry = reservationExpiryWarning(status, savedReservationWindow?.staleInBlocks, registrationsPaused)
     return (
       <Panel className="claim-card resume" aria-labelledby="overview-heading">
         <div className="claim-main">
           <span className="eyebrow"><Clock size={13} /> {status === 'missing' ? 'Request saved' : 'Reserved'}</span>
           <h2 id="overview-heading">{pendingReservationStatusCopy(status, waitBlocks)}</h2>
           <p>{pendingReservationNextStepCopy(status)}</p>
+          {expiry ? <p className="claim-warning" role="status">{expiry}</p> : null}
         </div>
         <div className="claim-stub">
           <BrandClaimNotice name={displayName} />
@@ -90,11 +99,13 @@ export function SearchResultOverview({ readOnly = false, registrationUnavailable
   }
 
   if (!canRegister) {
+    const blocked = claimBlockedCopy({ blockedReason, displayName, quoteLoading, readOnly,
+      registrationsPaused, resultIssues, resultStatus })
     return (
       <Panel className="claim-card blocked" aria-labelledby="overview-heading">
         <div className="claim-main">
-          <h2 id="overview-heading">{resultStatus === 'registered' ? 'This name is taken' : 'This name can’t be claimed'}</h2>
-          {listing ? <p className="claim-listing"><strong>{listing.text}</strong></p> : <p>{overviewCopyForIssues(resultStatus, resultIssues)}</p>}
+          <h2 id="overview-heading">{blocked.heading}</h2>
+          {listing ? <p className="claim-listing"><strong>{listing.text}</strong></p> : <p>{blocked.body}</p>}
           {resultStatus === 'registered' && onSuggestion ? <div className="name-suggestions"><p>Try another name</p>{suggestedNames(displayName).map(name => <Button key={name} onClick={() => onSuggestion(name)}>{name}</Button>)}</div> : null}
         </div>
         {resultStatus === 'registered' ? (

@@ -10,11 +10,15 @@ import type {
 import type { DuskDomainsMarketplaceOnChainClient, MarketplaceOrderIdentity } from './marketTypes'
 import { createDuskDomainsIndexerClient } from './http/client'
 import { DEFAULT_FEE_CONFIG } from './ui/names'
+import { REGISTRATIONS_CLOSED_MESSAGE } from './ui/errors'
 import { getRecordDefinition, type ResolverRecordKey } from './ui/records'
 import { namehashHex } from './hash'
 import { safeNumber } from './numbers'
 import { success, failure } from './http/resultHelpers'
 import { listPendingNameReservations } from './reservations'
+import { admittedStores, rawRead } from './directoryMembers'
+import { PrimaryTargetError, primaryLinks, primaryTarget, type PrimaryLink } from './primaryLinks'
+import { retryReadRace } from './readRace'
 export function contractIdFromOutput(value: unknown): string | null {
   try {
     return '0x' + sdk.contractId(value as string | number[])
@@ -61,14 +65,24 @@ export async function requireName(client: sdk.FrozenClient, spelling: string) {
   if (!view) throw new Error('This name is no longer registered. Refresh and try again.')
   return { ...located, view, ref: { key: view.name.key, incarnation: view.name.incarnation } }
 }
+/**
+ * The directory's registration context, refused while registrations are paused or the policy is
+ * suspended. The store would refuse a quote or commit with Closed then, and Rusk answers that
+ * read-only trap with HTTP 500, so the store is never asked.
+ */
+export async function openRegistrationContext(client: sdk.FrozenClient) {
+  const context = await client.directory.registration_context()
+  if (context.operator_paused || context.guardian_suspended) throw new Error(REGISTRATIONS_CLOSED_MESSAGE)
+  return context
+}
 export async function registrationQuote(
   client: sdk.FrozenClient,
   spelling: string,
   years: number,
   actor: string,
 ) {
-  const placement = await client.registrationPlacement(sdk.nameKey(spelling).root),
-    context = await client.directory.registration_context()
+  const context = await openRegistrationContext(client),
+    placement = await client.registrationPlacement(sdk.nameKey(spelling).root)
   const policy = await client.policy(sdk.contractId(context.policy)).config()
   const quote = await client.quoteRegistration(placement.store, {
     node: sdk.nameKey(spelling).node,
@@ -85,15 +99,20 @@ export async function registrationRegistry(
   _contracts: DuskDomainContractMap,
   name: string,
 ): Promise<string> {
-  if (!app.client) throw new Error('Frozen client unavailable')
-  return (await (await app.client).registrationPlacement(sdk.nameKey(name).root)).store
+  const client = app.client
+  if (!client) throw new Error('Frozen client unavailable')
+  return (await (await client).registrationPlacement(sdk.nameKey(name).root)).store
 }
 export function createDuskDomainsOnChainReadTransport(
   app: DuskConnectAppLike,
   _contracts: DuskDomainContractMap,
 ): DuskDomainsOnChainReadTransport {
   return {
-    client: app.client,
+    // Asked for on every read: once creation recovers from a failure, the next read uses the new client.
+    get client() {
+      return app.client
+    },
+    isCurrentClient: (client) => app.isCurrentClient?.(client) ?? true,
     read: (call) =>
       app.readContract({
         contract: _contracts[call.contract]!,
@@ -104,7 +123,7 @@ export function createDuskDomainsOnChainReadTransport(
 }
 async function wrapped<T>(read: () => Promise<T>) {
   try {
-    return success(await read())
+    return success(await retryReadRace(read))
   } catch (e) {
     return failure<T>('contract_read_failed', e instanceof Error ? e.message : String(e))
   }
@@ -113,8 +132,9 @@ export function createDuskDomainsOnChainClient(
   options: DuskDomainsOnChainClientOptions,
 ): DuskDomainsOnChainClient {
   const getClient = async () => {
-    if (!options.read.client) throw new Error('Frozen client unavailable')
-    return options.read.client
+    const client = options.read.client
+    if (!client) throw new Error('Frozen client unavailable')
+    return client
   }
   const names = new Map<string, string>()
   const byNode = async (node: string) => {
@@ -166,34 +186,46 @@ export function createDuskDomainsOnChainClient(
     )
     return (local(r.value)?.records ?? []).map(recordView).filter((r) => !keys || keys.includes(r.key))
   }
+  const linkView = ({ store, view }: PrimaryLink) => ({
+    store,
+    node: '0x' + sdk.hex(view.primary.name.key.node),
+    name: view.spelling,
+    mappingId: String(view.primary.mapping_id),
+    updatedAtBlock: safeNumber(view.primary.updated_at),
+  })
+  // Every store's stored link for the address, in admission order, as set_primary's uniqueness check reads them.
+  const storedPrimaryLinks = async (endpoint: import('./http/results').DuskEndpoint) =>
+    (await primaryLinks(await getClient(), endpointBytes(endpoint.value))).map(linkView)
   const primary = async (endpoint: import('./http/results').DuskEndpoint) => {
     if (endpoint.type !== 'moonlight_address')
       throw new Error('Only public Dusk addresses support primary names.')
     const c = await getClient()
+    const bytes = endpointBytes(endpoint.value)
+    // A store admitted since the last read is verified first. The snapshot then reads every store at
+    // once, in a few round trips, so it finishes between blocks.
+    await admittedStores(c)
     // SDK 0.3.2 verifyPrimary reads the raw mapping. The store's resolution
     // additionally requires the endpoint to be the current owner or manager.
     const v = await c.snapshot(async (height) => {
-      const { stores } = await c.discover()
-      const bytes = endpointBytes(endpoint.value)
-      let found: sdk.VerifiedPrimary | null = null
-      for (const admission of stores) {
+      const candidates = await Promise.all((await admittedStores(c)).map(async (admission) => {
         const store = sdk.contractId(admission.id)
-        const primary = await c.store(store).resolve_primary({ endpoint: bytes })
-        if (!primary) continue
+        const primary = await rawRead(c, 'store', store, 'resolve_primary', { endpoint: bytes })
+        if (!primary) return null
         const key = primary.primary.name.key
-        const name = await c.locate<sdk.NameView>(store, key.root, 'get_name', key)
-        if (name.store !== store) continue
-        const resolved = await c.locate<sdk.RecordValue | null>(store, key.root, 'resolve_record', {
-          key, record_key: 'moonlight_address',
-        })
-        const record = local(resolved.value)
-        if (resolved.store !== store || !record || !sdk.primaryNameStatus({
-          endpoint: bytes, primary, name: local(name.value), record, height,
-        }).verified) continue
-        if (found) throw new Error('Multiple resolved pool primaries')
-        found = { store, primary, record, height }
-      }
-      return found
+        const [home, name, resolved] = await Promise.all([
+          rawRead(c, 'store', store, 'home', { root: key.root }),
+          rawRead(c, 'store', store, 'get_name', key),
+          rawRead(c, 'store', store, 'resolve_record', { key, record_key: 'moonlight_address' }),
+        ])
+        // The mapping counts only at the store its name lives in, not one it moved on from.
+        if (typeof home === 'object' && 'Forwarded' in home) return null
+        const view = local(name), record = local(resolved)
+        if (!view || !record || !sdk.primaryNameStatus({ endpoint: bytes, primary, name: view, record, height }).verified) return null
+        return { store, primary, record, height }
+      }))
+      const found = candidates.filter((candidate): candidate is sdk.VerifiedPrimary => candidate !== null)
+      if (found.length > 1) throw new Error('Multiple resolved pool primaries')
+      return found[0] ?? null
     })
     if (!v) return null
     return {
@@ -253,23 +285,20 @@ export function createDuskDomainsOnChainClient(
         if (expectedName && expectedName !== p.primaryName) throw new Error('Primary name mismatch')
         return p
       }),
+    readPrimaryLinks: (endpoint) => wrapped(async () => storedPrimaryLinks(endpoint)),
+    checkPrimaryTarget: async (name, address) => {
+      try {
+        const target = await retryReadRace(async () =>
+          primaryTarget(await getClient(), sdk.normalizeNameInput(name), endpointBytes(address)))
+        return success({ store: target.store, nameRef: target.ref, links: target.links.map(linkView) })
+      } catch (e) {
+        return failure(e instanceof PrimaryTargetError ? 'not_primary_eligible' : 'contract_read_failed', e instanceof Error ? e.message : String(e))
+      }
+    },
     readPrimaryName: (endpoint) =>
       wrapped(async () => {
-        const c = await getClient(),
-          { stores } = await c.discover()
-        for (const store of stores) {
-          const p = await c
-            .store(sdk.contractId(store.id))
-            .read_primary({ endpoint: endpointBytes(endpoint.value) })
-          if (p)
-            return {
-              endpoint,
-              node: '0x' + sdk.hex(p.primary.name.key.node),
-              name: p.spelling,
-              updatedAtBlock: safeNumber(p.primary.updated_at),
-            }
-        }
-        return null
+        const link = (await storedPrimaryLinks(endpoint))[0]
+        return link ? { endpoint, ...link } : null
       }),
     getPendingCommitment: (controller, commitment) =>
       wrapped(async () => {
@@ -330,8 +359,9 @@ export function createDuskDomainsMarketplaceOnChainClient(
   read: DuskDomainsOnChainReadTransport,
 ): DuskDomainsMarketplaceOnChainClient {
   const client = async () => {
-    if (!read.client) throw new Error('Frozen client unavailable')
-    return read.client
+    const current = read.client
+    if (!current) throw new Error('Frozen client unavailable')
+    return current
   }
   const order = async (node: string, buyer?: string, identity?: MarketplaceOrderIdentity) => {
     if (identity) {
@@ -357,6 +387,8 @@ export function createDuskDomainsMarketplaceOnChainClient(
         )
       return { o, name: identity.name }
     }
+    // Without an order's identity only the buyer's offer slot in the preferred market is read, the
+    // market a new offer goes to. An existing order is always read at the market it records.
     if (!buyer) throw new Error('The recorded marketplace and order are required')
     const c = await client(),
       indexed = await createDuskDomainsIndexerClient({

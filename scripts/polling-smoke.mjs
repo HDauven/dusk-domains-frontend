@@ -40,6 +40,7 @@ export async function checkPollingBudget(page) {
         case 'subnames': body = { subnames: [], nextCursor: null }; break
         case 'marketplace/config': body = { initialized: true, router: null, treasuryContract: null, marketplaceAuthority: null, operator: null, feeBps: 250, updatedAtBlockHeight: null, txId: null, blockHeight: null }; break
         case 'marketplace/refund': body = null; break
+        case 'marketplace/refunds': body = { refunds: [], nextCursor: null }; break
         case 'marketplace/fixed-sales': body = { fixedSales: [], nextCursor: null }; break
         case 'marketplace/auctions': body = { auctions: [], nextCursor: null }; break
         case 'marketplace/offers': body = { offers: [], nextCursor: null }; break

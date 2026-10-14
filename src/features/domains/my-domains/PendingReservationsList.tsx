@@ -7,6 +7,7 @@ import {
   pendingReservationActionCopy,
   pendingReservationNextStepCopy,
   pendingReservationStatusCopy,
+  reservationExpiryWarning,
 } from '../../registration/registrationCopy'
 
 export function PendingReservationsList({
@@ -16,14 +17,18 @@ export function PendingReservationsList({
   onForgetPendingReservation,
   onOpenPendingReservation,
   pendingReservations,
+  registrationsPaused = false,
 }: {
   walletAction?: string
   onConnectWallet?: () => void
   currentBlockHeight: number | null
+  /** Registrations are paused, while each reservation keeps ageing toward its expiry. */
+  registrationsPaused?: boolean
   onForgetPendingReservation: (reservation: PendingNameReservation) => void
   onOpenPendingReservation: (reservation: PendingNameReservation, options?: { register?: boolean }) => void
   pendingReservations: PendingNameReservation[]
 }) {
+  const expiry = (window: ReturnType<typeof registrationCommitWindow>) => reservationExpiryWarning(window.status, window.staleInBlocks, registrationsPaused)
   return (
     <section className="pending-reservations" aria-labelledby="pending-heading">
       <h2 id="pending-heading" className="eyebrow">
@@ -41,6 +46,7 @@ export function PendingReservationsList({
                 <em>{pendingReservationStatusCopy(reservationWindow.status, reservationWindow.waitBlocks)}</em>
               </span>
               <p>{pendingReservationNextStepCopy(reservationWindow.status)}</p>
+              {expiry(reservationWindow) ? <p className="claim-warning" role="status">{expiry(reservationWindow)}</p> : null}
             </div>
             <div className="pending-reservation-actions">
               <Button variant={reservationWindow.status === 'ready' ? 'primary' : 'secondary'}

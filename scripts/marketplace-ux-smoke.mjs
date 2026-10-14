@@ -36,11 +36,13 @@ export async function checkMarketplaceReviews(page) {
     const { namehashHex } = await import('/src/names/internal.ts')
     const seller = `0x${'22'.repeat(32)}`, buyer = `0x${'33'.repeat(32)}`
     const node = namehashHex('aurora.dusk')
-    const sale = { saleId: 7, openedAtBlockHeight: 100, node, name: 'aurora.dusk', sellerAuthority: seller, priceLux: 25_123_456_789, privateBuyer: null, expiresAtBlockHeight: 5000, feeBps: 250 }
-    const offer = { node, name: sale.name, buyerAuthority: buyer, amountLux: 20_123_456_789, expiresAtBlockHeight: 5000, feeBps: 250 }
-    const auction = { auctionId: 8, feeBps: 250, startDeadlineBlockHeight: 5000, createdAtBlockHeight: 100, node, name: sale.name, sellerAuthority: seller, reservePriceLux: 25e9, startBlockHeight: null, endBlockHeight: null, highestBid: null, bidCount: 0, durationBlocks: 8640 }
+    // Each order is listed with the market and the order it was placed as.
+    const listed = id => ({ marketplaceContractId: `0x${'44'.repeat(32)}`, order: { terms: { id }, nonce: 1, status: 'Open' } })
+    const sale = { saleId: 7, openedAtBlockHeight: 100, node, name: 'aurora.dusk', sellerAuthority: seller, priceLux: 25_123_456_789, privateBuyer: null, expiresAtBlockHeight: 5000, feeBps: 250, ...listed(7) }
+    const offer = { node, name: sale.name, buyerAuthority: buyer, amountLux: 20_123_456_789, expiresAtBlockHeight: 5000, feeBps: 250, ...listed(9) }
+    const auction = { auctionId: 8, feeBps: 250, startDeadlineBlockHeight: 5000, createdAtBlockHeight: 100, node, name: sale.name, sellerAuthority: seller, reservePriceLux: 25e9, startBlockHeight: null, endBlockHeight: null, highestBid: null, bidCount: 0, durationBlocks: 8640, ...listed(8) }
     const auctions = [auction]
-    const refund = { authority: buyer, amountLux: 25_123_456_789 }
+    const refund = { marketplaceContractId: `0x${'44'.repeat(32)}`, authority: buyer, amountLux: 25_123_456_789 }
     const owned = { node, canonicalName: sale.name, owner: seller, namespace: { descendantCount: 2, heldByOthersCount: 1 } }
     window.reviewCalls = []
     window.changedPrice = false
@@ -65,7 +67,8 @@ export async function checkMarketplaceReviews(page) {
       const offers = useOffers({ ...args, writes, setError, marketplaceContractId: `0x${'44'.repeat(32)}`, ownedNames: [owned] })
       const sell = useSellForm({ ...args, writes, setError, marketplaceContractId: `0x${'44'.repeat(32)}`, selectedName: owned, feeBps: 250 })
       const bids = useAuctions({ ...args, writes, auctions, indexerClient: null, marketScope: 'local', accountScope: `${wallet}:${scope}`, selectedAuctionNode: '', setSelectedAuctionNode: () => {}, onBidPlaced: () => {}, setError, setConfirmation })
-      const claimRefund = useMarketplaceRefund(refund, writes)
+      const withdraw = useMarketplaceRefund(writes)
+      const claimRefund = () => withdraw(refund)
       window.marketProbe = { writes, fixed, offers, sell, sale, offer, bids, auction, claimRefund }
       return React.createElement(React.Fragment, null,
         React.createElement('output', { id: 'market-review-error' }, error),

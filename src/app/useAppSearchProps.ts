@@ -1,34 +1,35 @@
-import { registrationPrice } from '../names/internal'
-import { formatDusk } from '../utils/format'
 import type { useDomainManagementFeature } from '../features/domains/useDomainManagementFeature'
 import type { useRegistrationFeature } from '../features/registration/useRegistrationFeature'
 import { useSearchWorkspaceFeature } from '../features/search/useSearchWorkspaceFeature'
 import { lifecycleBadgeCopy, lifecycleNote } from '../features/domains/domainFormat'
 import { clampDurationYears } from './appConstants'
 import type { AppViewModelInputs } from './appViewTypes'
-import { isMarketplaceEscrow } from './managedNameState'
-import { useNameListing } from '../features/marketplace/useNameListing'
 import { nameListingOffer } from '../features/marketplace/nameListing'
+import type { HeldNameListing } from './useHeldListing'
 import { loadSubnameActivity, useSubnameActivity } from '../features/activity/subnameActivity'
-import { pricingRules } from '../features/search/pricingRules'
+import { priceTiers, pricingRules } from '../features/search/pricingRules'
+import { addressRecordIssue } from '../features/domains/recordPresentation'
+import type { ResolverRecord } from '../names/internal'
 
 type UseAppSearchPropsArgs =
   & AppViewModelInputs
-  & { management: ReturnType<typeof useDomainManagementFeature> }
+  & { management: ReturnType<typeof useDomainManagementFeature>; heldListing: HeldNameListing }
   & ReturnType<typeof useRegistrationFeature>
 
-function paysPreviousOwner({ owner, records, selectedAddress, selectedAuthority }: {
+/** The address a name the connected wallet owns pays instead of it. An invalid one pays nobody; the profile says so. */
+export function paysPreviousOwner({ owner, records, selectedAddress, selectedAuthority }: {
   owner: string
-  records: { key: string, value: string }[]
+  records: Pick<ResolverRecord, 'key' | 'value' | 'resolverIssue'>[]
   selectedAddress: string
   selectedAuthority: string
 }) {
-  const address = records.find((record) => record.key === 'moonlight_address')?.value ?? ''
+  const record = records.find((record) => record.key === 'moonlight_address')
+  const address = record && !addressRecordIssue(record) ? record.value : ''
   const owns = Boolean(selectedAuthority) && owner.toLowerCase() === selectedAuthority.toLowerCase()
   return owns && address && selectedAddress && address !== selectedAddress ? address : null
 }
 
-export function useAppSearchProps({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, mainViewRuntime, namePreview, registrationProps, registrationState, searchRuntime, searchState, walletRuntime, management }: UseAppSearchPropsArgs) {
+export function useAppSearchProps({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, mainViewRuntime, namePreview, registrationProps, registrationState, searchRuntime, searchState, walletRuntime, management, heldListing }: UseAppSearchPropsArgs) {
   const {
     primaryProps,
     recordsProps,
@@ -77,11 +78,8 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     handleMainViewChange,
   } = mainViewRuntime
 
-  // A listed name's price and market link. The market holds a listed name as its owner.
-  const configuredMarket = appRuntime.runtimeConfig.contracts?.marketplace?.contractId ?? null
-  const heldByMarket = result.status === 'registered' && managedName.node === nodeHex
-    && Boolean(managedName.inMarketplaceEscrow ?? isMarketplaceEscrow(managedName, configuredMarket))
-  const listing = useNameListing({ indexerClient: appRuntime.indexerClient, node: heldByMarket ? nodeHex : '', escrowed: heldByMarket })
+  // A listed name's price and market link.
+  const { heldByMarket, listing } = heldListing
   // What a subname change on this name was, and who made it, is only in the subname's own activity.
   const subnameActivity = useSubnameActivity(appRuntime.indexerClient, nodeHex, activityEntries, subnames)
   const indexerClient = appRuntime.indexerClient
@@ -94,7 +92,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
       ? walletRuntime.selectedAddress : '',
     premiumResult: result,
     nameSupport: appRuntime.runtimeConfig.nameSupport,
-    priceTiers: !economicsRuntime.feeConfigLoaded ? undefined : ['abc', 'abcd', 'abcde'].map((label, i) => ({ label: ['3 characters', '4 characters', '5+ characters'][i], price: formatDusk(registrationPrice(label, 1, economicsRuntime.feeConfig)) })),
+    priceTiers: economicsRuntime.feeConfigLoaded ? priceTiers(economicsRuntime.feeConfig) : undefined,
     pricingRules: economicsRuntime.feeConfigLoaded ? pricingRules(economicsRuntime.feeConfig) : undefined,
     hasMoreActivity: activityFeed.hasMoreActivity,
     onLoadMoreActivity: () => void activityFeed.loadMoreActivity(),
@@ -106,10 +104,17 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     nowSeconds: searchState.nowSeconds,
     activityEntries,
     activityLoading,
+    // After a policy replacement: the live quote's reason, or prices the indexer withholds. A pause
+    // is explained by the claim card itself.
+    blockedReason: namePreview.registrationBlockedReason
+      || (economicsRuntime.registrationPricesUnavailable ? 'Registration prices are unavailable right now. Try again later.' : ''),
+    registrationsPaused: appRuntime.pause.registrationsPaused,
+    quoteLoading: namePreview.quoteLoading,
     canRegister,
     marketplaceOffers: Boolean(appRuntime.runtimeConfig.capabilities.marketplace && appRuntime.runtimeConfig.contracts.marketplace),
     checked,
-    readError: searchState.indexerError || economicsRuntime.feeConfigError,
+    // Withheld registration prices are not a failed read of this name; the claim card says so.
+    readError: searchState.indexerError || (economicsRuntime.registrationPricesUnavailable ? '' : economicsRuntime.feeConfigError),
     onRetry: () => { void searchRuntime.refreshCurrentNameFromIndexer(); void economicsRuntime.loadFeeConfig() },
     currentBlockHeight: searchState.currentBlockHeight,
     displayName,

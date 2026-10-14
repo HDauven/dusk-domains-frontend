@@ -20,6 +20,7 @@ export function useSellForm({
   feeBps,
   duskDomainsOnChainClient,
   marketplaceContractId,
+  newOrdersRefusal = null,
   onOpenWalletConnection,
   selectedAddress,
   selectedAuthority,
@@ -30,6 +31,8 @@ export function useSellForm({
   feeBps: number | null
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
   marketplaceContractId: string
+  /** Why the preferred market takes no new listing now, such as an unknown fee. */
+  newOrdersRefusal?: string | null
   onOpenWalletConnection: () => void
   selectedAddress: string
   selectedAuthority: string
@@ -51,13 +54,14 @@ export function useSellForm({
   }, [])
 
   const createListing = useCallback(async function createListing(reviewed = false, reviewedRef?: NameRef) {
+    if (newOrdersRefusal) { setError(newOrdersRefusal); return }
     if (feeBps === null) { setError('The marketplace fee is still loading. Try again shortly.'); return }
     if (!selectedName) {
       setError('Choose a name to sell.')
       return
     }
     if (!marketplaceContractId) {
-      setError('Marketplace contract is not configured.')
+      setError('The market can’t be reached right now. Try again in a moment.')
       return
     }
     if (!selectedAddress) {
@@ -195,6 +199,7 @@ export function useSellForm({
     durationDays,
     fixedPriceDusk,
     marketplaceContractId,
+    newOrdersRefusal,
     onOpenWalletConnection,
     privateBuyer,
     reserveDusk,

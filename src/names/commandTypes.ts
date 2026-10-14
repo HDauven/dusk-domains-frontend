@@ -18,6 +18,8 @@ export type DuskDomainContractMap = Record<DuskDomainRequiredContractKey, DuskDo
 export type DuskDomainCallKind = 'read' | 'write'
 
 export type ReviewedAuthorityRecipient = { name?: string; address: string }
+/** The owner a renewal of someone else's name was reviewed for, and its listing, if listed. */
+export type ReviewedRenewal = { owner: string; listing: { marketplace: string; orderId: string } | null }
 
 export type DuskDomainCallMetadata<TArgs = unknown> = {
   /** Presentation only; reassignment and take-back use the same contract call. */
@@ -28,8 +30,18 @@ export type DuskDomainCallMetadata<TArgs = unknown> = {
   /** Display only; removal always includes every descendant, even if not listed here. */
   knownDescendants?: string[]
   reviewedOrder?: import('@duskdomains/sdk').Order
+  /** The registration quote shown when Register was pressed; the reveal signs only this price. */
   quote?: import('@duskdomains/sdk').RegistrationQuote
+  /** What the reservation was priced at, kept with it; a policy replacement since then needs confirming. */
+  reservedQuote?: import('./registrationQuote').ReviewedRegistrationQuote
   nameRef?: import('@duskdomains/sdk').NameRef
+  /**
+   * What a renewal of a name someone else holds was offered for: the owner reviewed and, for a listed
+   * name, the market holding it and the order it is listed by. The holder's own renewal has none.
+   */
+  reviewedRenewal?: ReviewedRenewal
+  /** The primary link a clear was reviewed for: the name it is to, the store holding it and its mapping. */
+  reviewedPrimary?: { name: string; store: string; mappingId: string }
   expectedFeeBps?: number
   expectedRecipient?: string
   expectedScheduleVersion?: bigint
@@ -62,6 +74,8 @@ export type DuskConnectAppLike = {
     name: string,
   ) => Promise<import('./transactions').WalletFrozenCall>
   client?: Promise<import('@duskdomains/sdk').FrozenClient>
+  /** Whether `client` is still the current one: false once it was discarded, such as after a failed verification. */
+  isCurrentClient?: (client: unknown) => boolean
   readonly chainId?: string
   readContract: (params: {
     contract: DuskDomainContractPreset

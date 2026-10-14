@@ -24,6 +24,8 @@ it.each(['mainnet', 'testnet'])('documents every production setting for %s', (ne
     // No wallet or explorer supports .dusk names yet; add them here when they ship.
     VITE_DUSK_DOMAINS_NAME_WALLETS: '',
     VITE_DUSK_DOMAINS_NAME_EXPLORERS: '',
+    // Contracts admitted after launch, such as a replacement policy, load only from the manifest.
+    VITE_DUSK_DOMAINS_MANIFEST_URL: '/manifest.json',
   })
   for (const role of ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE']) {
     expect(env[`VITE_DUSK_DOMAINS_${role}_CONTRACT_ID`]).toMatch(/^<.+>$/)

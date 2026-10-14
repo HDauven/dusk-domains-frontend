@@ -1,15 +1,57 @@
 import * as sdk from '@duskdomains/sdk'
 import { SETTLEMENT_WINDOW_BLOCKS } from './marketplaceProtocol'
 import type * as T from './commandTypes'
-import { endpointBytes, local, requireName } from './reads'
+import { endpointBytes, local, openRegistrationContext, requireName } from './reads'
 import { createDuskDomainsIndexerClient } from './http/client'
+import { PrimaryElsewhereError, PrimaryTargetError, primaryLinkMoving, primaryLinks, primaryTarget } from './primaryLinks'
+import { retryReadRace } from './readRace'
 import { namehashHex } from './hash'
 import { prepareRecordMutations } from './recordMutations'
+import { RegistrationPriceChangedError, registrationPolicyChanged, registrationQuoteBindingsDiffer } from './registrationQuote'
 import { walletExpiry, walletSaleAmounts, withWalletDetails, type WalletCallDetails } from './walletCallDetails'
 import type { WalletFrozenCall } from './transactions'
+import { MARKET_CLOSED_MESSAGE } from './ui/errors'
 const bytes = (v: string) => sdk.fromHex(v, 32)
 const changed = () =>
   new Error('On-chain terms changed. Refresh and review the latest terms before signing.')
+
+const NOT_LISTED = 'This name isn’t listed anymore, so only its owner or manager can renew it.'
+const OWNER_CHANGED = 'This name changed owners since you reviewed it, so only its owner or manager can renew it.'
+
+// Anyone can renew a name on chain, but this site renews someone else's name only as reviewed: the
+// owner unchanged and, for a listed name, the market this release lists still holding it with the
+// reviewed order open. A sale or return between review and signing changes the owner, not the name's
+// incarnation. A listed name is renewed through its market with that order, which the chain checks
+// again when the renewal executes. The holder's own renewal needs none of this.
+async function requireRenewalBasis(client: sdk.FrozenClient, n: Awaited<ReturnType<typeof requireName>>, actor: number[], reviewed?: T.ReviewedRenewal) {
+  const { owner, manager, custody } = n.view.name
+  if ([owner, manager].some(authority => sdk.hex(authority) === sdk.hex(actor))) return null
+  if (!reviewed || sdk.hex(owner) !== sdk.hex(bytes(reviewed.owner))) throw new Error(OWNER_CHANGED)
+  if (!reviewed.listing) {
+    if (custody) throw new Error(NOT_LISTED)
+    return null
+  }
+  const marketId = sdk.contractId(bytes(reviewed.listing.marketplace))
+  if (!custody || sdk.contractId(custody.custodian) !== marketId || sdk.hex(owner) !== marketId) throw new Error(NOT_LISTED)
+  try {
+    await client.verifyContract('marketplace', marketId)
+  } catch {
+    throw new Error(NOT_LISTED)
+  }
+  const order = await client.marketplace(marketId).read_order({ id: BigInt(reviewed.listing.orderId) })
+  if (!order || order.status !== 'Open' || order.terms.kind === 'Offer' || order.nonce !== custody.nonce
+    || sdk.hex(order.terms.name.key.node) !== sdk.hex(n.ref.key.node)
+    || sdk.stringifyJson(order.terms.name.incarnation) !== sdk.stringifyJson(n.ref.incarnation))
+    throw new Error(NOT_LISTED)
+  return { marketId, order }
+}
+
+// A new order or bid needs the market's own enablement and the directory's Listed status. Both are
+// read now: the indexer's pause flags can lag, as while its collector is stuck.
+async function requireMarketTakesOrders(client: sdk.FrozenClient, marketId: string, config?: sdk.Config) {
+  const [own, listed] = await Promise.all([config ?? client.marketplace(marketId).config(), client.directory.market({ id: bytes(marketId) })])
+  if (own.new_orders_disabled || listed?.state !== 'Listed') throw new Error(MARKET_CLOSED_MESSAGE)
+}
 
 async function walletRecipient(client: sdk.FrozenClient, authority: string, reviewed?: T.ReviewedAuthorityRecipient) {
   if (!reviewed) return `Account ID: ${authority}`
@@ -28,8 +70,20 @@ async function walletRecipient(client: sdk.FrozenClient, authority: string, revi
   }
   return reviewed.name ? `${reviewed.name} (${reviewed.address})` : reviewed.address
 }
-/** Name edits resolve the current home; existing orders retain their recorded target. */
-export async function prepareFrozenCall(
+/**
+ * The call to sign for a request. Name edits resolve the current home; existing orders retain their
+ * recorded target. Preparation only reads, so when a block lands mid-read it reads again.
+ */
+export function prepareFrozenCall(
+  client: sdk.FrozenClient,
+  request: T.DuskDomainCallMetadata,
+  spelling: string,
+  account: string,
+): Promise<import('./transactions').WalletFrozenCall> {
+  return retryReadRace(() => prepareOnce(client, request, spelling, account), 4)
+}
+
+async function prepareOnce(
   client: sdk.FrozenClient,
   request: T.DuskDomainCallMetadata,
   spelling: string,
@@ -50,6 +104,8 @@ export async function prepareFrozenCall(
   const years = (count: number) => `${count} ${count === 1 ? 'year' : 'years'}`
   if (op === 'commit') {
     if (!request.contractId) throw new Error('Original commitment store is required')
+    // Before the wallet is asked: a commit while registrations are closed fails and costs its fee.
+    await openRegistrationContext(client)
     return describe(sdk.storeCommitCall(request.contractId, {
       hash: bytes((request.args as T.CoreCommitRuntimeArgs).commitment),
     }), `Reserve ${spelling} for registration`, { Price: '0 DUSK', 'Next step': 'Register and pay the registration price in a separate transaction' })
@@ -58,12 +114,14 @@ export async function prepareFrozenCall(
     const a = request.args as T.CoreCompleteRegistrationRuntimeArgs
     if (!a.commitmentStore || !a.directory || sdk.contractId(a.directory) !== client.directoryId)
       throw new Error('Reservation belongs to another deployment')
+    await openRegistrationContext(client)
     const pending = await client
       .store(a.commitmentStore)
       .pending_commitment({ actor, hash: bytes(a.commitment) })
     if (!pending) throw new Error('Reservation is missing or expired. Reserve this name again.')
     if (sdk.registrationCommitWindow(pending.created_at, height).status !== 'ready')
       throw new Error('Reservation is outside the reveal window')
+    // A fresh quote under the policy the directory selects now, for the same reservation.
     const priced = await client.prepareRegistration({
       actor,
       label: a.label,
@@ -75,17 +133,27 @@ export async function prepareFrozenCall(
       records: a.records.map((r) => sdk.createRecordInput(r.key, r.value, BigInt(r.ttlSeconds))),
       primary: a.primaryEndpoint ? endpointBytes(a.primaryEndpoint.endpointValue) : null,
     })
-    if (BigInt(priced.quote.total_lux) !== BigInt(a.feeLux)) throw changed()
-    if (request.quote && sdk.stringifyJson(request.quote) !== sdk.stringifyJson(priced.quote)) {
-      // The observation height may change; economic and policy bindings must not.
-      if (
-        request.quote.total_lux !== priced.quote.total_lux ||
-        request.quote.policy_version !== priced.quote.policy_version ||
-        request.quote.quote.config_version !== priced.quote.quote.config_version ||
-        sdk.hex(request.quote.policy) !== sdk.hex(priced.quote.policy)
-      )
-        throw changed()
+    // Registration sets a primary name as set_primary does: never while another store holds the link.
+    if (a.primaryEndpoint) {
+      const elsewhere = (await primaryLinks(client, endpointBytes(a.primaryEndpoint.endpointValue)))
+        .find(link => link.store !== sdk.contractId(priced.store))
+      if (elsewhere) throw new PrimaryElsewhereError(elsewhere, spelling)
     }
+    // A policy replacement keeps the reservation but not its price. Sign only the price that was
+    // shown and, if the reservation was priced under another policy, only once the new one is confirmed.
+    // The observation height may change; economic and policy bindings must not.
+    const reserved = request.reservedQuote?.years === a.durationYears ? request.reservedQuote : undefined
+    const sinceReservation = Boolean(reserved && registrationPolicyChanged(reserved, priced.quote))
+    if (
+      sinceReservation ||
+      BigInt(priced.quote.total_lux) !== BigInt(a.feeLux) ||
+      (request.quote && registrationQuoteBindingsDiffer(request.quote, priced.quote))
+    )
+      throw new RegistrationPriceChangedError({
+        previousTotalLux: sinceReservation ? reserved!.totalLux : String(a.feeLux),
+        sinceReservation,
+        quote: priced.quote,
+      })
     const call = priced.calls.reveal
     return describe(call, `Register ${spelling} for ${years(a.durationYears)}: ${money(call.deposit)}`, {
       Duration: years(a.durationYears), Price: money(call.deposit),
@@ -132,15 +200,18 @@ export async function prepareFrozenCall(
   if (op === 'clear_primary_name') {
     const a = request.args as T.CoreClearPrimaryNameRuntimeArgs,
       endpoint = endpointBytes(a.endpointValue),
-      { stores } = await client.discover()
-    for (const s of stores) {
-      const store = sdk.contractId(s.id),
-        p = await client.store(store).read_primary({ endpoint })
-      if (p)
-        return withWalletDetails(sdk.storeClearPrimaryCall(store, { endpoint, expected_mapping_id: p.primary.mapping_id }),
-          `Clear ${p.spelling} as your primary name`, { Name: p.spelling, 'Dusk address': a.endpointValue })
-    }
-    throw new Error('Primary name is already cleared.')
+      reviewed = request.reviewedPrimary,
+      links = await primaryLinks(client, endpoint),
+      link = reviewed ? links.find(link => link.store === sdk.contractId(reviewed.store)) : links[0]
+    if (!link) throw new Error('Primary name is already cleared.')
+    // Only the mapping reviewed is cleared: another, even for the same name, is never adopted.
+    if (reviewed && (link.view.spelling !== reviewed.name || String(link.view.primary.mapping_id) !== reviewed.mappingId))
+      throw new Error('Your primary name changed since you reviewed it. Check it again before continuing.')
+    // clear_primary refuses while the link's name has moved on from its store or is being moved.
+    if (await primaryLinkMoving(client, link))
+      throw new Error(`${link.view.spelling} is moving between shards, so it can’t be cleared as your primary name until the move finishes. Try again after it.`)
+    return withWalletDetails(sdk.storeClearPrimaryCall(link.store, { endpoint, expected_mapping_id: reviewed ? BigInt(reviewed.mappingId) : link.view.primary.mapping_id }),
+      `Clear ${link.view.spelling} as your primary name`, { Name: link.view.spelling, 'Dusk address': a.endpointValue })
   }
   const config = await client.directory.config()
   if (op === 'claim_refund') {
@@ -228,6 +299,7 @@ export async function prepareFrozenCall(
     }
     if (op === 'place_bid') {
       const a = request.args as T.MarketplacePlaceBidRuntimeArgs
+      await requireMarketTakesOrders(client, marketId)
       return describe(calls.bid(
         current,
         String(a.amountLux),
@@ -291,6 +363,7 @@ export async function prepareFrozenCall(
   if (request.nameRef && sdk.stringifyJson(request.nameRef) !== sdk.stringifyJson(n.ref)) throw changed()
   switch (op) {
     case 'renew': {
+      const listing = await requireRenewalBasis(client, n, actor, request.reviewedRenewal)
       const a = request.args as T.CoreRenewRuntimeArgs,
         q = await client.quoteRenewal(n.store, { name: n.ref, years: a.durationYears }),
         v = local(q.value)
@@ -301,15 +374,18 @@ export async function prepareFrozenCall(
           request.expectedScheduleVersion !== v.schedule_version)
       )
         throw changed()
-      return describe(sdk.storeRenewCall(q.store, {
+      const renewal = {
         name: n.ref,
         years: a.durationYears,
         expected_schedule_version: v.schedule_version,
         expected_fee_lux: v.total_lux,
         valid_until: deadline,
-      }), `Renew ${spelling} for ${years(a.durationYears)}: ${money(v.total_lux)}`, {
-        Duration: years(a.durationYears), Price: money(v.total_lux), 'New expiry (estimated)': expiry(v.new_expiry),
-      })
+      }
+      return describe(listing ? sdk.marketplaceRenewEscrowCall(listing.marketId, { order: listing.order, renewal }) : sdk.storeRenewCall(q.store, renewal),
+        `Renew ${spelling} for ${years(a.durationYears)}: ${money(v.total_lux)}`, {
+          Duration: years(a.durationYears), Price: money(v.total_lux), 'New expiry (estimated)': expiry(v.new_expiry),
+          ...(listing ? { Listing: 'Stays listed as it is' } : {}),
+        })
     }
     case 'update_authorities': {
       const a = request.args as T.CoreUpdateAuthoritiesRuntimeArgs
@@ -344,11 +420,20 @@ export async function prepareFrozenCall(
         Records: a.mutations.map(mutation => `${mutation.action === 'set' ? 'Set' : 'Clear'} ${mutation.key}`).join('; '),
       })
     }
-    case 'set_primary_name':
-      return describe(sdk.storeSetPrimaryCall(n.store, {
-        name: n.ref,
-        endpoint: endpointBytes((request.args as T.CoreSetPrimaryNameRuntimeArgs).endpointValue),
-      }), `Set ${spelling} as your primary name`, { 'Dusk address': (request.args as T.CoreSetPrimaryNameRuntimeArgs).endpointValue })
+    case 'set_primary_name': {
+      const a = request.args as T.CoreSetPrimaryNameRuntimeArgs
+      // Every precondition is read from the chain: the address set is the name's own record, which
+      // the connected wallet must be, and the signer its owner or manager, for a current name.
+      const target = await primaryTarget(client, spelling, sender)
+      if (sdk.hex(endpointBytes(a.endpointValue)) !== sdk.hex(sender))
+        throw new PrimaryTargetError(`${spelling}’s Dusk address record isn’t the address this was reviewed for. Refresh and check it again.`)
+      if (request.nameRef && sdk.stringifyJson(request.nameRef) !== sdk.stringifyJson(target.ref)) throw changed()
+      // set_primary refuses while another store holds the address's primary link (PrimaryAlreadySet);
+      // only the address can clear that one, in its own store. A link in this store it replaces.
+      const elsewhere = target.links.find(link => link.store !== target.store)
+      if (elsewhere) throw new PrimaryElsewhereError(elsewhere, spelling)
+      return describe(sdk.storeSetPrimaryCall(target.store, { name: target.ref, endpoint: sender }), `Set ${spelling} as your primary name`, { 'Dusk address': account })
+    }
     case 'remove_subname':
       return describe(sdk.storeRemoveSubnameCall(n.store, { name: n.ref }), `Remove ${spelling} and all its descendants`, {
         Records: 'Clear records and primary names of this name and every subname beneath it',
@@ -376,11 +461,15 @@ export async function prepareFrozenCall(
       }), `Take back subnames of ${spelling}`, { Subdomains: subnames.sort().join(', '), Records: 'Clear records and primary names of these subnames' })
     }
   }
-  if (!config.preferred_marketplace) throw new Error('Marketplace unavailable')
+  // New orders go to the market the directory prefers now. A SetPreferredMarketplace can execute
+  // after review (anyone may execute it once it is ready), and a market this site's manifest doesn't
+  // list fails verification with that reason.
+  if (!config.preferred_marketplace) throw new Error('The market isn’t taking new orders right now.')
   const marketId = sdk.contractId(config.preferred_marketplace)
   const expectedMarket =
     request.contractId ?? (request.args as { marketplaceContract?: string }).marketplaceContract
-  if (expectedMarket && sdk.contractId(expectedMarket) !== marketId) throw changed()
+  if (expectedMarket && sdk.contractId(expectedMarket) !== marketId)
+    throw new Error('The market moved to a new contract after you reviewed this. Review it again before signing.')
   await client.verifyContract('marketplace', marketId)
   const driver = client.release.drivers.get(marketId)!
   const calls = sdk.createMarketplaceCalls(marketId, client.directoryId, driver),
@@ -391,6 +480,7 @@ export async function prepareFrozenCall(
       T.MarketplacePlaceOfferRuntimeArgs
     const mc = await market.config(),
       kind = op === 'escrow_fixed_sale' ? 'Fixed' : op === 'escrow_auction' ? 'Auction' : 'Offer'
+    await requireMarketTakesOrders(client, marketId, mc)
     if (request.expectedFeeBps !== undefined && request.expectedFeeBps !== mc.fee_bps) throw changed()
     let recipient = a.sellerRecipient ? endpointBytes(a.sellerRecipient) : null
     if (kind === 'Offer') {

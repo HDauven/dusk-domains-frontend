@@ -71,6 +71,17 @@ export function renewalDeadline(lifecycle: { expiresAt: number, graceEndsAt: num
   return graceEndsAt > unixSecondsLifecycleFloor ? graceEndsAt - 60 * 60 : graceEndsAt
 }
 
+/**
+ * Whether a name can still be renewed before its grace period ends. A deadline in blocks needs the
+ * current block height: without it, the deadline may have passed, so renewal is closed.
+ */
+export function renewalOpen(lifecycle: { expiresAt: number, graceEndsAt: number }, currentBlockHeight: number | null, nowSeconds: number) {
+  const deadline = renewalDeadline(lifecycle)
+  if (deadline <= 0) return false
+  if (deadline <= unixSecondsLifecycleFloor && currentBlockHeight === null) return false
+  return !lifecycleHeightReached(deadline, currentBlockHeight, nowSeconds)
+}
+
 // Only label.dusk is registered; every deeper name is a subname.
 export function isSubname(name: string) {
   return name.replace(/\.dusk$/u, '').includes('.')

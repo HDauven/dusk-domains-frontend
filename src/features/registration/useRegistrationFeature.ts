@@ -8,6 +8,9 @@ import { useRegistrationActions } from './useRegistrationActions'
 import { saveReservationPrimaryChoice } from './reservationPrimaryChoice'
 import { registrationCommitMatchesSession } from './pendingReservationTypes'
 import { claimSetsPrimary, isPrimaryAsk, primaryNameNote, useWalletPrimary } from './walletPrimary'
+import { safeNumber } from '../../names/numbers'
+import { registrableQuote } from '../../names/internal'
+import { readReservationQuote, type RegistrationPriceReview } from './reservationQuote'
 
 const REGISTER_INTENT_MS = 30_000
 
@@ -33,7 +36,18 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
   const { primary: walletPrimary, readFresh: readWalletPrimary } = useWalletPrimary(appRuntime.indexerClient, appRuntime.duskDomainsOnChainClient,
     walletRuntime.selectedAddress, namePreview.canRegister ? namePreview.displayName : '')
   const registerSetsPrimary = claimSetsPrimary(registrationState.registerSetsPrimary, walletPrimary, namePreview.displayName)
-  const { handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions({
+  // A price change found for this reservation, waiting for the new price to be confirmed: one a
+  // registration attempt found, or a newer policy selection this page already quoted. Selection
+  // versions only increase, so an older quote shown here never reads as a change.
+  const commitment = registrationState.committed ? registrationState.preparedCommit?.commitment : undefined
+  const review = registrationState.priceChange
+  const reserved = commitment ? readReservationQuote({ chainId: appRuntime.runtimeConfig.chainId, commitment }) : null
+  const live = namePreview.result.quotedYears === registrationState.duration ? namePreview.result.policyQuote : undefined
+  const priceChange: RegistrationPriceReview | null = review && typeof review.commitment === 'string' && review.commitment === commitment ? review
+    : commitment && reserved && live && reserved.years === registrationState.duration && registrableQuote(live)
+      && BigInt(live.policy_version) > BigInt(reserved.policyVersion)
+      ? { commitment, previousLux: safeNumber(reserved.totalLux), quote: live, sinceReservation: true, refused: false } : null
+  const { handleConfirmNewPrice, handlePrepareCommit, handleRegisterName, handleRestartReservation } = useRegistrationActions({
     appliedReferral: economicsRuntime.appliedReferral,
     appendActivity: activityFeed.appendActivity,
     canPrepareCommit: derivedState.canPrepareCommit,
@@ -52,9 +66,11 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
     loadPendingReservations: registrationRuntime.loadPendingReservations,
     nodeHex: namePreview.nodeHex,
     preparedCommit: registrationState.preparedCommit,
+    priceChange,
     primaryChoice: registrationState.registerSetsPrimary,
     readWalletPrimary,
     recordSourceContractId: appRuntime.recordSourceContractId,
+    refreshQuotes: namePreview.refreshQuotes,
     refreshCommitBlockState: registrationRuntime.refreshCommitBlockState,
     registrationTargetAddress: registrationRuntime.registrationTargetAddress,
     registrationTargetAddressErrors: registrationRuntime.registrationTargetAddressErrors,
@@ -71,6 +87,7 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
     setManagedName: domainState.setManagedName,
     setNowSeconds: searchState.setNowSeconds,
     setPreparedCommit: registrationState.setPreparedCommit,
+    setPriceChange: registrationState.setPriceChange,
     setPrimaryEndpointValue: domainState.setPrimaryEndpointValue,
     setConnectedPrimaryName: domainState.setConnectedPrimaryName,
     setPrimaryName: domainState.setPrimaryName,
@@ -104,7 +121,7 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
   const premiumConfirmation = premiumConfirmationQuote(namePreview.result, registrationState.duration, economicsRuntime.feeConfig, namePreview.lifecycleBaseBlockHeight)
   const intent = registrationState.registerIntent
   const intentReady = Boolean(intent && intent.commitment === registrationState.preparedCommit?.commitment
-    && registrationState.registrationStep === 'purchase' && derivedState.canRevealRegistration && !premiumConfirmation)
+    && registrationState.registrationStep === 'purchase' && derivedState.canRevealRegistration && !premiumConfirmation && !priceChange)
   const registerFromIntent = useEffectEvent(() => {
     const requestedAt = registrationState.registerIntent?.requestedAt ?? 0
     registrationState.setRegisterIntent(null)
@@ -115,6 +132,9 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
     if (intentReady) registerFromIntent()
   }, [intentReady])
 
+  const newTotalLux = priceChange ? safeNumber(priceChange.quote.total_lux) : null
+  // The price shown is live when the claim has a quote for its term; otherwise it is an estimate.
+  const liveQuote = namePreview.result.quotedYears === registrationState.duration && namePreview.result.totalFeeLux !== undefined
   const step: RegistrationFlowPanelProps['step'] = {
     registrationStep: registrationState.registrationStep,
     quote: {
@@ -122,12 +142,16 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
       currentBlockHeight: namePreview.lifecycleBaseBlockHeight,
       premiumConfirmation,
       onWaitForPremium: onBackToOverview,
+      priceChange: priceChange ? { previousLux: priceChange.previousLux, totalLux: newTotalLux!,
+        sinceReservation: priceChange.sinceReservation, refused: priceChange.refused } : null,
+      priceNote: priceChange ? '' : namePreview.registrationBlockedReason
+        || (economicsRuntime.registrationPricesUnavailable && !liveQuote ? 'Registration prices are unavailable right now. Try again later.' : ''),
       canRegister: namePreview.canRegister,
       displayName: namePreview.displayName,
       duration: registrationState.duration,
       expiryDate: namePreview.expiryDate,
-      feeConfigError: namePreview.quoteError || economicsRuntime.feeConfigError,
-      registrationFee: namePreview.registrationFee,
+      feeConfigError: priceChange || liveQuote ? '' : namePreview.quoteError || economicsRuntime.feeConfigError,
+      registrationFee: newTotalLux !== null ? newTotalLux / 1e9 : namePreview.registrationFee,
       registrationTargetAddress: registrationRuntime.registrationTargetAddress,
       registrationTargetAddressErrors: registrationRuntime.registrationTargetAddressErrors,
     },
@@ -146,6 +170,7 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
       onPrepareCommit: () => void withPrimaryChoiceLocked(handlePrepareCommit),
       onRestartReservation: () => void withPrimaryChoiceLocked(handleRestartReservation),
       reservationStranded: derivedState.reservationStranded,
+      registrationsPaused: Boolean(appRuntime.pause?.registrationsPaused),
     },
     purchase: {
       canRevealRegistration: derivedState.canRevealRegistration,
@@ -154,6 +179,11 @@ export function useRegistrationFeature({ activityFeed, appRuntime, derivedState,
         // The switch and the primary name its note is about, as shown when Register is pressed.
         const shown = { setsPrimary: registerSetsPrimary, primary: walletPrimary }
         void withPrimaryChoiceLocked(() => handleRegisterName(confirmedTotalLux, shown))
+      },
+      onConfirmNewPrice: () => {
+        if (registrationState.registerIntent) registrationState.setRegisterIntent(null)
+        const shown = { setsPrimary: registerSetsPrimary, primary: walletPrimary }
+        void withPrimaryChoiceLocked(() => handleConfirmNewPrice(shown))
       },
       onAddRecords: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, async name => { await searchRuntime.openIndexedName(name); searchState.setResultView('records') }),
       onSetAddress: () => void openRegisteredName(appRuntime.indexerClient, namePreview.displayName, searchRuntime.openIndexedName),

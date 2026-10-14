@@ -158,11 +158,17 @@ function normalizedOptionalAuthority(value: string | null) {
 }
 
 function sameOrder(indexed?: Order, canonical?: Order) {
- return !indexed || Boolean(canonical && stringifyJson(indexed.terms) === stringifyJson(canonical.terms) && indexed.nonce === canonical.nonce && indexed.status === canonical.status)
+ return Boolean(indexed && canonical && stringifyJson(indexed.terms) === stringifyJson(canonical.terms) && indexed.nonce === canonical.nonce && indexed.status === canonical.status)
 }
 
+// An order row is acted on only at the market and order it records. A row missing either is
+// refused, never matched against what the preferred market holds.
 function orderIdentity(indexed: { name: string; marketplaceContractId?: string | null; order?: Order }) {
-  if (!indexed.order) return undefined
-  if (!indexed.marketplaceContractId) throw new Error('The recorded marketplace is missing. Refresh before trying again.')
+  if (!indexed.order || !indexed.marketplaceContractId) throw new Error('The recorded marketplace is missing. Refresh before trying again.')
   return { marketplaceContractId: indexed.marketplaceContractId, name: indexed.name, order: indexed.order }
+}
+
+/** The market an order row records. */
+export function recordedMarketplace(indexed: { name: string; marketplaceContractId?: string | null; order?: Order }) {
+  return orderIdentity(indexed).marketplaceContractId
 }

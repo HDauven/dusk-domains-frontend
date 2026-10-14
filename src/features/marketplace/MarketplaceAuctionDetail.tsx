@@ -100,7 +100,7 @@ export function MarketplaceAuctionDetail({ selectedAuction: auction, ...props }:
 
         <Panel as="aside" className="marketplace-bid-panel" aria-label={`Bid on ${auction.name}`}>
           {leading ? <p className="marketplace-bidder-banner leading">{status === 'settlement_expired' ? 'Settlement expired — refund available after closing' : status === 'ended' ? 'You won — finalizing' : 'You’re the highest bidder'}</p> : null}
-          {ownAuction ? <><p className="marketplace-bidder-banner selling">You’re selling this name</p><p>Renewal is available after the listing closes.</p></> : null}
+          {ownAuction ? <><p className="marketplace-bidder-banner selling">You’re selling this name</p><p>You can still renew it while it’s listed. Renewing doesn’t change the listing.</p></> : null}
           <div className="marketplace-bid-price">
             <span>{auction.highestBid ? 'Current bid' : 'Minimum bid'}</span>
             <strong><MarketplaceAmount lux={auction.highestBid?.amountLux ?? auction.reservePriceLux} roundUp={!auction.highestBid} /></strong>
@@ -162,16 +162,20 @@ function AuctionAction({
       <div className="marketplace-auction-action-stack"><p>Your name remains in escrow until the auction is finalized.</p></div>
     )
   }
-  // Visitors can work out a bid first. The wallet is needed only to review and sign it.
+  // Visitors can work out a bid first. The wallet is needed only to review and sign it. A market
+  // that takes no new orders still finalizes and closes the auctions it holds.
+  const refusal = props.auction.bidRefusal?.(auction) ?? null
+  const biddable = !props.wallet.tradingPaused && !refusal && props.wallet.actionsAvailable && auction.escrowed
   const form = (
     <div className="marketplace-auction-action-stack">
+      {refusal ? <p className="field-note" role="status">{refusal}</p> : null}
       <label className="marketplace-bid-field">
         <span>Your bid</span>
         <div className="marketplace-input-suffix">
           <Input
             aria-describedby={`bid-help-${auction.node}`}
             aria-label={`Bid on ${auction.name}`}
-            disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !auction.escrowed}
+            disabled={!biddable}
             inputMode="decimal"
             type="text"
             value={props.auction.bidDrafts[auction.node] ?? minimum}
@@ -187,7 +191,7 @@ function AuctionAction({
       {!props.wallet.selectedAddress ? (
         <Button variant="primary" className="compact" type="button" onClick={props.wallet.onOpenWalletConnection}>Connect wallet to bid</Button>
       ) : (
-        <Button variant="primary" className="compact" disabled={props.wallet.tradingPaused || !props.wallet.actionsAvailable || !auction.escrowed} type="button" onClick={() => props.auction.onReviewBid(auction)}>Review bid</Button>
+        <Button variant="primary" className="compact" disabled={!biddable} type="button" onClick={() => props.auction.onReviewBid(auction)}>Review bid</Button>
       )}
       <p className="marketplace-custody-note">Your full bid is locked in the marketplace contract. If you’re outbid, it becomes withdrawable marketplace balance.</p>
     </div>

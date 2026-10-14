@@ -20,18 +20,21 @@ import {
 
 const node = namehashHex('example.dusk')
 const authority = `0x${'22'.repeat(32)}`
+// Every order row names the market and order it was read from.
+const order = { terms: { id: 1n }, nonce: 1n, status: 'Open' } as unknown as NonNullable<IndexedMarketplaceOffer['order']>
+const identity = { marketplaceContractId: `0x${'66'.repeat(32)}`, order }
 
 describe('canonical marketplace signing state', () => {
   it('accepts matching canonical sale state', async () => {
     const client = clientWith({
       getFixedSale: vi.fn(async () => ({ ok: true, value: {
         node, name: 'example.dusk', sellerAuthority: authority, priceLux: 10n,
-        privateBuyer: null, expiresAtBlock: 200, domainExpiresAtBlock: 300,
+        privateBuyer: null, expiresAtBlock: 200, domainExpiresAtBlock: 300, order,
       } })),
     })
     const indexed = {
       node, name: 'example.dusk', sellerAuthority: authority, priceLux: 10, privateBuyer: null,
-      expiresAtBlockHeight: 200,
+      expiresAtBlockHeight: 200, ...identity,
     } as IndexedMarketplaceFixedSale
     await expect(canonicalFixedSale(client, indexed)).resolves.toMatchObject({ priceLux: 10n })
   })
@@ -40,19 +43,19 @@ describe('canonical marketplace signing state', () => {
     const client = clientWith({
       getFixedSale: vi.fn(async () => ({ ok: true, value: {
         node, name: 'example.dusk', sellerAuthority: authority, priceLux: 11n,
-        privateBuyer: null, expiresAtBlock: 200, domainExpiresAtBlock: 300,
+        privateBuyer: null, expiresAtBlock: 200, domainExpiresAtBlock: 300, order,
       } })),
     })
     const indexed = {
       node, name: 'example.dusk', sellerAuthority: authority, priceLux: 10,
-      privateBuyer: null, expiresAtBlockHeight: 200,
+      privateBuyer: null, expiresAtBlockHeight: 200, ...identity,
     } as IndexedMarketplaceFixedSale
     await expect(canonicalFixedSale(client, indexed)).rejects.toThrow('changed on-chain')
   })
 
   it('blocks absent auctions and calculates the rounded five-percent minimum', async () => {
     const client = clientWith({ getAuction: vi.fn(async () => ({ ok: true, value: null })) })
-    await expect(canonicalAuction(client, { node } as IndexedMarketplaceAuction)).rejects.toThrow('changed on-chain')
+    await expect(canonicalAuction(client, { node, name: 'example.dusk', ...identity } as IndexedMarketplaceAuction)).rejects.toThrow('changed on-chain')
     expect(minimumCanonicalBidLux({ reservePriceLux: 10n, highestBid: { amountLux: 101n } } as never)).toBe(107n)
   })
 
@@ -71,6 +74,7 @@ describe('canonical marketplace signing state', () => {
       endBlockHeight: null,
       bidCount: 0,
       highestBid: null,
+      ...identity,
     } as IndexedMarketplaceAuction
     const client = clientWith({
       getAuction: vi.fn(async () => ({ ok: true, value: {
@@ -88,6 +92,7 @@ describe('canonical marketplace signing state', () => {
         endBlock: null,
         bidCount: 0,
         highestBid: null,
+        order,
       } })),
     })
 
@@ -201,6 +206,7 @@ describe('canonical marketplace signing state', () => {
       amountLux: 10,
       feeBps: 250,
       expiresAtBlockHeight: 200,
+      ...identity,
     } as IndexedMarketplaceOffer
     const absent = clientWith({ getOffer: vi.fn(async () => ({ ok: true, value: null })) })
     await expect(canonicalOffer(absent, indexed)).rejects.toThrow('changed on-chain')
@@ -212,8 +218,23 @@ describe('canonical marketplace signing state', () => {
       offerId: 1,
       feeBps: 250,
       expiresAtBlock: 200,
+      order,
     } })) })
     await expect(canonicalOffer(changed, indexed)).rejects.toThrow('changed on-chain')
+  })
+
+  it.each([
+    ['neither', { marketplaceContractId: undefined, order: undefined }],
+    ['no market', { marketplaceContractId: null }],
+    ['no order', { order: undefined }],
+  ] as const)('refuses an order row without its recorded market and order before reading: %s', async (_missing, row) => {
+    const read = vi.fn(async () => ({ ok: true as const, value: null }))
+    const client = clientWith({ getFixedSale: read, getAuction: read, getOffer: read })
+    const base = { node, name: 'example.dusk', buyerAuthority: authority, ...identity, ...row }
+    await expect(canonicalFixedSale(client, base as unknown as IndexedMarketplaceFixedSale)).rejects.toThrow('The recorded marketplace is missing')
+    await expect(canonicalAuction(client, base as unknown as IndexedMarketplaceAuction)).rejects.toThrow('The recorded marketplace is missing')
+    await expect(canonicalOffer(client, base as unknown as IndexedMarketplaceOffer)).rejects.toThrow('The recorded marketplace is missing')
+    expect(read).not.toHaveBeenCalled()
   })
 
   it('requires the connected buyer offer key to be empty before placement', async () => {

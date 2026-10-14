@@ -1,4 +1,5 @@
 import type { PremiumConfirmationQuote } from '../premiumTiming'
+import type { PriceChangeView } from '../registrationCopy'
 import type { DuskDomainTxState, NameResult } from '../../../names/internal'
 import type { ReferralState } from '../../referrals/referralState'
 import type { WalletConnectionStatus } from '../../wallet/walletStatus'
@@ -34,6 +35,10 @@ export type RegistrationStepPanelProps = {
     currentBlockHeight?: number | null
     premiumConfirmation?: PremiumConfirmationQuote | null
     onWaitForPremium?: () => void
+    /** The price changed since it was shown or reserved; Register waits for the new one. */
+    priceChange?: PriceChangeView | null
+    /** Why the price can't be registered or isn't live, shown with it. */
+    priceNote?: string
     canRegister: boolean
     displayName: string
     duration: number
@@ -58,10 +63,14 @@ export type RegistrationStepPanelProps = {
     onPrepareCommit: () => void
     onRestartReservation: () => void
     reservationStranded: boolean
+    /** Registrations are paused, while the reservation keeps ageing toward its expiry. */
+    registrationsPaused?: boolean
   }
   purchase: {
     canRevealRegistration: boolean
     onRegisterName: (confirmedTotalLux?: number) => void
+    /** Register the same reservation at the changed price. */
+    onConfirmNewPrice?: () => void
     onAddRecords?: () => void
     onSetAddress: () => void
     registrationCompletion: RegistrationCompletionState | null

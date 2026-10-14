@@ -8,11 +8,15 @@ import { useMarketplaceWrites } from './useMarketplaceWrites'
 const node = namehashHex('example.dusk')
 const buyerAuthority = `0x${'22'.repeat(32)}`
 const seller = `0x${'33'.repeat(32)}`
-const indexed = { node, name: 'example.dusk', buyerAuthority, amountLux: 10_000_000_000, feeBps: 250, expiresAtBlockHeight: 200 } as IndexedMarketplaceOffer
+// The market the row records, which isn't the one the directory prefers now.
+const recordedMarket = `0x${'66'.repeat(32)}`
+const order = { terms: { id: 7n, kind: 'Offer' }, nonce: 1n, status: 'Open' } as unknown as NonNullable<IndexedMarketplaceOffer['order']>
+const indexed = { node, name: 'example.dusk', buyerAuthority, amountLux: 10_000_000_000, feeBps: 250, expiresAtBlockHeight: 200, marketplaceContractId: recordedMarket, order } as IndexedMarketplaceOffer
 
 function setup(offer = { ...indexed }, ownedName = { node, canonicalName: 'example.dusk' } as IndexedNameSummary) {
-  const live: DuskDomainsOnChainOffer = { node, buyerAuthority, amountLux: 10_000_000_000n, offerId: 7, feeBps: 250, expiresAtBlock: 200 }
-  const marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient = { getOffer: async () => ({ ok: true, value: live }), getFixedSale: async () => ({ ok: true, value: null }), getAuction: async () => ({ ok: true, value: null }), getRefund: async () => ({ ok: true, value: null }) }
+  const live: DuskDomainsOnChainOffer = { node, buyerAuthority, amountLux: 10_000_000_000n, offerId: 7, feeBps: 250, expiresAtBlock: 200, order }
+  const getOffer = vi.fn(async () => ({ ok: true as const, value: live }))
+  const marketplaceOnChainClient: DuskDomainsMarketplaceOnChainClient = { getOffer, getFixedSale: async () => ({ ok: true, value: null }), getAuction: async () => ({ ok: true, value: null }), getRefund: async () => ({ ok: true, value: null }) }
   let confirm: (() => Promise<unknown>) | undefined
   const submit = vi.fn(async () => null)
   const setError = vi.fn()
@@ -37,7 +41,7 @@ function setup(offer = { ...indexed }, ownedName = { node, canonicalName: 'examp
     return null
   }
   renderToStaticMarkup(<Probe />)
-  return { accept: () => feature.acceptOffer(offer), confirm: () => confirm!(), submit, setError, requestReview,
+  return { accept: () => feature.acceptOffer(offer), confirm: () => confirm!(), submit, setError, requestReview, getOffer,
     cancel: () => feature.cancelOffer(offer), expire: () => feature.expireOffer(offer),
     change: (terms: Partial<DuskDomainsOnChainOffer>) => { Object.assign(live, terms) } }
 }
@@ -132,4 +136,33 @@ it('keeps the recorded marketplace on cleanup even when the current owner no lon
   expect(h.submit).toHaveBeenCalledTimes(2)
   expect(h.submit).toHaveBeenCalledWith('cancelling this offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), expect.any(String))
   expect(h.submit).toHaveBeenCalledWith('closing this expired offer', 'example.dusk', expect.objectContaining({ contractId: marketplaceContractId }), expect.any(String))
+})
+
+describe('an offer row without its recorded market and order', () => {
+  it.each([
+    ['neither', { marketplaceContractId: undefined, order: undefined }],
+    ['no market', { marketplaceContractId: null }],
+    ['no order', { order: undefined }],
+  ] as const)('is refused, never matched in the preferred market: %s', async (_missing, row) => {
+    for (const action of ['accept', 'cancel', 'expire'] as const) {
+      const h = setup({ ...indexed, ...row })
+      await h[action]()
+      expect(h.getOffer).not.toHaveBeenCalled()
+      expect(h.requestReview).not.toHaveBeenCalled()
+      expect(h.submit).not.toHaveBeenCalled()
+      expect(h.setError).toHaveBeenCalledWith('The recorded marketplace is missing. Refresh before trying again.')
+    }
+  })
+
+  it('acts at the market the row records, not the preferred one', async () => {
+    const h = setup()
+    await h.accept()
+    await h.confirm()
+    await h.cancel()
+    await h.expire()
+    expect(h.getOffer).toHaveBeenCalledWith(node, buyerAuthority, expect.objectContaining({ marketplaceContractId: recordedMarket, order }))
+    expect(h.submit).toHaveBeenCalledTimes(3)
+    for (const [, , call] of h.submit.mock.calls as unknown as Array<[string, string, { contractId: string; args: Record<string, unknown> }]>) expect(call.contractId).toBe(recordedMarket)
+    expect((h.submit.mock.calls[0] as unknown as [string, string, { args: { marketplaceContract: string } }])[2].args.marketplaceContract).toBe(recordedMarket)
+  })
 })

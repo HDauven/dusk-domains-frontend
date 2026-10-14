@@ -20,13 +20,15 @@ export async function checkListingFeeReview(page) {
       getMarketplaceOffersPage: async () => ({ offers: [], nextCursor: null }),
       getAllNames: async () => [owned],
       getHealth: async () => ({ currentBlockHeight: 1000, finalizedBlockHeight: 1000 }),
-      getMarketplaceRefund: async () => null,
+      getAllMarketplaceRefunds: async () => [],
       getMarketplaceConfig: async () => ({ feeBps: window.listingFee }),
     }
     const args = { mainView: 'marketplace', tradingPaused: false, liveWritesAvailable: true, indexerClient,
       duskDomainsOnChainClient: core, marketplaceOnChainClient: {}, selectedAddress: 'seller', selectedAuthority: seller,
       ensurePublicBalanceForLiveWrite: async () => true, onOpenWalletConnection: () => {},
       runtimeConfig: { chainId: 'local', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: `0x${'44'.repeat(32)}` } } },
+      // New listings go to the market the directory prefers, here the configured one.
+      preferredMarketplace: `0x${'44'.repeat(32)}`,
       submitNameWrite: async (_name, call) => { window.listingCalls.push(call); return { status: 'executed' } },
     }
     function FeeReview() {

@@ -26,8 +26,11 @@ export async function checkOpenRenewal(page) {
       } }, config.contracts)
     function Probe() {
       const [poolRead, setPoolRead] = React.useState(read)
-      const marketplaceContractId = usePoolMarketplace(poolRead)
-      const { managedName, setManagedName } = useDomainManagementAppState('resolver', null, null, location.origin, marketplaceContractId)
+      const market = usePoolMarketplace(poolRead)
+      const marketplaceContractId = market.preferred
+      // As the app does: the preferred market, those the release lists and the configured one.
+      const known = React.useMemo(() => [...new Set([...market.known, config.contracts.marketplace.contractId])], [market.known])
+      const { managedName, setManagedName } = useDomainManagementAppState('resolver', null, null, location.origin, known)
       React.useEffect(() => { setManagedName(current => ({ ...current, node: 'node', owner: `0x${contract}`, manager: `0x${contract}`, expiresAt: 200, graceEndsAt: 300 })) }, [setManagedName])
       const [connected, setConnected] = React.useState(true)
       const [resultView, setView] = React.useState('details')
@@ -89,6 +92,8 @@ export async function checkOpenRenewal(page) {
               renewalFee: 10,
               renewalPreviewExpiresAt: 3_153_800,
               onRenewName: () => renewDomainName({ ...capabilities, managedName, displayName: 'alice.dusk', nodeHex: 'node',
+                // Without a live quote, the directory's renewal schedule prices the renewal.
+                feeConfig: { renewalYearLux: { threeChar: 150_000_000_000, fourChar: 50_000_000_000, fivePlus: 10_000_000_000 } },
                 selectedAuthority, resultLabel: 'alice', renewalYears: 1, currentBlockHeight: 250, nowSeconds: 1_790_000_000,
                 walletSetupState: 'connected', runtimeConfig: { contracts: {} }, setRenewalError: message => { window.renewalError = message },
                 setManagedName, appendActivity: event => { window.renewalActivity = event },
@@ -111,9 +116,9 @@ export async function checkOpenRenewal(page) {
   }, { contract, wallet, marketplace })
   await page.waitForFunction(() => window.renewalOwnerIsContract)
   assert.equal(await page.evaluate(() => window.renewalMarketplaceUiEnabled), false)
-  assert.equal(await page.evaluate(() => window.canRenew), false)
-  assert.equal(await page.getByRole('tab', { name: 'Renew', exact: true }).count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).count(), 0)
+  // Anyone can pay to renew a name a contract holds, before the market's identity is read too.
+  assert.equal(await page.evaluate(() => window.canRenew), true)
+  assert.equal(await page.getByRole('tab', { name: 'Renew', exact: true }).count(), 1)
   await page.evaluate(() => window.resolveRenewalPool())
   await page.getByRole('tab', { name: 'Renew', exact: true }).click()
   await page.getByText('Renewal adds time and does not change the owner.', { exact: true }).waitFor()
@@ -123,23 +128,24 @@ export async function checkOpenRenewal(page) {
   assert.deepEqual(await page.evaluate(() => window.renewalCall.args), { node: 'node', durationYears: 1, feeLux: 10_000_000_000 })
   assert.equal(await page.evaluate(() => window.renewalOwner), `0x${contract}`)
   assert.equal(await page.evaluate(() => window.renewalActivity.actor), 'payer')
+  const listingNote = page.getByText('Renewing it doesn’t change the listing', { exact: false })
   for (const managerOnly of [false, true]) {
     await page.evaluate(managerOnly => window.escrowRenewalName(managerOnly), managerOnly)
-    await page.waitForFunction(() => window.renewalOwnerIsContract && !window.canRenew)
-    await page.getByRole('tab', { name: 'Renew', exact: true }).waitFor({ state: 'detached' })
-    assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).count(), 0)
+    await page.waitForFunction(() => window.renewalOwnerIsContract && window.canRenew)
+    await listingNote.waitFor()
+    assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).isEnabled(), true)
     await page.evaluate(() => window.closeRenewalListing())
-    await page.getByRole('tab', { name: 'Renew', exact: true }).click()
+    await listingNote.waitFor({ state: 'detached' })
     assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).isEnabled(), true)
   }
+  // A failed read of the market leaves its identity unknown, and renewal open.
   await page.evaluate(() => window.failRenewalPool())
-  await page.waitForFunction(() => window.renewalPoolId === null && !window.canRenew)
-  assert.equal(await page.getByRole('tab', { name: 'Renew', exact: true }).count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).count(), 0)
+  await page.waitForFunction(() => window.renewalPoolId === null && window.canRenew)
+  assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).isEnabled(), true)
   await page.evaluate(() => window.deferRenewalPool())
   await page.waitForFunction(() => Boolean(window.resolveStaleRenewalPool))
   await page.evaluate(() => window.restoreRenewalPool())
-  await page.getByRole('tab', { name: 'Renew', exact: true }).click()
+  await page.waitForFunction(m => window.renewalPoolId === m, `0x${marketplace}`)
   await page.evaluate(() => window.resolveStaleRenewalPool())
   assert.equal(await page.evaluate(() => window.renewalPoolId), `0x${marketplace}`)
   assert.equal(await page.getByRole('button', { name: 'Renew', exact: true }).isEnabled(), true)

@@ -4,7 +4,8 @@ import { useFixedSales } from './useFixedSales'
 import type { DuskDomainsOnChainFixedSale, IndexedMarketplaceFixedSale } from '../../names/internal'
 
 function setup() {
-  const sale = { saleId: 7, node: 'node', name: 'example.dusk', sellerAuthority: 'seller', priceLux: 10_000_000_000, feeBps: 250, privateBuyer: null, expiresAtBlockHeight: 200, openedAtBlockHeight: 100 } as IndexedMarketplaceFixedSale
+  const sale = { saleId: 7, node: 'node', name: 'example.dusk', sellerAuthority: 'seller', priceLux: 10_000_000_000, feeBps: 250, privateBuyer: null, expiresAtBlockHeight: 200, openedAtBlockHeight: 100,
+    marketplaceContractId: `0x${'66'.repeat(32)}`, order: { terms: { id: 7n }, nonce: 1n, status: 'Open' } } as unknown as IndexedMarketplaceFixedSale
   const live: DuskDomainsOnChainFixedSale = { ...sale, priceLux: 10_000_000_000n, expiresAtBlock: 200, domainExpiresAtBlock: 300 }
   const submit = vi.fn(async () => null)
   const setError = vi.fn()

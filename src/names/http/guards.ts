@@ -1,5 +1,5 @@
 // App presentation / HTTP view model, ported from SDK 0.2.0 (MIT).
-import { ACTIVITY_EVENT_TYPES, type ActivityEntry } from '../ui/activity'
+import { isActivityEventType, type ActivityEntry } from '../ui/activity'
 import type { ForwardResolutionResponse } from './types'
 import type {
   IndexedFeeConfig,
@@ -10,6 +10,7 @@ import type {
   IndexedMarketplaceAuction,
   IndexedMarketplaceOffer,
   IndexedMarketplaceRefund,
+  IndexedMarketplaceSummary,
   IndexedNameSummary,
   IndexedReferralState,
   IndexedRegistrationCommitment,
@@ -28,9 +29,8 @@ export function isNameResult(value: unknown): value is NameResult {
     typeof value.displayName === 'string' &&
     typeof value.label === 'string' &&
     isNameStatus(value.status) &&
-    typeof value.price === 'number' &&
-    Number.isFinite(value.price) &&
-    value.price >= 0 &&
+    // Null while the indexer withholds the prices of a selected policy it has not verified.
+    (value.price === null || (typeof value.price === 'number' && Number.isFinite(value.price) && value.price >= 0)) &&
     Array.isArray(value.issues) &&
     value.issues.every(isSearchIssue) &&
     typeof value.transactionBlocked === 'boolean'
@@ -140,7 +140,7 @@ export function isActivityEntry(value: unknown): value is ActivityEntry {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
-    ACTIVITY_EVENT_TYPES.includes(value.eventType as ActivityEntry['eventType']) &&
+    isActivityEventType(value.eventType) &&
     typeof value.node === 'string' &&
     typeof value.name === 'string' &&
     typeof value.actor === 'string' &&
@@ -242,6 +242,8 @@ export function isIndexedHolding(value: unknown): value is IndexedHolding {
   )
 }
 
+// A market whose configuration the indexer hasn't authenticated has no fee, never a default one.
+// The market summaries are checked one by one, so one malformed row can't hide the config.
 export function isIndexedMarketplaceConfig(value: unknown): value is IndexedMarketplaceConfig {
   return (
     isRecord(value) &&
@@ -252,10 +254,30 @@ export function isIndexedMarketplaceConfig(value: unknown): value is IndexedMark
     (value.tradingPaused === undefined || typeof value.tradingPaused === 'boolean') &&
     isNullableString(value.operator) &&
     (value.pendingOperator === undefined || isNullableString(value.pendingOperator)) &&
-    isNonNegativeInteger(value.feeBps) &&
+    (value.marketplaceContractId === undefined || isNullableString(value.marketplaceContractId)) &&
+    (value.feeBps === null || isNonNegativeInteger(value.feeBps)) &&
     isNullableNumber(value.updatedAtBlockHeight) &&
     isNullableString(value.txId) &&
-    isNullableNumber(value.blockHeight)
+    isNullableNumber(value.blockHeight) &&
+    (value.marketplaces === undefined || Array.isArray(value.marketplaces))
+  )
+}
+
+export function isIndexedMarketplaceSummary(value: unknown): value is IndexedMarketplaceSummary {
+  return (
+    isRecord(value) &&
+    typeof value.marketplaceContractId === 'string' &&
+    typeof value.state === 'string' &&
+    typeof value.preferred === 'boolean' &&
+    (value.authenticated === undefined || typeof value.authenticated === 'boolean') &&
+    typeof value.initialized === 'boolean' &&
+    typeof value.tradingPaused === 'boolean' &&
+    (value.feeBps === null || isNonNegativeInteger(value.feeBps)) &&
+    // What a market holds is unknown, so null, while the indexer hasn't authenticated it.
+    (value.unsettledOrders === null || isNonNegativeInteger(value.unsettledOrders)) &&
+    (value.refundAccounts === null || isNonNegativeInteger(value.refundAccounts)) &&
+    (value.refundableLux === null || (typeof value.refundableLux === 'string' && /^\d+$/.test(value.refundableLux))) &&
+    (value.holdsObligations === null || typeof value.holdsObligations === 'boolean')
   )
 }
 
@@ -361,21 +383,10 @@ export function isIndexedTreasuryState(value: unknown): value is IndexedTreasury
     isAccountingLux(value.referralClaimedLux) &&
     isNonNegativeInteger(value.referralCount) &&
     isNullableString(value.lastFeeSourceContract) &&
-    (value.lastFeeReason === 'registration' ||
-      value.lastFeeReason === 'renewal' ||
-      value.lastFeeReason === 'other' ||
-      value.lastFeeReason === null) &&
+    // A newer vault event or fee reason is kept as long as it is a plain identifier.
+    (value.lastFeeReason === null || isActivityEventType(value.lastFeeReason)) &&
     isNullableString(value.lastFeeNode) &&
-    (value.lastEventType === 'fee_received' ||
-      value.lastEventType === 'protocol_claimed' ||
-      value.lastEventType === 'referral_claimed' ||
-      value.lastEventType === 'treasury_initialized' ||
-      value.lastEventType === 'treasury_operator_changed' ||
-      value.lastEventType === 'treasury_operator_proposed' ||
-      value.lastEventType === 'treasury_operator_cancelled' ||
-      value.lastEventType === 'treasury_fee_received' ||
-      value.lastEventType === 'treasury_claimed' ||
-      value.lastEventType === null) &&
+    (value.lastEventType === null || isActivityEventType(value.lastEventType)) &&
     isNullableString(value.txId) &&
     (isNonNegativeInteger(value.blockHeight) || value.blockHeight === null) &&
     Array.isArray(value.claims) &&

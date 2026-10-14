@@ -1,4 +1,5 @@
 import {
+  ALL_MARKETPLACES,
   contractPrincipalFromWalletAccount,
   namehashHex,
   type DuskDomainsIndexerClient,
@@ -7,6 +8,7 @@ import {
   type IndexedNameSummary,
 } from '../../names/internal'
 import { sameAuthority } from '../identity/ownerLabel'
+import { trustedDuskAddressOf } from '../identity/addressTrust'
 import { isSubname } from './domainFormat'
 import { forgetHeldSubnames, rememberedHeldSubnames } from './heldSubnames'
 
@@ -63,8 +65,9 @@ export async function fetchMyHoldings({ indexerClient, selectedAddress, selected
   const primaryRead = holderIndex ? null : readPrimary()
   const [held, fixedSales, auctions, indexed] = await Promise.all([
     fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority }),
-    listingRead(indexerClient.getAllMarketplaceFixedSales()),
-    listingRead(indexerClient.getAllMarketplaceAuctions()),
+    // Listings in every market: one the directory no longer prefers still holds the names listed there.
+    listingRead(indexerClient.getAllMarketplaceFixedSales(undefined, { marketplace: ALL_MARKETPLACES })),
+    listingRead(indexerClient.getAllMarketplaceAuctions(undefined, { marketplace: ALL_MARKETPLACES })),
     holderIndex ? Promise.all(authorities.map(authority => indexerClient.getAllHoldings({ authority }))).catch(() => null) : null,
   ])
   const names = held.filter(name => !isSubname(name.canonicalName))
@@ -124,9 +127,7 @@ export async function fetchWalletScopedNames({
   const matchesWallet = (name: IndexedNameSummary) => Boolean(
     name.owner && authorityCandidates.includes(name.owner)
     || name.manager && authorityCandidates.includes(name.manager)
-    || name.records.some((record) => (
-      record.key === 'moonlight_address' && record.value === walletAddress
-    ))
+    || trustedDuskAddressOf(name.records) === walletAddress
   )
   const ownerResults = await Promise.all(authorityCandidates.map(async (owner) => (
     indexerClient.getAllNames({ owner })

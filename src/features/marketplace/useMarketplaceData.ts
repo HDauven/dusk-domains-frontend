@@ -6,12 +6,15 @@ import { marketplaceOrderKey, matchesAuctionSelection, auctionSelection } from '
 import { appendPage, readMarketplacePage, readMarketplaceWindow, type MarketplaceCursors } from './marketplacePages'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  ALL_MARKETPLACES,
   namehashHex,
   type DuskDomainsIndexerClient,
   type IndexedMarketplaceAuction,
+  type IndexedMarketplaceConfig,
   type IndexedMarketplaceFixedSale,
   type IndexedMarketplaceOffer,
   type IndexedMarketplaceRefund,
+  type IndexedMarketplaceSummary,
   type IndexedNameSummary,
 } from '../../names/internal'
 import { useScopedState } from '../../utils/useScopedState'
@@ -24,15 +27,25 @@ export type MarketplaceSnapshot = {
 }
 
 type ListingReader = Pick<DuskDomainsIndexerClient, 'getMarketplaceFixedSale' | 'getMarketplaceAuction'>
+/** Whether the preferred market's fee is known: loading, known, or unknown because the indexer has no authenticated config for it. */
+export type MarketplaceFeeStatus = 'loading' | 'known' | 'unknown'
+type MarketConfigRead = Pick<IndexedMarketplaceConfig, 'feeBps' | 'marketplaces'>
 
 function listingNode(name: string) {
   try { return name ? namehashHex(name) : '' } catch { return '' }
 }
 
-// A listing link names a sale or an auction. Read it by its name, not from whichever page has loaded.
+// A listing link names a sale or an auction. Read it by its name, not from whichever page has loaded,
+// in whichever market holds it.
 async function readLinkedListing(client: ListingReader, node: string) {
-  const [fixedSale, auction] = await Promise.all([client.getMarketplaceFixedSale(node), client.getMarketplaceAuction(node)])
+  const anyMarket = { marketplace: ALL_MARKETPLACES }
+  const [fixedSale, auction] = await Promise.all([client.getMarketplaceFixedSale(node, anyMarket), client.getMarketplaceAuction(node, anyMarket)])
   return { fixedSale, auction }
+}
+
+// What's left to withdraw, one row per market. A claimed refund leaves a row at zero.
+async function readRefunds(client: DuskDomainsIndexerClient, authority: string) {
+  return (await client.getAllMarketplaceRefunds(authority)).filter(refund => BigInt(refund.amountLux) > 0n)
 }
 
 const linkedReadError = "Couldn't load the listing this link opens. Retrying…"
@@ -49,6 +62,7 @@ export function useMarketplaceData({
   listingName = '',
   mainView,
   onLoaded,
+  preferredMarketplace = null,
   selectedAddress,
   selectedAuctionNode = '',
   selectedAuthority,
@@ -60,16 +74,21 @@ export function useMarketplaceData({
   listingName?: string
   mainView: string
   onLoaded?: (snapshot: MarketplaceSnapshot) => void
+  /** The market new orders go to, whose fee the sell form shows; null while it can't be read. */
+  preferredMarketplace?: string | null
   selectedAddress: string
   selectedAuctionNode?: string
   selectedAuthority: string
   setError: (message: string) => void
 }) {
   const [feeBps, setFeeBps] = useScopedState<number | null>(accountScope, null)
+  const [feeStatus, setFeeStatus] = useScopedState<MarketplaceFeeStatus>(accountScope, 'loading')
+  // Null until a config with market summaries is read.
+  const [marketplaces, setMarketplaces] = useScopedState<IndexedMarketplaceSummary[] | null>(accountScope, null)
   const [fixedSales, setFixedSales] = useState<IndexedMarketplaceFixedSale[]>([])
   const [auctions, setAuctions] = useState<IndexedMarketplaceAuction[]>([])
   const [offers, setOffers] = useState<IndexedMarketplaceOffer[]>([])
-  const [refund, setRefund] = useScopedState<IndexedMarketplaceRefund | null>(accountScope, null)
+  const [refunds, setRefunds] = useScopedState<IndexedMarketplaceRefund[]>(accountScope, [])
   const [ownedNames, setOwnedNames] = useScopedState<IndexedNameSummary[]>(accountScope, [])
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
   const [updatedAt, setUpdatedAt] = useState<number | null>(null)
@@ -84,7 +103,7 @@ export function useMarketplaceData({
   const requestId = useRef(0)
   const auctionRequest = useRef(0)
   const auctionPending = useRef(false)
-  const backgroundSnapshot = useRef<{ updatedAt: number; feeBps: number | null; ownedNames: IndexedNameSummary[]; refund: IndexedMarketplaceRefund | null } | null>(null)
+  const backgroundSnapshot = useRef<{ updatedAt: number; config: MarketConfigRead | null; ownedNames: IndexedNameSummary[]; refunds: IndexedMarketplaceRefund[] } | null>(null)
   const onLoadedRef = useRef(onLoaded)
   const setErrorRef = useRef(setError)
   const selectedAuctionRef = useRef(selectedAuctionNode)
@@ -120,14 +139,16 @@ export function useMarketplaceData({
       // Fees and wallet data keep the slow cadence while listings refresh each minute.
       const cachedSnapshot = background && backgroundSnapshot.current && Date.now() - backgroundSnapshot.current.updatedAt < 180_000
         ? backgroundSnapshot.current : null
-      const [page, nextOwnedNames, health, nextRefund, config] = await Promise.all([
+      const [page, nextOwnedNames, health, nextRefunds, config] = await Promise.all([
         readMarketplaceWindow(indexerClient, loadedPages.current),
         cachedSnapshot ? Promise.resolve(cachedSnapshot.ownedNames) : selectedAddress
           ? fetchWalletScopedNames({ indexerClient, selectedAddress, selectedAuthority })
           : Promise.resolve([]),
         readSharedHealth(indexerClient),
-        cachedSnapshot ? Promise.resolve(cachedSnapshot.refund) : selectedAuthority ? indexerClient.getMarketplaceRefund(selectedAuthority) : Promise.resolve(null),
-        cachedSnapshot ? Promise.resolve({ feeBps: cachedSnapshot.feeBps }) : indexerClient.getMarketplaceConfig?.() ?? Promise.resolve(null),
+        cachedSnapshot ? Promise.resolve(cachedSnapshot.refunds) : selectedAuthority ? readRefunds(indexerClient, selectedAuthority) : Promise.resolve([]),
+        // The fee of the market new orders go to, which the chain names; the indexer's own default can lag.
+        cachedSnapshot ? Promise.resolve(cachedSnapshot.config)
+          : (indexerClient.getMarketplaceConfig?.(preferredMarketplace ? { marketplace: preferredMarketplace } : undefined) ?? Promise.resolve(null)) as Promise<MarketConfigRead | null>,
       ])
       if (!shouldApply()) return
 
@@ -149,11 +170,15 @@ export function useMarketplaceData({
         page.fixedSales = withOrder(page.fixedSales, fixedSale)
         page.auctions = withOrder(page.auctions, auction)
       }
-      if (!cachedSnapshot) backgroundSnapshot.current = { updatedAt: Date.now(), feeBps: config?.feeBps ?? null, ownedNames: nextOwnedNames, refund: nextRefund }
+      if (!cachedSnapshot) backgroundSnapshot.current = { updatedAt: Date.now(), config, ownedNames: nextOwnedNames, refunds: nextRefunds }
       hasData.current = true
       setReadError(linkedFailed ? linkedReadError : '')
       setAuctionReadError('')
-      setFeeBps(config?.feeBps ?? null)
+      // A market whose configuration the indexer hasn't authenticated has no fee. None is assumed.
+      const fee = typeof config?.feeBps === 'number' ? config.feeBps : null
+      setFeeBps(fee)
+      setFeeStatus(fee !== null ? 'known' : config ? 'unknown' : 'loading')
+      setMarketplaces(Array.isArray(config?.marketplaces) ? config.marketplaces : null)
       setFixedSales(page.fixedSales)
       setAuctions(page.auctions)
       setOffers(page.offers)
@@ -161,7 +186,7 @@ export function useMarketplaceData({
       setOwnedNames(nextOwnedNames)
       setCurrentBlockHeight(health.currentBlockHeight)
       setUpdatedAt(Date.now())
-      setRefund(nextRefund?.amountLux ? nextRefund : null)
+      setRefunds(nextRefunds)
       onLoadedRef.current?.({ auctions: page.auctions, fixedSales: page.fixedSales, ownedNames: nextOwnedNames })
     } catch (loadError) {
       if (shouldApply()) setReadError(hasData.current ? "Couldn't refresh. Retrying…" : 'Marketplace data is unavailable right now.')
@@ -169,7 +194,7 @@ export function useMarketplaceData({
     } finally {
       if (shouldApply()) { setLoading(false); refreshPending.current = false }
     }
-  }, [indexerClient, selectedAddress, selectedAuthority, setOwnedNames, setRefund, setFeeBps])
+  }, [indexerClient, preferredMarketplace, selectedAddress, selectedAuthority, setOwnedNames, setRefunds, setFeeBps, setFeeStatus, setMarketplaces])
 
   const hasMore = Object.values(cursors).some(Boolean)
   const loadMore = useCallback(async () => {
@@ -264,5 +289,5 @@ export function useMarketplaceData({
   const refresh = useCallback((options?: RefreshOptions) => loadMarketplace(!options?.fresh), [loadMarketplace])
   useAutoRefresh(refresh, mainView === 'marketplace', 60_000)
 
-  return { auctionPollingEnabled, readError: readError || auctionReadError, hasData: updatedAt !== null, feeBps, updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refund }
+  return { auctionPollingEnabled, readError: readError || auctionReadError, hasData: updatedAt !== null, feeBps, feeStatus, marketplaces, updatedAt, hasMore, loadMore, auctions, currentBlockHeight, fixedSales, loadMarketplace, loading, offers, ownedNames, refunds }
 }

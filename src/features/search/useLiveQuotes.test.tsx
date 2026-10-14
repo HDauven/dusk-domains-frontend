@@ -47,3 +47,48 @@ it('quotes only submitted searches and discards an outstanding quote when the ne
   await act(async () => root.render(<Probe client={oldClient} />))
   expect(shown).toBeNull()
 })
+
+// The block height alone does not move on every page, so a replacement policy's price must not wait for it.
+function ReplacementProbe({ client, policyVersion }: { client: DuskDomainsOnChainClient; policyVersion: number }) {
+  const value = useLiveQuotes(client, result, 1, 1, 'actor', 100, policyVersion)
+  useLayoutEffect(() => {
+    shown = value
+  })
+  return null
+}
+function replacementClient() {
+  let total = '10000000000'
+  const read = vi.fn(async () => ({ ok: true, value: { quote: { total_lux: total } } }))
+  return { client: { getRegistrationQuote: read } as unknown as DuskDomainsOnChainClient, read, replace: () => { total = '15000000000' } }
+}
+
+it('quotes again when the indexer reports a replacement policy, without a reload', async () => {
+  const { client, read, replace } = replacementClient()
+  await act(async () => root.render(<ReplacementProbe client={client} policyVersion={4} />))
+  expect(shown?.registration?.total_lux).toBe('10000000000')
+  replace()
+  await act(async () => root.render(<ReplacementProbe client={client} policyVersion={4} />))
+  expect(read).toHaveBeenCalledOnce()
+  await act(async () => root.render(<ReplacementProbe client={client} policyVersion={5} />))
+  expect(read).toHaveBeenCalledTimes(2)
+  expect(shown?.registration?.total_lux).toBe('15000000000')
+})
+
+it('quotes again at the normal refresh cadence, keeping the last quote shown meanwhile', async () => {
+  vi.useFakeTimers()
+  try {
+    const { client, read, replace } = replacementClient()
+    await act(async () => root.render(<ReplacementProbe client={client} policyVersion={4} />))
+    await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+    expect(shown?.registration?.total_lux).toBe('10000000000')
+    replace()
+    await act(async () => { await vi.advanceTimersByTimeAsync(179_000) })
+    expect(read).toHaveBeenCalledOnce()
+    expect(shown?.registration?.total_lux).toBe('10000000000')
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000) })
+    expect(read).toHaveBeenCalledTimes(2)
+    expect(shown?.registration?.total_lux).toBe('15000000000')
+  } finally {
+    vi.useRealTimers()
+  }
+})

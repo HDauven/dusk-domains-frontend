@@ -6,6 +6,7 @@ import {
   type DuskDomainTxState,
 } from '../../names/internal'
 import { pluralize } from '../../utils/format'
+import { formatLuxNumberAsDusk } from '../treasury/feeConfig'
 import type { RegistrationCompletionState } from './registrationCompletionState'
 
 type CommitWindowStatus = ReturnType<typeof registrationCommitWindow>['status']
@@ -65,6 +66,21 @@ export function pendingReservationNextStepCopy(status: CommitWindowStatus) {
   return 'Ready to register.'
 }
 
+// About an hour of blocks: little enough time left to say so.
+const EXPIRES_SOON_BLOCKS = 360
+
+/**
+ * A reservation expires 8,640 blocks after it was made, about a day, and a registration pause
+ * doesn't stop that clock. While registrations are paused, say when it expires; otherwise say so
+ * once little time is left, as it can be soon after a pause ends. Null when there is nothing to add.
+ */
+export function reservationExpiryWarning(status: CommitWindowStatus, staleInBlocks: number | undefined, registrationsPaused = false) {
+  if (status === 'missing' || status === 'stale' || !staleInBlocks || staleInBlocks <= 0) return null
+  if (registrationsPaused) return `Registrations are paused, so this reservation can’t be registered now. It expires in about ${formatWait(staleInBlocks)}; if registrations haven’t reopened by then, reserve the name again.`
+  if (status === 'ready' && staleInBlocks <= EXPIRES_SOON_BLOCKS) return `Register soon: this reservation expires in about ${formatWait(staleInBlocks)}.`
+  return null
+}
+
 export function savedReservationOverviewCopy(
   status: CommitWindowStatus = 'missing',
   waitBlocks = 0,
@@ -95,3 +111,27 @@ export function countdownCopy(seconds: number) {
   return seconds > 0 ? `Ready in about ${Math.ceil(seconds)} s` : 'Waiting for the next block…'
 }
 
+
+export type PriceChangeView = {
+  /** The price last seen; null when unknown. */
+  previousLux: number | null
+  totalLux: number
+  sinceReservation: boolean
+  refused: boolean
+}
+
+export function priceChangeTitle(change: PriceChangeView) {
+  return change.previousLux === change.totalLux ? 'Terms changed' : 'Price changed'
+}
+
+// A policy replacement reprices a reservation but keeps it valid; say what changed and that it still holds.
+export function priceChangeCopy(change: PriceChangeView, staleInBlocks: number) {
+  const next = formatLuxNumberAsDusk(change.totalLux)
+  const when = change.refused ? ' before your registration was confirmed, so it was refused'
+    : change.sinceReservation ? ' since you reserved this name' : ''
+  const what = change.previousLux === null ? `The registration price changed${when}. It is now ${next}.`
+    : change.previousLux === change.totalLux ? `The registration terms changed${when}. The price is still ${next}.`
+    : `The registration price changed from ${formatLuxNumberAsDusk(change.previousLux)} to ${next}${when}.`
+  const refund = change.refused ? ' Your payment was returned; only the network fee was charged.' : ''
+  return `${what}${refund} Your reservation is still valid for about ${formatWait(staleInBlocks)}.`
+}

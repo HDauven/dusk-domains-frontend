@@ -27,9 +27,13 @@ import { useMarketplaceRefund } from './useMarketplaceRefund'
 import { useSellForm } from './useSellForm'
 import { useWatchlist } from './watchlist'
 import { useListingLink } from './useListingLink'
+import { MARKET_FEE_UNKNOWN, MARKET_NOT_TAKING_BIDS, marketTakesNewOrders } from './marketAvailability'
+import type { IndexedMarketplaceAuction } from '../../names/internal'
 
 type UseMarketplaceFeatureArgs = {
   tradingPaused: boolean
+  /** The market the directory prefers now, which takes new orders; null while it can't be read. */
+  preferredMarketplace: string | null
   ensurePublicBalanceForLiveWrite: LiveWritePreflight['ensurePublicBalanceForLiveWrite']
   indexerClient: DuskDomainsIndexerClient | null
   duskDomainsOnChainClient: DuskDomainsOnChainClient | null
@@ -95,10 +99,18 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
     && liveWritesAvailable
     && Boolean(marketplaceOnChainClient)
     && Boolean(duskDomainsOnChainClient)
-  const marketplaceContractId = runtimeConfig.contracts.marketplace?.contractId ?? ''
+  // New orders go to the preferred market, which governance can change after this site was built.
+  // Existing orders keep the market they were placed at.
+  const marketplaceContractId = args.preferredMarketplace ?? ''
 
-  const data = useMarketplaceData({ accountScope, indexerClient, listingName: listingLink.listingName, mainView, onLoaded: () => setError(marketplaceErrorAfterRefresh), selectedAddress, selectedAuctionNode, selectedAuthority, setError })
-  const { auctions, fixedSales, loadMarketplace, ownedNames, refund } = data
+  const data = useMarketplaceData({ accountScope, indexerClient, listingName: listingLink.listingName, mainView, onLoaded: () => setError(marketplaceErrorAfterRefresh), preferredMarketplace: args.preferredMarketplace, selectedAddress, selectedAuctionNode, selectedAuthority, setError })
+  const { auctions, fixedSales, loadMarketplace, ownedNames, refunds } = data
+  // The preferred market's fee is unknown while the indexer hasn't authenticated its configuration:
+  // it then takes no new listing or offer here, and no fee is assumed.
+  const newOrdersRefusal = data.feeStatus === 'unknown' ? MARKET_FEE_UNKNOWN : null
+  // Bids go to the auction's own market, which may be draining, paused or unconfigured.
+  const bidRefusal = (auction: IndexedMarketplaceAuction) => marketTakesNewOrders(auction.marketplaceContractId,
+    { marketplaces: data.marketplaces, preferred: args.preferredMarketplace, tradingPaused: args.tradingPaused }) ? null : MARKET_NOT_TAKING_BIDS
 
   const writes = useMarketplaceWrites({
     ...args,
@@ -109,17 +121,17 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
   })
 
   const { sellableNames, selectedName, selectedNode, setSelectedNode } = useSellInventory({ accountScope, ownedNames, auctions, fixedSales, selectedAuthority, requestedName: sellName })
-  const claimRefund = useMarketplaceRefund(refund, writes)
+  const claimRefund = useMarketplaceRefund(writes)
 
   const sell = useSellForm({
-    feeBps: data.feeBps, duskDomainsOnChainClient, marketplaceContractId, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
+    feeBps: data.feeBps, duskDomainsOnChainClient, marketplaceContractId, newOrdersRefusal, onOpenWalletConnection, selectedAddress, selectedAuthority, selectedName, setError, writes,
   })
   const auctionState = useAuctions({
     refreshActivity: data.auctionPollingEnabled,
-    accountScope, auctions, indexerClient, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
+    accountScope, auctions, bidRefusal, indexerClient, marketplaceOnChainClient, marketScope, selectedAuctionNode, setSelectedAuctionNode, onBidPlaced: watch, selectedAuthority, setConfirmation, setError, writes,
   })
   const offerState = useOffers({
-    duskDomainsOnChainClient, initialOfferName: opening.offerName, marketplaceContractId, marketplaceOnChainClient, ownedNames, selectedAddress, selectedAuthority, setError, writes,
+    duskDomainsOnChainClient, initialOfferName: opening.offerName, marketplaceContractId, marketplaceOnChainClient, newOrdersRefusal, ownedNames, selectedAddress, selectedAuthority, setError, writes,
   })
 
   const fixedSaleState = useFixedSales({ marketplaceOnChainClient, selectedAddress, selectedAuthority, setError, writes })
@@ -183,6 +195,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
         onReviewBid: (auction) => void auctionState.reviewBid(auction),
         onSettleAuction: auctionState.settleAuction,
         onCloseAuction: auctionState.closeAuction,
+        bidRefusal,
       },
       market: {
         hasData: data.hasData,
@@ -198,6 +211,7 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
       selling: {
         durationDays: sell.durationDays,
         feeBps: data.feeBps,
+        newOrdersRefusal,
         fixedPriceDusk: sell.fixedPriceDusk,
         privateBuyer: sell.privateBuyer,
         reserveDusk: sell.reserveDusk,
@@ -226,8 +240,9 @@ export function useMarketplaceFeature(args: UseMarketplaceFeatureArgs) {
         onPlaceOffer: offerState.placeOffer,
       },
       withdrawal: {
-        refund,
+        refunds,
         onClaimRefund: claimRefund,
+        currentMarketplace: args.preferredMarketplace,
       },
       navigation: {
         tab,

@@ -69,10 +69,27 @@ it.each([undefined, 10_000_000_000, 11_000_000_000])('requires the displayed tot
   expect(ensureAuthority).toHaveBeenCalledTimes(confirmedTotal === 11_000_000_000 ? 1 : 0)
 })
 
+// After a policy replacement the live quote prices the claim; the indexer's price list can lag behind it.
+it.each([16_000_000_000, 11_000_000_000])('confirms near a step boundary only the live total shown (confirmed: %s)', async confirmedTotal => {
+  vi.stubGlobal('window', { confirm: vi.fn() })
+  const ensureAuthority = vi.fn(() => false)
+  await completeRegistration({
+    result: { ...result, quotedYears: 1, totalFeeLux: 16_000_000_000 }, lifecycleBaseBlockHeight: boundary - 1, displayName: 'aurora.dusk',
+    duration: 1, feeConfig: DEFAULT_FEE_CONFIG,
+    canRegister: true, committed: true, commitWindow: { status: 'ready' }, preparedCommit: { controller: 'owner', ownerAddress: 'wallet', chainId: 'dusk:0' },
+    selectedAuthority: 'owner', runtimeConfig: { chainId: 'dusk:0' },
+    selectedAddress: 'wallet', registrationTargetReady: true, registrationTargetAddressErrors: [],
+    submitNameWrite: { captureSession: () => () => true, captureWorkspace: () => () => true }, setWalletError: vi.fn(), setRegistrationCompletion: vi.fn(),
+    ensureContractAuthorityForLiveWrite: ensureAuthority,
+  } as unknown as UseRegistrationActionsProps, confirmedTotal)
+  expect(ensureAuthority).toHaveBeenCalledTimes(confirmedTotal === 16_000_000_000 ? 1 : 0)
+})
+
 it('refreshes the premium and total at a block boundary while leaving renewal at base price', () => {
   function Preview({ height }: { height: number }) {
     const preview = useNamePreview({ apiSearchResult: result, currentBlockHeight: height, duration: 2,
-      feeConfig: DEFAULT_FEE_CONFIG, managedNameExpiresAt: 20_000, nowSeconds: 1_000, query: 'aurora', renewalYears: 2 })
+      feeConfig: { ...DEFAULT_FEE_CONFIG, renewalYearLux: { threeChar: 150e9, fourChar: 50e9, fivePlus: 10e9 } },
+      managedNameExpiresAt: 20_000, nowSeconds: 1_000, query: 'aurora', renewalYears: 2 })
     return <span>{preview.registrationFee}|{preview.renewalFee}|{preview.result.premiumLux}</span>
   }
   const start = BigInt(DEFAULT_FEE_CONFIG.premiumStartLux)

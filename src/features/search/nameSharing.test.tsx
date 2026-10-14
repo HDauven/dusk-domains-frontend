@@ -76,7 +76,7 @@ function AppNamePage({ selectedAddress = walletAddress, walletSetupState = 'conn
   const { referralState } = useReferralControls({ selectedAddress, setReferralError: () => {} })
   const managedName = { node: 'node', owner: 'owner', manager: 'manager' }
   const { searchProps } = useAppSearchProps({
-    appRuntime: { runtimeConfig: { capabilities: { referralAttribution }, launchLinks: { abuse: null } } },
+    appRuntime: { pause: { registrationsPaused: false, tradingPaused: false }, runtimeConfig: { capabilities: { referralAttribution }, launchLinks: { abuse: null } } },
     walletRuntime: { selectedAddress, selectedAuthority: 'owner', walletSetupState },
     economicsRuntime: { feeConfig: DEFAULT_FEE_CONFIG, activeReferral: referralState, appliedReferral: referralState, referralsProps: { referralState } },
     activityFeed: { activityEntries: [], recentWarnings: [] },
@@ -89,6 +89,7 @@ function AppNamePage({ selectedAddress = walletAddress, walletSetupState = 'conn
     mainViewRuntime: {},
     registrationState: { duration: 1 },
     registrationProps: { wizard: {} },
+    heldListing: { heldByMarket: false, listing: null },
     management: { primaryProps: { primaryVerification: {} }, settingsProps: {
         managedName,
         ownership: {  },

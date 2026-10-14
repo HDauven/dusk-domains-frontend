@@ -1,6 +1,5 @@
 import { WebsiteVerificationPanel } from './settings/WebsiteVerificationPanel'
 import { Panel } from '../../components/ui/Panel'
-import { canRenewOutsideEscrow } from '../../app/managedNameState'
 import { PanelHeader } from '../../components/ui/PanelHeader'
 import { isSubname } from './domainFormat'
 import { RecipientSettingsPanel } from './settings/RecipientSettingsPanel'
@@ -23,12 +22,12 @@ export function DomainSettingsView({ isOwner = true, displayName, managedName, o
 
       {isSubname(displayName) ? (
         <SubnameExpiryPanel displayName={displayName} managedName={managedName} clock={clock} />
-      ) : managedName.inMarketplaceEscrow ? (
-        <p>Renewal is available after the listing closes.</p>
-      ) : !canRenewOutsideEscrow(managedName) ? (
-        <p>Renewal is unavailable until marketplace custody can be checked.</p>
       ) : (
-        <RenewalPanel managedName={managedName} renewal={renewal} clock={clock} />
+        <>
+          {/* Anyone can renew a listed name before its grace ends; the order keeps its own terms. */}
+          {managedName.inMarketplaceEscrow ? <p className="renewal-listing-note">This name is listed in the market. Renewing it doesn’t change the listing: the name stays listed at the same price, until the same end date.</p> : null}
+          <RenewalPanel managedName={managedName} renewal={renewal} clock={clock} />
+        </>
       )}
     </Panel>
   )

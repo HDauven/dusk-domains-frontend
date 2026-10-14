@@ -60,7 +60,7 @@ describe('names for sale', () => {
     expect(client.getMarketplaceFixedSale).not.toHaveBeenCalled()
     await act(async () => root.render(<Probe escrowed />))
     await vi.waitFor(() => expect(listing).toMatchObject({ kind: 'fixed', name: 'marrowfen.dusk' }))
-    expect(client.getMarketplaceAuction).toHaveBeenCalledWith(node)
+    expect(client.getMarketplaceAuction).toHaveBeenCalledWith(node, { marketplace: 'all' })
     await act(async () => root.unmount())
   })
 })

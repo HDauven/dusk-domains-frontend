@@ -14,6 +14,7 @@ import { checkNameManagement } from './name-management-smoke.mjs'
 import { checkPrimaryNameSwitches } from './primary-name-smoke.mjs'
 import { checkUiSystem } from './ui-system-smoke.mjs'
 import { checkNameFit } from './name-fit-smoke.mjs'
+import { checkRecordLayout } from './record-layout-smoke.mjs'
 import { checkBrandNotices } from './brand-notice-smoke.mjs'
 import assert from 'node:assert/strict'
 import { checkIndexerSessionBudget } from './indexer-session-smoke.mjs'
@@ -206,8 +207,11 @@ try {
     const { createDuskNodeBlockHeightReader } = await import('/src/app/duskNodeHeight.ts')
     const { createDuskDomainsOnChainClient } = await import('/src/names/internal.ts')
     localStorage.removeItem('dusk-domains-marketplace-watchlist-v1')
+    // An auction at the market the directory prefers, which takes bids, listed with its market and order.
+    const market = `0x${'55'.repeat(32)}`
     const auction = { auctionId: 1, durationBlocks: 8640, feeBps: 250, startDeadlineBlockHeight: 5000, createdAtBlockHeight: 100, node: `0x${'11'.repeat(32)}`, name: 'heightbound.dusk', sellerAuthority: `0x${'22'.repeat(32)}`,
-      reservePriceLux: 5000000000, startBlockHeight: null, endBlockHeight: null, bidCount: 0, highestBid: null }
+      reservePriceLux: 5000000000, startBlockHeight: null, endBlockHeight: null, bidCount: 0, highestBid: null, marketplaceContractId: market,
+      order: { terms: { id: 1, kind: 'Auction' }, nonce: 1, status: 'Open' } }
     window.heightBoundAuction = auction
     const currentBlockHeight = createDuskNodeBlockHeightReader('http://node.test/', async (_input, init) => {
       window.heightFetchStarted = true
@@ -216,9 +220,9 @@ try {
         reject(init.signal.reason)
       }, { once: true }))
     })
-    const args = { mainView: 'search', indexerClient: null, liveWritesAvailable: true,
+    const args = { mainView: 'search', indexerClient: null, liveWritesAvailable: true, preferredMarketplace: market,
       selectedAddress: 'buyer', selectedAuthority: `0x${'33'.repeat(32)}`,
-      runtimeConfig: { chainId: 'dusk:0', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: `0x${'55'.repeat(32)}` } } },
+      runtimeConfig: { chainId: 'dusk:0', capabilities: { marketplace: true }, contracts: { marketplace: { contractId: market } } },
       duskDomainsOnChainClient: createDuskDomainsOnChainClient({ read: { read: async () => null, client: Promise.resolve({transport:{currentBlockHeight:async()=>{const height=await currentBlockHeight();if(height===null)throw new Error('Height unavailable');return BigInt(height)}}}) } }),
       marketplaceOnChainClient: { getAuction: async () => ({ ok: true, value: { ...auction,
             reservePriceLux: 5000000000n, startBlock: null, endBlock: null } }) },
@@ -548,6 +552,7 @@ try {
   await checkPrimaryNameSwitches(page)
   await checkUiSystem(page)
   await checkNameFit(page)
+  await checkRecordLayout(page)
   await checkBrandNotices(page)
   await checkPricingDraft(page)
   await checkLockedClaims(page)

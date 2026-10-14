@@ -30,7 +30,8 @@ export type DomainSettingsViewProps = {
     onRenewalYearsChange: (years: number) => void
     renewalBusy: boolean
     renewalError: string
-    renewalFee: number
+    /** From the live renewal quote or the renewal schedule; null while neither is known. */
+    renewalFee: number | null
     renewalPreviewExpiresAt: number
     renewalTxState: DuskDomainTxState | null
     renewalYears: number

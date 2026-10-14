@@ -1,17 +1,30 @@
 import type { DuskDomainTxState } from '../names/internal'
 
-export type ConfirmationState = DuskDomainTxState & { retryConfirmation?: () => void }
+export type ConfirmationState = DuskDomainTxState & {
+  retryConfirmation?: () => void
+  /** Why checks paused before their five minutes ran out. */
+  pauseReason?: string
+}
 export type PendingConfirmation = { name: string; state: ConfirmationState & { txId: string } }
 
-// Each round checks for five minutes. A retry resumes the read; it never sends a write.
-export async function waitForConfirmation<T>(read: () => Promise<T | null>, onPause: (retry: () => void) => void, onChecking: () => void, signal?: AbortSignal): Promise<T> {
+/** A confirmation read's answer when checking again can't succeed yet: pause now, and say why. */
+export class ConfirmationPause {
+  readonly reason: string
+  constructor(reason: string) { this.reason = reason }
+}
+
+// Each round checks for five minutes, or until a read pauses it. A retry resumes the read; it never
+// sends a write.
+export async function waitForConfirmation<T>(read: () => Promise<T | ConfirmationPause | null>, onPause: (retry: () => void, reason?: string) => void, onChecking: () => void, signal?: AbortSignal): Promise<T> {
   for (;;) {
     onChecking()
     const deadline = Date.now() + 300_000
+    let reason: string | undefined
     while (Date.now() < deadline) {
       signal?.throwIfAborted()
       const value = await read().catch(() => null)
       signal?.throwIfAborted()
+      if (value instanceof ConfirmationPause) { reason = value.reason; break }
       if (value !== null) return value
       await new Promise<void>((resolve, reject) => {
         const aborted = () => { clearTimeout(timer); reject(signal?.reason) }
@@ -23,7 +36,7 @@ export async function waitForConfirmation<T>(read: () => Promise<T | null>, onPa
     await new Promise<void>((resolve, reject) => {
       const aborted = () => reject(signal?.reason)
       signal?.addEventListener('abort', aborted, { once: true })
-      onPause(() => { signal?.removeEventListener('abort', aborted); resolve() })
+      onPause(() => { signal?.removeEventListener('abort', aborted); resolve() }, reason)
     })
   }
 }

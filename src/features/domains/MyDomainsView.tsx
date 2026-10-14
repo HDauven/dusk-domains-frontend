@@ -12,6 +12,7 @@ import { ListingCard, SubnameCard } from './my-domains/HeldCards'
 import type { HeldListing, HeldSubname } from './myDomainsData'
 import { PendingReservationsList } from './my-domains/PendingReservationsList'
 import { indexedPrimaryIsActive } from './indexedPrimary'
+import { trustedDuskAddressOf } from '../identity/addressTrust'
 
 export type MyNamePrimarySummary = {
   label: string
@@ -34,6 +35,8 @@ export type MyDomainsViewProps = {
   onOpenPendingReservation: (reservation: PendingNameReservation, options?: { register?: boolean }) => void
   onSearchHome: () => void
   pendingReservations: PendingNameReservation[]
+  /** Registrations are paused, so saved reservations can't be registered until they reopen. */
+  registrationsPaused?: boolean
   primarySummaries: Record<string, MyNamePrimarySummary>
   wallet: {
     walletStatus?: WalletConnectionStatus
@@ -43,7 +46,7 @@ export type MyDomainsViewProps = {
 }
 
 // Everything the connected wallet holds: claims still in progress first, then its names.
-export function MyDomainsView({ listings = [], subnames = [], listingsUnavailable = false, currentBlockHeight, loading, myNames, myNamesError, onForgetPendingReservation, onOpenIndexedName, onOpenPendingReservation, onSearchHome, pendingReservations, primarySummaries, wallet }: MyDomainsViewProps) {
+export function MyDomainsView({ listings = [], subnames = [], listingsUnavailable = false, currentBlockHeight, loading, myNames, myNamesError, onForgetPendingReservation, onOpenIndexedName, onOpenPendingReservation, onSearchHome, pendingReservations, registrationsPaused = false, primarySummaries, wallet }: MyDomainsViewProps) {
   const {
     walletStatus,
     onConnectWallet,
@@ -51,7 +54,7 @@ export function MyDomainsView({ listings = [], subnames = [], listingsUnavailabl
   } = wallet
   const empty = myNames.length === 0 && pendingReservations.length === 0 && listings.length === 0 && subnames.length === 0
   const nameCount = myNames.length + listings.length
-  const pointsHere = (name: IndexedNameSummary) => name.records.find((record) => record.key === 'moonlight_address')?.value === selectedAddress
+  const pointsHere = (name: IndexedNameSummary) => Boolean(selectedAddress) && trustedDuskAddressOf(name.records) === selectedAddress
   const primaryCount = myNames.filter((name) => primarySummaries[name.node]?.tone === 'success' && pointsHere(name) && indexedPrimaryIsActive(name, currentBlockHeight)).length
 
   return (
@@ -81,6 +84,7 @@ export function MyDomainsView({ listings = [], subnames = [], listingsUnavailabl
           onForgetPendingReservation={onForgetPendingReservation}
           onOpenPendingReservation={onOpenPendingReservation}
           pendingReservations={pendingReservations}
+          registrationsPaused={registrationsPaused}
         />
       ) : null}
 

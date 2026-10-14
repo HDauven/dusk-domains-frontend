@@ -1,12 +1,14 @@
 import type { DuskDomainsIndexerClient, IndexedNameSummary } from '../../names/internal'
 import { sameAuthority } from '../identity/ownerLabel'
+import { trustedDuskAddressOf } from '../identity/addressTrust'
 import { lifecycleHeightReached, unixSecondsFromIso } from './domainFormat'
 import type { MyNamePrimarySummary } from './MyDomainsView'
 
 // Records can survive transfer and custody. A matching address alone does not
 // make a name primary, even when a cached list summary still says "verified".
 export function indexedPrimaryIsActive(name: IndexedNameSummary, currentBlockHeight: number | null) {
-  const address = name.records.find(record => record.key === 'moonlight_address')?.value
+  // Only an address "Send to" would offer can be a name's primary address here.
+  const address = trustedDuskAddressOf(name.records)
   return name.status === 'active' && Boolean(address)
     && [name.owner, name.manager].some(authority => sameAuthority(authority, address))
     && !lifecycleHeightReached(name.expiresAtBlockHeight ?? unixSecondsFromIso(name.expiresAt) ?? 0,
@@ -14,8 +16,9 @@ export function indexedPrimaryIsActive(name: IndexedNameSummary, currentBlockHei
 }
 
 export async function readIndexedPrimarySummary(client: Pick<DuskDomainsIndexerClient, 'getPrimaryName'>, name: IndexedNameSummary): Promise<MyNamePrimarySummary> {
-  const address = name.records.find(record => record.key === 'moonlight_address')?.value
-  if (!address) return { label: 'No address', tone: 'muted' }
+  const address = trustedDuskAddressOf(name.records)
+  if (!address) return name.records.some(record => record.key === 'moonlight_address')
+    ? { label: 'Invalid address', tone: 'warning' } : { label: 'No address', tone: 'muted' }
   if (!indexedPrimaryIsActive(name, null)) return { label: 'Not primary', tone: 'warning' }
   try {
     // /reverse uses the SDK projection's authority and incarnation checks.
