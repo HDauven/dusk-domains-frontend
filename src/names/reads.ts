@@ -60,8 +60,10 @@ export function local<T>(value: sdk.Located<T>): T | null {
   return typeof value === 'object' && 'Local' in value ? value.Local : null
 }
 export async function requireName(client: sdk.FrozenClient, spelling: string) {
-  const located = await client.getName(spelling),
-    view = local(located.value)
+  return requiredName(await client.getName(spelling))
+}
+function requiredName(located: sdk.Routed<sdk.NameView>) {
+  const view = local(located.value)
   if (!view) throw new Error('This name is no longer registered. Refresh and try again.')
   return { ...located, view, ref: { key: view.name.key, incarnation: view.name.incarnation } }
 }
@@ -137,6 +139,23 @@ export function createDuskDomainsOnChainClient(
     return client
   }
   const names = new Map<string, string>()
+  // One name read per name and height, shared by the parts of a page: its state, records, renewal
+  // quote and owner checks. A caller reuses a read only when it was taken at the tip this caller
+  // reads after asking, or later, so no caller sees a name older than the chain when it asked.
+  const nameReads = new Map<string, { client: sdk.FrozenClient; read: Promise<sdk.Routed<sdk.NameView>> }>()
+  const readName = async (c: sdk.FrozenClient, spelling: string): Promise<sdk.Routed<sdk.NameView>> => {
+    const earlier = nameReads.get(spelling)
+    if (earlier?.client === c) {
+      const [tip, routed] = await Promise.all([c.transport.currentBlockHeight(), earlier.read.catch(() => null)])
+      if (routed && routed.height >= BigInt(tip)) return structuredClone(routed)
+    }
+    const read = c.getName(spelling)
+    nameReads.delete(spelling)
+    nameReads.set(spelling, { client: c, read })
+    if (nameReads.size > 64) nameReads.delete(nameReads.keys().next().value!)
+    read.catch(() => { if (nameReads.get(spelling)?.read === read) nameReads.delete(spelling) })
+    return structuredClone(await read)
+  }
   const byNode = async (node: string) => {
     const c = await getClient()
     const known = names.get(node.toLowerCase())
@@ -151,7 +170,7 @@ export function createDuskDomainsOnChainClient(
   const getName = async (spelling: string): Promise<DuskDomainsOnChainNameResponse> => {
     const c = await getClient(),
       name = sdk.normalizeNameInput(spelling),
-      located = await c.getName(name),
+      located = await readName(c, name),
       v = local(located.value)
     names.set(namehashHex(name), name)
     return {
@@ -176,7 +195,7 @@ export function createDuskDomainsOnChainClient(
   }
   const records = async (spelling: string, keys?: string[]) => {
     const c = await getClient(),
-      name = await requireName(c, sdk.normalizeNameInput(spelling))
+      name = requiredName(await readName(c, sdk.normalizeNameInput(spelling)))
     // The store resolves the registry-qualified slot through its admitted resolver.
     const r = await c.locate<sdk.RecordsView>(
       name.store,
@@ -257,7 +276,7 @@ export function createDuskDomainsOnChainClient(
     resolveName: (name, key = 'moonlight_address') =>
       wrapped(async () => {
         const c = await getClient(),
-          n = await requireName(c, sdk.normalizeNameInput(name))
+          n = requiredName(await readName(c, sdk.normalizeNameInput(name)))
         const resolved = await c.locate<sdk.RecordValue | null>(
           n.store,
           n.ref.key.root,
@@ -329,7 +348,7 @@ export function createDuskDomainsOnChainClient(
     getRenewalQuote: (name, years) =>
       wrapped(async () => {
         const c = await getClient(),
-          n = await requireName(c, name),
+          n = requiredName(await readName(c, name)),
           quote = await c.quoteRenewal(n.store, { name: n.ref, years })
         const v = local(quote.value)
         if (!v) throw new Error('Renewal unavailable')
