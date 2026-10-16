@@ -5,7 +5,8 @@ export type ConfirmationState = DuskDomainTxState & {
   /** Why checks paused before their five minutes ran out. */
   pauseReason?: string
 }
-export type PendingConfirmation = { name: string; state: ConfirmationState & { txId: string } }
+/** A write still confirming: by the .dusk name it changes, or by its action when it changes none. */
+export type PendingConfirmation = ({ name: string } | { action: string }) & { state: ConfirmationState & { txId: string } }
 
 /** A confirmation read's answer when checking again can't succeed yet: pause now, and say why. */
 export class ConfirmationPause {

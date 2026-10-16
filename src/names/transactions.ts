@@ -39,6 +39,8 @@ export type DuskDomainTxState = {
 }
 export type SubmitDuskDomainWriteOptions = {
   name?: string
+  /** What the write's notices call it: its name unless given. */
+  title?: string
   balanceAction?: string
   gas?: DuskDomainGas
   onUpdate?: (state: DuskDomainTxState) => void
@@ -74,7 +76,7 @@ export async function submitDuskDomainWrite(
     ? balanceErrorMessage(error.details, balanceAction)
     : userFacingErrorMessage(error, undefined, { functionName: request.functionName })
   const context = {
-      title: options.name ?? request.functionName,
+      title: options.title ?? options.name ?? request.functionName,
       description: 'Confirm this action in your wallet.',
       fields: [],
     },

@@ -569,7 +569,7 @@ it.each(['fixed', 'auction'] as const)(
 it('claims protocol and referral funds from the vault with the operator epoch and explicit payout', async () => {
   const h = fixture()
   expect(
-    await prepareFrozenCall(h.client, intent.vaultClaimAllRequest(), 'treasury.dusk', account),
+    await prepareFrozenCall(h.client, intent.vaultClaimAllRequest(), '', account),
   ).toMatchObject({
     contractId: id(4),
     functionName: 'claim_protocol',
@@ -580,7 +580,7 @@ it('claims protocol and referral funds from the vault with the operator epoch an
     await prepareFrozenCall(
       h.client,
       intent.vaultClaimReferralRewardRequest({ amountLux: 123, recipient: account }),
-      'referrals.dusk',
+      '',
       account,
     ),
   ).toMatchObject({
@@ -728,7 +728,7 @@ it('places an offer with an owner-verified payout and claims refunds from the pr
     await prepareFrozenCall(
       h.client,
       intent.marketplaceClaimRefundRequest(),
-      'marketplace.dusk',
+      '',
       account,
     ),
   ).toMatchObject({
@@ -1485,7 +1485,7 @@ it('switches from settlement to close/return and allows the refund at the record
     await prepareFrozenCall(
       h.client,
       { ...intent.marketplaceClaimRefundRequest(), contractId: id(6) },
-      'Marketplace refund',
+      '',
       account,
     ),
   ).toMatchObject({ contractId: id(6), functionName: 'claim_refund' })

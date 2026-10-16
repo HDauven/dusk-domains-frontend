@@ -57,7 +57,7 @@ export async function updateFeeConfig({
   if (!ensureContractAuthorityForLiveWrite('update pricing', setFeeConfigUpdateError)) return
   if (!(await ensurePublicBalanceForLiveWrite('updating pricing', setFeeConfigUpdateError))) return
 
-  const finalState = await submitNameWrite('pricing.dusk', directorySetFeeConfigRequest(parsed.config), {
+  const finalState = await submitNameWrite({ action: 'Update pricing' }, directorySetFeeConfigRequest(parsed.config), {
     contracts: runtimeConfig.contracts,
     onUpdate: setFeeConfigTxState,
   })

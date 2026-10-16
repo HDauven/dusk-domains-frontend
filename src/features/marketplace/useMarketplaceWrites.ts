@@ -3,7 +3,7 @@ import { MARKETPLACE_SYNC_MESSAGE } from './marketplacePresentation'
 import type { MarketplaceReviewDetails } from './marketplaceTypes'
 import { useCallback } from 'react'
 import { waitForIndexerBlock } from '../../app/indexerReadHelpers'
-import type { SubmitNameWrite } from '../../app/useDuskDomainWriter'
+import type { SubmitNameWrite, WriteSubject } from '../../app/useDuskDomainWriter'
 import type { LiveWritePreflight } from '../../app/useLiveWritePreflight'
 import {
   userFacingErrorMessage,
@@ -66,7 +66,7 @@ export function useMarketplaceWrites({
 
   const submit = useCallback(async (
     actionName: string,
-    name: string,
+    subject: WriteSubject,
     call: DuskDomainCallMetadata,
     successMessage = 'Marketplace updated.',
   ) => {
@@ -86,7 +86,7 @@ export function useMarketplaceWrites({
     if (!await ensurePublicBalanceForLiveWrite(actionName, setError)) return null
 
     try {
-      const finalState = await submitNameWrite(name, call, {
+      const finalState = await submitNameWrite(subject, call, {
         contracts: runtimeConfig.contracts,
         balanceAction: actionName,
         onUpdate: setTxState,

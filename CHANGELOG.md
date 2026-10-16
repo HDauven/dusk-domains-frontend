@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Label referral claims, protocol fee claims and pricing updates by their action in transaction notices, not as a `.dusk` name.
 - Change a primary name kept in another shard with two named wallet approvals, clearing it there first, and never send a set the chain refuses.
 - Check a primary name on chain before each wallet request, and say why when its Dusk address isn’t the wallet’s, the wallet doesn’t control it, or it expired or is moving.
 - Never offer an address the indexer reports invalid, or that fails validation, as a payment target.

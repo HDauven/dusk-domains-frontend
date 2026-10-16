@@ -61,7 +61,7 @@ export async function claimTreasury(
   const call = mode === 'partial'
     ? vaultClaimRequest({ amountLux: Number(amountLux) })
     : vaultClaimAllRequest()
-  const finalState = await submitNameWrite('treasury.dusk', {...call,expectedRecipient:treasuryState.operatorRecipient ?? undefined}, {
+  const finalState = await submitNameWrite({ action: 'Claim protocol fees' }, {...call,expectedRecipient:treasuryState.operatorRecipient ?? undefined}, {
     contracts: runtimeConfig.contracts,
     onUpdate: setTreasuryTxState,
   })
