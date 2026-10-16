@@ -19,6 +19,8 @@ import {
 } from '../names/internal'
 
 export type SubmitNameWrite = ReturnType<typeof useDuskDomainWriter>
+/** The .dusk name a write changes, or the plain label of an action that changes none, such as a claim. */
+export type WriteSubject = string | { action: string }
 
 // One wallet write at a time. Preview never submits or simulates a transaction.
 export function useDuskDomainWriter({
@@ -65,7 +67,7 @@ export function useDuskDomainWriter({
   }, [chainId, wallet])
 
   const submit = useCallback(async (
-    name: string,
+    subject: WriteSubject,
     call: DuskDomainCallMetadata,
     options: SubmitDuskDomainWriteOptions & {
       ownershipChange?: 'transfer' | 'manager'
@@ -77,8 +79,12 @@ export function useDuskDomainWriter({
     } = {},
   ): Promise<DuskDomainTxState & { ownershipConfirmed?: boolean }> => {
     const { ownershipChange, workspace, session: expectedSession, beforeSign, onNotBroadcast, onBroadcast, ...writeOptions } = options
+    // An action's label only titles its notices; it never stands in for a name.
+    const name = typeof subject === 'string' ? subject : ''
+    const title = typeof subject === 'string' ? subject : subject.action
+    const about = typeof subject === 'string' ? { name } : { action: title }
     const currentWorkspace = workspace ?? (() => true)
-    if (!currentWorkspace()) return { status: 'rejected', context: { title: name } } as DuskDomainTxState
+    if (!currentWorkspace()) return { status: 'rejected', context: { title } } as DuskDomainTxState
     const unavailable = accessRef.current.reason(call)
     if (unavailable) throw new Error(unavailable)
     if (pendingWrite.current) throw new Error('Finish the pending wallet transaction before starting another.')
@@ -124,7 +130,7 @@ export function useDuskDomainWriter({
     let stillConfirming: ReturnType<typeof setTimeout> | undefined
     const update = (state: ConfirmationState) => {
       if (state.txId && ['submitted', 'executing'].includes(state.status)) {
-        onPendingConfirmation?.({ name, state: { ...state, txId: state.txId } })
+        onPendingConfirmation?.({ ...about, state: { ...state, txId: state.txId } })
       }
       if (currentWorkspace()) options.onUpdate?.(state)
     }
@@ -141,6 +147,7 @@ export function useDuskDomainWriter({
       let state = await submitDuskDomainWriteCall(app, call, {
         contracts,
         name,
+        title,
         ...writeOptions,
         onUpdate,
         allowUnsafePreviewCall: !liveDuskDomainsApp && options.allowUnsafePreviewCall,

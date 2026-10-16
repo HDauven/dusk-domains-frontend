@@ -70,7 +70,7 @@ export function useReferralActions({
       recipient: selectedAddress,
     })
 
-    const finalState = await submitNameWrite('referrals.dusk', call, {
+    const finalState = await submitNameWrite({ action: 'Claim referral rewards' }, call, {
       session,
       contracts: runtimeConfig.contracts,
       onUpdate: setReferralTxState,

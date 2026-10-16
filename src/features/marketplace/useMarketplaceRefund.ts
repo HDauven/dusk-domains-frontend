@@ -7,6 +7,6 @@ import type { MarketplaceWrites } from './useMarketplaceWrites'
 export function useMarketplaceRefund(writes: MarketplaceWrites) {
   return async (refund: IndexedMarketplaceRefund) => {
     if (!await writes.guardCanonicalRead((client) => canonicalRefund(client, refund))) return
-    await writes.submit('withdrawing your refund', 'Marketplace refund', { ...marketplaceClaimRefundRequest(), contractId: refund.marketplaceContractId ?? undefined }, `${formatLuxAsDusk(BigInt(refund.amountLux))} DUSK withdrawn to your wallet.`)
+    await writes.submit('withdrawing your refund', { action: 'Marketplace refund' }, { ...marketplaceClaimRefundRequest(), contractId: refund.marketplaceContractId ?? undefined }, `${formatLuxAsDusk(BigInt(refund.amountLux))} DUSK withdrawn to your wallet.`)
   }
 }

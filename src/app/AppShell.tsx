@@ -79,7 +79,7 @@ export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused,
       <main className="page-main">
         <OperatorPauseBanner pause={pause} />
         {pendingConfirmation?.state.retryConfirmation ? <section aria-label="Pending transaction" key={pendingConfirmation.state.txId}>
-          <p>{pendingConfirmation.name}</p>
+          <p>{'action' in pendingConfirmation ? pendingConfirmation.action : pendingConfirmation.name}</p>
           <TransactionStatusNotice state={pendingConfirmation.state} />
         </section> : null}
         <NetworkFreshnessContext value={freshness}>{children}</NetworkFreshnessContext>
