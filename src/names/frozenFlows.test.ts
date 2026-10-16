@@ -1878,6 +1878,8 @@ it('reads again when a block lands during a read, and only then', async () => {
   expect(reads).toHaveBeenCalledTimes(2)
   reads.mockReset()
   reads.mockRejectedValue(new Error('Unexpected read'))
+  // A block has landed since, so the name is read again; any other failure isn't retried.
+  h.setHeight(107n)
   expect(await h.client.getName('example.dusk')).toMatchObject({ ok: false, error: { message: 'Unexpected read' } })
   expect(reads).toHaveBeenCalledTimes(1)
 })

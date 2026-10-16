@@ -206,6 +206,12 @@ SDK 0.4.0 isn't patch-compatible with 0.3.x. Before the pin moves:
   registration quote at another height). 0.4.0 restarts a preparation at the new height itself
   and rethrows a failure that repeats at every height as itself: keep the retry only for the
   errors 0.4.0 still throws when the tip moves.
+- [ ] Drop the SDK 0.3.2 read-sharing bridge once 0.4.0 shares reads at one height itself: delete
+  `src/names/sharedReads.ts` and its tests (`src/names/sharedReads.test.ts`,
+  `src/app/liveNodeReads.test.ts`), and in `src/app/duskDomainsLiveApp.ts` the `transport`
+  option and the `clearSessionImmutableReads` call on discard, and update the README's note on
+  keeping verification replies for the session. Keep the name-read sharing in `src/names/reads.ts`.
+  Tabs then leave their `dusk-domains:immutable-read:v1:` session entries unused.
 - [ ] Create the client with `createClientFromManifest` alone, in
   `src/app/duskDomainsLiveApp.ts`. 0.4.0's discovery no longer verifies the policy the directory
   selects; under 0.3.2, `discoverWithoutPolicy` in `src/names/directoryMembers.ts` discovers the

@@ -121,6 +121,11 @@ After a failed client creation or a failed contract verification, the app discar
 client and its release and builds a fresh one on the next read, so a fixed manifest
 takes effect without a reload.
 
+The parts of a page share what they read from the chain at one block height: a name is read
+once while the tip stays at the height it was read at, and reads the SDK repeats at one height
+reach the node once. A contract's interface, binding and market order API never change, so the
+tab keeps those replies for its session; a discarded client reads them again.
+
 ## Documentation
 
 - [Design direction](docs/design.md): Afterglow type, colour, motion and copy rules
