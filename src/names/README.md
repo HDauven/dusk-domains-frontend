@@ -28,10 +28,16 @@ matches both the price shown and that policy selection; otherwise it throws
 `RegistrationPriceChangedError` carrying the fresh quote, and the claim offers the
 new price for the same reservation.
 
+SDK 0.3.2 reads the tip height around every read and repeats routing reads inside each name
+lookup. Until the frontend moves to SDK 0.4.x, the live app gives it `sharedReads.ts` as its
+transport, which sends reads repeated at one block height once and keeps contract verification
+replies for the tab's session. The name-read sharing in `reads.ts` stays after that.
+
 The frontend does not persist SDK projection snapshots or restore projector
 checkpoints. Indexed views and record sets live in React state and are fetched
 again after loading. Browser storage holds reservation recovery (with each
-reservation's price), referral attribution and watchlist preferences, not projections. Projection schema 3
+reservation's price), referral attribution, watchlist preferences and, for the session,
+contract verification replies, not projections. Projection schema 3
 therefore needs no browser storage migration; an indexer persisting SDK snapshots
 must rebuild or discard older checkpoints before serving current data. HTTP view
 payloads are separate from the SDK's internal projection schema.

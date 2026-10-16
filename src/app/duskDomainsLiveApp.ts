@@ -1,4 +1,4 @@
-import { createClientFromManifest, contractId, FrozenClient, loadReleaseManifest, WriteBalanceError, type ContractRole } from '@duskdomains/sdk'
+import { createClientFromManifest, createHttpTransport, contractId, FrozenClient, loadReleaseManifest, WriteBalanceError, type ContractRole } from '@duskdomains/sdk'
 import { createDuskDomainsConnectApp } from '@duskdomains/sdk/connect-app'
 import type { DuskWallet } from '@dusk/connect'
 import { createSessionWriteWallet } from '../features/wallet/sessionWriteWallet'
@@ -7,6 +7,7 @@ import { roles } from '../names/config'
 import { configuredReleaseManifest } from '../names/releaseManifest'
 import { discoverWithoutPolicy } from '../names/directoryMembers'
 import { prepareFrozenCall } from '../names/prepareFrozenCall'
+import { clearSessionImmutableReads, createSharedReadTransport, sessionImmutableReads } from '../names/sharedReads'
 import { checkPublicBalanceForWrite, frozenPayload } from '../names/transactions'
 import {
   isPlaceholderContractId,
@@ -62,6 +63,8 @@ export function createDuskDomainsLiveApp(options: {
   const discard = (created: ClientPromise) => {
     if (current?.promise !== created) return
     current = undefined
+    // SDK 0.3.2 bridge: the next client verifies its contracts with replies read again.
+    clearSessionImmutableReads()
     globalThis.dispatchEvent?.(new Event(CLIENT_RESET_EVENT))
   }
   const client = (): ClientPromise => {
@@ -73,6 +76,11 @@ export function createDuskDomainsLiveApp(options: {
           artifactBaseUrl: origin + '/',
           nodeUrl: config.nodeUrl,
           indexerUrl: new URL(config.indexerUrl!, origin).href,
+          // SDK 0.3.2 bridge (names/sharedReads.ts): the SDK's own HTTP transport, at the node URL
+          // its release loads, answering reads it repeats. Drop it with SDK 0.4.x.
+          transport: createSharedReadTransport(createHttpTransport(new URL(config.nodeUrl).href), {
+            immutable: sessionImmutableReads(manifest),
+          }),
           // A contract admitted after this release, such as the policy a SetPolicy proposal selects,
           // loads only once the operator republishes the reviewed manifest listing it (docs/deploy.md).
           resolveContract: async (role: ContractRole, id: string) => {
