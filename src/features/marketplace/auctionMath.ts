@@ -3,10 +3,15 @@ import { parseDuskAmountToLux } from '../treasury/feeConfig'
 
 export const AUCTION_BLOCKS_PER_DAY = 8_640
 export const AUCTION_MIN_BID_INCREMENT_BPS = 500n
-export const MIN_MARKETPLACE_AMOUNT_LUX = 1_000_000_000n
+export const MIN_MARKETPLACE_AMOUNT_LUX = 5_000_000_000n
 
 const BPS_DENOMINATOR = 10_000n
 const LUX_PER_DUSK = 1_000_000_000n
+
+/** The refusal for an amount below the marketplace contract's minimum, or null when it meets it. */
+export function belowMarketplaceMinimum(lux: bigint, what: 'Offer' | 'Price' | 'Reserve') {
+  return lux < MIN_MARKETPLACE_AMOUNT_LUX ? `${what} at least ${formatLuxAsDusk(MIN_MARKETPLACE_AMOUNT_LUX)} DUSK.` : null
+}
 
 export function durationBlocks(days: number) {
   return days * AUCTION_BLOCKS_PER_DAY

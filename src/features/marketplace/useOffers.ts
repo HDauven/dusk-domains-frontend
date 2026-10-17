@@ -18,7 +18,7 @@ import {
 } from '../../names/internal'
 import { proceedsRows } from './marketplaceFees'
 import { abbreviate } from '../../utils/format'
-import { durationBlocks, formatLuxAsDusk, MIN_MARKETPLACE_AMOUNT_LUX, validLuxAmount } from './auctionMath'
+import { belowMarketplaceMinimum, durationBlocks, formatLuxAsDusk, validLuxAmount } from './auctionMath'
 import {
   canonicalOffer,
   canonicalOfferAbsent,
@@ -69,8 +69,9 @@ export function useOffers({
       setError('Enter a valid offer.')
       return
     }
-    if (amountLux < MIN_MARKETPLACE_AMOUNT_LUX) {
-      setError('Offer at least 1 DUSK.')
+    const belowMinimum = belowMarketplaceMinimum(amountLux, 'Offer')
+    if (belowMinimum) {
+      setError(belowMinimum)
       return
     }
     if (![1, 3, 7, 14, 30].includes(days)) {
