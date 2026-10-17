@@ -10,7 +10,7 @@ import {
   type IndexedNameSummary,
 } from '../../names/internal'
 import { proceedsRows } from './marketplaceFees'
-import { durationBlocks, MIN_MARKETPLACE_AMOUNT_LUX, validLuxAmount } from './auctionMath'
+import { belowMarketplaceMinimum, durationBlocks, validLuxAmount } from './auctionMath'
 import { canonicalOwnedName } from './canonicalMarketplaceState'
 import type { MarketplaceSaleMode } from './marketplaceTypes'
 import type { MarketplaceWrites } from './useMarketplaceWrites'
@@ -88,8 +88,9 @@ export function useSellForm({
         setError('Enter a valid reserve.')
         return
       }
-      if (reserveLux < MIN_MARKETPLACE_AMOUNT_LUX) {
-        setError('Reserve at least 1 DUSK.')
+      const belowMinimum = belowMarketplaceMinimum(reserveLux, 'Reserve')
+      if (belowMinimum) {
+        setError(belowMinimum)
         return
       }
       if (!duskDomainsOnChainClient) return
@@ -138,8 +139,9 @@ export function useSellForm({
       setError('Enter a valid sale price.')
       return
     }
-    if (priceLux < MIN_MARKETPLACE_AMOUNT_LUX) {
-      setError('Price at least 1 DUSK.')
+    const belowMinimum = belowMarketplaceMinimum(priceLux, 'Price')
+    if (belowMinimum) {
+      setError(belowMinimum)
       return
     }
     let privateBuyerAuthority: string | null

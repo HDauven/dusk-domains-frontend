@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Require at least 5 DUSK for an offer, fixed price or auction reserve, the marketplace contract's minimum.
 - Read each name once per block across a page, ask the node once for reads the SDK repeats in a block, and keep contract verification for the browser session.
 - Label referral claims, protocol fee claims and pricing updates by their action in transaction notices, not as a `.dusk` name.
 - Change a primary name kept in another shard with two named wallet approvals, clearing it there first, and never send a set the chain refuses.

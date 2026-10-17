@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IndexedMarketplaceAuction } from '../../names/internal'
 import {
+  belowMarketplaceMinimum,
   compactLuxAsDusk,
   currentBidDraft,
   validLuxAmount,
@@ -35,8 +36,16 @@ describe('auction math', () => {
     expect(durationBlocks(7)).toBe(60_480)
   })
 
-  it('uses a one DUSK storage-economic floor', () => {
-    expect(MIN_MARKETPLACE_AMOUNT_LUX).toBe(1_000_000_000n)
+  it('uses the marketplace contract\'s five DUSK floor', () => {
+    expect(MIN_MARKETPLACE_AMOUNT_LUX).toBe(5_000_000_000n)
+  })
+
+  it.each(['Offer', 'Price', 'Reserve'] as const)('refuses an amount below five DUSK and accepts five DUSK: %s', (what) => {
+    expect(belowMarketplaceMinimum(4_999_999_999n, what)).toBe(`${what} at least 5 DUSK.`)
+    expect(belowMarketplaceMinimum(1_000_000_000n, what)).toBe(`${what} at least 5 DUSK.`)
+    expect(belowMarketplaceMinimum(0n, what)).toBe(`${what} at least 5 DUSK.`)
+    expect(belowMarketplaceMinimum(5_000_000_000n, what)).toBeNull()
+    expect(belowMarketplaceMinimum(25_000_000_000n, what)).toBeNull()
   })
 })
 
