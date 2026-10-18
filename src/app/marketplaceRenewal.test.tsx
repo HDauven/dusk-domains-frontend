@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it, vi } from 'vitest'
-import { createDuskDomainsOnChainReadTransport, createDuskDomainsRuntimeConfig } from '../names/internal'
+import { createDuskDomainsRuntimeConfig } from '../names/internal'
 import { SearchResultPanel, type SearchResultPanelProps } from '../features/search/SearchResultPanel'
 import { deriveAppDerivedState } from './derived/deriveAppDerivedState'
 import { readPoolMarketplace } from './poolMarketplace'
@@ -77,9 +77,9 @@ function renderRenewal() {
 it('offers Renew for a listed name, saying the listing stays as it is, and for a name outside escrow', async () => {
   expect(runtime.runtimeConfig.capabilities.marketplace).toBe(false)
   expect(runtime.runtimeConfig.capabilities.marketplace).toBe(false)
-  const readContract = vi.fn().mockResolvedValue({ output: { marketplace: Array(32).fill(0xab) }, fnName: 'config' })
-  runtime.marketplaceContractId = await readPoolMarketplace(createDuskDomainsOnChainReadTransport({ readContract } as never, runtime.runtimeConfig.contracts))
-  expect(readContract).toHaveBeenCalledWith(expect.objectContaining({ contract: runtime.runtimeConfig.contracts.directory, functionName: 'config' }))
+  const bootstrap = vi.fn().mockResolvedValue({ config: { preferred_marketplace: Array(32).fill(0xab) }, market: { id: Array(32).fill(0xab) } })
+  runtime.marketplaceContractId = (await readPoolMarketplace({ bootstrap } as never)).preferred
+  expect(bootstrap).toHaveBeenCalledOnce()
   owner = marketplace
   const escrowed = renderRenewal()
   expect(escrowed.canRenew).toBe(true)

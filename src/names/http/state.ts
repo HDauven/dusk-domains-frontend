@@ -117,6 +117,8 @@ export type IndexedLifecycleName = {
   owner: string | null
   manager: string | null
   resolverId: string | null
+  /** The store the name lives in, where the chain is read first. */
+  homeShard?: string | null
   expiresAt: string | null
   graceEndsAt: string | null
   expiresAtBlockHeight?: number | null

@@ -2,26 +2,36 @@ import { expect, it, vi } from 'vitest'
 import { readPoolMarketplace } from './poolMarketplace'
 import { isMarketplaceEscrow } from './managedNameState'
 
-it.each([
-  { marketplace: Array(32).fill(0xab) },
-  { marketplace: 'ab'.repeat(32) },
-  { output: { marketplace: `0x${'AB'.repeat(32)}` }, fnName: 'config' },
-])('reads the marketplace identity from router config: %j', async response => {
-  const read = vi.fn().mockResolvedValue(response)
-  expect(await readPoolMarketplace({ read })).toBe(`0x${'ab'.repeat(32)}`)
-  expect(read).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ contract: 'directory', functionName: 'config', kind: 'read' }))
+const market = Array(32).fill(0xab)
+const state = (preferred: unknown, recorded: unknown = preferred) => ({
+  config: { preferred_marketplace: preferred },
+  market: recorded === null ? null : { id: recorded },
 })
 
-it.each([null, {}, { marketplace: '' }, { marketplace: Array(31).fill(1) }, { marketplace: Array(32).fill(256) }, { marketplace: Array(32).fill(1.5) }])('leaves malformed config unknown: %j', async response => {
-  expect(await readPoolMarketplace({ read: async () => response })).toBeNull()
+it('reads the preferred marketplace from the directory state, with the record it came with', async () => {
+  const bootstrap = vi.fn().mockResolvedValue(state(market))
+  expect(await readPoolMarketplace({ bootstrap } as never)).toEqual({ preferred: `0x${'ab'.repeat(32)}`, recorded: true })
+  expect(bootstrap).toHaveBeenCalledOnce()
 })
 
-it('keeps read failures unknown', async () => {
-  expect(await readPoolMarketplace({ read: async () => { throw new Error('offline') } })).toBeNull()
+it('knows the preferred marketplace without counting another market’s record as its own', async () => {
+  expect(await readPoolMarketplace({ bootstrap: async () => state(market, Array(32).fill(0xcd)) } as never))
+    .toEqual({ preferred: `0x${'ab'.repeat(32)}`, recorded: false })
+  expect(await readPoolMarketplace({ bootstrap: async () => state(market, null) } as never))
+    .toEqual({ preferred: `0x${'ab'.repeat(32)}`, recorded: false })
 })
 
-it.each([new Array(32), Object.assign(new Array(32), { 0: 1 }), Array(32).fill('1'), Array(32).fill(-1), Array(32).fill(1.5), Array(32).fill(0), '00'.repeat(32), `0x${'00'.repeat(32)}`])('leaves marketplace custody unknown with an invalid marketplace ID: %j', async marketplace => {
-  const id = await readPoolMarketplace({ read: async () => ({ marketplace }) })
+it('has no preferred marketplace while the directory prefers none', async () => {
+  expect(await readPoolMarketplace({ bootstrap: async () => state(null) } as never)).toEqual({ preferred: null, recorded: false })
+})
+
+it('keeps read failures and a missing client unknown', async () => {
+  expect(await readPoolMarketplace({ bootstrap: async () => { throw new Error('offline') } } as never)).toEqual({ preferred: null, recorded: false })
+  expect(await readPoolMarketplace(null)).toEqual({ preferred: null, recorded: false })
+})
+
+it.each([new Array(32), Object.assign(new Array(32), { 0: 1 }), Array(32).fill('1'), Array(32).fill(-1), Array(32).fill(1.5), Array(32).fill(0), '00'.repeat(32), `0x${'00'.repeat(32)}`])('leaves marketplace custody unknown with an invalid marketplace ID: %j', async preferred => {
+  const { preferred: id } = await readPoolMarketplace({ bootstrap: async () => state(preferred) } as never)
   expect(id).toBeNull()
   expect(isMarketplaceEscrow({ owner: `0x${'ab'.repeat(32)}`, manager: 'seller' }, id)).toBeNull()
 })

@@ -49,9 +49,19 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     ...(['directory', 'policy', 'store', 'vault', 'resolver', 'marketplace'] as const),
     'store' as const,
   ]
+  const binding = { directory: bytes(1), vault: bytes(4), network: 0 }
+  // What the release commits each contract to; the directory's records of them say the same. A policy's
+  // init commitment is over its binding and immutable config.
+  const codeHash = (n: number) => id(0x10 + n)
+  const policyInit = (config: sdk.PolicyConfig) =>
+    sdk.hex(sdk.hash('duskds:init:v1', realDrivers.get('policy')!.encodeInput('init', sdk.stringifyJson(sdk.wireValue('InitPolicy', { binding, config })))))
+  const initHash = (n: number) => (n === 2 ? policyInit(sdk.launchPolicyConfig()) : id(0x20 + n))
+  const committed = (n: number) => ({ interface_version: 1, code_hash: sdk.fromHex(codeHash(n), 32), init_hash: sdk.fromHex(initHash(n), 32) })
   const entries = roles.map((role, i) => ({
     role,
     contractId: id(i + 1),
+    codeHash: codeHash(i + 1),
+    initHash: initHash(i + 1),
     dataDriver: { path: `/${role}.wasm`, sha256: '00'.repeat(32) },
   }))
   const encoded: Array<{ method: string; args: unknown }> = []
@@ -85,7 +95,7 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     artifactBaseUrl: 'http://release.invalid/',
   }
   const directory = sample('DirectoryConfig')
-  directory.binding = { directory: bytes(1), vault: bytes(4), network: 0 }
+  directory.binding = binding
   directory.store_count = 2
   directory.resolver_count = 1
   directory.registration.policy = bytes(2)
@@ -136,7 +146,17 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     id: bytes(n),
     ordinal,
     admitted_at: 1n,
+    ...committed(n),
   }))
+  const resolvers = [{ ...sample('Admission'), id: bytes(5), ordinal: 0, ...committed(5) }]
+  // Each store's home for a root, unless a test set one: store 3 forwards to store 7, where it lives.
+  const homeOf = (target: string, root: number[]): sdk.Home => {
+    if (responses.has(`${target}:home`)) return responses.get(`${target}:home`) as sdk.Home
+    if (unseen) return 'Absent'
+    return target === id(3)
+      ? { Forwarded: { root, destination: bytes(7), destination_ordinal: 1, move_id: bytes(9), generation: 7n, completed_at: 100n } }
+      : 'Local'
+  }
   const transport: sdk.ReadTransport = {
     currentBlockHeight: async () => height,
     read: async (target, method, b) => {
@@ -154,13 +174,11 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
       if (method === 'binding') return encode(directory.binding)
       if (method === 'order_api_version') return encode(1)
       if (method === 'members')
-        return encode({
-          rows:
-            (args as { kind: string }).kind === 'Store'
-              ? admissions
-              : [{ ...sample('Admission'), id: bytes(5), ordinal: 0 }],
-          next: null,
-        })
+        return encode({ rows: (args as { kind: string }).kind === 'Store' ? admissions : resolvers, next: null })
+      if (method === 'member') {
+        const { kind, id: wanted } = args as { kind: string; id: number[] }
+        return encode((kind === 'Store' ? admissions : resolvers).find((row) => sdk.hex(row.id) === sdk.hex(wanted)) ?? null)
+      }
       if (method === 'config')
         return encode(
           role === 'directory' ? directory : role === 'policy' ? policy : market,
@@ -168,23 +186,9 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
       if (method === 'registration_context') return encode(directory.registration)
       if (method === 'market' && role === 'directory') {
         const market = (args as { id: number[] }).id
-        return encode({ id: market, state: marketStates.get(sdk.contractId(market)) ?? 'Listed', version: 1n, interface_version: 1, code_hash: bytes(0), init_hash: bytes(0) })
+        return encode({ id: market, state: marketStates.get(sdk.contractId(market)) ?? 'Listed', version: 1n, ...committed(market[0]) })
       }
-      if (method === 'home')
-        return encode(
-          unseen ? 'Absent' : target === id(3)
-            ? {
-                Forwarded: {
-                  root: (args as { root: number[] }).root,
-                  destination: bytes(7),
-                  destination_ordinal: 1,
-                  move_id: bytes(9),
-                  generation: 7n,
-                  completed_at: 100n,
-                },
-              }
-            : 'Local',
-        )
+      if (method === 'home') return encode(homeOf(target, (args as { root: number[] }).root))
       if (method === 'get_name') return encode({ Local: { ...name, name: { ...name.name, key: args } } })
       if (method === 'capacity')
         return encode({ memory_bytes: 0n, reserved_bytes: 0n, accepts_new: true, sealed: false })
@@ -192,6 +196,12 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
         return encode({ counters: name.counters, grace_end: name.name.grace_end })
       if (method === 'quote_registration') {
         if (admissions.find((a) => sdk.contractId(a.id) === target)?.retiring)
+          throw new Error('WrongHome')
+        // The store's own placement check: a root that isn't at home here is registered only at the
+        // newest store, and only while no other store holds it, or the store holding it is retiring.
+        const root = (args as sdk.QuoteRegistration).node
+        if (homeOf(target, root) !== 'Local' && (target !== sdk.contractId(directory.registration.newest_store) ||
+          admissions.some((a) => sdk.contractId(a.id) !== target && !a.retiring && homeOf(sdk.contractId(a.id), root) !== 'Absent')))
           throw new Error('WrongHome')
         const request = args as sdk.QuoteRegistration
         const quoteRequest: sdk.QuoteRequest = {
@@ -217,9 +227,12 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
       throw new Error(`Unexpected read ${target}.${method}`)
     },
   }
+  // The client keeps its own copy of the release, and Connect signs from that copy. Its operations share
+  // no answered read (heightReuseMs 0), so a reply a test changes is read at once, as after a block.
+  const client = new sdk.FrozenClient(release, { transport, heightReuseMs: 0 })
   return {
-    client: new sdk.FrozenClient(release, { transport }),
-    release,
+    client,
+    release: client.release,
     calls,
     responses,
     encoded,
@@ -236,8 +249,12 @@ function fixture({ released = false, unseen = false, policyQuotes = false } = {}
     // Governance deploys an immutable policy with the reviewed policy driver and selects it.
     replacePolicy: (n: number, config: sdk.PolicyConfig) => {
       const contractId = id(n)
-      release.contracts.set(contractId, { role: 'policy', contractId, dataDriver: { path: '/policy.wasm', sha256: '00'.repeat(32) } })
-      drivers.set(contractId, drivers.get(id(2))!)
+      // The republished manifest lists it, and the client's release holds what its manifest lists.
+      const entry = { role: 'policy' as const, contractId, codeHash: codeHash(n), initHash: policyInit(config), dataDriver: { path: '/policy.wasm', sha256: '00'.repeat(32) } }
+      for (const r of [release, client.release]) {
+        r.contracts.set(contractId, entry)
+        r.drivers.set(contractId, drivers.get(id(2))!)
+      }
       directory.registration.policy = bytes(n)
       directory.registration.policy_version += 1n
       policy = config
@@ -390,8 +407,10 @@ it.each([
       expected_fee_lux: total, valid_until: 17375n,
     },
   })
+  // The preview and the premium each ask the directory's newest store first, which refuses a root
+  // another store holds, then the placement; the reveal quotes at its placement.
   expect(h.calls.filter((call) => call.method === 'quote_registration').map((call) => call.target))
-    .toEqual([id(target), id(target), id(target)])
+    .toEqual(target === 7 ? [id(7), id(7), id(7)] : [id(7), id(3), id(7), id(3), id(3)])
   expect(h.calls.filter((call) => call.method === 'pending_commitment').map((call) => call.target))
     .toEqual([original.commitmentStore])
   expect(h.calls.some((call) => call.method === 'released_root')).toBe(retiring)
@@ -1793,10 +1812,8 @@ it.each(['escrow', 'transfer with identity kept', 'manager-only', 'expiry', 're-
     expect(await h.client.getPrimaryName(h.endpoint)).toEqual({ ok: true, value: expected })
     expect((await h.client.verifyPrimaryName(h.endpoint)).ok).toBe(expected !== null)
     expect(await h.client.readPrimaryName(h.endpoint)).toMatchObject({ ok: true, value: { name: 'example.dusk' } })
-    if (change === 'escrow' || change === 'transfer with identity kept') {
-      // Proves the old verifyPrimary path would reproduce the product bug.
-      expect(await h.sdkClient.verifyPrimary(endpointBytes(account))).not.toBeNull()
-    }
+    // The app's reads are the SDK's own verifyPrimary, which resolves the authority through the store.
+    expect(await h.sdkClient.verifyPrimary(endpointBytes(account)) !== null).toBe(expected !== null)
     expect(h.calls.some(call => call.method === 'resolve_primary')).toBe(true)
   },
 )

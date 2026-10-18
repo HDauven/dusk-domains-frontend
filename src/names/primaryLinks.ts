@@ -1,5 +1,5 @@
 import * as sdk from '@duskdomains/sdk'
-import { admittedStores, rawRead } from './directoryMembers'
+import { admittedStores, storeOwnRead } from './directoryMembers'
 
 /** A Dusk address's stored primary link in one store. */
 export type PrimaryLink = { store: string; view: sdk.PrimaryView }
@@ -10,7 +10,6 @@ export type PrimaryLink = { store: string; view: sdk.PrimaryView }
  * a primary only while no other store holds a link for the address; its own link it replaces.
  */
 export async function primaryLinks(client: sdk.FrozenClient, endpoint: number[]): Promise<PrimaryLink[]> {
-  await admittedStores(client)
   return client.snapshot(() => linksNow(client, endpoint))
 }
 
@@ -18,7 +17,7 @@ export async function primaryLinks(client: sdk.FrozenClient, endpoint: number[])
 async function linksNow(client: sdk.FrozenClient, endpoint: number[]): Promise<PrimaryLink[]> {
   return (await Promise.all((await admittedStores(client)).map(async (admission) => {
     const store = sdk.contractId(admission.id)
-    const view = await rawRead(client, 'store', store, 'read_primary', { endpoint })
+    const view = await client.store(store).read_primary({ endpoint })
     return view ? { store, view } : null
   }))).filter((link): link is PrimaryLink => link !== null)
 }
@@ -43,23 +42,18 @@ const shortAddress = (address: string) => address.length <= 18 ? address : `${ad
  * The links it returns show whether another store keeps a link for the address.
  */
 export async function primaryTarget(client: sdk.FrozenClient, spelling: string, sender: number[]): Promise<PrimaryTarget> {
-  await admittedStores(client)
   return client.snapshot(async () => {
-    const located = await client.getName(spelling)
-    const view = typeof located.value === 'object' && 'Local' in located.value ? located.value.Local : null
+    // The name at its home, where its root is Local, and its Dusk address record there.
+    const [resolved, links] = await Promise.all([client.resolve(spelling, ['moonlight_address']), linksNow(client, sender)])
+    const view = typeof resolved.value === 'object' && 'Local' in resolved.value ? resolved.value.Local : null
     if (!view) throw new PrimaryTargetError(`${spelling} isn’t registered right now, so it can’t be a primary name.`)
-    const store = sdk.contractId(located.store), key = view.name.key
-    const [home, record, links] = await Promise.all([
-      rawRead(client, 'store', store, 'home', { root: key.root }),
-      rawRead(client, 'store', store, 'resolve_record', { key, record_key: 'moonlight_address' }),
-      linksNow(client, sender),
-    ])
+    const store = sdk.contractId(resolved.store), key = view.name.key
     // A link the address keeps in this store is replaced, which its own move would hold up too.
     const own = links.find(link => link.store === store)
-    if (home !== 'Local' || view.move_pending || (own && await primaryLinkMoving(client, own)))
+    if (view.move_pending || (own && await primaryLinkMoving(client, own)))
       throw new PrimaryTargetError(`${spelling} is moving between shards, so it can’t be set as a primary name until the move finishes.`)
     if (!view.active) throw new PrimaryTargetError(`${spelling} has expired, so it can’t be a primary name. Renew it first.`)
-    const forward = typeof record === 'object' && 'Local' in record ? record.Local : null
+    const forward = resolved.records[0]
     if (!forward)
       throw new PrimaryTargetError(`${spelling} has no Dusk address record, so it can’t be a primary name. Add your Dusk address under Records first.`)
     if (sdk.hex(forward.value) !== sdk.hex(sender))
@@ -79,8 +73,8 @@ export async function primaryTarget(client: sdk.FrozenClient, spelling: string, 
 export async function primaryLinkMoving(client: sdk.FrozenClient, link: PrimaryLink) {
   const key = link.view.primary.name.key
   const [home, name] = await Promise.all([
-    rawRead(client, 'store', link.store, 'home', { root: key.root }),
-    rawRead(client, 'store', link.store, 'get_name', key),
+    storeOwnRead(client, link.store, 'home', { root: key.root }),
+    storeOwnRead(client, link.store, 'get_name', key),
   ])
   const view = typeof name === 'object' && 'Local' in name ? name.Local : null
   return home !== 'Local' || Boolean(view?.move_pending)

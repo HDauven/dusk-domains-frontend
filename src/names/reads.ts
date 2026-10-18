@@ -16,9 +16,15 @@ import { namehashHex } from './hash'
 import { safeNumber } from './numbers'
 import { success, failure } from './http/resultHelpers'
 import { listPendingNameReservations } from './reservations'
-import { admittedStores, rawRead } from './directoryMembers'
 import { PrimaryTargetError, primaryLinks, primaryTarget, type PrimaryLink } from './primaryLinks'
 import { retryReadRace } from './readRace'
+/**
+ * The store an indexer row names as a name's home (`homeShard`), as a hint where to read it first. A
+ * hint is only where to look: a wrong one costs reads, never the answer, and a malformed one is none.
+ */
+export function homeHint(value: unknown): string | undefined {
+  return typeof value === 'string' && value ? value : undefined
+}
 export function contractIdFromOutput(value: unknown): string | null {
   try {
     return '0x' + sdk.contractId(value as string | number[])
@@ -77,24 +83,20 @@ export async function openRegistrationContext(client: sdk.FrozenClient) {
   if (context.operator_paused || context.guardian_suspended) throw new Error(REGISTRATIONS_CLOSED_MESSAGE)
   return context
 }
+/**
+ * A registration quote to show, from the store the chain would register the name at. It is for display
+ * only: Register quotes again with `prepareRegistration` and signs that quote alone. `homeHint`, a
+ * released root's home, is where the preview looks first.
+ */
 export async function registrationQuote(
   client: sdk.FrozenClient,
   spelling: string,
   years: number,
   actor: string,
+  homeHint?: string,
 ) {
-  const context = await openRegistrationContext(client),
-    placement = await client.registrationPlacement(sdk.nameKey(spelling).root)
-  const policy = await client.policy(sdk.contractId(context.policy)).config()
-  const quote = await client.quoteRegistration(placement.store, {
-    node: sdk.nameKey(spelling).node,
-    label: spelling.split('.').at(-2)!,
-    years,
-    actor: sdk.fromHex(actor, 32),
-    expected_policy_version: context.policy_version,
-    expected_policy_config_version: policy.config_version,
-  })
-  return { store: placement.store, quote }
+  await openRegistrationContext(client)
+  return client.previewRegistration({ label: spelling.split('.').at(-2)!, years, actor: sdk.fromHex(actor, 32) }, homeHint)
 }
 export async function registrationRegistry(
   app: DuskConnectAppLike,
@@ -140,21 +142,30 @@ export function createDuskDomainsOnChainClient(
   }
   const names = new Map<string, string>()
   // One name read per name and height, shared by the parts of a page: its state, records, renewal
-  // quote and owner checks. A caller reuses a read only when it was taken at the tip this caller
-  // reads after asking, or later, so no caller sees a name older than the chain when it asked.
+  // quote and owner checks. A name page reads the name with everything else it shows, and the other
+  // parts take the name from that read. A caller reuses a read only when it was taken at the tip this
+  // caller reads after asking, or later, so no caller sees a name older than the chain when it asked.
   const nameReads = new Map<string, { client: sdk.FrozenClient; read: Promise<sdk.Routed<sdk.NameView>> }>()
-  const readName = async (c: sdk.FrozenClient, spelling: string): Promise<sdk.Routed<sdk.NameView>> => {
+  const keepName = (c: sdk.FrozenClient, spelling: string, read: Promise<sdk.Routed<sdk.NameView>>) => {
+    nameReads.delete(spelling)
+    nameReads.set(spelling, { client: c, read })
+    if (nameReads.size > 64) nameReads.delete(nameReads.keys().next().value!)
+    read.catch(() => { if (nameReads.get(spelling)?.read === read) nameReads.delete(spelling) })
+  }
+  const readName = async (c: sdk.FrozenClient, spelling: string, hint?: string): Promise<sdk.Routed<sdk.NameView>> => {
     const earlier = nameReads.get(spelling)
     if (earlier?.client === c) {
       const [tip, routed] = await Promise.all([c.transport.currentBlockHeight(), earlier.read.catch(() => null)])
       if (routed && routed.height >= BigInt(tip)) return structuredClone(routed)
     }
-    const read = c.getName(spelling)
-    nameReads.delete(spelling)
-    nameReads.set(spelling, { client: c, read })
-    if (nameReads.size > 64) nameReads.delete(nameReads.keys().next().value!)
-    read.catch(() => { if (nameReads.get(spelling)?.read === read) nameReads.delete(spelling) })
+    const read = c.getName(spelling, hint)
+    keepName(c, spelling, read)
     return structuredClone(await read)
+  }
+  const readPage = async (c: sdk.FrozenClient, spelling: string, hint?: string) => {
+    const page = c.namePage(spelling, hint)
+    keepName(c, spelling, page.then(({ store, value, forwards, height }) => ({ store, value, forwards, height })))
+    return page
   }
   const byNode = async (node: string) => {
     const c = await getClient()
@@ -167,11 +178,8 @@ export function createDuskDomainsOnChainClient(
       throw new Error('Name spelling unavailable')
     return indexed.canonicalName
   }
-  const getName = async (spelling: string): Promise<DuskDomainsOnChainNameResponse> => {
-    const c = await getClient(),
-      name = sdk.normalizeNameInput(spelling),
-      located = await readName(c, name),
-      v = local(located.value)
+  const nameResponse = (name: string, located: sdk.Routed<sdk.NameView>): DuskDomainsOnChainNameResponse => {
+    const v = local(located.value)
     names.set(namehashHex(name), name)
     return {
       canonicalName: name,
@@ -192,6 +200,11 @@ export function createDuskDomainsOnChainClient(
           }
         : null,
     }
+  }
+  const getName = async (spelling: string, hint?: string): Promise<DuskDomainsOnChainNameResponse> => {
+    const c = await getClient(),
+      name = sdk.normalizeNameInput(spelling)
+    return nameResponse(name, await readName(c, name, hint))
   }
   const records = async (spelling: string, keys?: string[]) => {
     const c = await getClient(),
@@ -215,50 +228,40 @@ export function createDuskDomainsOnChainClient(
   // Every store's stored link for the address, in admission order, as set_primary's uniqueness check reads them.
   const storedPrimaryLinks = async (endpoint: import('./http/results').DuskEndpoint) =>
     (await primaryLinks(await getClient(), endpointBytes(endpoint.value))).map(linkView)
-  const primary = async (endpoint: import('./http/results').DuskEndpoint) => {
+  const primaryView = (endpoint: import('./http/results').DuskEndpoint, v: sdk.VerifiedPrimary) => ({
+    endpoint,
+    primaryName: v.primary.spelling,
+    node: '0x' + sdk.hex(v.primary.primary.name.key.node),
+    forwardRecord: recordView(v.record),
+    verified: true as const,
+  })
+  // The store's authority-gated resolution, with incarnation, lifecycle and forward record checked. The
+  // store a hint names, the one keeping the mapping, is asked first: one it verifies is the pool's only one.
+  const primary = async (endpoint: import('./http/results').DuskEndpoint, hint?: string) => {
     if (endpoint.type !== 'moonlight_address')
       throw new Error('Only public Dusk addresses support primary names.')
-    const c = await getClient()
-    const bytes = endpointBytes(endpoint.value)
-    // A store admitted since the last read is verified first. The snapshot then reads every store at
-    // once, in a few round trips, so it finishes between blocks.
-    await admittedStores(c)
-    // SDK 0.3.2 verifyPrimary reads the raw mapping. The store's resolution
-    // additionally requires the endpoint to be the current owner or manager.
-    const v = await c.snapshot(async (height) => {
-      const candidates = await Promise.all((await admittedStores(c)).map(async (admission) => {
-        const store = sdk.contractId(admission.id)
-        const primary = await rawRead(c, 'store', store, 'resolve_primary', { endpoint: bytes })
-        if (!primary) return null
-        const key = primary.primary.name.key
-        const [home, name, resolved] = await Promise.all([
-          rawRead(c, 'store', store, 'home', { root: key.root }),
-          rawRead(c, 'store', store, 'get_name', key),
-          rawRead(c, 'store', store, 'resolve_record', { key, record_key: 'moonlight_address' }),
-        ])
-        // The mapping counts only at the store its name lives in, not one it moved on from.
-        if (typeof home === 'object' && 'Forwarded' in home) return null
-        const view = local(name), record = local(resolved)
-        if (!view || !record || !sdk.primaryNameStatus({ endpoint: bytes, primary, name: view, record, height }).verified) return null
-        return { store, primary, record, height }
-      }))
-      const found = candidates.filter((candidate): candidate is sdk.VerifiedPrimary => candidate !== null)
-      if (found.length > 1) throw new Error('Multiple resolved pool primaries')
-      return found[0] ?? null
-    })
-    if (!v) return null
+    const v = await (await getClient()).verifyPrimary(endpointBytes(endpoint.value), hint)
+    return v ? primaryView(endpoint, v) : null
+  }
+  // What a name's page shows, at one height: the name, every record and the verified primary of its own
+  // Dusk address record. The page's other parts then take the name from this read.
+  const namePage = async (spelling: string, hint?: string) => {
+    const c = await getClient(),
+      name = sdk.normalizeNameInput(spelling),
+      page = await readPage(c, name, hint)
+    const verified = page.primary.verified
     return {
-      endpoint,
-      primaryName: v.primary.spelling,
-      node: '0x' + sdk.hex(v.primary.primary.name.key.node),
-      forwardRecord: recordView(v.record),
-      verified: true as const,
+      name: nameResponse(name, page),
+      records: (page.records?.records ?? []).map(recordView),
+      primaryName: verified ? verified.primary.spelling : null,
+      primaryError: page.primary.error ? (page.primary.error instanceof Error ? page.primary.error.message : String(page.primary.error)) : null,
     }
   }
   return {
     getCurrentBlockHeight: () =>
       wrapped(async () => safeNumber(await (await getClient()).transport.currentBlockHeight())),
-    getName: (name) => wrapped(() => getName(name)),
+    getName: (name, hint) => wrapped(() => getName(name, hint)),
+    getNamePage: (name, hint) => wrapped(() => namePage(name, hint)),
     getNameByNode: (node) => wrapped(async () => getName(await byNode(node))),
     getNameOwner: (name) =>
       wrapped(async () => {
@@ -275,18 +278,10 @@ export function createDuskDomainsOnChainClient(
       }),
     resolveName: (name, key = 'moonlight_address') =>
       wrapped(async () => {
-        const c = await getClient(),
-          n = requiredName(await readName(c, sdk.normalizeNameInput(name)))
-        const resolved = await c.locate<sdk.RecordValue | null>(
-          n.store,
-          n.ref.key.root,
-          'resolve_record',
-          {
-            key: n.ref.key,
-            record_key: key,
-          },
-        )
-        const raw = local(resolved.value)
+        // The name at its home with that record, at one height.
+        const resolved = await (await getClient()).resolve(sdk.normalizeNameInput(name), [key])
+        if (!local(resolved.value)) throw new Error('This name is no longer registered. Refresh and try again.')
+        const raw = resolved.records[0]
         if (!raw) throw new Error('Record is missing or the name is inactive')
         const r = recordView(raw)
         return {
@@ -296,10 +291,10 @@ export function createDuskDomainsOnChainClient(
           record: r,
         }
       }),
-    getPrimaryName: (endpoint) => wrapped(async () => (await primary(endpoint))?.primaryName ?? null),
-    verifyPrimaryName: (endpoint, expectedName) =>
+    getPrimaryName: (endpoint, hint) => wrapped(async () => (await primary(endpoint, hint))?.primaryName ?? null),
+    verifyPrimaryName: (endpoint, expectedName, hint) =>
       wrapped(async () => {
-        const p = await primary(endpoint)
+        const p = await primary(endpoint, hint)
         if (!p) throw new Error('No resolved primary name')
         if (expectedName && expectedName !== p.primaryName) throw new Error('Primary name mismatch')
         return p
@@ -336,19 +331,19 @@ export function createDuskDomainsOnChainClient(
           pending: p ? { controller, createdAtBlock: safeNumber(p.created_at) } : null,
         }
       }),
-    getRegistrationPremium: (name) =>
+    getRegistrationPremium: (name, hint) =>
       wrapped(async () =>
         safeNumber(
-          (await registrationQuote(await getClient(), name, 1, PREVIEW_QUOTE_ACTOR)).quote.quote
+          (await registrationQuote(await getClient(), name, 1, PREVIEW_QUOTE_ACTOR, hint)).quote.quote
             .premium_lux,
         ),
       ),
-    getRegistrationQuote: (name, years, actor) =>
-      wrapped(async () => registrationQuote(await getClient(), name, years, actor)),
-    getRenewalQuote: (name, years) =>
+    getRegistrationQuote: (name, years, actor, hint) =>
+      wrapped(async () => registrationQuote(await getClient(), name, years, actor, hint)),
+    getRenewalQuote: (name, years, hint) =>
       wrapped(async () => {
         const c = await getClient(),
-          n = requiredName(await readName(c, name)),
+          n = requiredName(await readName(c, name, hint)),
           quote = await c.quoteRenewal(n.store, { name: n.ref, years })
         const v = local(quote.value)
         if (!v) throw new Error('Renewal unavailable')
@@ -415,7 +410,7 @@ export function createDuskDomainsMarketplaceOnChainClient(
       }).getNameState(node)
     if (!indexed?.canonicalName || namehashHex(indexed.canonicalName) !== node.toLowerCase())
       throw new Error('Name spelling unavailable')
-    const n = await c.getName(indexed.canonicalName),
+    const n = await c.getName(indexed.canonicalName, homeHint(indexed.homeShard)),
       config = await c.directory.config()
     if (!config.preferred_marketplace) throw new Error('Marketplace unavailable')
     const market = c.marketplace(sdk.contractId(config.preferred_marketplace))

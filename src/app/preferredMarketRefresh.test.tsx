@@ -21,10 +21,18 @@ const verifying = (rejected: string[] = []) => (id: string) => ({ order_api_vers
   if (rejected.includes(id)) throw new Error('Contract deployment binding mismatch')
   return 1
 } })
+// The directory's state names the preferred market and comes with its record, checked against the
+// release; a preferred market that fails verification fails the read.
+const directoryState = (preferred: () => string, rejected: string[] = []) => async () => {
+  const id = preferred().slice(2)
+  if (rejected.includes(id)) throw new Error('Contract deployment binding mismatch')
+  const bytes = Array.from({ length: 32 }, (_, i) => Number.parseInt(id.slice(2 * i, 2 * i + 2), 16))
+  return { config: { preferred_marketplace: bytes }, market: { id: bytes } }
+}
 
 it('follows a change of preferred market without a reload, and still knows the market it moved from', async () => {
   let preferred = first
-  const read = { client: Promise.resolve({ release, marketplace: verifying() }), read: vi.fn(async () => ({ marketplace: preferred })) } as unknown as DuskDomainsOnChainReadTransport
+  const read = { client: Promise.resolve({ release, marketplace: verifying(), bootstrap: directoryState(() => preferred) }), read: vi.fn() } as unknown as DuskDomainsOnChainReadTransport
   let market!: ReturnType<typeof usePoolMarketplace>
   function Probe() {
     market = usePoolMarketplace(read)
@@ -45,16 +53,16 @@ it('follows a change of preferred market without a reload, and still knows the m
 
 const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
 
-// SDK 0.3.2 adds a contract it resolves to the client's release before verifying it. The live app
-// then discards that client, but a read already holding it must not publish what its release lists.
+// The live app discards a client that refused a contract, but a read already holding it must not
+// publish what its release lists.
 it('drops the markets of a client discarded while its read was in flight', async () => {
   const unverified = `0x${'0f'.repeat(32)}`
-  const stale = { release: { contracts: new Map([[next.slice(2), { role: 'marketplace' }], [unverified.slice(2), { role: 'marketplace' }]]) }, marketplace: verifying() }
-  const clean = { release: { contracts: new Map([[next.slice(2), { role: 'marketplace' }]]) }, marketplace: verifying() }
+  const stale = { release: { contracts: new Map([[next.slice(2), { role: 'marketplace' }], [unverified.slice(2), { role: 'marketplace' }]]) }, marketplace: verifying(), bootstrap: directoryState(() => next) }
+  const clean = { release: { contracts: new Map([[next.slice(2), { role: 'marketplace' }]]) }, marketplace: verifying(), bootstrap: directoryState(() => next) }
   let resolveStale!: (client: unknown) => void
   let current: unknown = stale
   let pending: Promise<unknown> = new Promise(resolve => { resolveStale = resolve })
-  const read = { get client() { return pending }, read: vi.fn(async () => ({ marketplace: next })), isCurrentClient: (client: unknown) => client === current } as unknown as DuskDomainsOnChainReadTransport
+  const read = { get client() { return pending }, read: vi.fn(), isCurrentClient: (client: unknown) => client === current } as unknown as DuskDomainsOnChainReadTransport
   let market!: ReturnType<typeof usePoolMarketplace>
   function Probe() {
     market = usePoolMarketplace(read)
@@ -74,9 +82,9 @@ it('drops the markets of a client discarded while its read was in flight', async
 })
 
 it('drops what it already showed from a client that is discarded later', async () => {
-  const listed = { release, marketplace: verifying() }
+  const listed = { release, marketplace: verifying(), bootstrap: directoryState(() => next) }
   let current: unknown = listed
-  const read = { client: Promise.resolve(listed), read: vi.fn(async () => ({ marketplace: next })), isCurrentClient: (client: unknown) => client === current } as unknown as DuskDomainsOnChainReadTransport
+  const read = { client: Promise.resolve(listed), read: vi.fn(), isCurrentClient: (client: unknown) => client === current } as unknown as DuskDomainsOnChainReadTransport
   let market!: ReturnType<typeof usePoolMarketplace>
   function Probe() {
     market = usePoolMarketplace(read)
@@ -92,7 +100,7 @@ it('drops what it already showed from a client that is discarded later', async (
 })
 
 it('never lists a market whose verification fails', async () => {
-  const read = { client: Promise.resolve({ release, marketplace: verifying([first.slice(2)]) }), read: vi.fn(async () => ({ marketplace: next })) } as unknown as DuskDomainsOnChainReadTransport
+  const read = { client: Promise.resolve({ release, marketplace: verifying([first.slice(2)]), bootstrap: directoryState(() => next) }), read: vi.fn() } as unknown as DuskDomainsOnChainReadTransport
   let market!: ReturnType<typeof usePoolMarketplace>
   function Probe() {
     market = usePoolMarketplace(read)
@@ -104,7 +112,7 @@ it('never lists a market whose verification fails', async () => {
 })
 
 it('never counts a preferred market whose verification fails as known', async () => {
-  const read = { client: Promise.resolve({ release, marketplace: verifying([next.slice(2)]) }), read: vi.fn(async () => ({ marketplace: next })) } as unknown as DuskDomainsOnChainReadTransport
+  const read = { client: Promise.resolve({ release, marketplace: verifying([next.slice(2)]), bootstrap: directoryState(() => next, [next.slice(2)]) }), read: vi.fn() } as unknown as DuskDomainsOnChainReadTransport
   let market!: ReturnType<typeof usePoolMarketplace>
   function Probe() {
     market = usePoolMarketplace(read)

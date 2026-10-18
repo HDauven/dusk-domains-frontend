@@ -27,10 +27,12 @@ it.each(['mainnet', 'testnet'])('documents every production setting for %s', (ne
     // Contracts admitted after launch, such as a replacement policy, load only from the manifest.
     VITE_DUSK_DOMAINS_MANIFEST_URL: '/manifest.json',
   })
-  for (const role of ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE']) {
+  for (const role of ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKETPLACE', 'LENS']) {
     expect(env[`VITE_DUSK_DOMAINS_${role}_CONTRACT_ID`]).toMatch(/^<.+>$/)
     expect(env[`VITE_DUSK_DOMAINS_${role}_DRIVER_URL`]).toBe(`/contracts/dusk-domains-${role.toLowerCase()}.<sha256>.data-driver.wasm`)
   }
+  // The read lens is on; false reads every contract directly.
+  expect(env.VITE_DUSK_DOMAINS_USE_LENS).toBe('true')
 })
 
 it('keeps the testnet dev shortcut on the testnet site and env mode', () => {

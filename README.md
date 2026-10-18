@@ -16,7 +16,8 @@ npm run dev -- --host 127.0.0.1 --port 5217 --strictPort
 
 Fill [.env.local using the template](.env.example) with the six deployed contract IDs
 (directory, policy, store, vault, resolver and marketplace), their pinned driver URLs,
-the node, chain and indexer URL, and for a production site the deployment manifest URL.
+the node, chain and indexer URL, and for a production site the deployment manifest URL and
+the read lens's ID and driver URL.
 `VITE_DUSK_DOMAINS_ENABLE_LIVE_WRITES` enables wallet transactions when the runtime
 is configured. Live writes require Dusk Wallet and browser-accessible node endpoints.
 Support/abuse/security/status URLs are optional; unset links are hidden.
@@ -117,14 +118,17 @@ indexer reports invalid, or that fails the SDK's validation, is never offered as
 payment target, nor shown or copied as anyone's Dusk address. Long records show their
 first lines until expanded.
 
-After a failed client creation or a failed contract verification, the app discards the
+After a failed client creation, or once the client refuses a contract, the app discards the
 client and its release and builds a fresh one on the next read, so a fixed manifest
 takes effect without a reload.
 
-The parts of a page share what they read from the chain at one block height: a name is read
-once while the tip stays at the height it was read at, and reads the SDK repeats at one height
-reach the node once. A contract's interface, binding and market order API never change, so the
-tab keeps those replies for its session; a discarded client reads them again.
+When the release has a read lens, a name's page, a primary name, a registration price and the
+directory's state each take one contract query, however many stores the directory admits; anything
+the lens can't answer is read directly. Reads start at the store the indexer names as a name's home.
+The parts of a page share what they read from the chain at one block height: they take the name from
+the page's read while the tip stays at its height, and reads repeated at one height reach the node
+once. A contract's interface, binding and market order API never change, so the tab keeps what
+verification read for its session; signing for a contract reads it from the chain again.
 
 ## Documentation
 

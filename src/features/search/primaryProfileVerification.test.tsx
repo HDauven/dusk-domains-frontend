@@ -86,7 +86,7 @@ it.each([
   expect(state.canClearPrimary).toBe(selectedAddress === bobAddress)
   expect(primaryName).toBe(name)
   expect(connectedPrimaryName).toBe(selectedAddress ? indexedPrimary ?? 'alice.dusk' : null)
-  expect(onChainClient.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: bobAddress })
+  expect(onChainClient.getPrimaryName).toHaveBeenCalledWith({ type: 'moonlight_address', value: bobAddress }, undefined)
   expect(indexerClient.getPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress ? 1 : 0)
   expect(onChainClient.readPrimaryName).toHaveBeenCalledTimes(selectedAddress === aliceAddress && !indexedPrimary ? 1 : 0)
 })

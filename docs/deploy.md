@@ -7,7 +7,7 @@ its own indexer, whose allowed browser origin matches that site.
 
 Copy `.env.mainnet.example` to `.env.mainnet.local`, and `.env.testnet.example` to
 `.env.testnet.local`. Merge that network's deploy bundle `frontend.env` into its local env file. It supplies
-`VITE_DUSK_DOMAINS_{DIRECTORY,POLICY,STORE,VAULT,RESOLVER,MARKETPLACE}_{CONTRACT_ID,DRIVER_URL}`.
+`VITE_DUSK_DOMAINS_{DIRECTORY,POLICY,STORE,VAULT,RESOLVER,MARKETPLACE,LENS}_{CONTRACT_ID,DRIVER_URL}`.
 Copy the bundle's `contracts/` contents to `public/contracts/`; immutable filenames are
 `dusk-domains-<role>.<sha256>.data-driver.wasm`, with `frozen-resolver` and `marketplace-v1`
 for the resolver and marketplace. Validation checks IDs, emitted filenames and SHA-256.
@@ -32,6 +32,19 @@ orders retain their marketplace, order ID and original store, including cancella
 The separate `indexer.env` belongs to a fresh frozen indexer database, replayed from its
 first deployment block with the emitted event schema version. Env files contain public build configuration; keep
 filled copies out of git. Never put credentials in a `VITE_` variable.
+
+The handoff carries the read lens as a top-level `lens` deployment beside the six roles, with its
+driver in `artifacts.lens`; the app adapts it to the SDK's top-level `lens`. Through the lens, a name's
+page, a primary name, a registration price and the directory's state each take one contract query,
+however many stores the directory admits. The site reads through it only when the build pins it:
+`VITE_DUSK_DOMAINS_LENS_CONTRACT_ID` and `VITE_DUSK_DOMAINS_LENS_DRIVER_URL` from the bundle's
+`frontend.env` must name the manifest's lens and its driver, and validation refuses a deploy where
+they disagree. A lens the build doesn't pin is ignored. Without a lens every read is direct, and the
+SDK reads directly for any call the lens can't answer, such as a reply that fails its checks.
+`VITE_DUSK_DOMAINS_USE_LENS=false` turns the lens off: the site then loads no lens driver and reads
+every contract directly, whatever the manifest lists. [Turn the read lens off](#turn-the-read-lens-off)
+gives the steps. A lens reply verifies nothing for signing: before a write, the site verifies the
+contract it goes to, such as a name's store, against the directory.
 
 `VITE_DUSK_DOMAINS_EXPLORER_URL` links transaction IDs in a name's activity to a
 block explorer: `https://explorer.dusk.network` on mainnet and
@@ -113,6 +126,29 @@ using its manifest. It does not rebuild or need the original env file. The resto
 release serves the `manifest.json` it was deployed with: if governance admitted a
 contract since then, deploy the current manifest again.
 
+## Turn the read lens off
+
+The lens setting is built into the site, so it changes with a deploy, not on the server. In the
+network's env file, such as `.env.mainnet.local`, set `VITE_DUSK_DOMAINS_USE_LENS=false` (`0`, `no`
+and `off` also work) and keep the lens contract and driver lines. Then deploy the live commit again
+with the same command and manifest as in [Deploy](#deploy). With a warm npm cache the build takes
+about ten seconds; the upload, exchange and version check follow as for any deploy. `version.json`
+doesn't change, so check the served bundle instead (for testnet, use `https://testnet.dusk.domains`):
+
+```sh
+site=https://dusk.domains
+curl -s "$site$(curl -s "$site/" | grep -o '/assets/index-[A-Za-z0-9_-]*\.js' | head -1)" \
+  | grep -o 'VITE_DUSK_DOMAINS_USE_LENS:`[a-z]*`' | sort -u
+```
+
+The value it prints ends in `false`. Pages already open keep the previous build until they
+reload. `scripts/deploy.sh --rollback` turns the lens back on, as does a deploy with `true`.
+
+To turn it off in seconds, stage the switched-off build first: deploy the commit with
+`VITE_DUSK_DOMAINS_USE_LENS=false`, then again with `true`. The switched-off build is then the
+newest previous release, and `scripts/deploy.sh --rollback` restores it without a rebuild. Any later
+deploy takes its place as the newest previous release, so stage it again after each deploy.
+
 ## Contracts admitted after launch
 
 Governance admits and selects contracts through delayed directory proposals: `SetPolicy`
@@ -131,9 +167,14 @@ when someone executes it. Before the proposal becomes ready:
    deployed before the proposal is ready.
 3. Deploy the current commit with the updated manifest, as in [Deploy](#deploy).
 
+The lens reads every store and resolver the directory admits, and the site uses a lens reply only
+when the release lists each of them, so a shard the manifest doesn't list yet makes those reads
+direct. A new lens is a new contract ID: it needs the new lens pins in a rebuild, deployed with a
+manifest listing it.
+
 Open pages read the manifest again when the chain uses a contract their release lacks, and
-build a fresh client after a failed creation, or after a contract fails verification once its
-driver has loaded, so they follow the change without a reload. New listings and offers go to
+build a fresh client after a failed creation, or once the client refuses a contract, so they follow
+the change without a reload. New listings and offers go to
 the market the directory prefers, which the site reads again every three minutes. If a
 proposal executes before the manifest lists its contract, the
 site says it hasn't been updated for that contract yet, and recovers once the manifest is
@@ -165,64 +206,18 @@ verify, the site shows no registration prices and registration stays paused.
 
 ## SDK dependency
 
-The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.3.2`,
+The frontend pins the exact published SDK release, `npm:@jsr/duskdomains__sdk@0.4.1`,
 through the `@jsr` registry mapping in `.npmrc`. It never imports the removed
 `/internal` or `/writes` entry points. UI presentation helpers live in `src/names/ui`.
 
-### Moving to SDK 0.4.0
-
-SDK 0.4.0 isn't patch-compatible with 0.3.x. Before the pin moves:
-
-- [ ] Pass `client.release` to `createDuskDomainsConnectApp(wallet, client.release)` in
-  `src/app/duskDomainsLiveApp.ts`, not the release object the app loaded.
-- [ ] On `ContractRefusedError`, build a new client once the release is fixed. A contract that
-  isn't admitted yet, or a missing artifact, stays retryable on the same client.
-- [ ] Before building `listFixed`, `auction` or `acceptOffer`, call
-  `client.verifyContract('marketplace', id)` and build the calls with
-  `client.release.drivers.get(marketId)`, for every market, including a draining one
-  (`src/names/prepareFrozenCall.ts`).
-- [ ] Sign only the exact quote object `quoteRegistration` or `prepareRegistration` returned:
-  a quote that was cloned, serialized, persisted or wrapped in a proxy can't be signed. The site
-  keeps or rebuilds quote state in these places, and each must quote again before signing:
-  - `src/features/registration/reservationQuote.ts` saves a plain summary of the quote a
-    reservation was made at (term, total, policy and versions) in `localStorage`, under
-    `dusk-domains.claim-quote:<chain>:<commitment>`. Register only compares it with a fresh quote.
-  - `src/names/reservations.ts` saves reservations through the SDK: secret, commitment and
-    term, without a quote.
-  - `src/names/prepareFrozenCall.ts` quotes again with `client.prepareRegistration` when
-    Register signs, and signs `priced.calls.reveal`. Its `withWalletDetails` returns a copy of
-    the call (`{ ...call, display }`): check that the wallet still receives a call 0.4.0 accepts,
-    or attach the display details without copying the call.
-  - `src/features/registration/completeRegistrationCall.ts` passes the preview quote, or a new
-    price the person confirmed (`RegistrationPriceReview.quote`, held in React state), as
-    `call.quote`. `prepareFrozenCall` only compares it with the fresh quote. Never hand it to
-    `prepareRegistration` or `registrationCalls` in place of quoting again.
-  - `src/features/search/useNamePreview.ts` keeps the live quote from `useLiveQuotes` as
-    `NameResult.policyQuote`, and `prepareRegistrationCommit.ts` turns it into the saved summary.
-  - The commit is built from the saved commitment hash with `storeCommitCall`, without a quote.
-    If 0.4.0 builds commits only through `registrationCalls`, quote right before the commit.
-- [ ] `src/names/readRace.ts` reads again, and prepares a call again, when SDK 0.3.2 reports
-  that a block landed mid-read (`Chain tip changed during read; retry the snapshot`, or a
-  registration quote at another height). 0.4.0 restarts a preparation at the new height itself
-  and rethrows a failure that repeats at every height as itself: keep the retry only for the
-  errors 0.4.0 still throws when the tip moves.
-- [ ] Drop the SDK 0.3.2 read-sharing bridge once 0.4.0 shares reads at one height itself: delete
-  `src/names/sharedReads.ts` and its tests (`src/names/sharedReads.test.ts`,
-  `src/app/liveNodeReads.test.ts`), and in `src/app/duskDomainsLiveApp.ts` the `transport`
-  option and the `clearSessionImmutableReads` call on discard, and update the README's note on
-  keeping verification replies for the session. Keep the name-read sharing in `src/names/reads.ts`.
-  Tabs then leave their `dusk-domains:immutable-read:v1:` session entries unused.
-- [ ] Create the client with `createClientFromManifest` alone, in
-  `src/app/duskDomainsLiveApp.ts`. 0.4.0's discovery no longer verifies the policy the directory
-  selects; under 0.3.2, `discoverWithoutPolicy` in `src/names/directoryMembers.ts` discovers the
-  deployment without it while the manifest doesn't list that policy yet.
-- [ ] Read stores with the SDK's own reads again. `rawRead` and `admittedStores` in
-  `src/names/directoryMembers.ts` keep 0.3.2's nested reads from taking their own heights inside
-  a snapshot, and keep their own record of verified stores; 0.4.0 runs nested reads in one
-  snapshot and keeps a verification ledger per client.
-- [ ] The Connect app signs only for the directory, the vault and contracts whose release entry
-  carries both `codeHash` and `initHash`. `adaptDeploymentManifest` in
-  `src/names/releaseManifest.ts` copies a handoff entry's `initHash`, and handoffs carry one
-  for every contract. A release built from environment variables alone (`manifestFromConfig`
-  in `src/names/config.ts`, used without `VITE_DUSK_DOMAINS_MANIFEST_URL`) carries neither and
-  can no longer sign store or market calls: give local and preview builds a manifest too.
+The client verifies the directory when it is created, and every other contract the first time it
+reads through it; no page needs every contract verified up front. A client that refuses a contract
+refuses it for good, so the app builds a new client then; a contract not admitted yet, a missing
+artifact or a failed read stays retryable on the same client. The Connect app takes `client.release`
+and signs only for contracts that client verified against the release's `codeHash` and `initHash`,
+which the handoff carries for every contract: a release built from environment variables alone
+(`manifestFromConfig`, used without `VITE_DUSK_DOMAINS_MANIFEST_URL`) can read but not sign store or
+market calls, so give local and preview builds a manifest too. Register signs only the quote
+`prepareRegistration` returns when it signs: a reservation keeps a plain summary of its price, which
+Register only compares with that quote, and a quote no client verified as returned throws a retryable
+`UnverifiedQuoteError`, shown as asking to check the price again.

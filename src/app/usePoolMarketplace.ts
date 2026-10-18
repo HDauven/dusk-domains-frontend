@@ -10,11 +10,13 @@ type PoolMarketplace = { read: DuskDomainsOnChainReadTransport; client: FrozenCl
 
 /**
  * The market contracts in this site's release that verify. A read verifies a contract once per client;
- * one that fails verification is never listed, though SDK 0.3.2 leaves it in the release.
+ * one that fails verification is never listed. The preferred market whose record the directory's state
+ * came with, checked against the release, is listed without reading it again.
  */
-async function releaseMarketplaces(client: FrozenClient | null) {
+async function releaseMarketplaces(client: FrozenClient | null, recorded: string | null) {
   const ids = [...client?.release?.contracts.entries() ?? []].filter(([, contract]) => contract.role === 'marketplace').map(([id]) => id)
   const verified = await Promise.all(ids.map(async id => {
+    if (recorded && contractIdFromOutput(id) === recorded) return recorded
     try {
       await client!.marketplace(id).order_api_version()
       return contractIdFromOutput(id)
@@ -38,7 +40,8 @@ export function usePoolMarketplace(read: DuskDomainsOnChainReadTransport | null)
     if (!read) return
     const request = ++latest.current
     const client = await Promise.resolve(read.client).catch(() => null) ?? null
-    const [preferred, listed] = await Promise.all([readPoolMarketplace(read), releaseMarketplaces(client)])
+    const { preferred, recorded } = await readPoolMarketplace(client)
+    const listed = await releaseMarketplaces(client, recorded ? preferred : null)
     // A client discarded meanwhile, such as after a failed verification, publishes nothing.
     if (request !== latest.current || (client && read.isCurrentClient?.(client) === false)) return
     const known = preferred && listed.includes(preferred) ? [preferred, ...listed.filter(id => id !== preferred)] : listed
