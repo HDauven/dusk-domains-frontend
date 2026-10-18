@@ -12,3 +12,7 @@ other historical handoff data remain from the original review. It is not a curre
 deployment manifest. No contract WASM is included. The handoff intentionally has
 no indexer URL; integration tests add a local /api setting and intercept every
 fetch. No test connects to the handoff node.
+
+The read lens's driver, `dusk-domains-lens.63198ec4….data-driver.wasm`, is the driver of the testnet
+lens deployed for the release rehearsal. The manifest lists no lens: tests that need one add the deploy
+tool's top-level `lens` deployment and `artifacts.lens` to a copy, bound to this handoff's directory.

@@ -12,6 +12,7 @@ import { announceDuskProvider, DuskWallet, type DuskProvider } from '@dusk/conne
 import { type DuskDomainsRuntimeConfig } from '../names/internal'
 import { createWalletSession } from '../features/wallet/walletSession'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
+import { frozenNode, id, LENS } from '../test/frozenNode'
 
 const cleanups: Array<() => void> = []
 afterEach(() => { cleanups.splice(0).forEach(cleanup => cleanup()); vi.unstubAllGlobals() })
@@ -130,10 +131,20 @@ it.each([null, {}, { value: 'bad' }, { value: '-1' }, { value: '1.5' }])('blocks
   expect(provider.request.mock.calls.some(([args]) => args.method === 'dusk_sendTransaction')).toBe(false)
 })
 
-async function fixture(chainId = 'dusk:2') {
+// A client of the configured deployment that quoted example.dusk's registration, so Connect signs it.
+async function verifiedClient(chainId: string) {
+  const client = frozenNode({ network: Number(chainId.split(':')[1]) }).client()
+  await client.quoteRegistration(id(3), {
+    node: sdk.nameKey('example.dusk').node, label: 'example', years: 1, actor: Array(32).fill(1),
+    expected_policy_version: 1n, expected_policy_config_version: 1n,
+  })
+  return client
+}
+
+async function fixture(chainId = 'dusk:2', client?: sdk.FrozenClient) {
   vi.stubGlobal('window', new EventTarget())
-  const release = {manifest:{chainId},contracts:new Map(Object.entries(contracts).map(([role,c])=>[c.contractId,{role}])),drivers:new Map(Object.values(contracts).map(c=>[c.contractId,{encodeInput:()=>new Uint8Array([1,2,3])}]))}
-  vi.mocked(createClientFromManifest).mockResolvedValue({release,verifyContract:vi.fn()} as never)
+  const release = client ?? await verifiedClient(chainId)
+  vi.mocked(createClientFromManifest).mockResolvedValue(release)
   const listeners = new Map<string, Set<(value: unknown) => void>>()
   const provider = {
     isDusk: true, isAuthorized: true, chainId, profiles: [{ account: 'A', profileId: 'primary' }],
@@ -227,7 +238,7 @@ it.each(['lock', 'disconnect', 'network', 'account', 'profile', 'authorization',
     emit(change === 'lock' ? 'lock' : 'profilesChanged', provider.profiles)
   }
   await session.refresh()
-  if (change === 'encoding') delayed.resolve({release,verifyContract:vi.fn()})
+  if (change === 'encoding') delayed.resolve(release)
   else delayed.resolve({median:'1'})
   await result
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
@@ -250,7 +261,7 @@ it.each(['profiles', 'encoding'])('rejects a return to the same account during i
     emit('profilesChanged', provider.profiles)
     await session.refresh()
   }
-  delayed.resolve(stage === 'encoding' ? {release,verifyContract:vi.fn()} : {median:'1'})
+  delayed.resolve(stage === 'encoding' ? release : {median:'1'})
   expect(await outcome).toContain('wallet session changed')
   expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toEqual([])
 })
@@ -267,4 +278,44 @@ it.each(balanceCases)('replaces only site details for $label at the provider bou
   await submit(display)
   const sent = provider.request.mock.calls.find(([args]) => args.method === 'dusk_sendTransaction')![0]
   expect(sent).toEqual({ ...original, params: { ...(original as { params: object }).params, display } })
+})
+
+// A lens read verifies nothing: Connect signs only for contracts its client verified.
+it('verifies a store only a lens read showed before Connect signs a write to it', async () => {
+  const n = frozenNode({ lens: true, network: 2 }), client = n.client()
+  await client.verifyContract('directory', id(1))
+  const shown = await client.getName('example.dusk')
+  expect(n.calls.some(call => call.kind === 'read' && call.target === LENS && call.method === 'resolve')).toBe(true)
+  const { provider, names } = await fixture('dusk:2', client)
+  const view = shown.value !== 'Absent' && 'Local' in shown.value ? shown.value.Local.name : undefined
+  const call = sdk.storeMutateRecordsCall(shown.store, { name: { key: view!.key, incarnation: view!.incarnation }, mutations: [{ action: 'Set', ...record }] })
+  await expect(names.writeContract({ contract: contracts.store, functionName: 'mutate_records_sender', args: call })).resolves.toMatchObject({ hash: 'ab'.repeat(32) })
+  expect(provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')).toHaveLength(1)
+  // The store was verified against the directory's record of it, then signed for.
+  expect(n.reads()).toEqual(expect.arrayContaining(['member', 'interface_version', 'binding']))
+})
+
+// Connect verifies a contract the client verified only from the verification cache again from the
+// chain before signing. A refusal there, wrapped in Connect's UnverifiedContractError, discards the client.
+it('discards a client whose contract Connect refuses when it checks it again from the chain before signing', async () => {
+  const n = frozenNode({ network: 2 }), cache = new Map<string, string>()
+  const verificationCache = { getItem: (key: string) => cache.get(key), setItem: (key: string, value: string) => void cache.set(key, value) }
+  let lying = false
+  // The node now reports another interface for store 3 than the one the cache holds.
+  const transport: sdk.ReadTransport = { ...n.transport, read: async (target, method, input) => lying && target === id(3) && method === 'interface_version'
+    ? new TextEncoder().encode(sdk.stringifyJson({ kind: 'Resolver', version: 1, move_version: 0, custody_version: 0 }))
+    : n.transport.read(target, method, input) }
+  const options = { verificationCache, transportNamespace: 'fake-node' }
+  await n.client(transport, options).verifyContract('store', id(3))
+  lying = true
+  const client = n.client(transport, options)
+  await client.verifyContract('store', id(3))
+  const { names } = await fixture('dusk:2', client)
+  const dispatchEvent = vi.fn()
+  vi.stubGlobal('dispatchEvent', dispatchEvent)
+  const current = await names.client!
+  await expect(names.writeContract({ contract: contracts.store, functionName: 'commit', args: storeCommitCall(id(3), { hash: Array(32).fill(1) }) }))
+    .rejects.toMatchObject({ name: 'UnverifiedContractError', cause: { name: 'ContractRefusedError' } })
+  expect(dispatchEvent).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ type: 'dusk-domains:client-reset' }))
+  expect(names.isCurrentClient?.(current)).toBe(false)
 })

@@ -21,6 +21,11 @@ const registry = `0x${'ab'.repeat(32)}`
 const endpoint = { kind: 'MoonlightAddress', value: Array.from(decodeBase58(address)!) }
 const record = { name: 'alice.dusk', node: Array.from({ length: 32 }, (_, i) => parseInt(node.slice(2 + i * 2, 4 + i * 2), 16)), updated_at: 90 }
 const searchResult = { canonical: 'alice.dusk' } as NameResult
+// The chain's page of a name: alice.dusk with these records, and the primary of its Dusk address.
+const page = (records: unknown[], owner = 'alice', primaryName: string | null = null) => ({ ok: true, value: {
+  name: { record: { owner, manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } },
+  records, primaryName, primaryError: null,
+} }) as never
 
 function setup(primary: string | null = null, payload: unknown = { endpoint, record }) {
   const client = {
@@ -124,8 +129,7 @@ it.each(['expired', 'unverified', 'unhealthy', 'missing', 'missing resolver', 'm
 it('keeps custom canonical resolver records without applying editor validation or inventing dates', async () => {
   const { client, onChainClient } = setup()
   vi.mocked(client.resolveForward).mockResolvedValue({ records: [], verificationStatus: 'unverified' } as never)
-  vi.spyOn(onChainClient, 'getName').mockResolvedValue({ ok: true, value: { record: { owner: 'alice', manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } } } as never)
-  vi.spyOn(onChainClient, 'getRecords').mockResolvedValue({ ok: true, value: [{ key: 'custom.binary', value: '0xff00', visibility: 'public', ttlSeconds: 60, updatedAtBlock: 90 }] } as never)
+  vi.spyOn(onChainClient, 'getNamePage').mockResolvedValue(page([{ key: 'custom.binary', value: '0xff00', visibility: 'public', ttlSeconds: 60, updatedAtBlock: 90 }]))
   const result = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
   expect(result?.forwardRead.value?.records).toEqual([{ key: 'custom.binary', value: '0xff00', visibility: 'public', ttlSeconds: 60, updatedAt: '' }])
 })
@@ -136,10 +140,7 @@ it.each(['owner', 'website', 'unchanged'])('keeps website verification bound whe
   const website = { key: 'website', value: 'https://harbourline.com' }
   vi.mocked(client.resolveForward).mockResolvedValue({ records: [website], verification } as never)
   vi.mocked(client.getNameState).mockResolvedValue({ owner: 'alice', verification } as never)
-  vi.spyOn(onChainClient, 'getName').mockResolvedValue({ ok: true, value: { record: {
-    owner: change === 'owner' ? 'bob' : 'alice', manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 },
-  } } } as never)
-  vi.spyOn(onChainClient, 'getRecords').mockResolvedValue({ ok: true, value: [{ ...website, value: change === 'website' ? website.value + '/changed' : website.value }] } as never)
+  vi.spyOn(onChainClient, 'getNamePage').mockResolvedValue(page([{ ...website, value: change === 'website' ? website.value + '/changed' : website.value }], change === 'owner' ? 'bob' : 'alice'))
   const reads = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
   expect(reads?.forwardRead.value?.verification).toEqual(change === 'unchanged' ? verification : undefined)
   expect(reads?.stateRead.value?.verification).toEqual(change === 'unchanged' ? verification : undefined)
@@ -156,16 +157,33 @@ it.each([false, true])('keeps the resolver’s invalid-record findings on the re
     verificationStatus: 'unverified', expiry: { status: 'active' }, resolver: { health: 'invalid' },
   } as never)
   const chain = {
-    getName: vi.fn(async () => ({ ok: true, value: { record: { owner: 'alice', manager: 'alice', lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } } })),
-    getRecords: vi.fn(async () => ({ ok: true, value: [
+    getNamePage: vi.fn(async () => page([
       { key: 'moonlight_address', value: address, visibility: 'public', ttlSeconds: 300 },
       { key: 'website', value: 'https://alice.example', visibility: 'public', ttlSeconds: 3600 },
-    ] })),
+    ])),
     readPrimaryName: vi.fn(async () => ({ ok: true, value: null })),
   }
   const reads = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', fromChain ? chain as never : null)
   const records = reads?.forwardRead.value?.records ?? []
-  expect(fromChain ? chain.getRecords : client.resolveForward).toHaveBeenCalled()
+  expect(fromChain ? chain.getNamePage : client.resolveForward).toHaveBeenCalled()
   expect(records.find(record => record.key === 'moonlight_address')?.resolverIssue).toBe(issue)
   expect(records.find(record => record.key === 'website')?.resolverIssue).toBeUndefined()
+})
+
+it('reads the name page from the chain at the store the indexer names, with its primary name', async () => {
+  const { client, onChainClient } = setup()
+  const homeShard = `0x${'07'.repeat(32)}`
+  vi.mocked(client.getNameState).mockResolvedValue({ owner: 'alice', manager: 'alice', homeShard } as never)
+  vi.mocked(client.resolveForward).mockResolvedValue({
+    canonicalName: 'alice.dusk', node, records: [], resolver: { resolverId: registry, health: 'ok' },
+    expiry: { status: 'active', expiresAt: null }, verificationStatus: 'forward_resolved', errors: [],
+  } as never)
+  const getNamePage = vi.spyOn(onChainClient, 'getNamePage').mockResolvedValue(page([{ key: 'moonlight_address', value: address, visibility: 'public', ttlSeconds: 60, updatedAtBlock: 90 }], 'alice', 'alice.dusk'))
+  const getPrimaryName = vi.spyOn(onChainClient, 'getPrimaryName')
+  const reads = await readIndexedName(client, { ...searchResult, status: 'registered' }, '', onChainClient)
+  expect(getNamePage).toHaveBeenCalledExactlyOnceWith('alice.dusk', homeShard)
+  // The page's read of the chain came with the primary name of its Dusk address: no other read is made.
+  expect(reads?.primaryName).toBe('alice.dusk')
+  expect(getPrimaryName).not.toHaveBeenCalled()
+  expect(client.getPrimaryName).not.toHaveBeenCalled()
 })

@@ -1,14 +1,22 @@
 import type { ContractRole, ReleaseManifest } from '@duskdomains/sdk'
-import { runtimeChainId, runtimeEnvValue } from './runtimeEnv'
+import { runtimeChainId, runtimeEnvValue, runtimeUsesLens } from './runtimeEnv'
 import type { DuskDomainContractMap } from './commandTypes'
 export type DuskDomainsRuntimeEnv = Record<string, string | boolean | undefined>
 /** An app that supports .dusk names, with an optional https link. */
 export type NameIntegration = { name: string; url: string | null }
 /** Wallets that can send to a .dusk name and explorers that show .dusk names. Empty until support ships. */
 export type NameSupport = { wallets: NameIntegration[]; explorers: NameIntegration[] }
+/** The read lens a build pins: its contract and the immutable URL of its reviewed driver. */
+export type PinnedLens = { contractId: string; driverUrl: string }
 export type DuskDomainsRuntimeConfig = {
   mode: 'preview' | 'live_ready'
   contracts: DuskDomainContractMap
+  /**
+   * The read lens this build pins. The site reads through a manifest's lens only when it is this
+   * contract with this driver. Null without one, or when `VITE_DUSK_DOMAINS_USE_LENS=false` turns the
+   * lens off: every read is then direct.
+   */
+  lens: PinnedLens | null
   capabilities: { marketplace: boolean; referralAttribution: boolean; referralRewardClaims: boolean }
   launchLinks: {
     support: string | null
@@ -61,6 +69,13 @@ export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}):
       return [role, { contractId: id || '0x' + '0'.repeat(64), driverUrl, name: role, methodSigs: {} }]
     }),
   ) as DuskDomainContractMap
+  // The lens is optional: without both pins every read is direct, as with the lens turned off.
+  const lensId = get('LENS_CONTRACT_ID'),
+    lensDriverUrl = get('LENS_DRIVER_URL')
+  const lensPinned = !isPlaceholderContractId(lensId) && validUrl(lensDriverUrl) && /\.[a-f\d]{64}\.data-driver\.wasm$/i.test(lensDriverUrl)
+  if ((lensId || lensDriverUrl) && !lensPinned)
+    warnings.push('The read lens needs both VITE_DUSK_DOMAINS_LENS_CONTRACT_ID and an immutable VITE_DUSK_DOMAINS_LENS_DRIVER_URL; reading directly.')
+  const lens = lensPinned && runtimeUsesLens(env) ? { contractId: lensId, driverUrl: lensDriverUrl } : null
   const indexerUrl = validUrl(get('INDEXER_URL')) ? get('INDEXER_URL') : null
   if (!indexerUrl) missingLiveInputs.push('VITE_DUSK_DOMAINS_INDEXER_URL')
   const chainId = runtimeChainId(env)
@@ -76,6 +91,7 @@ export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}):
   const explorer = get('EXPLORER_URL').replace(/\/+$/, '')
   return {
     contracts,
+    lens,
     mode: missingLiveInputs.length ? 'preview' : 'live_ready',
     indexerUrl,
     explorerUrl: /^https?:\/\/[^/\s?#]+(?:\/[^\s?#]*)?$/.test(explorer) ? explorer : null,

@@ -17,3 +17,8 @@ export function runtimeChainId(env) {
 export function isProductionChain(chainId) {
   return chainId === 'dusk:1' || chainId === 'dusk:2'
 }
+
+/** Whether the site reads through the release's lens: always, unless VITE_DUSK_DOMAINS_USE_LENS is false. */
+export function runtimeUsesLens(env) {
+  return !/^(false|0|no|off)$/i.test(runtimeEnvValue(env, 'USE_LENS'))
+}

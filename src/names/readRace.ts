@@ -1,11 +1,8 @@
-// SDK 0.3.2 reads at the node's tip and compares the height around each read. When a block lands
-// mid-read, a snapshot reads again, three times at most, and a registration quote taken at the new
-// height no longer matches the preparation that asked for it. Both say only that the chain moved
-// on, so the whole read is tried again from the start, a few times.
-const races = [
-  /Chain tip changed during read; retry the snapshot/,
-  /Registration quote does not match placement and previous lifecycle/,
-]
+// The SDK reads at the node's tip and reads a sequence again, up to three times, when a block lands
+// during it; a preparation it restarts at the new height itself. When blocks keep landing it gives up
+// with this error, which says only that the chain moved on, so the whole read is tried again from the
+// start, a few times. A failure that repeats at every height it rethrows as itself, and that is final.
+const races = [/Chain tip changed during read; retry the snapshot/]
 
 export function isReadRace(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')

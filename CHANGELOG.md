@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Read a name page, a primary name, a registration price and the preferred market through the release's read lens, one node query each at any number of stores, and read directly whatever it can't answer.
+- Start name and primary reads at the store the indexer names as the name's home.
+- Use only the lens the build pins, turn it off with `VITE_DUSK_DOMAINS_USE_LENS=false`, and refuse a deploy whose manifest and build disagree about it.
+- Verify each contract the first time the site reads through it, and a write's target before the wallet is asked.
+- Ask to check the price again when a registration's quote can't be signed.
 - Require at least 5 DUSK for an offer, fixed price or auction reserve, the marketplace contract's minimum.
 - Read each name once per block across a page, ask the node once for reads the SDK repeats in a block, and keep contract verification for the browser session.
 - Label referral claims, protocol fee claims and pricing updates by their action in transaction notices, not as a `.dusk` name.
@@ -16,7 +21,7 @@
 - Let anyone renew a listed name, and say that renewing doesn't change the listing.
 - Place new listings and offers at the market the directory prefers now, read every three minutes.
 - Treat an indexer that reports another network or contracts as unhealthy.
-- Build a fresh client after a failed creation or contract verification, without a reload.
+- Build a fresh client after a failed creation, or once it refuses a contract, without a reload.
 - Price names exactly at any size, and keep the app running when one view fails to render.
 - Accept new activity and treasury event types, and say when name data stopped updating.
 - Deploy the network's manifest with `--manifest`, and refuse one that doesn't match the build.

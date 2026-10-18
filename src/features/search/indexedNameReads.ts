@@ -1,5 +1,6 @@
 import { indexedSubnameToState, indexerRead, type IndexerReadResult } from '../../app/indexerReadHelpers'
 import { trustedDuskAddressOf } from '../identity/addressTrust'
+import { homeHint } from '../../names/internal'
 import type {
   ActivityEntry,
   DuskDomainsIndexerClient,
@@ -61,22 +62,27 @@ export async function readIndexedName(
     indexerRead(client.getAllSubnames(node)),
     isSubname(canonicalName) ? indexerRead(client.getSubname(node)) : rootName,
   ])
-  if (onChainClient && searchResult.status === 'registered') {
-    const [name, records] = await Promise.all([onChainClient.getName(canonicalName), onChainClient.getRecords(canonicalName)])
-    if (!name.ok || !records.ok) throw new Error(!name.ok ? name.error.message : !records.ok ? records.error.message : 'Name data unavailable')
-    if (!name.value.record) throw new Error('Name state changed. Search again.')
+  // The name, its records and its primary name, read from the chain at one height, at the home the
+  // indexer names first.
+  const page = onChainClient && searchResult.status === 'registered'
+    ? await onChainClient.getNamePage(canonicalName, homeHint(stateRead.value?.homeShard ?? forwardRead.value?.homeShard))
+    : null
+  if (page) {
+    if (!page.ok) throw new Error(page.error.message)
+    const { name, records } = page.value
+    if (!name.record) throw new Error('Name state changed. Search again.')
     const indexedWebsite = forwardRead.value?.records.find(record => record.key === 'website')?.value
-    const chainWebsite = records.value.find(record => record.key === 'website')?.value
-    if (stateRead.value?.owner !== name.value.record.owner || indexedWebsite !== chainWebsite) {
+    const chainWebsite = records.find(record => record.key === 'website')?.value
+    if (stateRead.value?.owner !== name.record.owner || indexedWebsite !== chainWebsite) {
       if (stateRead.value) stateRead.value.verification = undefined
       if (forwardRead.value) forwardRead.value.verification = undefined
     }
-    if (forwardRead.value) forwardRead.value.records = records.value.map(r => ({ key: r.key, value: r.value, visibility: r.visibility, ttlSeconds: r.ttlSeconds, updatedAt: '' }))
+    if (forwardRead.value) forwardRead.value.records = records.map(r => ({ key: r.key, value: r.value, visibility: r.visibility, ttlSeconds: r.ttlSeconds, updatedAt: '' }))
     if (stateRead.value) {
-      stateRead.value.owner=name.value.record.owner
-      stateRead.value.manager=name.value.record.manager
-      stateRead.value.expiresAtBlockHeight=name.value.record.lifecycle.expiresAtBlock
-      stateRead.value.graceEndsAtBlockHeight=name.value.record.lifecycle.graceEndsAtBlock
+      stateRead.value.owner=name.record.owner
+      stateRead.value.manager=name.record.manager
+      stateRead.value.expiresAtBlockHeight=name.record.lifecycle.expiresAtBlock
+      stateRead.value.graceEndsAtBlockHeight=name.record.lifecycle.graceEndsAtBlock
     }
   }
   if (forwardRead.value) forwardRead.value.records = withResolverIssues(forwardRead.value.records, forwardRead.value.errors)
@@ -87,12 +93,15 @@ export async function readIndexedName(
   const forwardAddress = trustedDuskAddressOf(forwardRead.value?.records ?? [])
   const forwardVerified = forwardRead.value?.verificationStatus === 'forward_resolved'
     && forwardRead.value.expiry?.status === 'active' && forwardRead.value.resolver?.health === 'ok'
-  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(onChainClient
-    ? onChainClient.getPrimaryName({ type: 'moonlight_address', value: forwardAddress }).then(result => {
-      if (!result.ok) throw new Error(result.error.message)
-      return result.value
-    })
-    : client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
+  // A name read from the chain came with the primary name of its own Dusk address record.
+  const primaryReadPromise = forwardAddress && forwardVerified ? indexerRead(page?.ok
+    ? page.value.primaryError ? Promise.reject(new Error(page.value.primaryError)) : Promise.resolve(page.value.primaryName)
+    : onChainClient
+      ? onChainClient.getPrimaryName({ type: 'moonlight_address', value: forwardAddress }, homeHint(stateRead.value?.homeShard)).then(result => {
+        if (!result.ok) throw new Error(result.error.message)
+        return result.value
+      })
+      : client.getPrimaryName({ type: 'moonlight_address', value: forwardAddress })) : null
   const [primaryRead, connectedPrimaryRead] = await Promise.all([
     primaryReadPromise,
     selectedAddress === forwardAddress && primaryReadPromise ? primaryReadPromise

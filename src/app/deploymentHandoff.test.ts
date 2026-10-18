@@ -2,8 +2,8 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
-import { contractId, FrozenClient, type ContractRole } from '@duskdomains/sdk'
-import { handoff, handoffDriver, handoffEnv } from '../test/handoffFixtures'
+import { contractId, type ContractRole } from '@duskdomains/sdk'
+import { handoff, handoffDriver, handoffEnv, handoffNodeReply, handoffWithLens, lensDriver, lensEnv, lensArtifact } from '../test/handoffFixtures'
 import { createDuskDomainsRuntimeConfig, roles } from '../names/config'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 import { adaptDeploymentManifest, configuredReleaseManifest } from '../names/releaseManifest'
@@ -43,13 +43,42 @@ it('validates every real handoff filename and rejects changed driver bytes', () 
   }
 })
 
+it('validates a handoff’s lens only against the lens this build pins', async () => {
+  mkdirSync('node_modules/.cache', { recursive: true })
+  const root = mkdtempSync(resolve('node_modules/.cache/handoff-'))
+  roots.push(root)
+  mkdirSync(`${root}/public/contracts`, { recursive: true })
+  for (const role of roles)
+    writeFileSync(`${root}/public/${handoff.artifacts[role].driver.path}`, handoffDriver(role))
+  writeFileSync(`${root}/public/${lensArtifact.path}`, lensDriver())
+  const manifest = await handoffWithLens()
+  const env = (lines: Record<string, string>) => `${readFileSync('src/test/handoff/frontend.env', 'utf8')}\nVITE_DUSK_DOMAINS_MANIFEST_URL=/manifest.json\n${Object.entries(lines).map(([key, value]) => `${key}=${value}`).join('\n')}\n`
+  const run = (lines: Record<string, string>, published: unknown = manifest) => {
+    writeFileSync(`${root}/public/manifest.json`, JSON.stringify(published))
+    writeFileSync(`${root}/frontend.env`, env(lines))
+    return spawnSync(process.execPath, [resolve('scripts/validate-deploy.mjs'), `${root}/frontend.env`], { cwd: root, encoding: 'utf8' })
+  }
+  const pinned = run(lensEnv)
+  expect(pinned.status, pinned.stderr).toBe(0)
+  // Turned off, the site reads directly and loads no lens, so nothing about it is checked.
+  expect(run({ VITE_DUSK_DOMAINS_USE_LENS: 'false' }).status).toBe(0)
+  expect(run({}).stderr).toContain('The manifest lists a read lens this build doesn')
+  expect(run(lensEnv, handoff).stderr).toContain('This build pins a read lens the manifest doesn')
+  expect(run({ ...lensEnv, VITE_DUSK_DOMAINS_LENS_CONTRACT_ID: `0x${'9b'.repeat(32)}` }).stderr).toContain("isn't the lens this build pins")
+  expect(run({ VITE_DUSK_DOMAINS_LENS_CONTRACT_ID: lensEnv.VITE_DUSK_DOMAINS_LENS_CONTRACT_ID }).stderr).toContain('VITE_DUSK_DOMAINS_LENS_DRIVER_URL must be the immutable lens driver URL')
+  writeFileSync(`${root}/public/${lensArtifact.path}`, new Uint8Array([0]))
+  expect(run(lensEnv).stderr).toContain('Driver checksum mismatch')
+})
+
 it.each([false, true])(
   'initializes the live app with real handoff drivers (manifest=%s)',
   async (useManifest) => {
-    // This integration covers configuration, manifest loading and real drivers, without a node.
-    vi.spyOn(FrozenClient.prototype, 'discover').mockResolvedValue({} as never)
+    // This integration covers configuration, manifest loading and real drivers. The node answers the
+    // directory's verification, the only contract a new client verifies.
     const fetcher = vi.fn(async (input: string | URL | Request) => {
       const url = new URL(String(input))
+      const node = handoffNodeReply(url)
+      if (node) return node
       if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(handoff))
       const role = roles.find(
         (role) =>
@@ -82,7 +111,8 @@ it.each([false, true])(
       const entry = handoff.contracts.find((c: { key: string }) => c.key === role)
       expect((client.release.contracts.get(id) as { initHash?: string }).initHash).toBe(useManifest ? entry.initHash : undefined)
     }
-    expect(fetcher).toHaveBeenCalledTimes(useManifest ? 7 : 6)
+    // The manifest, six drivers, and the directory's interface and binding.
+    expect(fetcher).toHaveBeenCalledTimes(useManifest ? 9 : 8)
   },
 )
 
@@ -113,11 +143,16 @@ it.each(['chain', 'role', 'missing_hash', 'changed_driver', 'repinned_driver'] a
     if (fault === 'missing_hash') delete manifest.artifacts.store.driver.sha256
     // Internally consistent: another real driver with its own matching checksum.
     if (fault === 'repinned_driver') manifest.artifacts.store.driver = structuredClone(manifest.artifacts.resolver.driver)
-    const discover = vi.spyOn(FrozenClient.prototype, 'discover').mockResolvedValue({} as never)
+    const nodeReads: string[] = []
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: string | URL | Request) => {
         const url = new URL(String(input))
+        const node = handoffNodeReply(url)
+        if (node) {
+          nodeReads.push(url.pathname)
+          return node
+        }
         if (url.pathname === '/manifest.json') return new Response(JSON.stringify(manifest))
         const role = roles.find((role) => url.pathname === `/${handoff.artifacts[role].driver.path}`)
         if (!role) throw new Error(`Unexpected network request: ${url}`)
@@ -143,7 +178,8 @@ it.each(['chain', 'role', 'missing_hash', 'changed_driver', 'repinned_driver'] a
           ? 'checksum'
           : 'configured network and contracts',
     )
-    expect(discover).not.toHaveBeenCalled()
+    // Refused before the client reads the chain at all.
+    expect(nodeReads).toEqual([])
   },
 )
 
@@ -190,10 +226,11 @@ it.each([
   ['a manifest without the new policy', true, false],
   ['configuration without a manifest', false, false],
 ] as const)('follows a replacement policy from %s, and says plainly when it is missing', async (_, useManifest, republished) => {
-  vi.spyOn(FrozenClient.prototype, 'discover').mockResolvedValue({} as never)
   let manifest = structuredClone(handoff)
   const fetcher = vi.fn<(input: string | URL | Request, init?: RequestInit) => Promise<Response>>(async (input) => {
     const url = new URL(String(input))
+    const node = handoffNodeReply(url)
+    if (node) return node
     if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))
     const role = roles.find((role) => url.pathname === `/releases/local/${handoff.artifacts[role].driver.path}`
       || url.pathname === `/${handoff.artifacts[role].driver.path}`)
@@ -219,9 +256,10 @@ it.each([
   }
   const verified = client.verifyContract('policy', replacementPolicy)
   if (republished) {
-    // The reviewed policy driver loads for it; its interface read then goes to the node.
+    // The reviewed policy driver loads for it; its interface read then goes to the node. It enters the
+    // client's release only once it verifies.
     await expect(verified).rejects.toThrow('Unexpected network request: http://127.0.0.1:18184/')
-    expect(client.release.contracts.get(replacementPolicy)?.role).toBe('policy')
+    expect(client.release.contracts.has(replacementPolicy)).toBe(false)
   } else {
     await expect(verified).rejects.toThrow('This site has not been updated for the new registration prices yet. Try again later.')
   }

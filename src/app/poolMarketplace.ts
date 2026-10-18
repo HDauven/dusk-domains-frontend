@@ -1,11 +1,17 @@
-import { contractIdFromOutput, directoryConfigRequest, type DuskDomainsOnChainReadTransport } from '../names/internal'
+import type { FrozenClient } from '@duskdomains/sdk'
+import { contractIdFromOutput } from '../names/internal'
 
-export async function readPoolMarketplace(read: DuskDomainsOnChainReadTransport): Promise<string | null> {
+/**
+ * The market the directory prefers now, from the directory's state at one height, and whether that state
+ * came with the directory's record of the market, checked against this site's release. Unknown when the
+ * state can't be read: an unavailable pool config must not enable contract-owned renewal.
+ */
+export async function readPoolMarketplace(client: Pick<FrozenClient, 'bootstrap'> | null): Promise<{ preferred: string | null; recorded: boolean }> {
   try {
-    const response = await read.read(directoryConfigRequest())
-    const config = response && typeof response === 'object' && 'output' in response ? response.output : response
-    if (!config || typeof config !== 'object' || !('marketplace' in config)) return null
-    return contractIdFromOutput(config.marketplace)
-  } catch { /* An unavailable pool config must not enable contract-owned renewal. */ }
-  return null
+    const state = await client?.bootstrap()
+    const preferred = state?.config.preferred_marketplace ? contractIdFromOutput(state.config.preferred_marketplace) : null
+    return { preferred, recorded: Boolean(preferred && state?.market && contractIdFromOutput(state.market.id) === preferred) }
+  } catch {
+    return { preferred: null, recorded: false }
+  }
 }

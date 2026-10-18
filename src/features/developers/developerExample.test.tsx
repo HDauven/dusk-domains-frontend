@@ -60,7 +60,8 @@ function fakeNode() {
 function serve(manifestPath: string | null) {
   const fetcher = vi.fn(async (input: string | URL | Request) => {
     const url = new URL(input instanceof Request ? input.url : String(input))
-    if (url.pathname.endsWith('/on/graphql/query')) return Response.json({ data: { block: { header: { height: 100 } } } })
+    // The tip's height and block hash, read together as the SDK's transport reads them.
+    if (url.pathname.endsWith('/on/graphql/query')) return Response.json({ data: { block: { header: { height: 100, hash: 'ab'.repeat(32) } } } })
     if (manifestPath && url.href === `${origin}${manifestPath}`) return new Response(JSON.stringify(handoff))
     const role = roles.find(role => url.pathname.endsWith(`/${handoff.artifacts[role].driver.path.split('/').pop()}`))
     if (role) return new Response(handoffDriver(role) as BodyInit)

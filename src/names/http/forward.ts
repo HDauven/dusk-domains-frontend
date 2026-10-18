@@ -45,6 +45,8 @@ export type ForwardResolutionResponse = {
   warnings: RecentChangeWarning[]
   verificationStatus: 'unverified' | 'forward_resolved'
   errors: ForwardResolutionError[]
+  /** The store the name lives in, where the chain is read first. */
+  homeShard?: string | null
 }
 
 export type ForwardResolutionInput = {

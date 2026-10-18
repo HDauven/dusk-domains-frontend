@@ -12,7 +12,8 @@ it.each([
   ['Quote is not open for public registration', 'This name can’t be registered under the current registration rules.'],
   // Blocks kept landing while the SDK read, after the reads were tried again.
   ['Chain tip changed during read; retry the snapshot', 'New blocks kept arriving while this was read. Try again.'],
-  ['Registration quote does not match placement and previous lifecycle', 'New blocks kept arriving while the price was checked. Try again.'],
+  // The SDK quotes again at a new height itself: this mismatch repeated at every height it tried.
+  ['Registration quote does not match placement and previous lifecycle', 'The registration price couldn’t be confirmed on chain. Try again.'],
   // Another store holds the address's primary link, which only the address can clear first.
   ['Panic: DuskDS:v1:PrimaryAlreadySet', 'Your Dusk address already has a primary name, kept in another shard. Clear that one first, then set this one.'],
 ])('explains %j plainly', (raw, copy) => {

@@ -28,8 +28,10 @@ it.each(['owner', 'website', 'unchanged', 'refresh failure'])('shows only the re
     getActivityPage: vi.fn(async () => ({ activity: [] })), getAllSubnames: vi.fn(async () => []),
   }
   const chain = {
-    getName: vi.fn(async () => ({ ok: true, value: { record: { owner, manager: owner, lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } } })),
-    getRecords: vi.fn(async () => ({ ok: true, value: [{ ...record, value: website }] })),
+    getNamePage: vi.fn(async () => ({ ok: true, value: {
+      name: { record: { owner, manager: owner, lifecycle: { expiresAtBlock: 100, graceEndsAtBlock: 200 } } },
+      records: [{ ...record, value: website }], primaryName: null, primaryError: null,
+    } })),
   }
   const container = document.createElement('div'), root = createRoot(container)
   function Probe() {
@@ -55,6 +57,6 @@ it.each(['owner', 'website', 'unchanged', 'refresh failure'])('shows only the re
     expect(client.getHealth).toHaveBeenCalledOnce()
     expect(container.textContent?.includes('Verified · harbourline.com')).toBe(change === 'unchanged')
     if (change === 'refresh failure') expect(container.textContent).toContain('Could not refresh website verification')
-    else expect(chain.getName).toHaveBeenCalledExactlyOnceWith(name)
+    else expect(chain.getNamePage).toHaveBeenCalledExactlyOnceWith(name, undefined)
   } finally { await act(async () => root.unmount()) }
 })

@@ -1,34 +1,29 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { FrozenClient, type ContractRole } from '@duskdomains/sdk'
-import { handoff, handoffDriver, handoffEnv } from '../test/handoffFixtures'
+import { handoff, handoffDriver, handoffEnv, handoffNodeReply } from '../test/handoffFixtures'
 import { createDuskDomainsRuntimeConfig, roles } from '../names/config'
-import { discoverWithoutPolicy } from '../names/directoryMembers'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
-
-vi.mock('../names/directoryMembers', async (original) => ({
-  ...(await original<typeof import('../names/directoryMembers')>()),
-  discoverWithoutPolicy: vi.fn(async () => ({})),
-}))
 
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
-  vi.mocked(discoverWithoutPolicy).mockClear()
 })
 
 // A SetPolicy executed, and the directory selects a policy this site's manifest doesn't list yet.
 const selected = '0b'.repeat(32)
 
-// The live app with the real handoff manifest and drivers, without a node. SDK 0.3.2's discovery
-// verifies the policy the directory selects.
+// The live app with the real handoff manifest and drivers. The node answers the directory's
+// verification; it is asked for nothing else.
 function liveApp() {
-  vi.spyOn(FrozenClient.prototype, 'discover').mockImplementation(async function (this: FrozenClient) {
-    await this.verifyContract('policy', selected)
-    return {} as never
-  })
   const manifest = structuredClone(handoff)
+  const nodeReads: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
     const url = new URL(String(input))
+    const node = handoffNodeReply(url)
+    if (node) {
+      nodeReads.push(url.pathname.split('/').pop()!)
+      return node
+    }
     if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))
     const role = roles.find(role => url.pathname === `/releases/local/${handoff.artifacts[role].driver.path}` || url.pathname === `/${handoff.artifacts[role].driver.path}`)
     if (role) return new Response(handoffDriver(role as ContractRole) as BodyInit)
@@ -38,15 +33,15 @@ function liveApp() {
   vi.stubGlobal('dispatchEvent', dispatchEvent)
   const runtimeConfig = createDuskDomainsRuntimeConfig({ ...handoffEnv, VITE_DUSK_DOMAINS_INDEXER_URL: '/api', VITE_DUSK_DOMAINS_MANIFEST_URL: '/releases/local/manifest.json' })
   const { names } = createDuskDomainsLiveApp({ runtimeConfig, wallet: { state: { chainId: 'dusk:0' } } as never, session: { state: {} } as never })
-  return { names, dispatchEvent }
+  return { names, dispatchEvent, nodeReads }
 }
 
-it('reads, renews and manages names while the manifest doesn’t list the policy the directory selects', async () => {
-  const { names } = liveApp()
+it('creates the client without reading the policy the directory selects', async () => {
+  const { names, nodeReads } = liveApp()
   const client = await names.client!
   expect(client).toBeInstanceOf(FrozenClient)
-  // Everything but that policy is discovered and verified.
-  expect(discoverWithoutPolicy).toHaveBeenCalledExactlyOnceWith(client)
+  // Only the directory is verified: renewals, records and the market never need the selected policy.
+  expect(nodeReads).toEqual(['interface_version', 'binding'])
   expect(client.release.contracts.has(selected)).toBe(false)
   expect(await names.client!).toBe(client)
 })

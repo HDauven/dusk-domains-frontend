@@ -90,6 +90,17 @@ export type DuskDomainsOnChainPrimaryTarget = {
   links: DuskDomainsOnChainPrimaryLink[]
 }
 
+/** What a name's page shows, read from the chain at one height. */
+export type DuskDomainsOnChainNamePage = {
+  name: DuskDomainsOnChainNameResponse
+  /** Every record the name holds; none for a name no store holds. */
+  records: DuskDomainsOnChainRecord[]
+  /** The verified primary name of the name's own Dusk address record, if it has one. */
+  primaryName: string | null
+  /** Why that primary couldn't be verified, if it couldn't; the rest of the page stands. */
+  primaryError: string | null
+}
+
 export type DuskDomainsOnChainPendingCommitment = {
   commitment: string
   pending: {
@@ -98,15 +109,19 @@ export type DuskDomainsOnChainPendingCommitment = {
   } | null
 }
 
+// `homeHint` is the store an indexer row names as the name's home (`homeShard`): where to read first.
 export type DuskDomainsOnChainClient = {
+  /** A registration quote to show; Register quotes again and signs only that quote. */
   getRegistrationQuote: (
     name: string,
     years: number,
     actor: string,
+    homeHint?: string,
   ) => Promise<DuskDomainsResult<{ store: string; quote: import('@duskdomains/sdk').RegistrationQuote }>>
   getRenewalQuote: (
     name: string,
     years: number,
+    homeHint?: string,
   ) => Promise<
     DuskDomainsResult<{
       store: string
@@ -115,7 +130,9 @@ export type DuskDomainsOnChainClient = {
     }>
   >
   getCurrentBlockHeight: () => Promise<DuskDomainsResult<number>>
-  getName: (name: string) => Promise<DuskDomainsResult<DuskDomainsOnChainNameResponse>>
+  getName: (name: string, homeHint?: string) => Promise<DuskDomainsResult<DuskDomainsOnChainNameResponse>>
+  /** The name, its records and the verified primary of its Dusk address record, at one height. */
+  getNamePage: (name: string, homeHint?: string) => Promise<DuskDomainsResult<DuskDomainsOnChainNamePage>>
   getNameByNode: (node: string) => Promise<DuskDomainsResult<DuskDomainsOnChainNameResponse>>
   getNameOwner: (name: string) => Promise<DuskDomainsResult<string>>
   getRecords: (
@@ -130,8 +147,11 @@ export type DuskDomainsOnChainClient = {
     name: string,
     key?: DuskDomainsOnChainRecordKey,
   ) => Promise<DuskDomainsResult<DuskDomainsOnChainResolvedName>>
-  /** Authority-gated resolution, including incarnation, lifecycle and forward verification. */
-  getPrimaryName: (endpoint: DuskEndpoint) => Promise<DuskDomainsResult<string | null>>
+  /**
+   * Authority-gated resolution, including incarnation, lifecycle and forward verification. `homeHint` is
+   * the store keeping the mapping: the home of the primary name.
+   */
+  getPrimaryName: (endpoint: DuskEndpoint, homeHint?: string) => Promise<DuskDomainsResult<string | null>>
   /** Every store's stored link for the endpoint. A store sets a primary only while no other store has one. */
   readPrimaryLinks: (endpoint: DuskEndpoint) => Promise<DuskDomainsResult<DuskDomainsOnChainPrimaryLink[]>>
   /**
@@ -146,6 +166,7 @@ export type DuskDomainsOnChainClient = {
   verifyPrimaryName: (
     endpoint: DuskEndpoint,
     expectedName?: string,
+    homeHint?: string,
   ) => Promise<DuskDomainsResult<DuskDomainsOnChainPrimaryNameVerification>>
   /**
    * Commitments are kept per controller: the same hash from another account is a separate entry.
@@ -157,6 +178,6 @@ export type DuskDomainsOnChainClient = {
     commitment: string,
     name?: string,
   ) => Promise<DuskDomainsResult<DuskDomainsOnChainPendingCommitment>>
-  getRegistrationPremium: (name: string) => Promise<DuskDomainsResult<number>>
+  getRegistrationPremium: (name: string, homeHint?: string) => Promise<DuskDomainsResult<number>>
   getFeeConfig: () => Promise<DuskDomainsResult<CoreFeeConfig>>
 }

@@ -72,15 +72,19 @@ async function walletRecipient(client: sdk.FrozenClient, authority: string, revi
 }
 /**
  * The call to sign for a request. Name edits resolve the current home; existing orders retain their
- * recorded target. Preparation only reads, so when a block lands mid-read it reads again.
+ * recorded target. Preparation only reads, so when a block lands mid-read it reads again. A name read
+ * through the lens verifies nothing, so the call's target, such as that name's store, is verified with
+ * the client before the call is returned: Connect signs only for contracts its client verified.
  */
-export function prepareFrozenCall(
+export async function prepareFrozenCall(
   client: sdk.FrozenClient,
   request: T.DuskDomainCallMetadata,
   spelling: string,
   account: string,
 ): Promise<import('./transactions').WalletFrozenCall> {
-  return retryReadRace(() => prepareOnce(client, request, spelling, account), 4)
+  const call = await retryReadRace(() => prepareOnce(client, request, spelling, account), 4)
+  await client.verifyContract(call.role, call.contractId)
+  return call
 }
 
 async function prepareOnce(

@@ -11,7 +11,7 @@ export async function checkOpenRenewal(page) {
     const { React, root } = window
     const { useDomainManagementAppState } = await import('/src/app/useDomainManagementAppState.ts')
     const { usePoolMarketplace } = await import('/src/app/usePoolMarketplace.ts')
-    const { createDuskDomainsRuntimeConfig, createDuskDomainsOnChainReadTransport } = await import('/src/names/internal.ts')
+    const { createDuskDomainsRuntimeConfig } = await import('/src/names/internal.ts')
     const { SearchResultPanel } = await import('/src/features/search/SearchResultPanel.tsx')
     const { deriveAppDerivedState } = await import('/src/app/derived/deriveAppDerivedState.ts')
     const { renewDomainName } = await import('/src/features/domains/renewDomainName.ts')
@@ -19,11 +19,13 @@ export async function checkOpenRenewal(page) {
       VITE_DUSK_DOMAINS_DIRECTORY_CONTRACT_ID: `0x${'11'.repeat(32)}`,
       VITE_DUSK_DOMAINS_MARKETPLACE_CONTRACT_ID: `0x${marketplace}` })
     window.renewalMarketplaceUiEnabled = config.capabilities.marketplace
-    const poolConfig = new Promise(resolve => { window.resolveRenewalPool = () => resolve({ marketplace: Array(32).fill(0xcc) }) })
-    const read = createDuskDomainsOnChainReadTransport({ readContract: async ({ contract: target, functionName }) => {
-        if (target !== config.contracts.directory || functionName !== 'config') throw new Error('Expected router config read')
-        return { output: await poolConfig, fnName: 'config' }
-      } }, config.contracts)
+    const poolConfig = new Promise(resolve => { window.resolveRenewalPool = () => resolve(Array(32).fill(0xcc)) })
+    // A client whose directory state names the preferred market, with the directory's record of it.
+    const reading = preferred => ({ read: async () => { throw new Error('Expected the directory state') }, client: Promise.resolve({
+      release: { contracts: new Map() },
+      bootstrap: async () => { const id = await preferred(); return { config: { preferred_marketplace: id }, market: { id } } },
+    }) })
+    const read = reading(() => poolConfig)
     function Probe() {
       const [poolRead, setPoolRead] = React.useState(read)
       const market = usePoolMarketplace(poolRead)
@@ -47,11 +49,11 @@ export async function checkOpenRenewal(page) {
       window.canRenew = capabilities.canRenewName
       window.renewalOwnerIsContract = managedName.ownerIsContract
       window.renewalPoolId = marketplaceContractId
-      window.failRenewalPool = () => setPoolRead({ read: async () => { throw new Error('offline') } })
+      window.failRenewalPool = () => setPoolRead(reading(async () => { throw new Error('offline') }))
       window.restoreRenewalPool = () => setPoolRead(read)
       window.deferRenewalPool = () => {
-        const pending = new Promise(resolve => { window.resolveStaleRenewalPool = () => resolve({ marketplace: contract }) })
-        setPoolRead({ read: () => pending })
+        const pending = new Promise(resolve => { window.resolveStaleRenewalPool = () => resolve(Array(32).fill(0xaa)) })
+        setPoolRead(reading(() => pending))
       }
       window.disconnectRenewal = () => setConnected(false)
       window.renewalOwner = managedName.owner

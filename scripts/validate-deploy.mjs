@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { dirname } from 'node:path'
 import { parseEnv } from 'node:util'
 // The site's own reading of its env, so validation judges the env file as the build will.
-import { isProductionChain, runtimeChainId, runtimeEnvValue } from '../src/names/runtimeEnv.js'
+import { isProductionChain, runtimeChainId, runtimeEnvValue, runtimeUsesLens } from '../src/names/runtimeEnv.js'
 
 const env = parseEnv(readFileSync(process.argv[2], 'utf8'))
 const sha256 = path => createHash('sha256').update(readFileSync(path)).digest('hex')
@@ -20,6 +20,21 @@ for (const role of ['DIRECTORY', 'POLICY', 'STORE', 'VAULT', 'RESOLVER', 'MARKET
   const digest = sha256(`public${url}`)
   if (digest !== match[1].toLowerCase()) throw new Error(`Driver checksum mismatch: ${url}`)
   pinned[role.toLowerCase()] = { id: normalized(env[key]), sha256: digest }
+}
+
+// The read lens is optional. With VITE_DUSK_DOMAINS_USE_LENS=false the site reads directly and loads no
+// lens; otherwise a lens is pinned by both its contract ID and its immutable driver URL, or not at all.
+const usesLens = runtimeUsesLens(env)
+const lensId = runtimeEnvValue(env, 'LENS_CONTRACT_ID'), lensUrl = runtimeEnvValue(env, 'LENS_DRIVER_URL')
+let lens = null
+if (usesLens && (lensId || lensUrl)) {
+  if (!/^(?:0x)?[\da-f]{64}$/i.test(lensId) || /^(?:0x)?0+$/.test(lensId))
+    throw new Error('Set VITE_DUSK_DOMAINS_LENS_CONTRACT_ID to the deployed lens ID from frontend.env')
+  const match = /^\/contracts\/dusk-domains-lens\.([a-f0-9]{64})\.data-driver\.wasm$/i.exec(lensUrl)
+  if (!match) throw new Error('VITE_DUSK_DOMAINS_LENS_DRIVER_URL must be the immutable lens driver URL from frontend.env')
+  const digest = sha256(`public${lensUrl}`)
+  if (digest !== match[1].toLowerCase()) throw new Error(`Driver checksum mismatch: ${lensUrl}`)
+  lens = { id: normalized(lensId), sha256: digest }
 }
 
 // The reviewed manifest lists every contract the site may follow, also those admitted after launch.
@@ -64,5 +79,20 @@ if (!withoutManifest) {
     const path = `${dirname(file)}/${entry.driver.path}`
     if (!existsSync(path) || sha256(path) !== role.sha256)
       throw new Error(`The manifest's ${entry.role} driver ${entry.driver.path} is missing or changed`)
+  }
+  // The handoff's top-level lens, with its driver in artifacts.lens, or an SDK-format manifest's lens.
+  const listed = !manifest.lens ? null : manifest.schema === 'dusk-domains/frozen-release/v1'
+    ? { id: normalized(manifest.lens.id), driver: manifest.artifacts?.lens?.driver ?? {} }
+    : { id: normalized(manifest.lens.contractId), driver: manifest.lens.dataDriver ?? {} }
+  if (usesLens && listed && !lens)
+    throw new Error('The manifest lists a read lens this build doesn\'t pin. Set VITE_DUSK_DOMAINS_LENS_CONTRACT_ID and VITE_DUSK_DOMAINS_LENS_DRIVER_URL from frontend.env, or VITE_DUSK_DOMAINS_USE_LENS=false to read directly.')
+  if (lens && !listed)
+    throw new Error('This build pins a read lens the manifest doesn\'t list. Give the manifest with the lens, or set VITE_DUSK_DOMAINS_USE_LENS=false.')
+  if (lens && listed) {
+    if (listed.id !== lens.id || String(listed.driver.sha256).toLowerCase() !== lens.sha256)
+      throw new Error(`The manifest's lens 0x${listed.id} isn't the lens this build pins. A new lens needs a rebuild with new pins.`)
+    const path = `${dirname(file)}/${listed.driver.path}`
+    if (!existsSync(path) || sha256(path) !== lens.sha256)
+      throw new Error(`The manifest's lens driver ${listed.driver.path} is missing or changed`)
   }
 }

@@ -4,3 +4,5 @@ export function runtimeEnvValue(env: Record<string, unknown>, key: string): stri
 export function runtimeChainId(env: Record<string, unknown>): string
 /** Mainnet (dusk:1) and testnet (dusk:2), which follow governance through a deployed manifest. */
 export function isProductionChain(chainId: string): boolean
+/** Whether the site reads through the release's lens: always, unless VITE_DUSK_DOMAINS_USE_LENS is false. */
+export function runtimeUsesLens(env: Record<string, unknown>): boolean

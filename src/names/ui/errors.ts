@@ -34,7 +34,14 @@ const primaryRefusals: Record<string, Record<string, string>> = {
   },
 }
 
+/** A quote no client verified, or a reveal its client didn't quote: nothing was sent, and quoting again fixes it. */
+export const QUOTE_AGAIN_MESSAGE = 'The price needs checking again before you sign. Try again.'
+/** A contract the site couldn't verify for signing, so nothing was sent. */
+export const UNVERIFIED_CONTRACT_MESSAGE = 'This site couldn’t verify a Dusk Domains contract for signing, so nothing was sent. Refresh and try again.'
+
 export function userFacingErrorMessage(error: unknown, fallback: string = defaultErrorMessage, context: ErrorContext = {}): string {
+  if (error instanceof Error && error.name === 'UnverifiedQuoteError') return QUOTE_AGAIN_MESSAGE
+  if (error instanceof Error && error.name === 'UnverifiedContractError') return UNVERIFIED_CONTRACT_MESSAGE
   return userFacingMessageFromText(error instanceof Error ? error.message : String(error), fallback, context)
 }
 
@@ -81,8 +88,16 @@ export function userFacingMessageFromText(
     return 'This name can’t be registered under the current registration rules.'
   // Blocks kept landing mid-read, after the read was tried again.
   if (/Chain tip changed during read/.test(trimmed)) return 'New blocks kept arriving while this was read. Try again.'
+  // The store's quote disagreed with the placement it was read for, at every height tried.
   if (/Registration quote does not match placement and previous lifecycle/.test(trimmed))
-    return 'New blocks kept arriving while the price was checked. Try again.'
+    return 'The registration price couldn’t be confirmed on chain. Try again.'
+  // Connect signs a reveal only for a quote its own client returned, as after the site replaced its client.
+  if (/is not verified against this release: sign only a reveal|is not verified against this release; quote it|quote again with FrozenClient/.test(trimmed))
+    return QUOTE_AGAIN_MESSAGE
+  if (/absent from verified release|not a marketplace verified for this release/.test(trimmed)) return UNVERIFIED_CONTRACT_MESSAGE
+  // A release without the contract's code and init commitments, as one built from env alone, can't sign for it.
+  if (/has no reviewed code and init commitments in this release/.test(trimmed))
+    return 'This site can show this contract but not sign for it: its deployment manifest must list the contract’s code and initialization.'
   if (/Reservation storage|Quota exceeded/.test(trimmed))
     return 'Cannot save the reservation. Enable browser storage and try again.'
   if (/^(ambiguous_principal|invalid_account|empty)$/.test(trimmed))
