@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Price a name page's renewal from what the page read, and quote the store again before renewing.
 - Read a name page, a primary name, a registration price and the preferred market through the release's read lens, one node query each at any number of stores, and read directly whatever it can't answer.
 - Start name and primary reads at the store the indexer names as the name's home.
 - Use only the lens the build pins, turn it off with `VITE_DUSK_DOMAINS_USE_LENS=false`, and refuse a deploy whose manifest and build disagree about it.

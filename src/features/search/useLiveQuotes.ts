@@ -9,7 +9,8 @@ import type { RegistrationQuote, RenewalQuote, NameRef } from '@duskdomains/sdk'
  * changes (the indexer's policy version, for one) and at the app's normal refresh cadence, so a
  * governance SetPolicy shows its prices without a reload. The last quote stays shown meanwhile.
  * While registrations are paused the store refuses registration quotes, and Rusk answers that with
- * HTTP 500, so none is read; renewals ignore the pause and are still quoted.
+ * HTTP 500, so none is read; renewals ignore the pause and are still quoted, from the name page's
+ * read where there is one.
  */
 export function useLiveQuotes(
   client: DuskDomainsOnChainClient | null | undefined,
