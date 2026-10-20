@@ -146,6 +146,7 @@ export function createDuskDomainsLiveApp(options: {
         // Only a lens this build pins is in the release; without one every read is direct.
         useLens: Boolean(config.lens),
         onLensFallback,
+        ...(config.multicall === undefined ? {} : { multicall: config.multicall }),
         // A contract admitted after this release, such as the policy a SetPolicy proposal selects,
         // loads only once the operator republishes the reviewed manifest listing it (docs/deploy.md).
         resolveContract: async (role: ContractRole, id: string) => {

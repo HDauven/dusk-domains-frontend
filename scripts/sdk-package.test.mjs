@@ -4,9 +4,9 @@ import { expect, it } from 'vitest'
 it('installs the exact SDK release from JSR', () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
   const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'))
-  expect(pkg.dependencies['@duskdomains/sdk']).toBe('npm:@jsr/duskdomains__sdk@0.4.1')
+  expect(pkg.dependencies['@duskdomains/sdk']).toBe('npm:@jsr/duskdomains__sdk@0.5.1')
   expect(lock.packages['node_modules/@duskdomains/sdk']).toMatchObject({
-    version: '0.4.1',
+    version: '0.5.1',
     resolved: expect.stringMatching(/^https:\/\/npm\.jsr\.io\//),
     integrity: expect.stringMatching(/^sha512-/),
   })

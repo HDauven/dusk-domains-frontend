@@ -149,6 +149,8 @@ To turn it off in seconds, stage the switched-off build first: deploy the commit
 newest previous release, and `scripts/deploy.sh --rollback` restores it without a rebuild. Any later
 deploy takes its place as the newest previous release, so stage it again after each deploy.
 
+Multicall batching follows the SDK unless `VITE_DUSK_DOMAINS_USE_MULTICALL` says otherwise: on for mainnet and testnet; `false` in a rebuild sends every node read as its own query, and `true` turns it on for a local stack with the multicall deployed.
+
 ## Contracts admitted after launch
 
 Governance admits and selects contracts through delayed directory proposals: `SetPolicy`

@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { resolve } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { contractId, type ContractRole } from '@duskdomains/sdk'
-import { handoff, handoffDriver, handoffEnv, handoffNodeReply, handoffWithLens, lensDriver, lensEnv, lensArtifact } from '../test/handoffFixtures'
+import { handoff, handoffDriver, handoffEnv, handoffNodeReply, handoffWithLens, lensDriver, lensEnv, lensArtifact, nodeCalls } from '../test/handoffFixtures'
 import { createDuskDomainsRuntimeConfig, roles } from '../names/config'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 import { adaptDeploymentManifest, configuredReleaseManifest } from '../names/releaseManifest'
@@ -70,14 +70,16 @@ it('validates a handoff’s lens only against the lens this build pins', async (
   expect(run(lensEnv).stderr).toContain('Driver checksum mismatch')
 })
 
-it.each([false, true])(
-  'initializes the live app with real handoff drivers (manifest=%s)',
-  async (useManifest) => {
+it.each([
+  [false, undefined], [true, undefined], [true, 'true'], [true, 'false'],
+] as const)(
+  'initializes the live app with real handoff drivers (manifest=%s, VITE_DUSK_DOMAINS_USE_MULTICALL=%s)',
+  async (useManifest, multicall) => {
     // This integration covers configuration, manifest loading and real drivers. The node answers the
     // directory's verification, the only contract a new client verifies.
-    const fetcher = vi.fn(async (input: string | URL | Request) => {
+    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(String(input))
-      const node = handoffNodeReply(url)
+      const node = handoffNodeReply(url, {}, init?.body)
       if (node) return node
       if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(handoff))
       const role = roles.find(
@@ -93,6 +95,7 @@ it.each([false, true])(
       ...handoffEnv,
       VITE_DUSK_DOMAINS_INDEXER_URL: '/api',
       ...(useManifest ? { VITE_DUSK_DOMAINS_MANIFEST_URL: '/releases/local/manifest.json' } : {}),
+      ...(multicall ? { VITE_DUSK_DOMAINS_USE_MULTICALL: multicall } : {}),
     })
     expect(runtimeConfig.mode).toBe('live_ready')
     const { names } = createDuskDomainsLiveApp({
@@ -111,10 +114,23 @@ it.each([false, true])(
       const entry = handoff.contracts.find((c: { key: string }) => c.key === role)
       expect((client.release.contracts.get(id) as { initHash?: string }).initHash).toBe(useManifest ? entry.initHash : undefined)
     }
-    // The manifest, six drivers, and the directory's interface and binding.
-    expect(fetcher).toHaveBeenCalledTimes(useManifest ? 9 : 8)
+    // The manifest, six drivers, and the directory's interface and binding: read one query each on this
+    // local chain, as the SDK batches by default only on mainnet and testnet, or in one query when forced on.
+    const node = fetcher.mock.calls.map(([input]) => new URL(String(input))).filter((url) => url.pathname.startsWith('/on/'))
+    expect(node.map((url) => url.pathname.split('/').pop())).toEqual(multicall === 'true' ? ['aggregate'] : ['interface_version', 'binding'])
+    expect(fetcher).toHaveBeenCalledTimes((useManifest ? 7 : 6) + node.length)
+    expect(fetcher.mock.calls.flatMap(([input, init]) => nodeCalls(new URL(String(input)), init?.body))).toEqual(['interface_version', 'binding'])
   },
 )
+
+it('reads VITE_DUSK_DOMAINS_USE_MULTICALL three ways: unset for the SDK default, true to force batching on, false off', () => {
+  const multicall = (value?: string) =>
+    createDuskDomainsRuntimeConfig({ ...handoffEnv, ...(value === undefined ? {} : { VITE_DUSK_DOMAINS_USE_MULTICALL: value }) }).multicall
+  expect(multicall()).toBeUndefined()
+  for (const value of ['', ' ', 'maybe']) expect(multicall(value), value).toBeUndefined()
+  for (const value of ['true', 'TRUE', '1', 'yes', 'on']) expect(multicall(value), value).toBe(true)
+  for (const value of ['false', 'FALSE', '0', 'no', 'off']) expect(multicall(value), value).toBe(false)
+})
 
 it('requires a configured indexer and preserves IDs from the emitted indexer handoff', async () => {
   const { readFileSync } = await import('node:fs')
@@ -146,9 +162,9 @@ it.each(['chain', 'role', 'missing_hash', 'changed_driver', 'repinned_driver'] a
     const nodeReads: string[] = []
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (input: string | URL | Request) => {
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
         const url = new URL(String(input))
-        const node = handoffNodeReply(url)
+        const node = handoffNodeReply(url, {}, init?.body)
         if (node) {
           nodeReads.push(url.pathname)
           return node
@@ -227,9 +243,9 @@ it.each([
   ['configuration without a manifest', false, false],
 ] as const)('follows a replacement policy from %s, and says plainly when it is missing', async (_, useManifest, republished) => {
   let manifest = structuredClone(handoff)
-  const fetcher = vi.fn<(input: string | URL | Request, init?: RequestInit) => Promise<Response>>(async (input) => {
+  const fetcher = vi.fn<(input: string | URL | Request, init?: RequestInit) => Promise<Response>>(async (input, init) => {
     const url = new URL(String(input))
-    const node = handoffNodeReply(url)
+    const node = handoffNodeReply(url, {}, init?.body)
     if (node) return node
     if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))
     const role = roles.find((role) => url.pathname === `/releases/local/${handoff.artifacts[role].driver.path}`

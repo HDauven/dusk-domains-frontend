@@ -1,5 +1,5 @@
 import type { ContractRole, ReleaseManifest } from '@duskdomains/sdk'
-import { runtimeChainId, runtimeEnvValue, runtimeUsesLens } from './runtimeEnv'
+import { runtimeChainId, runtimeEnvValue, runtimeUsesLens, runtimeUsesMulticall } from './runtimeEnv'
 import type { DuskDomainContractMap } from './commandTypes'
 export type DuskDomainsRuntimeEnv = Record<string, string | boolean | undefined>
 /** An app that supports .dusk names, with an optional https link. */
@@ -17,6 +17,11 @@ export type DuskDomainsRuntimeConfig = {
    * lens off: every read is then direct.
    */
   lens: PinnedLens | null
+  /**
+   * Whether node reads go through the multicall: undefined for the SDK's default (on for mainnet and
+   * testnet), else `VITE_DUSK_DOMAINS_USE_MULTICALL` forces it on or off.
+   */
+  multicall: boolean | undefined
   capabilities: { marketplace: boolean; referralAttribution: boolean; referralRewardClaims: boolean }
   launchLinks: {
     support: string | null
@@ -92,6 +97,7 @@ export function createDuskDomainsRuntimeConfig(env: DuskDomainsRuntimeEnv = {}):
   return {
     contracts,
     lens,
+    multicall: runtimeUsesMulticall(env),
     mode: missingLiveInputs.length ? 'preview' : 'live_ready',
     indexerUrl,
     explorerUrl: /^https?:\/\/[^/\s?#]+(?:\/[^\s?#]*)?$/.test(explorer) ? explorer : null,

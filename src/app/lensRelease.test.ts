@@ -100,9 +100,9 @@ it('turns the lens off with VITE_DUSK_DOMAINS_USE_LENS=false, also for a lens it
 // The live app with the real handoff and lens drivers. The node answers the directory's verification.
 it.each([true, false])('loads the pinned lens and its driver with the release only while the lens is on (%s)', async (on) => {
   const manifest = await handoffWithLens()
-  const fetcher = vi.fn(async (input: string | URL | Request) => {
+  const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(String(input))
-    const node = handoffNodeReply(url)
+    const node = handoffNodeReply(url, {}, init?.body)
     if (node) return node
     if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))
     if (url.pathname === `/releases/local/${lensArtifact.path}`) return new Response(lensDriver() as BodyInit)
