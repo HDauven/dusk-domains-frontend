@@ -22,3 +22,13 @@ export function isProductionChain(chainId) {
 export function runtimeUsesLens(env) {
   return !/^(false|0|no|off)$/i.test(runtimeEnvValue(env, 'USE_LENS'))
 }
+
+/**
+ * Whether the site batches its node reads through the multicall: unset, the SDK decides (on for mainnet and
+ * testnet); VITE_DUSK_DOMAINS_USE_MULTICALL=true forces it on, as for a local stack with the multicall
+ * deployed, and false off.
+ */
+export function runtimeUsesMulticall(env) {
+  const value = runtimeEnvValue(env, 'USE_MULTICALL')
+  return /^(true|1|yes|on)$/i.test(value) ? true : /^(false|0|no|off)$/i.test(value) ? false : undefined
+}

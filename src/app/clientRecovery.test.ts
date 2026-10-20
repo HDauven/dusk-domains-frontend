@@ -33,9 +33,9 @@ const replacement = '0b'.repeat(32)
 // reports the interface `kinds` names for a contract, such as a replacement that isn't a policy.
 function liveApp(kinds: Record<string, string> = {}) {
   const manifest = structuredClone(handoff)
-  const fetcher = vi.fn(async (input: string | URL | Request) => {
+  const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(String(input))
-    const node = handoffNodeReply(url, kinds)
+    const node = handoffNodeReply(url, kinds, init?.body)
     if (node) return node
     if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))
     const role = roles.find(role => url.pathname === `/releases/local/${handoff.artifacts[role].driver.path}` || url.pathname === `/${handoff.artifacts[role].driver.path}`)

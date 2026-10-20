@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { FrozenClient, type ContractRole } from '@duskdomains/sdk'
-import { handoff, handoffDriver, handoffEnv, handoffNodeReply } from '../test/handoffFixtures'
+import { handoff, handoffDriver, handoffEnv, handoffNodeReply, nodeCalls } from '../test/handoffFixtures'
 import { createDuskDomainsRuntimeConfig, roles } from '../names/config'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 
@@ -17,11 +17,11 @@ const selected = '0b'.repeat(32)
 function liveApp() {
   const manifest = structuredClone(handoff)
   const nodeReads: string[] = []
-  vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+  vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(String(input))
-    const node = handoffNodeReply(url)
+    const node = handoffNodeReply(url, {}, init?.body)
     if (node) {
-      nodeReads.push(url.pathname.split('/').pop()!)
+      nodeReads.push(...nodeCalls(url, init?.body))
       return node
     }
     if (url.pathname === '/releases/local/manifest.json') return new Response(JSON.stringify(manifest))

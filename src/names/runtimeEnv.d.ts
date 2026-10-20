@@ -6,3 +6,5 @@ export function runtimeChainId(env: Record<string, unknown>): string
 export function isProductionChain(chainId: string): boolean
 /** Whether the site reads through the release's lens: always, unless VITE_DUSK_DOMAINS_USE_LENS is false. */
 export function runtimeUsesLens(env: Record<string, unknown>): boolean
+/** Whether the site batches its node reads through the multicall: undefined for the SDK's default, else VITE_DUSK_DOMAINS_USE_MULTICALL's. */
+export function runtimeUsesMulticall(env: Record<string, unknown>): boolean | undefined
