@@ -22,6 +22,11 @@ the saved original commitment store and observed inclusion height, validating th
 against the old generation and grace end so the dropped-name premium remains included,
 and signs only that quote.
 
+A name page's renewal price comes from the SDK's `previewRenewal` over the page `namePage`
+returned, for display only: no read where the SDK can price it, a direct quote elsewhere,
+and no term past the page's horizon (`max_years`). Renew quotes again with `quoteRenewal`
+right before the wallet is asked and signs only that quote.
+
 A governance `SetPolicy` keeps a reservation valid but not its price. The price a
 reservation was made at, with the policy selection that quoted it, is kept in browser
 storage beside the reservation. Reveal preparation continues only when the fresh quote

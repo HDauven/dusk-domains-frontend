@@ -125,6 +125,7 @@ export function createDuskDomainsOnChainReadTransport(
       }),
   }
 }
+type Kept<T> = { client: sdk.FrozenClient; read: Promise<T> }
 async function wrapped<T>(read: () => Promise<T>) {
   try {
     return success(await retryReadRace(read))
@@ -145,12 +146,14 @@ export function createDuskDomainsOnChainClient(
   // quote and owner checks. A name page reads the name with everything else it shows, and the other
   // parts take the name from that read. A caller reuses a read only when it was taken at the tip this
   // caller reads after asking, or later, so no caller sees a name older than the chain when it asked.
-  const nameReads = new Map<string, { client: sdk.FrozenClient; read: Promise<sdk.Routed<sdk.NameView>> }>()
-  const keepName = (c: sdk.FrozenClient, spelling: string, read: Promise<sdk.Routed<sdk.NameView>>) => {
-    nameReads.delete(spelling)
-    nameReads.set(spelling, { client: c, read })
-    if (nameReads.size > 64) nameReads.delete(nameReads.keys().next().value!)
-    read.catch(() => { if (nameReads.get(spelling)?.read === read) nameReads.delete(spelling) })
+  const nameReads = new Map<string, Kept<sdk.Routed<sdk.NameView>>>()
+  // The page each name's page read returned last, which prices the renewal that page shows.
+  const pages = new Map<string, Kept<sdk.NamePage>>()
+  const keep = <T>(reads: Map<string, Kept<T>>, c: sdk.FrozenClient, spelling: string, read: Promise<T>) => {
+    reads.delete(spelling)
+    reads.set(spelling, { client: c, read })
+    if (reads.size > 64) reads.delete(reads.keys().next().value!)
+    read.catch(() => { if (reads.get(spelling)?.read === read) reads.delete(spelling) })
   }
   const readName = async (c: sdk.FrozenClient, spelling: string, hint?: string): Promise<sdk.Routed<sdk.NameView>> => {
     const earlier = nameReads.get(spelling)
@@ -159,13 +162,29 @@ export function createDuskDomainsOnChainClient(
       if (routed && routed.height >= BigInt(tip)) return structuredClone(routed)
     }
     const read = c.getName(spelling, hint)
-    keepName(c, spelling, read)
+    keep(nameReads, c, spelling, read)
     return structuredClone(await read)
   }
   const readPage = async (c: sdk.FrozenClient, spelling: string, hint?: string) => {
     const page = c.namePage(spelling, hint)
-    keepName(c, spelling, page.then(({ store, value, forwards, height }) => ({ store, value, forwards, height })))
+    keep(nameReads, c, spelling, page.then(({ store, value, forwards, height }) => ({ store, value, forwards, height })))
+    keep(pages, c, spelling, page)
     return page
+  }
+  // A renewal price to show. For a name whose page was read, it is what the store quotes at the page's
+  // height: computed from the page without a read where the SDK can, quoted directly elsewhere, and
+  // refused, as the store would, for a term past the page's horizon. Other names are quoted directly.
+  // Renew quotes again directly and signs only that quote.
+  const renewalQuote = async (c: sdk.FrozenClient, spelling: string, years: number, hint?: string) => {
+    const shown = pages.get(spelling),
+      page = shown?.client === c ? await shown.read.catch(() => null) : null
+    const n = requiredName(page ?? (await readName(c, spelling, hint)))
+    if (page?.renewal && years > page.renewal.max_years)
+      throw new Error('A name can run at most 10 years ahead, so this term isn’t available now.')
+    const quote = page ? await c.previewRenewal(page, years) : await c.quoteRenewal(n.store, { name: n.ref, years })
+    const v = local(quote.value)
+    if (!v) throw new Error('Renewal unavailable')
+    return { ...quote, quote: v, ref: structuredClone(n.ref) }
   }
   const byNode = async (node: string) => {
     const c = await getClient()
@@ -341,14 +360,7 @@ export function createDuskDomainsOnChainClient(
     getRegistrationQuote: (name, years, actor, hint) =>
       wrapped(async () => registrationQuote(await getClient(), name, years, actor, hint)),
     getRenewalQuote: (name, years, hint) =>
-      wrapped(async () => {
-        const c = await getClient(),
-          n = requiredName(await readName(c, name, hint)),
-          quote = await c.quoteRenewal(n.store, { name: n.ref, years })
-        const v = local(quote.value)
-        if (!v) throw new Error('Renewal unavailable')
-        return { ...quote, quote: v, ref: n.ref }
-      }),
+      wrapped(async () => renewalQuote(await getClient(), sdk.normalizeNameInput(name), years, hint)),
     getFeeConfig: () =>
       wrapped(async () => {
         const c = await getClient(),

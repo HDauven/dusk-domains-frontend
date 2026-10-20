@@ -127,8 +127,10 @@ directory's state each take one contract query, however many stores the director
 the lens can't answer is read directly. Reads start at the store the indexer names as a name's home.
 The parts of a page share what they read from the chain at one block height: they take the name from
 the page's read while the tip stays at its height, and reads repeated at one height reach the node
-once. A contract's interface, binding and market order API never change, so the tab keeps what
-verification read for its session; signing for a contract reads it from the chain again.
+once. A name's page prices its renewal from the page's read, with no further read where the SDK can,
+and Renew quotes the store again before the wallet is asked. A contract's interface, binding and
+market order API never change, so the tab keeps what verification read for its session; signing for
+a contract reads it from the chain again.
 
 ## Documentation
 

@@ -44,9 +44,10 @@ export function frozenNode({ lens = false, blockHashes = false, network = 0 } = 
   const role = new Map<string, sdk.ContractRole>(roles.map(([r, n]) => [id(n), r]))
   const binding = { directory: bytes(1), vault: bytes(4), network }
   const policy = sdk.launchPolicyConfig()
-  // What the release commits each contract to, and the directory's records of them say. The policy is
-  // the published v1 policy, whose pricing the SDK recomputes, as on testnet and mainnet.
-  const codeHash = (n: number) => (n === 2 ? 'c6a9d9013d8dc2c0e3415b8aafbcc1d5c91d275531d7e677ab3cff57b22de678' : id(0x10 + n))
+  // What the release commits each contract to, and the directory's records of them say. The policy and
+  // the stores are the published v1 code, whose prices the SDK recomputes, as on testnet and mainnet.
+  const codeHash = (n: number) => n === 2 ? 'c6a9d9013d8dc2c0e3415b8aafbcc1d5c91d275531d7e677ab3cff57b22de678'
+    : n === 3 || n === 7 ? 'ab7c6e22b4bda3707cee67e584b0070b158821bf404d0da37c1b6c69f84094b2' : id(0x10 + n)
   const initHash = (n: number) => n === 2 ? initCommitment(drivers.get('policy')!, 'InitPolicy', { binding, config: policy }) : id(0x20 + n)
   const committed = (n: number) => ({ interface_version: 1, code_hash: sdk.fromHex(codeHash(n), 32), init_hash: sdk.fromHex(initHash(n), 32) })
   const directory = sample('DirectoryConfig')
@@ -61,6 +62,8 @@ export function frozenNode({ lens = false, blockHashes = false, network = 0 } = 
   directory.registration.guardian_suspended = false
   directory.preferred_marketplace = bytes(6)
   directory.market_version = 1n
+  // Renewals cost 17 DUSK a year for five or more characters.
+  directory.renewal = { annual_lux: ['150000000000', '50000000000', '20000000000', '20000000000', '17000000000'], effective_at: 1n, referral_bps: 500, version: 1n }
   const admissions = [3, 7].map((n, ordinal) => ({ ...sample('Admission'), id: bytes(n), ordinal, retiring: false, admitted_at: 1n, ...committed(n) }))
   const resolvers = [{ ...sample('Admission'), id: bytes(5), ordinal: 0, retiring: false, admitted_at: 1n, ...committed(5) }]
   const market: sdk.Market = { id: bytes(6), state: 'Listed', version: 1n, ...committed(6) }
@@ -72,14 +75,13 @@ export function frozenNode({ lens = false, blockHashes = false, network = 0 } = 
   view.name.manager = bytes(9)
   view.name.custody = null
   view.name.referrer = null
+  view.name.subname = null
   view.name.expires_at = 5000n
-  view.name.grace_end = 6000n
+  view.name.grace_end = 5000n + sdk.DEFAULT_GRACE_PERIOD_BLOCKS
   view.name.records = { resolver: bytes(5), epoch: 1n, count: 1, digest: bytes(9) }
   view.active = true
   view.move_pending = null
   const website: sdk.RecordValue = { key: 'website', value: [...new TextEncoder().encode('https://example.test')], ttl_seconds: 300n, updated_at: 90n }
-  const renewal = sample('RenewalQuote')
-  renewal.total_lux = '17000000000'
   const state: {
     height: bigint
     view: sdk.NameView
@@ -231,7 +233,9 @@ export function frozenNode({ lens = false, blockHashes = false, network = 0 } = 
         return encode(state.homes.get(target) === 'Local' ? { Local: state.view.active ? state.records.find((r) => r.key === record_key) ?? null : null } : 'Absent')
       }
       if (method === 'resolve_primary' || method === 'read_primary') return encode(null)
-      if (method === 'quote_renewal') return encode({ Local: renewal })
+      // As the v1 store, by the directory's schedule; a term past the ten-year horizon is refused.
+      if (method === 'quote_renewal')
+        return encode({ Local: sdk.estimateRenewalQuote(directory.renewal, state.view.name, (args as { years: number }).years, state.height) })
       if (method === 'quote_registration') return encode(quote(sdk.fromHex(target, 32), args as never).quote)
       if (method === 'capacity') return encode({ memory_bytes: 0n, reserved_bytes: 0n, accepts_new: true, sealed: false })
       throw new Error(`Unexpected read ${target}.${method}`)
@@ -258,6 +262,7 @@ export function frozenNode({ lens = false, blockHashes = false, network = 0 } = 
   })
   return {
     state,
+    directory,
     calls,
     failNext,
     lensRefuses,
