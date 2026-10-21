@@ -1,6 +1,6 @@
 # Terms of Use
 
-Last updated: 11 October 2026
+Last updated: 21 October 2026
 
 These terms govern your use of the Dusk Domains website at dusk.domains and testnet.dusk.domains, its public API, and the related software and documentation (together, **the Services**). The Services are operated by **Mochavi Limited**, a private company limited by shares incorporated in Hong Kong (Business Registration No. 77975303) (**Mochavi**, **we**, **us**). By using the Services you agree to these terms. If you don't agree, don't use them.
 
@@ -19,7 +19,7 @@ You must be at least 18 years old and legally able to enter into these terms. Yo
 - **Registration is a rental for a fixed term.** A name is registered for 1 to 10 years at a time, for a yearly price shown before you confirm. It is not a purchase of property, and it does not give you a trademark, trade name or any other right in the word or phrase.
 - **Expiry.** When a name's term ends, its owner, or anyone else, can renew it during a 30-day grace period. On this website, a name's owner or manager can renew it, and anyone can renew a listed name, which leaves the listing unchanged. After the grace period, anyone can register it, and its records and subnames are cleared. A recently released name may carry an extra premium that decreases daily.
 - **Subnames.** The owner or manager of a name can create subnames and give them to others. The owner or manager of any name above a subname can reassign or take back that subname at any time, which clears its records. If you hold a subname, you hold it on those terms.
-- **Reserved and restricted names.** Some names are reserved, and names shorter than 3 characters can't currently be registered. Which names are reserved is set by the protocol and may change for future registrations. Prices are also set by the protocol and may change for future registrations and renewals.
+- **Reserved and restricted names.** Some names are reserved and can't be registered through the public flow. Which names are reserved, and the shortest name that can be registered, are set by the protocol and may change for future registrations. Prices are also set by the protocol and may change for future registrations and renewals.
 - **Payments are final.** Fees are paid in DUSK to the protocol's on-chain treasury when your transaction executes. There are no refunds, including when a name expires, when you stop using it, or when it is hidden in the interface.
 - **Two-step registration.** Registration uses a commitment followed by a reveal. If you don't complete the reveal in time, the commitment expires and you may need to start again. Network fees for transactions that fail or expire are not refundable.
 
@@ -45,7 +45,7 @@ We can, at our discretion and without notice:
 
 - **hide or flag names, records and listings in our website and API**, for example after an infringement, abuse or legal complaint. This doesn't change anything on-chain, and other interfaces may still show them;
 - suspend, limit or discontinue any part of the Services, including the website and API;
-- use the powers the contracts give the protocol's operator. These are limited to the rules built into the contracts: for example setting prices for future registrations and renewals, choosing reserved names for future registrations, pausing new registrations and trades, admitting new contract shards, and collecting the protocol's share of the treasury. Some of these powers take effect only after a delay that is visible on-chain.
+- use the powers the contracts give the protocol's operator. These are limited to the rules built into the contracts: for example setting prices for future registrations and renewals, choosing reserved names and the shortest registrable name for future registrations, pausing new registrations and trades, admitting new contract shards, and collecting the protocol's share of the treasury. Some of these powers take effect only after a delay that is visible on-chain.
 
 We don't arbitrate disputes about names. There is no transfer procedure for trademark holders comparable to UDRP. If you believe a name infringes your rights, report it to [abuse@dusk.domains](mailto:abuse@dusk.domains); we may hide it in our interface, but we can't take it from its owner.
 
