@@ -37,11 +37,15 @@ export type DuskDomainTxState = {
   error?: unknown
   blockHeight?: number
 }
+/** A write that must follow this one, such as the registration a reservation is for. */
+export type FollowingWrite = Pick<WalletFrozenCall, 'deposit' | 'gasLimit'>
 export type SubmitDuskDomainWriteOptions = {
   name?: string
   /** What the write's notices call it: its name unless given. */
   title?: string
   balanceAction?: string
+  /** The public balance must also pay for this write, at this write's gas price, before the wallet is asked. */
+  followedBy?: FollowingWrite
   gas?: DuskDomainGas
   onUpdate?: (state: DuskDomainTxState) => void
   timeoutMs?: number
@@ -98,7 +102,7 @@ export async function submitDuskDomainWrite(
     const state = await submitFrozen(
       {
         prepare: async () => {
-          prepared = await app.prepareContractCall(params) as PreparedCall
+          prepared = await app.prepareContractCall({ ...params, followedBy: options.followedBy }) as PreparedCall
           return prepared
         },
         // Keep the reviewed price through submission; the SDK still rebuilds the call and checks funds again.
@@ -124,11 +128,12 @@ export function checkPublicBalanceForWrite(a: {
   balanceLux: unknown
   action: string
   prepared: Pick<PreparedCall, 'deposit' | 'gas'>
+  followedBy?: FollowingWrite
 }) {
   const result = checkBalance({
     balanceLux: a.balanceLux,
-    depositLux: a.prepared.deposit,
-    gasLimit: BigInt(a.prepared.gas.limit),
+    depositLux: String(BigInt(a.prepared.deposit) + BigInt(a.followedBy?.deposit ?? 0)),
+    gasLimit: BigInt(a.prepared.gas.limit) + (a.followedBy?.gasLimit ?? 0n),
     gasPrice: BigInt(a.prepared.gas.price),
   })
   return result.ok

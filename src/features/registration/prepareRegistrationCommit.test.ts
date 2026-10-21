@@ -27,7 +27,7 @@ function args() {
     setItem: (key: string, value: string) => data.set(key, value) })
   const noop = () => {}
   return {
-    canPrepareCommit: true, displayName: 'resume.dusk', nodeHex: namehashHex('resume.dusk'), duration: 1,
+    canPrepareCommit: true, displayName: 'resume.dusk', nodeHex: namehashHex('resume.dusk'), duration: 1, result: { label: 'resume' }, feeConfig: DEFAULT_FEE_CONFIG,
     selectedAddress: 'owner', selectedAuthority: controller, runtimeConfig: { chainId: 'dusk:0', contracts },
     liveDuskDomainsApp: {client:Promise.resolve({registrationPlacement:async()=>({store:contracts.store.contractId})})}, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,

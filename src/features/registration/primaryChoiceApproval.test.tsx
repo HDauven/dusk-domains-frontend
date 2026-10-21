@@ -1,7 +1,7 @@
 import { contracts } from '../../test/frozenFixtures'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
-import { listPendingNameReservations, namehashHex, type DuskDomainTxState } from '../../names/internal'
+import { DEFAULT_FEE_CONFIG, listPendingNameReservations, namehashHex, type DuskDomainTxState } from '../../names/internal'
 import { useRegistrationFeature, type UseRegistrationFeatureProps } from './useRegistrationFeature'
 import type { PreparedRegistrationCommit } from './usePendingReservations'
 import { RegistrationFlowPanel } from './RegistrationFlowPanel'
@@ -36,7 +36,7 @@ it.each([true, false])('locks primary choice %s before approval and recovers tha
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: () => balance.promise,
     loadPendingReservations: () => listPendingNameReservations(),
     searchActions: { resume: vi.fn() },
-    result: { issues: [] },
+    result: { issues: [], label: 'approval' }, feeConfig: DEFAULT_FEE_CONFIG,
   }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
   let feature!: ReturnType<typeof useRegistrationFeature>
   function Probe({ current = props }: { current?: typeof props }) {

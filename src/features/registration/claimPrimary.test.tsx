@@ -208,7 +208,7 @@ it.each([
   vi.stubGlobal('localStorage', { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => data.set(key, value), removeItem: (key: string) => data.delete(key) })
   const { useRegistrationFeature } = await import('./useRegistrationFeature')
   const { readReservationPrimaryChoice } = await import('./reservationPrimaryChoice')
-  const { listPendingNameReservations, namehashHex } = await import('../../names/internal')
+  const { DEFAULT_FEE_CONFIG, listPendingNameReservations, namehashHex } = await import('../../names/internal')
   const { contracts } = await import('../../test/frozenFixtures')
   const submitNameWrite = Object.assign(vi.fn(async (_name: string, _call: unknown, options: { beforeSign: () => void }) => {
     options.beforeSign()
@@ -224,7 +224,8 @@ it.each([
     commitBusy: false, txBusy: false, registrationCompletion: null, registrationStep: 'review',
     registrationTargetAddress: 'viktor', registrationTargetAddressErrors: [], registrationFee: 10,
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
-    loadPendingReservations: () => listPendingNameReservations(), searchActions: { resume: vi.fn() }, result: { issues: [] },
+    loadPendingReservations: () => listPendingNameReservations(), searchActions: { resume: vi.fn() }, result: { issues: [], label: 'brumeline' },
+    feeConfig: DEFAULT_FEE_CONFIG,
   }, { get: (target, key) => key in target ? target[key as keyof typeof target] : vi.fn() })
   let feature!: ReturnType<typeof useRegistrationFeature>
   function Probe() {

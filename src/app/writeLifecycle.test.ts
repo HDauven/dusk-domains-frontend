@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, expect, it, vi } from 'vitest'
 import { DuskWalletUserRejectedError } from '@dusk/connect'
 import { WalletSessionChangedError } from '../features/wallet/sessionWriteWallet'
-import { storeCommitRequest, listPendingNameReservations, namehashHex } from '../names/internal'
+import { DEFAULT_FEE_CONFIG, storeCommitRequest, listPendingNameReservations, namehashHex } from '../names/internal'
 import { prepareRegistrationCommit } from '../features/registration/prepareRegistrationCommit'
 import { saveDomainRecords } from '../features/domains/saveDomainRecords'
 import { createWriteAccess } from './writeAccess'
@@ -39,7 +39,7 @@ function fixture(session = wallet, nodeUrl?: string) {
   }
   renderToStaticMarkup(createElement(Probe))
   const props = {
-    canPrepareCommit: true, displayName: 'alpha.dusk', nodeHex: namehashHex('alpha.dusk'), duration: 1,
+    canPrepareCommit: true, displayName: 'alpha.dusk', nodeHex: namehashHex('alpha.dusk'), duration: 1, result: { label: 'alpha' }, feeConfig: DEFAULT_FEE_CONFIG,
     selectedAddress: 'owner', selectedAuthority: `0x${'11'.repeat(32)}`, runtimeConfig: { chainId: 'dusk:0', contracts },
     liveDuskDomainsApp: null, indexerClient: null, loadPendingReservations: () => listPendingNameReservations(),
     ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: vi.fn(async () => true),

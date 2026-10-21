@@ -216,7 +216,7 @@ export function createDuskDomainsLiveApp(options: {
       await verifyTarget(c, call)
       const prepared = await signing(c, () => createDuskDomainsConnectApp(options.wallet, c.release).prepare(call))
       const balance = await options.wallet.getPublicBalance()
-      const funds = checkPublicBalanceForWrite({ balanceLux: balance?.value, prepared, action: params.functionName })
+      const funds = checkPublicBalanceForWrite({ balanceLux: balance?.value, prepared, followedBy: params.followedBy, action: params.functionName })
       if (!funds.ok) throw new WriteBalanceError(funds)
       return prepared
     },
