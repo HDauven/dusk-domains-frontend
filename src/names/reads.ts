@@ -369,12 +369,15 @@ export function createDuskDomainsOnChainClient(
           renewal = await c.directory.renewal_schedule()
         return {
           ...DEFAULT_FEE_CONFIG,
+          oneCharYearLux: safeNumber(p.annual_lux[0]),
+          twoCharYearLux: safeNumber(p.annual_lux[1]),
           threeCharYearLux: safeNumber(p.annual_lux[2]),
           fourCharYearLux: safeNumber(p.annual_lux[3]),
           fivePlusYearLux: safeNumber(p.annual_lux[4]),
           referralRewardBps: p.base_referral_bps,
           premiumStartLux: safeNumber(p.premium_start_lux),
           premiumReferralRewardBps: p.premium_referral_bps,
+          minimumRootBytes: p.minimum_root_bytes,
           renewalReferralRewardBps: renewal.referral_bps,
           version: safeNumber(context.policy_version),
         }

@@ -28,7 +28,7 @@ it('prices a name exactly under a policy whose largest prices pass 2^53 - 1 Lux'
 })
 
 it('lists the prices of such a policy on the home page and the treasury page', () => {
-  expect(priceTiers(largePolicy).map(tier => tier.price)).toEqual(['1,000,000', '50', '10'])
+  expect(priceTiers(largePolicy).map(tier => tier.price)).toEqual(['1,000', '400', '1,000,000', '50', '10'])
   expect(pricingRules(largePolicy).join(' ')).toContain('9,000,000 DUSK')
   const html = renderToStaticMarkup(<TreasuryView {...{ treasuryState: emptyTreasuryUiState(), claim: {}, wallet: { connectedAsTreasuryOperator: false },
     pricing: { feeConfig: largePolicy, feeConfigError: '', feeConfigLoaded: true } } as unknown as TreasuryViewProps} />)

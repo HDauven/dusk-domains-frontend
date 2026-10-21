@@ -48,7 +48,7 @@ it.each(['bad\uD800', 'bad\uDC00', 'bad\uD800x.alpha.dusk'])(
 
 // Renewal follows the directory's renewal schedule; a registration policy replacement never changes it.
 it.each([
-  ['the renewal schedule', { threeChar: 120e9, fourChar: 40e9, fivePlus: 8e9 }, '16'],
+  ['the renewal schedule', { oneChar: 800e9, twoChar: 320e9, threeChar: 120e9, fourChar: 40e9, fivePlus: 8e9 }, '16'],
   ['nothing, without a quote or the schedule', undefined, ''],
 ])('estimates a renewal from %s, never from registration prices', (_, renewalYearLux, shown) => {
   function Preview() {

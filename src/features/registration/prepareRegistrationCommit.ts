@@ -5,9 +5,11 @@ import {
   createRegistrationSecret,
   currentUnixSeconds,
   listPendingNameReservations,
+  REGISTRATION_GAS_LIMIT,
   REGISTRATION_MIN_REVEAL_WAIT_BLOCKS,
   registrationCommitmentHex,
   registrationRegistry,
+  registrationTotalLux,
   removePendingNameReservation,
   reviewedRegistrationQuote,
   upsertPendingNameReservation,
@@ -21,6 +23,7 @@ export async function prepareRegistrationCommit({
   canPrepareCommit,
   displayName,
   duration,
+  feeConfig,
   indexerClient,
   liveDuskDomainsApp,
   loadPendingReservations,
@@ -92,6 +95,10 @@ export async function prepareRegistrationCommit({
       workspace,
       session,
       contracts: runtimeConfig.contracts,
+      // A reservation's fee is lost if the registration can't follow, so nothing is signed unless the
+      // balance also pays for the registration: the price Register signs, and its gas ceiling.
+      balanceAction: 'registering this name',
+      followedBy: { deposit: String(registrationTotalLux(result, duration, feeConfig)), gasLimit: REGISTRATION_GAS_LIMIT },
       beforeSign: () => {
         checkSession()
         if (listPendingNameReservations({ chainId: runtimeConfig.chainId, directory: runtimeConfig.contracts.directory.contractId, controller: selectedAuthority }).some(saved => saved.node === nodeHex)) {

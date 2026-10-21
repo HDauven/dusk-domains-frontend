@@ -56,11 +56,11 @@ describe('who controls a name', () => {
   it('keeps the Terms in step with the contracts on prices, renewal and the treasury', () => {
     const terms = readFileSync('src/legal/terms.md', 'utf8')
     // Renewal prices can change for names already registered, and the operator can claim only the protocol's share.
-    expect(terms).toContain('setting prices for future registrations and renewals, choosing reserved names for future registrations')
+    expect(terms).toContain('setting prices for future registrations and renewals, choosing reserved names and the shortest registrable name for future registrations')
     expect(terms).toContain('collecting the protocol\'s share of the treasury')
     expect(terms).toContain('We may use the protocol\'s share of the treasury as we see fit')
-    // Reserving a name affects who can register it, not renewals.
-    expect(terms).toContain('Which names are reserved is set by the protocol and may change for future registrations. Prices are also set by the protocol and may change for future registrations and renewals.')
+    // Reserving a name, or the shortest name allowed, affects who can register it, not renewals.
+    expect(terms).toContain('Which names are reserved, and the shortest name that can be registered, are set by the protocol and may change for future registrations. Prices are also set by the protocol and may change for future registrations and renewals.')
     // Anyone can pay to renew a listed name, on chain and on this website; the listing stays as it is.
     expect(terms).not.toContain('can\'t be renewed until the listing ends')
     expect(terms).not.toContain('This website renews')

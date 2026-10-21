@@ -89,6 +89,7 @@ export type DuskConnectAppLike = {
     args?: unknown
     deposit?: string
     decodedContext?: DuskDomainDecodedContext
+    followedBy?: import('./transactions').FollowingWrite
   }) => Promise<unknown>
   writeContract: (params: {
     display?: import('./walletCallDetails').WalletCallDetails

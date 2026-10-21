@@ -245,9 +245,7 @@ export function overviewCopyForIssues(status: NameStatus, issues: NameResult['is
 }
 
 export function policyIssueCopy(text: string) {
-  if (text === 'Labels shorter than 3 characters are reserved.') {
-    return 'Dusk Domains start at 3 characters. 1–2 character names are reserved.'
-  }
+  if (text === 'Root label is shorter than the policy minimum.') return 'This name is shorter than the registration policy allows.'
   return text
 }
 

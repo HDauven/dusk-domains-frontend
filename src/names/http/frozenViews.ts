@@ -154,15 +154,18 @@ export function frozenView(input: unknown, path: string): unknown {
     const policy = row(v.policy) ? v.policy : {},
       p = row(policy.config) ? policy.config : {},
       renewal = row(v.renewalSchedule) ? v.renewalSchedule : {}
-    // The schedule's tiers are lengths 1, 2, 3, 4 and 5+; names have at least 3 characters.
-    const annual = Array.isArray(renewal.annual_lux) && renewal.annual_lux.length === 5 ? renewal.annual_lux.map(value => safeNumber(String(value))) : null
+    // The schedule's and the policy's tiers are lengths 1, 2, 3, 4 and 5+.
+    const tiers = (lux: unknown) => (Array.isArray(lux) && lux.length === 5 ? lux.map(value => safeNumber(String(value))) : null)
+    const annual = tiers(renewal.annual_lux),
+      prices = tiers(p.annual_lux)
     Object.assign(v, {
       // After a SetPolicy the indexer withholds a policy whose initialization it has not verified.
       registrationPricesUnavailable: policy.config === null,
       referralRewardBps: p.base_referral_bps,
       premiumReferralRewardBps: p.premium_referral_bps,
       renewalReferralRewardBps: renewal.referral_bps,
-      ...(annual ? { renewalYearLux: { threeChar: annual[2], fourChar: annual[3], fivePlus: annual[4] } } : {}),
+      ...(prices ? { oneCharYearLux: prices[0], twoCharYearLux: prices[1] } : {}),
+      ...(annual ? { renewalYearLux: { oneChar: annual[0], twoChar: annual[1], threeChar: annual[2], fourChar: annual[3], fivePlus: annual[4] } } : {}),
       ...(typeof p.minimum_root_bytes === 'number' ? { minimumRootBytes: p.minimum_root_bytes } : {}),
       version: policy.version == null ? null : safeNumber(String(policy.version)),
       updatedAt: 0,

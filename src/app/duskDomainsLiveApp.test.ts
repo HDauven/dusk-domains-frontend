@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import * as sdk from '@duskdomains/sdk'
-import { submitDuskDomainWrite } from '../names/transactions'
+import { submitDuskDomainWrite, type SubmitDuskDomainWriteOptions } from '../names/transactions'
+import { prepareRegistrationCommit } from '../features/registration/prepareRegistrationCommit'
 import { userFacingTxMessage } from '../components/status/txStatus'
 import { account } from '../test/frozenFixtures'
 import { endpointBytes } from '../names/reads'
@@ -9,7 +10,7 @@ import { createClientFromManifest, storeCommitCall } from '@duskdomains/sdk'
 vi.mock('@duskdomains/sdk', async original => ({...await original<typeof import('@duskdomains/sdk')>(),createClientFromManifest:vi.fn()}))
 import { afterEach, expect, it, vi } from 'vitest'
 import { announceDuskProvider, DuskWallet, type DuskProvider } from '@dusk/connect'
-import { type DuskDomainsRuntimeConfig } from '../names/internal'
+import { DEFAULT_FEE_CONFIG, namehashHex, type DuskDomainCallMetadata, type DuskDomainsRuntimeConfig } from '../names/internal'
 import { createWalletSession } from '../features/wallet/walletSession'
 import { createDuskDomainsLiveApp } from './duskDomainsLiveApp'
 import { frozenNode, id, LENS } from '../test/frozenNode'
@@ -80,6 +81,36 @@ for (const price of [1n, 7n]) {
         expect(state.status).toBe('submitted')
         expect(sends).toHaveLength(1)
         expect(sends[0][0]).toMatchObject({ params: { deposit: call.deposit, gas: { limit: call.gasLimit.toString(), price: price.toString() } } })
+      }
+    })
+
+    // A reservation costs a fee, so it is never signed unless the balance also pays for the registration.
+    it(`reserves x.dusk at price ${price} only with its registration covered, short by ${shortBy} Lux`, async () => {
+      const { provider, names } = await fixture()
+      const commit = storeCommitCall(contracts.store.contractId, { hash: Array(32).fill(1) })
+      const quotedLux = 1_000_000_000_000n
+      const required = quotedLux + (commit.gasLimit + sdk.gasLimit('store', 'register')) * price
+      const request = provider.request.getMockImplementation()!
+      provider.request.mockImplementation(args => args.method === 'dusk_estimateGas'
+        ? Promise.resolve({ median: price.toString() })
+        : args.method === 'dusk_getPublicBalance' ? Promise.resolve({ value: (required - shortBy).toString() }) : request(args))
+      const setCommitTxState = vi.fn()
+      const submitNameWrite = Object.assign((_name: string, call: DuskDomainCallMetadata, options: SubmitDuskDomainWriteOptions) =>
+        submitDuskDomainWrite({ ...names, prepareIntent: async () => commit }, call, options), { captureSession: () => () => true, captureWorkspace: () => () => true })
+      await prepareRegistrationCommit({ canPrepareCommit: true, displayName: 'x.dusk', nodeHex: namehashHex('x.dusk'), duration: 1,
+        result: { label: 'x', quotedYears: 1, totalFeeLux: Number(quotedLux) }, feeConfig: DEFAULT_FEE_CONFIG,
+        selectedAddress: 'A', selectedAuthority: `0x${'11'.repeat(32)}`, runtimeConfig: { chainId: 'dusk:2', contracts }, liveDuskDomainsApp: null,
+        ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
+        setWalletError: vi.fn(), setRegistrationCompletion: vi.fn(), setCommitTxState, submitNameWrite } as never)
+      const sends = provider.request.mock.calls.filter(([args]) => args.method === 'dusk_sendTransaction')
+      if (shortBy) {
+        expect(sends).toHaveLength(0)
+        expect(setCommitTxState.mock.calls.some(([s]) => s.status === 'awaiting_approval')).toBe(false)
+        expect(setCommitTxState).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'failed',
+          message: `Insufficient public DUSK for registering this name. Available: ${sdk.formatLuxAsDusk(required - 1n)}. Required: ${sdk.formatLuxAsDusk(required)}.` }))
+      } else {
+        expect(sends).toHaveLength(1)
+        expect(sends[0][0]).toMatchObject({ params: { fnName: 'commit', deposit: '0', gas: { limit: commit.gasLimit.toString(), price: price.toString() } } })
       }
     })
   }

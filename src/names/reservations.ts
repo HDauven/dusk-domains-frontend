@@ -7,6 +7,8 @@ export type PendingNameReservation = Omit<sdk.PendingNameReservation, 'committed
 export const REGISTRATION_MIN_REVEAL_WAIT_BLOCKS = Number(sdk.REGISTRATION_MIN_REVEAL_WAIT_BLOCKS)
 export const REGISTRATION_MAX_COMMITMENT_AGE_BLOCKS = Number(sdk.REGISTRATION_MAX_COMMITMENT_AGE_BLOCKS)
 export const MAX_PENDING_COMMITMENTS_PER_CONTROLLER = sdk.MAX_PENDING_COMMITMENTS_PER_CONTROLLER
+/** The most gas a registration's reveal is signed with, whatever its records and referrer. */
+export const REGISTRATION_GAS_LIMIT = sdk.gasLimit('store', 'register')
 export function registrationCommitWindow(
   committed: number | null | undefined,
   current: number | null | undefined,

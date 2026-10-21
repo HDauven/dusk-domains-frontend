@@ -2,6 +2,7 @@ import type { WebsiteVerification } from '../http/verification'
 import {
   validateName as validate,
   analyzeName as analyze,
+  LAUNCH_NAME_POLICY,
   RESERVED_LABELS,
   launchPolicyConfig,
   registrationPremiumSchedule as premium,
@@ -13,6 +14,8 @@ export { normalizeNameInput } from '@duskdomains/sdk'
 export const LUX_PER_DUSK = 1_000_000_000
 const policy = launchPolicyConfig()
 export const DEFAULT_FEE_CONFIG: CoreFeeConfig = {
+  oneCharYearLux: Number(policy.annual_lux[0]),
+  twoCharYearLux: Number(policy.annual_lux[1]),
   threeCharYearLux: Number(policy.annual_lux[2]),
   fourCharYearLux: Number(policy.annual_lux[3]),
   fivePlusYearLux: Number(policy.annual_lux[4]),
@@ -20,6 +23,7 @@ export const DEFAULT_FEE_CONFIG: CoreFeeConfig = {
   renewalReferralRewardBps: 1000,
   premiumStartLux: Number(policy.premium_start_lux),
   premiumReferralRewardBps: policy.premium_referral_bps,
+  minimumRootBytes: policy.minimum_root_bytes,
   version: 1,
   updatedAt: 0,
 }
@@ -54,6 +58,9 @@ export type NameResult = {
 }
 
 export type CoreFeeConfig = {
+  /** The selected policy's yearly prices for 1- and 2-character names, when known; else the SDK's launch prices. */
+  oneCharYearLux?: number
+  twoCharYearLux?: number
   threeCharYearLux: number
   fourCharYearLux: number
   fivePlusYearLux: number
@@ -62,8 +69,8 @@ export type CoreFeeConfig = {
   premiumStartLux: number
   premiumReferralRewardBps: number
   /** Yearly renewal prices from the directory's renewal schedule, when the indexer reports it. */
-  renewalYearLux?: { threeChar: number; fourChar: number; fivePlus: number }
-  /** The selected policy's shortest registrable root label, when the indexer reports it. */
+  renewalYearLux?: { oneChar: number; twoChar: number; threeChar: number; fourChar: number; fivePlus: number }
+  /** The selected policy's shortest registrable root label, when known; else the SDK's launch minimum. */
   minimumRootBytes?: number
   version: number
   updatedAt: number
@@ -137,7 +144,8 @@ export function validateName(value: string): NameValidationResult {
   return result.ok ? { ...result, issues } : { ...result, issues }
 }
 export function analyzeName(query: string, feeConfig: CoreFeeConfig = DEFAULT_FEE_CONFIG): NameResult {
-  const result = analyze(query)
+  const minimum = minimumRootBytes(feeConfig)
+  const result = analyze(query, { policy: { ...LAUNCH_NAME_POLICY, minimum_root_bytes: minimum } })
   const canonical = result.canonical
   const issues = validateName(query).issues
   const reserved =
@@ -151,7 +159,7 @@ export function analyzeName(query: string, feeConfig: CoreFeeConfig = DEFAULT_FE
         ? 'invalid'
         : 'available'
   if (result.status === 'denied')
-    issues.push({ tone: 'danger', text: 'Root names need at least 3 characters.' })
+    issues.push({ tone: 'danger', text: `Root names need at least ${minimum} characters.` })
   if (reserved) issues.push({ tone: 'warning', text: reserved.reason })
   return {
     canonical,
@@ -166,22 +174,24 @@ export function analyzeName(query: string, feeConfig: CoreFeeConfig = DEFAULT_FE
   }
 }
 export function validateFeeConfigPrices(
-  config: Pick<CoreFeeConfig, 'threeCharYearLux' | 'fourCharYearLux' | 'fivePlusYearLux' | 'premiumStartLux'>,
+  config: Pick<CoreFeeConfig, 'oneCharYearLux' | 'twoCharYearLux' | 'threeCharYearLux' | 'fourCharYearLux' | 'fivePlusYearLux' | 'premiumStartLux'>,
 ) {
-  for (const value of [
+  const tiers = [
+    config.oneCharYearLux ?? 0,
+    config.twoCharYearLux ?? 0,
     config.threeCharYearLux,
     config.fourCharYearLux,
     config.fivePlusYearLux,
-    config.premiumStartLux,
-  ])
+  ]
+  for (const value of [...tiers, config.premiumStartLux])
     if (!Number.isSafeInteger(value) || value < 0 || BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER))
       throw new Error('Invalid price')
-  if (
-    BigInt(Math.max(config.threeCharYearLux, config.fourCharYearLux, config.fivePlusYearLux)) * 10n +
-      BigInt(config.premiumStartLux) >
-    BigInt(Number.MAX_SAFE_INTEGER)
-  )
+  if (BigInt(Math.max(...tiers)) * 10n + BigInt(config.premiumStartLux) > BigInt(Number.MAX_SAFE_INTEGER))
     throw new Error('Registration quote exceeds the supported display range.')
+}
+/** The selected policy's shortest registrable root, else the SDK's launch minimum. */
+export function minimumRootBytes(feeConfig: Pick<CoreFeeConfig, 'minimumRootBytes'>): number {
+  return feeConfig.minimumRootBytes ?? policy.minimum_root_bytes
 }
 export function registrationPremiumSchedule(options: {
   premiumStartLux: number
@@ -204,8 +214,11 @@ export function registrationPremiumSchedule(options: {
     nextStepBlockHeight: value.nextStepBlockHeight === null ? null : safeNumber(value.nextStepBlockHeight),
   }
 }
+/** The yearly price of `label` by its length's tier, 0 below the policy minimum, as the policy quotes it. */
 export function annualFeeLux(label: string, feeConfig: CoreFeeConfig = DEFAULT_FEE_CONFIG): number {
-  if (label.length <= 2) return 0
+  if (label.length < minimumRootBytes(feeConfig)) return 0
+  if (label.length === 1) return feeConfig.oneCharYearLux ?? DEFAULT_FEE_CONFIG.oneCharYearLux!
+  if (label.length === 2) return feeConfig.twoCharYearLux ?? DEFAULT_FEE_CONFIG.twoCharYearLux!
   if (label.length === 3) return feeConfig.threeCharYearLux
   if (label.length === 4) return feeConfig.fourCharYearLux
   return feeConfig.fivePlusYearLux
@@ -294,8 +307,10 @@ export function renewalFeeLux(
   feeConfig: Pick<CoreFeeConfig, 'renewalYearLux'>,
 ): number | null {
   const schedule = feeConfig.renewalYearLux
-  if (!schedule || label.length < 3 || !Number.isInteger(years) || years < 1 || years > 10) return null
-  const total = (label.length === 3 ? schedule.threeChar : label.length === 4 ? schedule.fourChar : schedule.fivePlus) * years
+  if (!schedule || !label || !Number.isInteger(years) || years < 1 || years > 10) return null
+  const tier = [schedule.oneChar, schedule.twoChar, schedule.threeChar, schedule.fourChar, schedule.fivePlus][Math.min(label.length, 5) - 1]
+  if (tier === undefined) return null
+  const total = tier * years
   return Number.isSafeInteger(total) ? total : null
 }
 
