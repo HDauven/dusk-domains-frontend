@@ -3,8 +3,7 @@ import { NetworkFreshnessContext } from '../../app/networkFreshness'
 import { ReadNotice } from '../../components/status/ReadNotice'
 import { AccountViewLayout } from '../../components/ui/AccountViewLayout'
 import { AccountCard, AccountDetailList, AccountDetailItem } from '../../components/ui/AccountCard'
-import { registrationPrice } from '../../names/internal'
-import { formatDusk } from '../../utils/format'
+import { priceTiers } from '../search/pricingRules'
 import { TreasuryAccountingCard } from './cards/TreasuryAccountingCard'
 import { TreasuryClaimCard } from './cards/TreasuryClaimCard'
 import { TreasuryClaimHistoryCard } from './cards/TreasuryClaimHistoryCard'
@@ -43,7 +42,7 @@ export function TreasuryView({ treasuryLoaded = true, onRetry, treasuryConfirmat
 
       {connectedAsTreasuryOperator && treasuryState.source !== 'vault' && pricing.feeConfigLoaded !== false ? <TreasuryPricingCard pricing={{ ...pricing, feeConfigError: '' }} wallet={wallet} /> : <AccountCard title="Pricing" heading="Yearly prices">
         {pricing.feeConfigLoaded === false ? <p>Loading prices…</p> : <AccountDetailList>
-          {['abc', 'abcd', 'abcde'].map((label, i) => <AccountDetailItem key={label} label={['3 characters', '4 characters', '5+ characters'][i]} value={`${formatDusk(registrationPrice(label, 1, feeConfig))} DUSK`} />)}
+          {priceTiers(feeConfig).map((tier) => <AccountDetailItem key={tier.label} label={tier.label} value={`${tier.price} DUSK`} />)}
         </AccountDetailList>}
       </AccountCard>}
 

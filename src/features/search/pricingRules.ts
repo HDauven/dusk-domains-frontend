@@ -1,15 +1,20 @@
-import { BLOCKS_PER_DAY, DEFAULT_GRACE_PERIOD_BLOCKS, PREMIUM_WINDOW_DAYS, registrationPrice, type CoreFeeConfig } from '../../names/internal'
+import { BLOCKS_PER_DAY, DEFAULT_GRACE_PERIOD_BLOCKS, PREMIUM_WINDOW_DAYS, annualFeeLux, minimumRootBytes, registrationPrice, type CoreFeeConfig } from '../../names/internal'
 import { maxDurationYears } from '../../app/appConstants'
 import { formatDusk } from '../../utils/format'
 
 const dusk = (lux: number) => `${formatDusk(lux / 1e9)} DUSK`
 
+/** The tiers a policy's prices cover, lengths 1, 2, 3, 4 and 5+, from the shortest name it accepts; 5+ always. */
+const tierLengths = (config: CoreFeeConfig) => [1, 2, 3, 4, 5].filter(length => length >= minimumRootBytes(config) || length === 5)
+const characters = (length: number) => `${length} ${length === 1 ? 'character' : 'characters'}`
+/** A name of a tier's length; the last tier's from the policy minimum when that is longer. */
+const sample = (config: CoreFeeConfig, length: number) => 'a'.repeat(length === 5 ? Math.max(5, minimumRootBytes(config)) : length)
+
 /** The yearly price by name length, from the length the selected policy accepts; the last tier covers longer names. */
 export function priceTiers(config: CoreFeeConfig) {
-  const minimum = Math.max(3, config.minimumRootBytes ?? 3)
-  return [3, 4, 5].filter(length => length >= minimum || length === 5).map(length => ({
-    label: length === 5 ? `${Math.max(5, minimum)}+ characters` : `${length} characters`,
-    price: formatDusk(registrationPrice('a'.repeat(length), 1, config)),
+  return tierLengths(config).map(length => ({
+    label: length === 5 ? `${Math.max(5, minimumRootBytes(config))}+ characters` : characters(length),
+    price: formatDusk(registrationPrice(sample(config, length), 1, config)),
   }))
 }
 
@@ -22,9 +27,12 @@ export function pricingRules(config: CoreFeeConfig) {
   const rules: string[] = []
   const renewal = config.renewalYearLux
   if (renewal) {
-    rules.push(renewal.threeChar === config.threeCharYearLux && renewal.fourChar === config.fourCharYearLux && renewal.fivePlus === config.fivePlusYearLux
+    const lengths = tierLengths(config),
+      tier = [renewal.oneChar, renewal.twoChar, renewal.threeChar, renewal.fourChar, renewal.fivePlus]
+    const prices = lengths.map((length, i) => `${dusk(tier[length - 1])}${i === 0 ? ` a year for ${characters(length)}` : ` for ${length === 5 ? '5 or more' : length}`}`)
+    rules.push(lengths.every(length => tier[length - 1] === annualFeeLux(sample(config, length), config))
       ? 'Renewing costs the same yearly price.'
-      : `Renewing costs ${dusk(renewal.threeChar)} a year for 3 characters, ${dusk(renewal.fourChar)} for 4 and ${dusk(renewal.fivePlus)} for 5 or more.`)
+      : `Renewing costs ${prices.slice(0, -1).join(', ')} and ${prices.at(-1)}.`)
   }
   rules.push(`A name can be paid for up to ${maxDurationYears} years ahead.`)
   // The premium on day d is (start >> d) - (start >> 21): day 0 is just under the start, and each day roughly halves it.

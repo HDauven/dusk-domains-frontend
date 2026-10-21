@@ -116,7 +116,10 @@ export function feeConfigValuesMatch(
   current: CoreFeeConfig,
   next: Omit<CoreFeeConfig, 'version' | 'updatedAt'>,
 ) {
-  return current.threeCharYearLux === next.threeCharYearLux
+  // A form that doesn't edit the 1- and 2-character prices leaves them as they are.
+  return (next.oneCharYearLux === undefined || current.oneCharYearLux === next.oneCharYearLux)
+    && (next.twoCharYearLux === undefined || current.twoCharYearLux === next.twoCharYearLux)
+    && current.threeCharYearLux === next.threeCharYearLux
     && current.fourCharYearLux === next.fourCharYearLux
     && current.fivePlusYearLux === next.fivePlusYearLux
     && current.referralRewardBps === next.referralRewardBps

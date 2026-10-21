@@ -20,12 +20,14 @@ it('treats prepaid lifecycle heights below a billion as blocks while retaining U
 })
 
 describe('domain policy copy', () => {
-  it('explains that 1–2 character names cannot be registered', () => {
-    const text = 'Labels shorter than 3 characters are reserved.'
-    const expected = 'Dusk Domains start at 3 characters. 1–2 character names are reserved.'
+  it('explains a name below the selected policy\'s minimum length in plain words', () => {
+    const text = 'Root label is shorter than the policy minimum.'
+    const expected = 'This name is shorter than the registration policy allows.'
 
     expect(policyIssueCopy(text)).toBe(expected)
     expect(overviewCopyForIssues('invalid', [{ tone: 'danger', text }])).toBe(expected)
+    // Names start at 1 character: no copy says they start at 3.
+    expect(policyIssueCopy('Labels shorter than 3 characters are reserved.')).not.toContain('start at 3')
   })
 })
 

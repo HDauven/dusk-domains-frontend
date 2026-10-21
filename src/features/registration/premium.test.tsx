@@ -88,7 +88,7 @@ it.each([16_000_000_000, 11_000_000_000])('confirms near a step boundary only th
 it('refreshes the premium and total at a block boundary while leaving renewal at base price', () => {
   function Preview({ height }: { height: number }) {
     const preview = useNamePreview({ apiSearchResult: result, currentBlockHeight: height, duration: 2,
-      feeConfig: { ...DEFAULT_FEE_CONFIG, renewalYearLux: { threeChar: 150e9, fourChar: 50e9, fivePlus: 10e9 } },
+      feeConfig: { ...DEFAULT_FEE_CONFIG, renewalYearLux: { oneChar: 1000e9, twoChar: 400e9, threeChar: 150e9, fourChar: 50e9, fivePlus: 10e9 } },
       managedNameExpiresAt: 20_000, nowSeconds: 1_000, query: 'aurora', renewalYears: 2 })
     return <span>{preview.registrationFee}|{preview.renewalFee}|{preview.result.premiumLux}</span>
   }

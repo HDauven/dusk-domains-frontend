@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Offer names from 1 character, priced and renewed by the live policy's five length tiers (1,000, 400, 150, 50 and 10 DUSK a year at launch).
 - Price a name page's renewal from what the page read, and quote the store again before renewing.
 - Read a name page, a primary name, a registration price and the preferred market through the release's read lens, one node query each at any number of stores, and read directly whatever it can't answer.
 - Start name and primary reads at the store the indexer names as the name's home.

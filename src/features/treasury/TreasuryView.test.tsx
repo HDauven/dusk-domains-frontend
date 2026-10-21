@@ -15,6 +15,9 @@ it('shows visitors a read-only summary and the operator their actions', () => {
     } as TreasuryViewProps
     const visitor = renderToStaticMarkup(<TreasuryView {...props} />)
     expect(visitor).toContain('Yearly prices')
+    // Every length the launch release sells, from 1 character.
+    for (const tier of ['1 character', '2 characters', '3 characters', '4 characters', '5+ characters']) expect(visitor).toContain(tier)
+    expect(visitor).toContain('1,000 DUSK')
     expect(visitor).toContain('Registrations')
     expect(visitor).not.toContain('<input')
     expect(visitor).not.toContain('Update pricing')
