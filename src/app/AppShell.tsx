@@ -11,11 +11,13 @@ import type { DuskDomainsIndexerClient, DuskDomainsRuntimeConfig, DuskWalletStat
 import { SkyBackground, type SkyName } from '../components/scene/SkyBackground'
 import type { WalletConnectionStatus } from '../features/wallet/walletStatus'
 import type { AppMainView, RuntimeNotice as RuntimeNoticeState } from './AppTypes'
+import type { NetworkSites } from './otherNetwork'
 import { RuntimeNotice } from './RuntimeNotice'
 import { SiteFooter } from './SiteFooter'
 import { TopBar, type NetworkBadge } from './TopBar'
+import { WalletNetworkBanner } from './WalletNetworkBanner'
 
-export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused, children, launchLinks, network, runtimeNotice, skyNames, wallet, navigation }: {
+export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused, children, launchLinks, network, runtimeNotice, sites, skyNames, wallet, navigation }: {
   pendingConfirmation?: PendingConfirmation | null
   networkStatus?: { config: DuskDomainsRuntimeConfig; client: DuskDomainsIndexerClient | null; readOnly?: boolean }
   pause?: OperatorPause
@@ -23,6 +25,8 @@ export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused,
   launchLinks: DuskDomainsRuntimeConfig['launchLinks']
   network: NetworkBadge
   runtimeNotice: RuntimeNoticeState | null
+  /** This site's network and the other network's site, for the header switch and the wallet banner. */
+  sites?: NetworkSites
   skyNames: SkyName[]
   wallet: {
     walletDialog?: ComponentProps<typeof WalletDialog>
@@ -66,9 +70,12 @@ export function AppShell({ networkStatus, pendingConfirmation, pause = unpaused,
         onOpenWallet={onOpenWallet}
         onSearchHome={onSearchHome}
         pendingReservationCount={pendingReservationCount}
+        sites={sites}
         walletState={walletState}
         walletStatus={walletStatus}
       />
+
+      {sites ? <WalletNetworkBanner sites={sites} walletChainId={walletState.chainId} walletStatus={walletStatus} onSwitchWallet={onOpenWallet} /> : null}
 
       {networkStatus ? <NetworkStatus readOnly={networkStatus.readOnly} config={networkStatus.config} message={pageShowsReadNotice || runtimeNotice ? null : freshness} /> : null}
 

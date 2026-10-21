@@ -178,7 +178,11 @@
 
 .hero-search-input .input:focus-visible { outline: none; box-shadow: none; }
 .hero-search-field:focus-within { outline: 2px solid var(--peach); outline-offset: 3px; }
-.search-prices { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; color: var(--muted); font-size: var(--text-sm); }
+/* Inside the collapsed pricing: one row per name length. */
+.search-prices { display: grid; grid-template-columns: repeat(2, max-content); justify-content: center; gap: 4px 24px; margin: var(--space-2) 0 0; text-align: left; }
+.search-prices div { display: contents; }
+.search-prices dt, .search-prices dd { margin: 0; }
+.search-prices dd { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
 .search-rules { max-width: 60ch; margin: var(--space-2) auto 0; color: var(--muted); font-size: var(--text-sm); text-align: center; }
 .search-rules summary { cursor: pointer; }
 .search-rules ul { margin: var(--space-2) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); text-align: left; line-height: 1.5; }

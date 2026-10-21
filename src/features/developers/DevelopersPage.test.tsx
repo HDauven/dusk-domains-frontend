@@ -57,12 +57,13 @@ describe('developers page', () => {
     expect(html).not.toMatch(/only its holder|Only your wallet/)
   })
 
-  it('is linked from the footer and listed for crawlers', () => {
+  it('is linked from the footer, links the SDK, API and llms.txt, and is listed for crawlers', () => {
     const footer = renderToStaticMarkup(<SiteFooter links={{ support: null, abuse: null, security: null, status: null }} onMainViewChange={() => {}} />)
     expect(footer).toContain('<a href="/developers">Developers</a>')
-    expect(footer).toContain('href="https://jsr.io/@duskdomains/sdk"')
-    expect(footer).toContain('href="https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md"')
-    expect(footer).toContain('href="/llms.txt"')
+    const html = page()
+    expect(html).toContain('href="https://jsr.io/@duskdomains/sdk"')
+    expect(html).toContain('href="https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md"')
+    expect(html).toContain('href="/llms.txt"')
     expect(readFileSync('scripts/site/sitemap-pages.xml', 'utf8')).toContain('<loc>%DUSK_DOMAINS_SITE_URL%/developers</loc>')
     expect(readFileSync('scripts/site/llms.txt', 'utf8')).toContain('(%DUSK_DOMAINS_SITE_URL%/developers)')
   })

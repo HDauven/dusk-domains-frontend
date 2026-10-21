@@ -47,6 +47,75 @@
 .network-badge.local::before { background: var(--muted); }
 .network-badge.preview::before { background: var(--muted); }
 
+/* Mainnet | Testnet: the current network marked, the other one a link to the same page there. */
+.network-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font: 500 var(--text-xs)/1 var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.network-switch > * {
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.network-switch [aria-current] {
+  color: var(--ink);
+  background: var(--surface-raised);
+}
+
+.network-switch a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--motion-hover) var(--ease), background var(--motion-hover) var(--ease);
+}
+
+.network-switch a:hover,
+.network-switch a:focus-visible {
+  color: var(--ink);
+  background: var(--surface-hover);
+}
+
+/* The connected wallet is on another network than this site's. */
+.wallet-network-banner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: min(var(--domain-flow-width), calc(100% - 2 * var(--domain-page-gutter)));
+  margin: 0 auto 10px;
+  padding: 10px 10px 10px var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.wallet-network-content {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-width: 0;
+}
+
+.wallet-network-content p { margin: 0; }
+.wallet-network-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.wallet-network-actions a.button { text-decoration: none; }
+.wallet-network-dismiss { flex: none; }
+
 .nav-links {
   display: flex;
   align-items: center;

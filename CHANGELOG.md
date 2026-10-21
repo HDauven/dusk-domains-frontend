@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Switch between mainnet and testnet from the header, on the same page, and say when the connected wallet is on the other network.
+- Fold the home page's prices, renewals and expiry into one line that opens.
+- Send support, feature requests and abuse reports to GitHub forms and security reports to GitHub's private reporting; privacy requests stay on email. Trim the footer to six links.
 - Offer names from 1 character, priced and renewed by the live policy's five length tiers (1,000, 400, 150, 50 and 10 DUSK a year at launch).
 - Refuse a reservation before signing when the public balance can't also pay for the registration.
 - Price a name page's renewal from what the page read, and quote the store again before renewing.

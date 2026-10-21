@@ -58,8 +58,12 @@ it.each([
   expect(html).toContain(`<meta name="robots" content="${noindex ? 'noindex, nofollow' : 'index,follow'}"`)
   const graph = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)![1])['@graph']
   expect(graph.every((item: { url: string }) => item.url === `${origin}/`)).toBe(true)
-  expect(html).toContain(`<a href="${other}">${label}</a>`)
-  expect(html).toContain(`network-badge ${_network}">${noindex ? 'Testnet' : 'Mainnet'}</span>`)
+  // The header switches to the same page on the other network's site.
+  const link = `<a href="${other}/" title="Open this page on ${new URL(other).host}">${label}</a>`
+  const current = `<span aria-current="true">${label === 'Testnet' ? 'Mainnet' : 'Testnet'}</span>`
+  expect(html).toContain(`<nav class="network-switch" aria-label="Network">${label === 'Testnet' ? current + link : link + current}</nav>`)
+  // With the other network's site configured, the switch replaces the badge.
+  expect(html).not.toContain('network-badge')
   const llms = output.read('llms.txt')
   expect(llms).toContain(`[Search and register](${origin}/)`)
   expect(llms).toContain(`${origin}/api`)

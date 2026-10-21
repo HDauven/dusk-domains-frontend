@@ -43,11 +43,12 @@ it('reads renewal prices from the directory schedule the indexer publishes', () 
 it('offers the rules beside the price list before anyone searches or connects', () => {
   const hero = (checked: boolean) => renderToStaticMarkup(<SearchHero checked={checked} loading={false} onCheckAvailability={vi.fn()} onQueryChange={vi.fn()} query=""
     priceTiers={[{ label: '3 characters', price: '150' }]} pricingRules={pricingRules(launch)} />)
-  expect(hero(false)).toContain('<summary>Renewals and expiry</summary>')
+  // One line until opened: the cheapest price, then the tiers and the rules inside.
+  expect(hero(false)).toContain('<details class="search-rules"><summary>From 150 DUSK a year · Pricing, renewals and expiry</summary><dl class="search-prices"><div><dt>3 characters</dt><dd>150 DUSK / year</dd></div></dl>')
   // Unstyled bullets keep their list semantics.
   expect(hero(false)).toContain('<ul role="list">')
   expect(hero(false)).toContain('A name can be paid for up to 10 years ahead.')
-  expect(hero(true)).not.toContain('Renewals and expiry')
+  expect(hero(true)).not.toContain('search-rules')
 })
 
 // A replacement policy can raise the minimum name length; the price list then starts there.

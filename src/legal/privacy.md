@@ -1,6 +1,6 @@
 # Privacy Notice
 
-Last updated: 11 October 2026
+Last updated: 21 October 2026
 
 This notice explains what personal data the Dusk Domains website at dusk.domains and testnet.dusk.domains and its public API (**the Services**) process, and why. The Services are operated by **Mochavi Limited**, a private company limited by shares incorporated in Hong Kong (Business Registration No. 77975303) (**Mochavi**, **we**, **us**), which is responsible for the processing described here.
 
@@ -25,7 +25,7 @@ We use these logs to run and secure the Services, investigate abuse and errors, 
 
 **Your wallet.** You connect a wallet, such as the Dusk Wallet browser extension, to sign transactions. The wallet is third-party software with its own terms and privacy practices; we only see the public account address and signed transactions it shares.
 
-**Messages by email.** Support, abuse, security and privacy requests go by email to addresses at dusk.domains. We use your email address and message to handle your request.
+**Requests and reports.** Support requests, feature requests and abuse reports are public GitHub issues, and security reports reach us privately through GitHub. Privacy requests go by email to [support@dusk.domains](mailto:support@dusk.domains), so personal data stays out of public issues. We use your GitHub username or email address, and your message, to handle your request.
 
 We don't use cookies, tracking pixels, advertising, or third-party analytics. We don't sell personal data or use it for profiling.
 
@@ -33,6 +33,7 @@ We don't use cookies, tracking pixels, advertising, or third-party analytics. We
 
 - **Hosting.** Our servers are hosted by Hetzner Online GmbH in the European Union, which processes the data above on our behalf.
 - **DNS and email.** Cloudflare provides DNS for dusk.domains and forwards email sent to our dusk.domains addresses. Website traffic does not pass through Cloudflare.
+- **GitHub.** GitHub hosts our issue forms and private security reports, under its own terms and privacy statement.
 - **Dusk nodes.** To read the blockchain and submit transactions, your browser connects directly to public Dusk nodes, such as nodes.dusk.network, which see your IP address under their operators' own policies.
 
 Mochavi is based in Hong Kong, and our servers are in the EU. Where personal data is transferred outside the European Economic Area, we rely on the safeguards the law requires.

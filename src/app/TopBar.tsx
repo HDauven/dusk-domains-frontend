@@ -7,6 +7,8 @@ import { NamesMark } from '../components/brand/NamesMark'
 import { DuskConnectControl } from '../components/wallet/DuskConnectControl'
 import type { WalletConnectionStatus } from '../features/wallet/walletStatus'
 import type { AppMainView } from './AppTypes'
+import { NetworkSwitch } from './NetworkSwitch'
+import type { NetworkSites } from './otherNetwork'
 import { PrimaryNavigation } from './PrimaryNavigation'
 
 export type NetworkBadge = { label: string, tone: 'mainnet' | 'testnet' | 'local' | 'preview' }
@@ -18,11 +20,14 @@ export function TopBar({
   onOpenWallet,
   onSearchHome,
   pendingReservationCount,
+  sites,
   walletState,
   walletStatus,
 }: {
   mainView: AppMainView
   network: NetworkBadge
+  /** With the other network's site, the badge becomes a switch between the two. */
+  sites?: NetworkSites
   onMainViewChange: (view: AppMainView) => void
   onOpenWallet: () => void
   onSearchHome: () => void
@@ -72,9 +77,11 @@ export function TopBar({
           <NamesMark />
           <span className="brand-name">Dusk Domains</span>
         </a>
-        <Badge className={`network-badge ${network.tone}`} title={network.tone === 'preview' ? 'Preview. Live registration is unavailable.' : `Dusk ${network.label.toLowerCase()} network`}>
-          {network.label}
-        </Badge>
+        {sites?.other ? <NetworkSwitch chainId={sites.chainId} other={sites.other} /> : (
+          <Badge className={`network-badge ${network.tone}`} title={network.tone === 'preview' ? 'Preview. Live registration is unavailable.' : `Dusk ${network.label.toLowerCase()} network`}>
+            {network.label}
+          </Badge>
+        )}
       </div>
 
       <div ref={navigation} id="primary-navigation" className="topbar-navigation">

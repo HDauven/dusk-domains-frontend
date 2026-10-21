@@ -106,7 +106,7 @@ a { transition: color var(--motion-feedback) var(--ease); }
   /* Each view and result enters once, when it mounts; refreshes keep the same elements. */
   .page-main > * { animation: enter var(--motion-enter) var(--ease) backwards; }
   .page-main > .hero-search { animation-delay: calc(var(--motion-stagger) * 2); }
-  .page-main > .search-prices { animation-delay: calc(var(--motion-stagger) * 3); }
+  .page-main > .search-rules { animation-delay: calc(var(--motion-stagger) * 3); }
   .page-main > .hero-showcase { animation-delay: calc(var(--motion-stagger) * 4); }
   /* "Checking the name…" waits a moment, so a quick answer never flashes it. */
   .page-main > .search-status { animation: fade var(--motion-hover) var(--ease) 200ms backwards; }
