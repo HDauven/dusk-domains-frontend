@@ -68,7 +68,8 @@ else
   cp -- "$work/dist/version.json" "$work/version.json"
   remote prepare
   remote_started=true
-  rsync -az --delete -- "$work/dist/" "$DEPLOY_HOST:$DEPLOY_DIR.next/"
+  # The release bundle is written owner-only (0600); the web server must read every served file.
+  rsync -az --delete --chmod=D755,F644 -- "$work/dist/" "$DEPLOY_HOST:$DEPLOY_DIR.next/"
   remote activate
 fi
 
