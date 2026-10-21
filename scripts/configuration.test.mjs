@@ -16,9 +16,10 @@ it.each(['mainnet', 'testnet'])('documents every production setting for %s', (ne
     VITE_DUSK_DOMAINS_ENABLE_REFERRAL_ATTRIBUTION: 'true',
     VITE_DUSK_DOMAINS_ENABLE_REFERRAL_CLAIMS: 'true',
     VITE_DUSK_DOMAINS_ENABLE_MARKETPLACE: 'true',
-    VITE_DUSK_DOMAINS_SUPPORT_URL: 'mailto:support@dusk.domains',
-    VITE_DUSK_DOMAINS_ABUSE_URL: 'mailto:abuse@dusk.domains',
-    VITE_DUSK_DOMAINS_SECURITY_URL: 'mailto:security@dusk.domains',
+    // GitHub's form chooser, the abuse form a name page prefills, and private vulnerability reporting.
+    VITE_DUSK_DOMAINS_SUPPORT_URL: 'https://github.com/HDauven/dusk-domains-frontend/issues/new/choose',
+    VITE_DUSK_DOMAINS_ABUSE_URL: 'https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml',
+    VITE_DUSK_DOMAINS_SECURITY_URL: 'https://github.com/HDauven/dusk-domains-frontend/security/advisories/new',
     VITE_DUSK_DOMAINS_STATUS_URL: '',
     VITE_DUSK_DOMAINS_EXPLORER_URL: mainnet ? 'https://explorer.dusk.network' : 'https://apps.testnet.dusk.network/explorer',
     // No wallet or explorer supports .dusk names yet; add them here when they ship.

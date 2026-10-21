@@ -5,6 +5,8 @@ import { Search, X } from 'lucide-react'
 import { NameChip } from '../../components/ui/NameChip'
 import type { ShowcaseName } from '../../app/useSkyNames'
 
+const amount = (price: string) => Number(price.replace(/,/g, ''))
+
 export function SearchHero({
   checked,
   priceTiers,
@@ -29,6 +31,8 @@ export function SearchHero({
 }) {
   const label = query.trim().replace(/\.dusk$/i, '')
 
+  // The cheapest tier, for the one line shown before the prices open.
+  const cheapest = priceTiers?.length ? priceTiers.reduce((low, tier) => amount(tier.price) < amount(low.price) ? tier : low).price : null
   return (
     <section className={checked ? 'hero checked' : 'hero'} id="search" aria-labelledby="hero-heading">
       <div className="hero-copy">
@@ -72,10 +76,10 @@ export function SearchHero({
         </div>
       </form>
 
-      {!checked && priceTiers ? <p className="search-prices">{priceTiers.map(tier => <span key={tier.label}>{tier.label}: {tier.price} DUSK / year</span>)}</p> : null}
-      {!checked && pricingRules?.length ? <details className="search-rules">
-        <summary>Renewals and expiry</summary>
-        <ul role="list">{pricingRules.map(rule => <li key={rule}>{rule}</li>)}</ul>
+      {!checked && (priceTiers?.length || pricingRules?.length) ? <details className="search-rules">
+        <summary>{cheapest ? `From ${cheapest} DUSK a year · ` : ''}Pricing, renewals and expiry</summary>
+        {priceTiers?.length ? <dl className="search-prices">{priceTiers.map(tier => <div key={tier.label}><dt>{tier.label}</dt><dd>{tier.price} DUSK / year</dd></div>)}</dl> : null}
+        {pricingRules?.length ? <ul role="list">{pricingRules.map(rule => <li key={rule}>{rule}</li>)}</ul> : null}
       </details> : null}
 
       {featuredNames === null ? (

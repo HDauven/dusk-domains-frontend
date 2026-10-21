@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import { otherNetwork } from '../src/app/otherNetwork'
+import { networkLabel, otherNetwork, samePageOn } from '../src/app/otherNetwork'
 import { injectStaticShell, staticShellFile } from '../src/app/staticShellHtml'
 
 type Env = Record<string, string | undefined>
@@ -22,11 +22,15 @@ function escapeHtml(value: string) {
 export function renderStaticShell(shell: string, env: Env) {
   const chain = env.VITE_DUSK_DOMAINS_CHAIN_ID || 'dusk:2'
   const label = chain === 'dusk:1' ? 'Mainnet' : chain === 'dusk:0' ? 'Local' : chain === 'dusk:3' ? 'Devnet' : 'Testnet'
-  const network = otherNetwork(env)
-  return shell
-    .replaceAll('%DUSK_DOMAINS_NETWORK_TONE%', label === 'Devnet' ? 'testnet' : label.toLowerCase())
-    .replaceAll('%DUSK_DOMAINS_NETWORK_LABEL%', label)
-    .replaceAll('%DUSK_DOMAINS_OTHER_NETWORK_LINK%', network ? `<a href="${escapeHtml(network.href)}">${network.label}</a>` : '')
+  const tone = label === 'Devnet' ? 'testnet' : label.toLowerCase()
+  const other = otherNetwork(env)
+  // With the other network's site, the header shows NetworkSwitch, on the home page, instead of the badge.
+  const switchLink = other ? `<a href="${escapeHtml(samePageOn(other.href, '/'))}" title="Open this page on ${escapeHtml(other.host)}">${other.label}</a>` : ''
+  const current = `<span aria-current="true">${networkLabel(chain)}</span>`
+  const badge = other
+    ? `<nav class="network-switch" aria-label="Network">${chain === 'dusk:1' ? current + switchLink : switchLink + current}</nav>`
+    : `<span title="Dusk ${tone} network" class="status-badge badge-neutral network-badge ${tone}">${label}</span>`
+  return shell.replaceAll('%DUSK_DOMAINS_NETWORK_BADGE%', badge)
 }
 
 export function siteBuild(env: Env): Plugin {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { notifyPageLocation } from '../../app/pageLocation'
 import {
   initialReferralInput,
   settleReferralInput,
@@ -37,6 +38,7 @@ export function useReferralControls({
       setInput(next)
       url.searchParams.delete('ref')
       window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+      notifyPageLocation()
     }
     capture()
     window.addEventListener('popstate', capture)

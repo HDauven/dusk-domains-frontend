@@ -63,11 +63,18 @@ const text = (element: Element | null | undefined) => element?.textContent?.repl
 it('is the home page exactly as the app renders it first', async () => {
   // React's server render leads with resource hints that the mounted app does not have.
   const shell = renderToStaticMarkup(createElement(App)).replace(/^(?:<link [^>]*\/>)+/, '')
-  const template = shell.replaceAll('Dusk testnet network', 'Dusk %DUSK_DOMAINS_NETWORK_TONE% network')
-    .replace('network-badge testnet">Testnet</span>', 'network-badge %DUSK_DOMAINS_NETWORK_TONE%">%DUSK_DOMAINS_NETWORK_LABEL%</span>')
-    .replace('</nav></footer>', '%DUSK_DOMAINS_OTHER_NETWORK_LINK%</nav></footer>')
+  const badge = '<span title="Dusk testnet network" class="status-badge badge-neutral network-badge testnet">Testnet</span>'
+  expect(shell.split(badge)).toHaveLength(2)
+  const template = shell.replace(badge, '%DUSK_DOMAINS_NETWORK_BADGE%')
   await expect(template).toMatchFileSnapshot('./static-shell.html')
   expect(renderStaticShell(template, deployment)).toBe(shell)
+})
+
+it('shows the network switch the app renders when the other network has a site', () => {
+  vi.stubEnv('VITE_DUSK_DOMAINS_OTHER_NETWORK_URL', 'https://dusk.domains')
+  const shell = renderToStaticMarkup(createElement(App)).replace(/^(?:<link [^>]*\/>)+/, '')
+  expect(shell).toContain('<nav class="network-switch" aria-label="Network"><a href="https://dusk.domains/" title="Open this page on dusk.domains">Mainnet</a><span aria-current="true">Testnet</span></nav>')
+  expect(renderStaticShell(readFileSync(staticShellFile, 'utf8'), { ...deployment, VITE_DUSK_DOMAINS_OTHER_NETWORK_URL: 'https://dusk.domains' })).toBe(shell)
 })
 
 it('hands focus and typed text over to the mounted app, which shows the same hero', async () => {

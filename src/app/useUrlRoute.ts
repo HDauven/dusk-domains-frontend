@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { AppMainView } from './AppTypes'
+import { notifyPageLocation } from './pageLocation'
 import { parseRoute, routePath, type AppRoute } from './routes'
 
 // Keeps the address bar and the app in step: every view and every searched name has a URL,
@@ -45,7 +46,10 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
       // next navigation's history entry.
       if (routePath(route) === shown.current) {
         pending.current = null
-        if (window.location.pathname !== shown.current) window.history.replaceState(null, '', `${shown.current}${window.location.search}`)
+        if (window.location.pathname !== shown.current) {
+          window.history.replaceState(null, '', `${shown.current}${window.location.search}`)
+          notifyPageLocation()
+        }
       } else {
         pending.current = { route, fresh: true }
       }
@@ -78,6 +82,7 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
       if (routePath(target) === path) {
         pending.current = null
         window.history.replaceState(null, '', `${path}${window.location.search}`)
+        notifyPageLocation()
         return
       }
       const catchingUp = target.name
@@ -87,6 +92,7 @@ export function useUrlRoute({ checked, mainView, onOpenName, onOpenView, searche
       pending.current = null
     }
     window.history.pushState(null, '', `${path}${window.location.search}`)
+    notifyPageLocation()
     // current is derived from the same inputs as path.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path])

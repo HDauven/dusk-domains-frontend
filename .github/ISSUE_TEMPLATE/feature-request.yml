@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new feature or an improvement to Dusk Domains.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This request is public. Don't include personal data, private keys or seed phrases.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Searching or registering names
+        - Records or primary name
+        - Subnames
+        - Market (sales, auctions, offers)
+        - Referrals
+        - API or SDK
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like to do?
+      description: The problem or the goal, in your own words.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: How could it work?
+      description: Optional. A rough idea, an example or a screenshot.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I did not include personal data, a recovery phrase, private key or wallet backup.
+          required: true

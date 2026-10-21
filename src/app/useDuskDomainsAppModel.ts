@@ -2,6 +2,7 @@ import { useAutoRefresh } from './useAutoRefresh'
 import type { DuskDomainsRuntimeConfig } from '../names/internal'
 import type { AppMainView } from './AppTypes'
 import type { NetworkBadge } from './TopBar'
+import { otherNetwork } from './otherNetwork'
 import { useSkyNames, showcase } from './useSkyNames'
 import { useUrlRoute } from './useUrlRoute'
 import { useAppCoreRuntimes } from './useAppCoreRuntimes'
@@ -82,6 +83,7 @@ export function useDuskDomainsAppModel() {
       pause: appRuntime.pause,
       launchLinks: appRuntime.runtimeConfig.launchLinks,
       network: networkBadge(appRuntime.runtimeConfig),
+      sites: { chainId: appRuntime.runtimeConfig.chainId, other: otherNetwork(appEnv) },
       skyNames: (skyNames ?? []).map(({ name, node }) => ({ label: name, node })),
       navigation: {
         mainView,

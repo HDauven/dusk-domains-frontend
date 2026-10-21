@@ -47,7 +47,7 @@ We can, at our discretion and without notice:
 - suspend, limit or discontinue any part of the Services, including the website and API;
 - use the powers the contracts give the protocol's operator. These are limited to the rules built into the contracts: for example setting prices for future registrations and renewals, choosing reserved names and the shortest registrable name for future registrations, pausing new registrations and trades, admitting new contract shards, and collecting the protocol's share of the treasury. Some of these powers take effect only after a delay that is visible on-chain.
 
-We don't arbitrate disputes about names. There is no transfer procedure for trademark holders comparable to UDRP. If you believe a name infringes your rights, report it to [abuse@dusk.domains](mailto:abuse@dusk.domains); we may hide it in our interface, but we can't take it from its owner.
+We don't arbitrate disputes about names. There is no transfer procedure for trademark holders comparable to UDRP. If you believe a name infringes your rights, report it with our [abuse report form](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml); we may hide it in our interface, but we can't take it from its owner.
 
 ## 6. The marketplace
 
@@ -111,4 +111,4 @@ If any part of these terms is found unenforceable, the rest remains in effect. O
 
 ## 17. Contact
 
-Email [support@dusk.domains](mailto:support@dusk.domains) for support and privacy requests, [abuse@dusk.domains](mailto:abuse@dusk.domains) to report abuse or infringement, and [security@dusk.domains](mailto:security@dusk.domains) to report a security vulnerability privately. Never send private keys or seed phrases.
+Use our [GitHub issue forms](https://github.com/HDauven/dusk-domains-frontend/issues/new/choose) for support, the [abuse report form](https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml) to report abuse or infringement, and [GitHub's private vulnerability reporting](https://github.com/HDauven/dusk-domains-frontend/security/advisories/new) to report a security vulnerability privately. Issues are public, so don't include personal data in them. Email privacy requests to [support@dusk.domains](mailto:support@dusk.domains). Never send private keys or seed phrases.

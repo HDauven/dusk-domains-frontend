@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { parseEnv } from 'node:util'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
@@ -93,18 +93,20 @@ describe('support, abuse and security contacts', () => {
   it.each(['mainnet', 'testnet'])('match the %s site links everywhere', network => {
     const env = parseEnv(readFileSync(`.env.${network}.example`, 'utf8'))
     const support = env.VITE_DUSK_DOMAINS_SUPPORT_URL!, abuse = env.VITE_DUSK_DOMAINS_ABUSE_URL!, security = env.VITE_DUSK_DOMAINS_SECURITY_URL!
-    expect([support, abuse, security]).toEqual(['mailto:support@dusk.domains', 'mailto:abuse@dusk.domains', 'mailto:security@dusk.domains'])
+    expect([support, abuse, security]).toEqual([
+      'https://github.com/HDauven/dusk-domains-frontend/issues/new/choose',
+      'https://github.com/HDauven/dusk-domains-frontend/issues/new?template=abuse-report.yml',
+      'https://github.com/HDauven/dusk-domains-frontend/security/advisories/new',
+    ])
     for (const href of [support, abuse, security]) {
       expect(sources.terms).toContain(`(${href})`)
       expect(sources.llms).toContain(`(${href})`)
     }
-    expect(sources.privacy).toContain(`(${support})`)
   })
 
-  it('no longer sends people to GitHub forms', () => {
-    for (const source of Object.values(sources)) {
-      expect(source).not.toMatch(/github\.com\/HDauven\/dusk-domains-frontend\/(issues|security)/)
-      expect(source).not.toMatch(/request form|issue form|forms in our/i)
-    }
+  it('keeps privacy requests out of public issues', () => {
+    for (const source of Object.values(sources)) expect(source).toContain('(mailto:support@dusk.domains)')
+    expect(sources.privacy).toMatch(/Privacy requests go by email/)
+    expect(existsSync('.github/ISSUE_TEMPLATE/privacy-request.yml')).toBe(false)
   })
 })
