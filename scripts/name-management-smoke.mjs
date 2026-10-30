@@ -191,7 +191,8 @@ export async function checkNameManagement(page) {
   })
   await page.getByRole('button', { name: 'Edit Dusk address', exact: true }).click()
   const field = await edges('input[aria-label="Dusk address record"]'), useWallet = await edges('.record-wallet-button')
-  assert.deepEqual([useWallet.top, useWallet.height], [field.top, field.height], 'Use wallet lines up with the Dusk address field')
+  // Within a pixel: browsers place form controls at subpixel offsets that vary by machine.
+  assert.ok(Math.abs(useWallet.top - field.top) <= 1 && Math.abs(useWallet.height - field.height) <= 1, 'Use wallet lines up with the Dusk address field')
   await page.getByRole('button', { name: 'Cancel', exact: true }).click()
   await page.evaluate(async () => {
     const { React, root } = window

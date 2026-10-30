@@ -33,9 +33,11 @@ export function SubdomainList({ onRecordTargetSelect, subnames, authority, clock
               aria-label={`Open ${subname.name}`} onClick={event => followLink(event, () => onRecordTargetSelect(subname))}>
               <NameSignature name={subname.name} /><ArrowRight size={18} aria-hidden="true" />
             </a> : <span className="subname-name"><NameSignature name={subname.name} /></span>}
-            <Badge>{subname.status}</Badge>
-            <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
-            <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>
+            <div className="subname-details">
+              <Badge>{subname.status}</Badge>
+              <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
+              <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>
+            </div>
           </div>
           {canControlSubname?.(subname) ? <SubnameAuthorityControls name={subname.name}
             onReassign={(owner, manager) => onReassignSubname?.(subname, owner, manager) ?? Promise.resolve()}

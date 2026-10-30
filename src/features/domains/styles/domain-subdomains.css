@@ -54,7 +54,15 @@
 
 .subname-row + .subname-row { border-top: 1px solid var(--line); }
 
+/* The name on its own line, its details on the next, so every row's details start at the same place. */
 .subname-summary {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.subname-details {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -62,8 +70,9 @@
   min-width: 0;
 }
 
-.subname-summary > * { min-width: 0; }
-.subname-summary > div { font-size: var(--text-sm); }
+.subname-summary > *,
+.subname-details > * { min-width: 0; }
+.subname-details > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1); font-size: var(--text-sm); }
 .subname-row .owner-identity code { white-space: normal; overflow-wrap: anywhere; }
 
 .subname-open {
@@ -80,7 +89,7 @@
 .subname-open:hover :is(.name-signature-label, em) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.12em; }
 .subname-open > svg { flex: none; }
 
-.subname-summary > span:not(.status-badge, .subname-name),
+.subname-details > span:not(.status-badge),
 .subname-row code {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -95,7 +104,7 @@
   white-space: nowrap;
 }
 
-.subname-summary > .status-badge {
+.subname-details > .status-badge {
   padding: var(--space-1) 7px;
   border-radius: 5px;
   font-weight: 700;
