@@ -54,7 +54,7 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
         <p>Create a name such as docs.{displayName}. Reserved words are allowed in subnames.</p>
       </div>
 
-      <div className="subname-quick-create">
+      <div className="subname-quick-create field-row">
         <TextField
           ref={labelRef}
           id="subname-label"
@@ -65,10 +65,9 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
           onChange={(event) => onSubnameLabelChange(event.target.value)}
         />
 
-        <div className="subname-create-action">
+        <div className="field-action">
           <Button
             ref={createRef}
-            className="save-record"
             disabled={!canCreateSubname || showReview}
             type="button"
             onClick={() => managedByOther ? setReviewing(true) : create()}
@@ -95,7 +94,7 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
 
       <details className="subname-advanced">
         <summary>Ownership and policy</summary>
-        <div className="subname-editor">
+        <div className="subname-editor field-row">
           <TextField
             id="subname-manager"
             hint="Leave empty to manage it yourself. Otherwise enter a Dusk address."

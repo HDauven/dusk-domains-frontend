@@ -1,7 +1,8 @@
+import { ArrowRight } from 'lucide-react'
 import { SubnameAuthorityControls } from './SubnameAuthorityControls'
 import { NameSignature } from '../../../components/ui/NameChip'
 import { Badge } from '../../../components/ui/Badge'
-import { Button } from '../../../components/ui/Button'
+import { followLink, routePath } from '../../../app/routes'
 import {
   subnameExpiryDescription,
 } from '../../../names/internal'
@@ -26,17 +27,16 @@ export function SubdomainList({ onRecordTargetSelect, subnames, authority, clock
     <div className="subname-list">
       {subnames.map((subname) => (
         <div className="subname-row" key={subname.node}>
-          <Button variant="quiet"
-            disabled={subname.status !== 'active'}
-            title={subname.status === 'active' ? `Open ${subname.name}` : undefined}
-            type="button"
-            onClick={() => onRecordTargetSelect(subname)}
-          >
-            <NameSignature name={subname.name} />
-          </Button>
-          <Badge>{subname.status}</Badge>
-          <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
-          <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>
+          <div className="subname-summary">
+            {/* An active subname's name is a link to its own page, where its records and primary name are set. */}
+            {subname.status === 'active' ? <a className="subname-open" href={routePath({ view: 'search', name: subname.name })}
+              aria-label={`Open ${subname.name}`} onClick={event => followLink(event, () => onRecordTargetSelect(subname))}>
+              <NameSignature name={subname.name} /><ArrowRight size={18} aria-hidden="true" />
+            </a> : <span className="subname-name"><NameSignature name={subname.name} /></span>}
+            <Badge>{subname.status}</Badge>
+            <span>{subnameExpiryDescription(subname.expiryPolicy)} · {formatLifecycleDay(subname.expiresAt, currentBlockHeight, nowSeconds)}</span>
+            <div>Manager: <OwnerLabel authority={subname.manager} viewerAuthority={selectedAuthority} addresses={ownerAddresses} /></div>
+          </div>
           {canControlSubname?.(subname) ? <SubnameAuthorityControls name={subname.name}
             onReassign={(owner, manager) => onReassignSubname?.(subname, owner, manager) ?? Promise.resolve()}
             onTakeBack={() => onTakeBackSubname?.(subname) ?? Promise.resolve()}

@@ -19,59 +19,68 @@
   font-size: var(--text-sm);
 }
 
-.subname-editor,
-.subname-quick-create,
-.subname-policy-grid {
-  display: grid;
-  gap: 14px;
-  align-items: end;
-}
-
+/* The label and Create subname share a line; a new subname's settings take three columns. */
 .subname-quick-create {
-  grid-template-columns: minmax(220px, 1fr) minmax(142px, auto);
-  align-items: start;
-}
-
-.subname-create-action {
-  display: flex;
-  align-items: flex-start;
-  min-height: auto;
-  padding-top: 21px;
-}
-
-.subname-create-action .button-secondary {
-  min-height: 42px;
-  align-self: flex-start;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .subname-editor {
-  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.subname-policy-grid {
-  grid-template-columns: minmax(170px, 0.8fr) minmax(170px, 0.8fr) minmax(170px, 0.8fr) auto;
+.subname-advanced[open] > summary {
+  margin-bottom: var(--space-3);
+}
+
+/* The subnames there are, set apart from creating one. */
+.subname-list-heading {
+  margin-top: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
 }
 
 .subname-list {
   display: grid;
-  gap: 10px;
 }
 
+/* A subname: its name, then its details at even gaps, and its actions below, starting where its
+   name does. */
 .subname-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-3);
-  align-items: center;
-  min-height: 54px;
-  padding: 10px var(--space-3);
-  text-align: left;
+  min-width: 0;
+  padding: var(--space-3) 0;
 }
 
-.subname-row > button { width: 100%; min-width: 0; justify-content: flex-start; }
-.subname-row > div { min-width: 0; font-size: var(--text-sm); }
+.subname-row + .subname-row { border-top: 1px solid var(--line); }
+
+.subname-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+
+.subname-summary > * { min-width: 0; }
+.subname-summary > div { font-size: var(--text-sm); }
 .subname-row .owner-identity code { white-space: normal; overflow-wrap: anywhere; }
 
-.subname-row > span:not(.name-signature),
+.subname-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-height: 44px;
+  color: var(--peach);
+  text-decoration: none;
+}
+
+.subname-open:hover { color: var(--peach-hover); }
+.subname-open:hover :is(.name-signature-label, em) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.12em; }
+.subname-open > svg { flex: none; }
+
+.subname-summary > span:not(.status-badge, .subname-name),
 .subname-row code {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -86,14 +95,9 @@
   white-space: nowrap;
 }
 
-.subname-row > span:nth-child(2) {
-  width: fit-content;
+.subname-summary > .status-badge {
   padding: var(--space-1) 7px;
-  color: var(--muted);
-  border: 1px solid var(--line);
   border-radius: 5px;
-  background: var(--surface);
-  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -103,40 +107,23 @@
 
 @media (max-width: 1060px) {
   .subname-quick-create,
-.subname-editor,
-.subname-policy-grid,
-.subname-row {
-    grid-template-columns: 1fr;
-  }
-
-  .subname-create-action {
-    padding-top: 0;
+  .subname-editor {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-.subname-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.subname-actions > p,
-.subname-actions > form,
-.subname-actions > div {
-  flex-basis: 100%;
-}
-
-.subname-actions form {
+.subname-actions,
+.subname-reassign,
+.subname-confirm {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: var(--space-3);
-}
-
-.subname-actions label {
-  display: grid;
-  gap: var(--space-2);
   min-width: 0;
+}
+
+.subname-actions p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
 .subname-review {

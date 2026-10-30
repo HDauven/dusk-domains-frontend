@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Line up the fields and buttons in a name's forms, and give the Subnames list its own heading.
+- Link each subname in a name's Subnames list to its own page, with an arrow.
 - Switch between mainnet and testnet from the header, on the same page, and say when the connected wallet is on the other network.
 - Fold the home page's prices, renewals and expiry into one line that opens.
 - Send support, feature requests and abuse reports to GitHub forms and security reports to GitHub's private reporting; privacy requests stay on email. Trim the footer to six links.

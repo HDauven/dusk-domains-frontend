@@ -25,7 +25,13 @@ export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRec
       />
 
       <div className="subname-box" aria-label="Subname controls">
-        {canEdit ? <SubdomainCreatePanel displayName={displayName} parentExpiryDay={parentExpiryDay} subdomainPreview={subdomainPreview} creation={creation} authority={authority} /> : null}
+        {canEdit ? <>
+          <SubdomainCreatePanel displayName={displayName} parentExpiryDay={parentExpiryDay} subdomainPreview={subdomainPreview} creation={creation} authority={authority} />
+          <div className="subname-list-heading">
+            <h3>Existing subnames</h3>
+            {subnames.length ? <p>Open a subname to set its records or make it your primary name.</p> : null}
+          </div>
+        </> : null}
 
         {subnames.length ? (
           <SubdomainList onRecordTargetSelect={onRecordTargetSelect} subnames={subnames} authority={authority} clock={clock} />

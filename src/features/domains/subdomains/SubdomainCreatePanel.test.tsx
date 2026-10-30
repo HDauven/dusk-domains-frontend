@@ -32,4 +32,19 @@ it('shows expiry and manager without revocation copy on existing subdomains', ()
   expect(markup).toContain('Inherits parent expiry')
   expect(markup).toContain('manager')
   expect(markup).not.toMatch(/revocation|revoke|locked after creation|delegate/i)
+  // The name is a link to the subname's own page, named for what it does.
+  expect(markup).toContain('<a class="subname-open" href="/name/pay.acme.dusk" aria-label="Open pay.acme.dusk">')
+})
+
+it('links only an active subname to its page', () => {
+  const markup = renderToStaticMarkup(<SubdomainList onRecordTargetSelect={noop}
+    subnames={[{
+      parentName: 'acme.dusk', parentNode: 'parent', label: 'old', name: 'old.acme.dusk', node: 'child',
+      owner: 'owner', manager: 'owner', resolver: '', expiresAt: 50, parentExpiresAt: 1000,
+      expiryPolicy: 'fixed_before_parent', createdAt: 10, status: 'expired',
+    }]}
+    authority={{ selectedAuthority: 'owner' }}
+    clock={{ currentBlockHeight: 100, nowSeconds: 1_790_000_000 }} />)
+  expect(markup).toContain('old.acme')
+  expect(markup).not.toContain('<a ')
 })

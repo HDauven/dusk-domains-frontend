@@ -92,7 +92,7 @@
 .input:not([type="checkbox"]):not([type="radio"]) {
   width: 100%;
   min-width: 0;
-  min-height: 46px;
+  min-height: var(--control-height);
   padding: var(--space-3);
   border: 1px solid var(--control-line);
   border-radius: var(--radius-sm);
@@ -101,6 +101,10 @@
   font: 400 var(--text-base)/var(--leading-body) var(--font-ui);
   transition: border-color var(--motion-feedback) var(--ease), background var(--motion-feedback) var(--ease);
 }
+/* Selects and date fields size themselves a little differently: they take a text field's height,
+   so fields in a row, and the buttons beside them, line up. */
+select.input,
+input.input[type="date"] { height: var(--control-height); }
 .input:hover:not(:disabled) { border-color: var(--muted); }
 .input:focus-visible { border-color: var(--peach); }
 .input::placeholder { color: var(--muted); opacity: 1; }
