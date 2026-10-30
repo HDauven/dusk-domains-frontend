@@ -76,18 +76,20 @@ async function checkSubnameLayout(page) {
     const { top, bottom, left, right, height } = element.getBoundingClientRect()
     return { top, bottom, left, right, height }
   })
+  // Within a pixel: browsers place form controls at subpixel offsets that vary by machine.
+  const near = (a, b) => a.every((value, i) => Math.abs(value - b[i]) <= 1)
   const label = await box('#subname-label'), create = await box('#subname-layout .field-action > .button')
-  assert.deepEqual([create.top, create.height], [label.top, label.height], 'Create subname sits on the label field’s line at its height')
+  assert.ok(near([create.top, create.height], [label.top, label.height]), 'Create subname sits on the label field’s line at its height')
   const fields = await Promise.all(['subname-manager', 'subname-expiry-policy', 'subname-expiry-date'].map(async id => ({
     label: await box(`label[for="${id}"]`), control: await box(`#${id}`) })))
   for (const field of fields.slice(1)) {
-    assert.equal(field.label.top, fields[0].label.top, 'The settings’ labels share a line')
-    assert.deepEqual([field.control.top, field.control.height], [fields[0].control.top, fields[0].control.height], 'The settings’ fields share a line and a height')
+    assert.ok(near([field.label.top], [fields[0].label.top]), 'The settings’ labels share a line')
+    assert.ok(near([field.control.top, field.control.height], [fields[0].control.top, fields[0].control.height]), 'The settings’ fields share a line and a height')
   }
   assert.ok(fields[0].label.top - (await box('#subname-layout .subname-advanced > summary')).bottom >= 8, 'Space between Ownership and policy and its fields')
   await page.getByRole('button', { name: 'Take back', exact: true }).click()
   const name = await box('#subname-layout .subname-open'), note = await box('#subname-layout .subname-actions > p')
-  assert.equal(name.left, note.left, 'A row’s actions start where its name does')
+  assert.ok(near([name.left], [note.left]), 'A row’s actions start where its name does')
   const takeBack = await box('#subname-layout .subname-confirm .button'), cancel = await page.getByRole('button', { name: 'Cancel', exact: true }).evaluate(element => element.getBoundingClientRect().left)
   assert.ok(cancel - takeBack.right >= 8, 'Take back name and Cancel keep apart')
   await page.getByRole('button', { name: 'Reassign', exact: true }).click()
