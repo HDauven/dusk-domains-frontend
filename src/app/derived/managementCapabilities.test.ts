@@ -224,6 +224,22 @@ it('requires name authority to set primary but only endpoint control to clear it
   expect(after.canClearPrimary).toBe(true)
 })
 
+// The primary switch says up front what it needs, from the record the page read: no chain read.
+it('tells the primary switch whether the name’s Dusk address is missing or another wallet’s', () => {
+  const address = '24bfNr8MDUo5xJBecmeGzXDEraax4Cmbnhjyyt5GaL1Vbe6H48ZSYTpmjRDcFRDFzgzuePAPUNcdGMnBzBQBk4zAMgBCtPsY27tBJtKmB1st6qcmpzRR4Er5imxrzvMRnfWc'
+  const other = '244Sywxj7PuMHpcPxemaXLcrY5rPgztra6H9Vz8cU1Ro5v23SxKTfVqr2yS7NXAXE1iq59ndn4aMZmYxuzu3Te3e9fokQKTUkYvFxYg2P2E8EEg1gWUbs3AFL2aNx62HQd7r'
+  const ready = { walletSigningReady: true, selectedAddress: address, selectedAuthority: 'owner', nodeHex: 'node', displayName: 'alice.dusk',
+    managedName: { node: 'node', owner: 'owner', manager: 'owner', expiresAt: 200, graceEndsAt: 300 }, currentBlockHeight: 100, nowSeconds: 0,
+    pendingReservations: [], primaryEndpointValue: '', confirmationInput: '', subnames: [], subnameLabel: '', subnameManager: '',
+    recordDraftMutations: [], recordDraftErrors: [] }
+  const addressRecord = (moonlightRecord?: object) => deriveAppDerivedState({ ...ready, moonlightRecord } as never).primaryVerification.addressRecord
+  expect(addressRecord()).toBe('missing')
+  expect(addressRecord({ key: 'moonlight_address', value: other })).toBe('other')
+  expect(addressRecord({ key: 'moonlight_address', value: address })).toBeNull()
+  // A record "Send to" wouldn't offer counts as none.
+  expect(addressRecord({ key: 'moonlight_address', value: address, resolverIssue: 'invalid_record' })).toBe('missing')
+})
+
 // Without the current block height, a block-height grace deadline can't be checked: renewal isn't offered.
 it('offers no renewal while the block height is unknown, unless the deadline is a date', () => {
   const ready = { walletAuthorized: true, selectedAddress: 'wallet', selectedAuthority: 'owner', nodeHex: 'node', displayName: 'alphavnuc.dusk',

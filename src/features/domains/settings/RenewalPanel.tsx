@@ -20,6 +20,7 @@ export function RenewalPanel({ managedName, renewal, clock }: RenewalPanelProps)
     renewalFee,
     renewalPreviewExpiresAt,
     renewalTxState,
+    onDismissFeedback,
     renewalYears,
   } = renewal
   const {
@@ -75,7 +76,7 @@ export function RenewalPanel({ managedName, renewal, clock }: RenewalPanelProps)
         </>
       )}
 
-      <ManagementFeedback error={renewalError} txState={renewalTxState} />
+      <ManagementFeedback error={renewalError} txState={renewalTxState} onDismiss={onDismissFeedback} />
     </div>
   )
 }

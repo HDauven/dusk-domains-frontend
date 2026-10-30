@@ -55,3 +55,24 @@ it('carries the manager address that was entered, so the wallet details can show
     reviewedAuthorities: { owner: { address: 'sam-address' }, manager: { address: manager } },
   }), expect.anything())
 })
+
+it.each([
+  { status: 'executed', typed: 'pay', left: '' },
+  { status: 'executed', typed: 'docs', left: 'docs' },
+  { status: 'rejected', typed: 'pay', left: 'pay' },
+])('clears the label once the subname exists, unless another was typed meanwhile: $status, $typed', async ({ status, typed, left }) => {
+  let label = 'pay'
+  const authority = `0x${'11'.repeat(32)}`
+  // The person may type the next label while the wallet and the chain confirm this one.
+  const submitNameWrite = Object.assign(vi.fn(async () => { label = typed; return { status, txId: 'tx' } }), { captureWorkspace: () => () => true })
+  await createSubdomain({
+    canCreateSubname: true, displayName: 'alpha.dusk', selectedAddress: 'address', selectedAuthority: authority,
+    walletSetupState: 'connected', subnameLabel: 'pay', subnameManager: '', recordSourceContractId: 'resolver',
+    subnameExpiryPolicy: 'inherits_parent', subnameExpiryDate: '', managedNameExpiresAt: 100_000, currentBlockHeight: 100, nowSeconds: 1_790_000_000,
+    runtimeConfig: { contracts: {} }, setSubnameError: vi.fn(), setSubnameTxState: vi.fn(), submitNameWrite,
+    setSubnameLabel: (next: string | ((current: string) => string)) => { label = typeof next === 'function' ? next(label) : next },
+    shouldApplyPreviewWriteFallback: async () => false, setSubnames: vi.fn(), setRecordError: vi.fn(), appendActivity: vi.fn(),
+    ensureContractAuthorityForLiveWrite: () => true, ensurePublicBalanceForLiveWrite: async () => true,
+  } as never)
+  expect(label).toBe(left)
+})

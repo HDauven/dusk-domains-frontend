@@ -12,6 +12,8 @@ export type SubdomainsViewProps = {
   onRecordTargetSelect: (subname: SubnameState) => void
   subnames: SubnameState[]
   txState: DuskDomainTxState | null
+  /** Closes the notice of a finished subname write. */
+  onDismissFeedback?: () => void
   authority: {
     ownerAddresses?: string[]
     canEdit?: boolean

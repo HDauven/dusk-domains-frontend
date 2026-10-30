@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Input } from '../../../components/ui/Input'
 import { Button } from '../../../components/ui/Button'
+import { TextField } from '../../../components/ui/FormControls'
 
 export function SubnameAuthorityControls({ name, onReassign, onTakeBack, onRemove }: {
   name: string
@@ -16,26 +16,37 @@ export function SubnameAuthorityControls({ name, onReassign, onTakeBack, onRemov
     setBusy(true)
     try { await action(); setMode(null) } finally { setBusy(false) }
   }
+  const cancel = <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
   return <div className="subname-actions">
     <p>Taking back or reassigning a subname always clears its records and primary name.</p>
-    <Button disabled={busy} onClick={() => { setMode('reassign'); setOwner(''); setManager('') }}>Reassign</Button>
-    <Button disabled={busy} onClick={() => setMode('take-back')}>Take back</Button>
-    <Button disabled={busy} onClick={() => setMode('remove')}>Remove</Button>
-    {mode === 'reassign' ? <form onSubmit={event => { event.preventDefault(); void run(() => onReassign(owner, manager || owner)) }}>
-      <label>New owner<Input required value={owner} onChange={event => setOwner(event.target.value)} placeholder="Dusk address, .dusk name or contract:0x…" /></label>
-      <label>New manager<Input value={manager} onChange={event => setManager(event.target.value)} placeholder="Same as new owner" /></label>
-      <Button type="submit" disabled={busy || !owner.trim()}>Save authorities</Button>
-      <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
+    <div className="form-actions">
+      <Button disabled={busy} onClick={() => { setMode('reassign'); setOwner(''); setManager('') }}>Reassign</Button>
+      <Button disabled={busy} onClick={() => setMode('take-back')}>Take back</Button>
+      <Button disabled={busy} onClick={() => setMode('remove')}>Remove</Button>
+    </div>
+    {mode === 'reassign' ? <form className="subname-reassign" onSubmit={event => { event.preventDefault(); void run(() => onReassign(owner, manager || owner)) }}>
+      <div className="field-row">
+        <TextField label="New owner" hint="Dusk address, .dusk name or contract:0x…" required value={owner} onChange={event => setOwner(event.target.value)} />
+        <TextField label="New manager" placeholder="Same as new owner" value={manager} onChange={event => setManager(event.target.value)} />
+      </div>
+      <div className="form-actions">
+        <Button type="submit" disabled={busy || !owner.trim()}>Save authorities</Button>
+        {cancel}
+      </div>
     </form> : null}
-    {mode === 'take-back' ? <div>
+    {mode === 'take-back' ? <div className="subname-confirm">
       <p>Take back {name}? Its records and primary name are cleared, and its current owner and manager lose it. You become its owner and manager.</p>
-      <Button disabled={busy} onClick={() => void run(onTakeBack)}>Take back name</Button>
-      <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
+      <div className="form-actions">
+        <Button disabled={busy} onClick={() => void run(onTakeBack)}>Take back name</Button>
+        {cancel}
+      </div>
     </div> : null}
-    {mode === 'remove' ? <div>
+    {mode === 'remove' ? <div className="subname-confirm">
       <p>Remove {name} and all its descendants?</p>
-      <Button disabled={busy} onClick={() => void run(onRemove)}>Remove name and descendants</Button>
-      <Button disabled={busy} onClick={() => setMode(null)}>Cancel</Button>
+      <div className="form-actions">
+        <Button disabled={busy} onClick={() => void run(onRemove)}>Remove name and descendants</Button>
+        {cancel}
+      </div>
     </div> : null}
   </div>
 }

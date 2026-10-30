@@ -260,6 +260,39 @@
   color: var(--muted);
 }
 
+/* Fields side by side, and the buttons that act on them. Each field's label, control and hint
+   take a row shared across the line, so a longer hint can't push a field out of line, and a
+   .field-action puts its buttons on the controls' row at their height. Narrow, they stack. */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: var(--space-2) var(--space-3);
+}
+
+.field-row > :is(.control-group, .field-action) {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+}
+
+.field-action {
+  grid-auto-flow: column;
+  justify-content: start;
+  column-gap: var(--space-3);
+}
+
+.field-action > * {
+  grid-row: 2;
+}
+
+/* A form's buttons, in one row after its fields. */
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .copy-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

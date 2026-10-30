@@ -7,7 +7,7 @@ import { SubdomainCreatePanel } from './subdomains/SubdomainCreatePanel'
 import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubdomainsViewProps } from './subdomains/types'
 
-export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRecordTargetSelect, subnames, txState, authority, creation, clock }: SubdomainsViewProps) {
+export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRecordTargetSelect, subnames, txState, onDismissFeedback, authority, creation, clock }: SubdomainsViewProps) {
   const { canEdit = true } = authority
   const { subnameLabel } = creation
   const { currentBlockHeight, nowSeconds } = clock
@@ -25,7 +25,13 @@ export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRec
       />
 
       <div className="subname-box" aria-label="Subname controls">
-        {canEdit ? <SubdomainCreatePanel displayName={displayName} parentExpiryDay={parentExpiryDay} subdomainPreview={subdomainPreview} creation={creation} authority={authority} /> : null}
+        {canEdit ? <>
+          <SubdomainCreatePanel displayName={displayName} parentExpiryDay={parentExpiryDay} subdomainPreview={subdomainPreview} creation={creation} authority={authority} />
+          <div className="subname-list-heading">
+            <h3>Existing subnames</h3>
+            {subnames.length ? <p>Open a subname to set its records or make it your primary name.</p> : null}
+          </div>
+        </> : null}
 
         {subnames.length ? (
           <SubdomainList onRecordTargetSelect={onRecordTargetSelect} subnames={subnames} authority={authority} clock={clock} />
@@ -36,7 +42,7 @@ export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRec
           </div>
         )}
 
-        <ManagementFeedback error={error} txState={txState} />
+        <ManagementFeedback error={error} txState={txState} onDismiss={onDismissFeedback} />
       </div>
     </Panel>
   )

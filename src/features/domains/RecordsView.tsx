@@ -22,6 +22,8 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
     onSaveRecords: () => Promise<boolean | undefined>
     recordBusy: boolean
     txState: DuskDomainTxState | null
+    /** Closes the notice of a finished save. */
+    onDismissFeedback?: () => void
   }
   draft: {
     criticalRecordChange: boolean
@@ -41,7 +43,7 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
     walletAddressAvailable: boolean
   }
 }) {
-  const { canRemoveRecords, canSaveRecords, error, onSaveRecords, recordBusy, txState } = actions
+  const { canRemoveRecords, canSaveRecords, error, onSaveRecords, recordBusy, txState, onDismissFeedback } = actions
   const { criticalRecordChange, recordDraftMutations, onDiscardDrafts, onDiscardDraft, onDraftValueChange, recordDraftErrors, recordDraftInvalid, recordDraftValues } = draft
   const { onUseWalletPublicAddress, onUseWalletShieldedAddress, walletAddressAvailable } = wallet
   const [editing, setEditing] = useState<ResolverRecordKey | null>(null)
@@ -151,6 +153,6 @@ export function RecordsView({ displayName, editableRecordKeys, resolverRecords, 
         <Button disabled={recordBusy} onClick={onDiscardDrafts}>Discard changes</Button>
       </div>
     </section> : null}
-    <ManagementFeedback error={error} txState={txState} />
+    <ManagementFeedback error={error} txState={txState} onDismiss={onDismissFeedback} />
   </Panel>
 }

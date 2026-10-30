@@ -13,7 +13,7 @@ export function searchActions(overrides: { [K in keyof SearchStateActions]?: Par
       ...overrides.registration,
     },
     domain: {
-      reset: vi.fn(), clearName: vi.fn(), hydrate: vi.fn(), beginRead: () => () => true,
+      reset: vi.fn(), clearName: vi.fn(), hydrate: vi.fn(), beginRead: () => () => true, leaveSection: vi.fn(),
       ...overrides.domain,
     },
     records: { reset: vi.fn(), hydrate: vi.fn(), ...overrides.records },

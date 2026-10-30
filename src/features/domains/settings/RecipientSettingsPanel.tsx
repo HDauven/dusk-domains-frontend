@@ -15,6 +15,7 @@ export function RecipientSettingsPanel({ displayName, managedName, ownership }: 
     confirmationInput,
     managementError,
     managementTxState,
+    onDismissFeedback,
     onConfirmationInputChange,
     onResolveRecipient,
     onOwnershipUpdate,
@@ -35,6 +36,7 @@ export function RecipientSettingsPanel({ displayName, managedName, ownership }: 
     onConfirmationInputChange('')
     setClearRecords(true)
   }
+  const cancel = <Button variant="quiet" disabled={busy || writing} onClick={() => reset(null)}>Cancel</Button>
   return <div className="recipient-settings">
     <div className="manager-summary"><div><h3>Manager</h3><p>Who can edit records.</p><OwnerLabel authority={managedName.manager} viewerAuthority={viewerAuthority} addresses={ownerAddresses} /></div><Button disabled={busy || writing} onClick={() => reset('manager')}>Change manager</Button></div>
     <div className="manager-summary"><div><h3>Transfer</h3><p>Give this name to another wallet.</p></div><Button disabled={busy || writing} onClick={() => reset('transfer')}>Transfer name</Button></div>
@@ -51,15 +53,17 @@ export function RecipientSettingsPanel({ displayName, managedName, ownership }: 
     }}>
       <TextField id="recipient-address" label={mode === 'transfer' ? 'New owner' : 'New manager'} hint="Dusk address or .dusk name" value={input} onChange={event => { revision.current += 1; setInput(event.target.value); setRecipient(null); setBusy(false); setError(''); onConfirmationInputChange('') }} disabled={busy || writing} />
       {mode === 'transfer' ? <label className="field-note"><input type="checkbox" checked={clearRecords} onChange={event => setClearRecords(event.target.checked)} disabled={busy || writing} /> Clear records and primary name<span className="field-note">Clear these so payments don't keep going to your address.</span></label> : null}
-      {!recipient ? <Button type="submit" disabled={!input.trim() || Boolean(writing)} loading={busy}>Check recipient</Button> : <>
+      {!recipient ? <div className="form-actions"><Button type="submit" disabled={!input.trim() || Boolean(writing)} loading={busy}>Check recipient</Button>{cancel}</div> : <>
         <p>Resolves to <span className="address-chip"><code>{recipient.address}</code><CopyValue value={recipient.address} label="Recipient Dusk address" /></span></p>
         {mode === 'transfer' ? <><p className="secure-note danger">You will lose ownership and management of {displayName}. Both owner and manager will pass to the recipient.</p><TextField id="transfer-confirm" label={`Type ${displayName} to confirm`} value={confirmationInput} onChange={event => onConfirmationInputChange(event.target.value)} disabled={busy || writing} /></> : <p>This wallet will be able to edit records. You keep ownership.</p>}
-        <Button variant={mode === 'transfer' ? 'destructive' : 'primary'} disabled={!canManageName || busy} loading={Boolean(writing)} onClick={() => { setBusy(true); void onOwnershipUpdate({kind:mode,recipient,clearRecords:mode === 'transfer' && clearRecords}).then(saved => { if (saved) reset(null) }).finally(() => setBusy(false)) }}>{mode === 'transfer' ? 'Confirm transfer' : 'Save manager'}</Button>
+        <div className="form-actions">
+          <Button variant={mode === 'transfer' ? 'destructive' : 'primary'} disabled={!canManageName || busy} loading={Boolean(writing)} onClick={() => { setBusy(true); void onOwnershipUpdate({kind:mode,recipient,clearRecords:mode === 'transfer' && clearRecords}).then(saved => { if (saved) reset(null) }).finally(() => setBusy(false)) }}>{mode === 'transfer' ? 'Confirm transfer' : 'Save manager'}</Button>
+          {cancel}
+        </div>
       </>}
-      <Button variant="quiet" disabled={busy || writing} onClick={() => reset(null)}>Cancel</Button>
       {error ? <p role="alert" className="secure-note danger">{error}</p> : null}
     </form> : null}
-    <ManagementFeedback error={managementError} txState={managementTxState} />
+    <ManagementFeedback error={managementError} txState={managementTxState} onDismiss={onDismissFeedback} />
     <a className="button button-secondary" href={routePath({ view: 'marketplace', sellName: displayName })}>List for sale</a>
   </div>
 }

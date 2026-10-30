@@ -73,6 +73,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     handleCheckAvailability,
     openPendingReservation,
     resetSearch,
+    showSection,
   } = searchRuntime
   const {
     handleMainViewChange,
@@ -133,7 +134,7 @@ export function useAppSearchProps({ activityFeed, appRuntime, derivedState, doma
     onOpenPendingReservation: (reservation, options) => void openPendingReservation(reservation, options),
     onOpenPendingReservations: () => void handleMainViewChange('my-names'),
     onQueryChange: resetSearch,
-    onResultViewChange: setResultView,
+    onResultViewChange: showSection,
     // The claim card already chose the term, so registration opens at Reserve.
     onStartRegistration: () => {
       setRegistrationStep('review')

@@ -56,7 +56,7 @@ export async function checkNameManagement(page) {
           renewal: {},
           clock: {},
         },
-        primaryProps: { primaryVerification: { verified: false }, displayName: 'alpha.dusk' },
+        primaryProps: { primaryVerification: { verified: false, addressRecord: 'missing' }, displayName: 'alpha.dusk' },
         subdomainsProps: {
           subnames: [],
           creation: {},
@@ -82,6 +82,10 @@ export async function checkNameManagement(page) {
   }
   await page.getByLabel('Section', { exact: true }).selectOption('manage', { timeout: 3000 })
   assert.equal(await page.evaluate(() => window.selectedNameSection), 'manage')
+  // Before it is tried, the primary switch says the name needs a Dusk address, and Records opens that section.
+  await page.getByText('Add your Dusk address under Records first, then turn this on.', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Records', exact: true }).click()
+  assert.equal(await page.evaluate(() => window.selectedNameSection), 'records')
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.evaluate(async () => {
     const { React, root } = window
@@ -180,6 +184,15 @@ export async function checkNameManagement(page) {
     assert.equal(await page.evaluate(() => window.savedMutations[0].value), address)
   }
   await page.setViewportSize({ width: 1440, height: 900 })
+  // Use wallet sits on its field's line, at the field's height.
+  const edges = selector => page.locator(selector).first().evaluate(element => {
+    const { top, height, width } = element.getBoundingClientRect()
+    return { top, height, width }
+  })
+  await page.getByRole('button', { name: 'Edit Dusk address', exact: true }).click()
+  const field = await edges('input[aria-label="Dusk address record"]'), useWallet = await edges('.record-wallet-button')
+  assert.deepEqual([useWallet.top, useWallet.height], [field.top, field.height], 'Use wallet lines up with the Dusk address field')
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
   await page.evaluate(async () => {
     const { React, root } = window
     const { RecipientSettingsPanel } = await import('/src/features/domains/settings/RecipientSettingsPanel.tsx')
@@ -214,6 +227,9 @@ export async function checkNameManagement(page) {
   await page.getByRole('button', { name: 'Check recipient' }).click()
   await page.getByRole('button', { name: 'Confirm transfer' }).waitFor()
   assert.equal(await page.getByRole('button', { name: 'Confirm transfer' }).isEnabled(), false)
+  // The form's buttons share a line at their own size, not the form's width.
+  const confirm = await edges('.recipient-form button.button-destructive'), cancel = await edges('.recipient-form button.button-quiet')
+  assert.ok(confirm.top === cancel.top && confirm.width < (await edges('.recipient-form')).width / 2, 'Confirm transfer and Cancel keep their size on one line')
   await page.locator('.recipient-form code').filter({ hasText: await page.evaluate(() => window.recipientAddress) }).waitFor()
   await page.getByLabel('Type alpha.dusk to confirm', { exact: true }).fill('alpha.dusk')
   await page.getByRole('button', { name: 'Confirm transfer' }).click()

@@ -53,3 +53,26 @@
   margin: 0;
   color: var(--error);
 }
+
+/* A finished result can be closed: the button sits in its corner, clear of its text. */
+.tx-status:has(> .feedback-dismiss) {
+  position: relative;
+  padding-right: var(--space-12);
+}
+
+.tx-status > .feedback-dismiss {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+}
+
+.action-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.action-feedback > .secure-note {
+  margin: 0;
+}

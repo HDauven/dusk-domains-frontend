@@ -6,6 +6,7 @@ import {
 } from './searchControllerActions'
 import { resetSearchState } from './searchControllerReset'
 import type { UseSearchControllerProps } from './searchControllerTypes'
+import type { SearchResultView } from './SearchResultPanel'
 
 // Availability is checked on Search or Enter only. Checking while typing swapped the result in
 // and out on every letter, so the page jumped as people typed.
@@ -29,6 +30,11 @@ export function useSearchController(props: UseSearchControllerProps) {
     resetSearch: (nextValue: string) => {
       cancel()
       resetSearchState(props, nextValue)
+    },
+    // Another section of the same name's page.
+    showSection: (view: SearchResultView) => {
+      props.domain.leaveSection()
+      props.search.showView(view)
     },
     // Direct links and saved names open the public profile. Typed searches show availability.
     searchName: (name: string) => {

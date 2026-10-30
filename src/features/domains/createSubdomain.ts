@@ -21,6 +21,7 @@ export async function createSubdomain({
   selectedAuthority,
   setRecordError,
   setSubnameError,
+  setSubnameLabel,
   setSubnames,
   setSubnameTxState,
   shouldApplyPreviewWriteFallback,
@@ -86,6 +87,8 @@ export async function createSubdomain({
     if (!workspace()) return
 
     if (finalState.status !== 'executed') return
+    // The subname exists now: the label is cleared for the next one, unless another was typed meanwhile.
+    setSubnameLabel(current => current === subnameLabel ? '' : current)
 
     if (!(await shouldApplyPreviewWriteFallback(`${subname.name} creation`, async (client) => {
       const indexed = await client.getSubname(subname.node)

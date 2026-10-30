@@ -66,6 +66,8 @@
   --radius: 1rem;
   --radius-lg: 1.5rem;
   --radius-pill: 999px;
+  /* A single-line field's height, which a button on its line matches. */
+  --control-height: 3.125rem;
   --shadow-sm: 0 8px 24px var(--shadow-color);
   --shadow-lg: 0 30px 80px var(--shadow-color);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
