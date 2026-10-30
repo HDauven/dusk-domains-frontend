@@ -60,7 +60,6 @@ export function SubdomainCreatePanel({ displayName, parentExpiryDay, subdomainPr
           id="subname-label"
           hint={subdomainPreview}
           label="Label"
-          placeholder="settlement"
           value={subnameLabel}
           onChange={(event) => onSubnameLabelChange(event.target.value)}
         />

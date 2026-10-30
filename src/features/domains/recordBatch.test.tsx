@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
-import { act, useLayoutEffect } from 'react'
+import { act, useLayoutEffect, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { deriveRecordCapabilities } from '../../app/derived/recordCapabilities'
-import { createResolverRecord, recordMutationPlan, type CoreRecordMutationInput, type ResolverRecord, type ResolverRecordKey } from '../../names/internal'
+import { CONFIRMED_NOTICE_MS } from '../../components/ui/ActionFeedback'
+import { createResolverRecord, recordMutationPlan, type CoreRecordMutationInput, type DuskDomainTxState, type ResolverRecord, type ResolverRecordKey } from '../../names/internal'
 import { RecordsView } from './RecordsView'
 import { useDomainRecordState } from './useDomainRecordState'
 
@@ -13,9 +14,14 @@ let root: Root
 let state: ReturnType<typeof useDomainRecordState>
 let records: ResolverRecord[]
 
+type Notice = { txState: DuskDomainTxState | null, error: string }
+let showNotice: (notice: Notice) => void
+
 function Probe({ editable = keys, nodeHex = 'node', showRecords = true }: { editable?: ResolverRecordKey[], nodeHex?: string, showRecords?: boolean }) {
   const current = useDomainRecordState({ displayName: 'alpha.dusk', nodeHex, editableRecordKeys: editable })
   useLayoutEffect(() => { state = current })
+  const [notice, setNotice] = useState<Notice>({ txState: null, error: '' })
+  useLayoutEffect(() => { showNotice = setNotice }, [])
   const { canSaveRecords } = deriveRecordCapabilities({ ...current,
     walletAuthorized: true, selectedAddress: 'wallet', recordBusy: false,
     currentBlockHeight: 100, nowSeconds: 0, displayName: 'alpha.dusk', nodeHex: 'node', selectedAuthority: 'owner',
@@ -26,7 +32,8 @@ function Probe({ editable = keys, nodeHex = 'node', showRecords = true }: { edit
   // Another section of the name page, or another page, replaces the records panel.
   if (!showRecords) return null
   return <RecordsView displayName="alpha.dusk" editableRecordKeys={editable} resolverRecords={current.resolverRecords}
-    actions={{ canRemoveRecords: true, canSaveRecords, error: '', recordBusy: false, txState: null,
+    actions={{ canRemoveRecords: true, canSaveRecords, error: notice.error, recordBusy: false, txState: notice.txState,
+      onDismissFeedback: () => setNotice({ txState: null, error: '' }),
       onSaveRecords: async () => { saved.push(current.recordDraftMutations); current.setRecordDrafts({}); return true } }}
     draft={{ ...current,
       onDiscardDrafts: () => current.setRecordDrafts({}),
@@ -276,4 +283,44 @@ it('drops staged changes that fresh records show were saved, and keeps the rest'
   await act(async () => state.setRecordDrafts({ website: 'https://newer.example' }))
   await act(async () => state.searchActions.hydrate('node', saved))
   expect(state.recordDraftMutations).toEqual([expect.objectContaining({ key: 'website', value: 'https://newer.example' })])
+})
+
+// A finished save's notice: a confirmed one goes by itself unless its details are open, and a failure
+// stays until it is closed.
+it('lets a confirmed save’s notice go after a while and keeps a failure until it is closed', async () => {
+  vi.useFakeTimers()
+  const text = () => document.body.textContent
+  const wait = (ms: number) => act(async () => { vi.advanceTimersByTime(ms) })
+  const confirmed = { status: 'executed', txId: 'ab'.repeat(32), context: { title: 'alpha.dusk' } } as DuskDomainTxState
+  try {
+    await act(async () => showNotice({ txState: confirmed, error: '' }))
+    expect(text()).toContain('Transaction confirmed')
+    await wait(CONFIRMED_NOTICE_MS - 100)
+    expect(text()).toContain('Transaction confirmed')
+    await wait(100)
+    expect(text()).not.toContain('Transaction confirmed')
+    // Open details hold it; closing it is one click.
+    await act(async () => showNotice({ txState: { ...confirmed }, error: '' }))
+    ;(document.querySelector('.tx-status details') as HTMLDetailsElement).open = true
+    await wait(CONFIRMED_NOTICE_MS * 3)
+    expect(text()).toContain('Transaction confirmed')
+    await click('Dismiss')
+    expect(text()).not.toContain('Transaction confirmed')
+    // Failures stay until they are closed.
+    await act(async () => showNotice({ txState: { ...confirmed, status: 'failed', message: 'The node refused it.' }, error: '' }))
+    await wait(CONFIRMED_NOTICE_MS * 3)
+    expect(text()).toContain('Transaction failed')
+    await click('Dismiss')
+    expect(text()).not.toContain('Transaction failed')
+    await act(async () => showNotice({ txState: null, error: 'Change at least one record before saving.' }))
+    await wait(CONFIRMED_NOTICE_MS * 3)
+    expect(text()).toContain('Change at least one record before saving.')
+    await click('Dismiss')
+    expect(text()).not.toContain('Change at least one record')
+    // A write under way can't be closed.
+    await act(async () => showNotice({ txState: { ...confirmed, status: 'executing' }, error: '' }))
+    expect(document.querySelector('button[aria-label="Dismiss"]')).toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
 })

@@ -49,6 +49,17 @@
   animation: spin var(--motion-spin) linear infinite;
 }
 .button.compact { min-width: 0; }
+/* A button that is a word in a sentence, such as Records in "Add your Dusk address under Records". */
+.button.inline-action {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  vertical-align: baseline;
+}
+.button.inline-action:hover:not(:disabled) { background: transparent; text-decoration: underline; }
+.button.inline-action:active:not(:disabled) { box-shadow: none; }
 .switch {
   display: inline-flex;
   align-items: center;

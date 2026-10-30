@@ -75,7 +75,8 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
   // Staged record changes stay with the name while other sections are open. Values that can't be saved yet count too.
   const unsavedRecords = canEdit && view !== 'records'
     ? (recordsProps?.draft?.recordDraftMutations?.length ?? 0) + (recordsProps?.draft?.recordDraftInvalid?.length ?? 0) : 0
-  const primaryControl = primaryProps?.primaryVerification ? <PrimaryNameControl {...primaryProps} /> : undefined
+  const primaryControl = primaryProps?.primaryVerification
+    ? <PrimaryNameControl {...primaryProps} onOpenRecords={canEdit ? () => onResultViewChange('records') : undefined} /> : undefined
   const hasPrimaryCleanup = primaryProps?.canClearPrimary || Boolean(primaryProps?.primaryVerification?.cleanupDescription)
   const content = <>
     {view === 'details' ? <DomainDetailsView {...detailsProps} canEdit={canEdit} isOwner={isOwner}
@@ -110,7 +111,7 @@ export function SearchResultPanel({ abuseUrl, activityProps, detailsProps, heade
         onReassign={(owner, manager) => subdomainsProps.authority.onReassignSubname?.(namespaceTarget, owner, manager) ?? Promise.resolve()}
         onTakeBack={() => subdomainsProps.authority.onTakeBackSubname?.(namespaceTarget) ?? Promise.resolve()}
         onRemove={() => subdomainsProps.authority.onRemoveSubname?.(namespaceTarget) ?? Promise.resolve()} />
-      <ManagementFeedback error={subdomainsProps.error} txState={subdomainsProps.txState} />
+      <ManagementFeedback error={subdomainsProps.error} txState={subdomainsProps.txState} onDismiss={subdomainsProps.onDismissFeedback} />
     </> : null}
     {tabbed ? <>
       <div className="name-section-select"><label htmlFor="name-section">Section</label><select id="name-section" value={view} onChange={event => onResultViewChange(event.target.value as SearchResultView)}>{tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}</select></div>

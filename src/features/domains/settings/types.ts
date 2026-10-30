@@ -14,6 +14,8 @@ export type DomainSettingsViewProps = {
     confirmationInput: string
     managementError: string
     managementTxState: DuskDomainTxState | null
+    /** Closes the notice of a finished transfer or manager change. */
+    onDismissFeedback?: () => void
     onConfirmationInputChange: (value: string) => void
     viewerAuthority?: string
     ownerAddresses?: string[]
@@ -34,6 +36,8 @@ export type DomainSettingsViewProps = {
     renewalFee: number | null
     renewalPreviewExpiresAt: number
     renewalTxState: DuskDomainTxState | null
+    /** Closes the notice of a finished renewal. */
+    onDismissFeedback?: () => void
     renewalYears: number
   }
   clock: {
@@ -43,11 +47,11 @@ export type DomainSettingsViewProps = {
 }
 
 export type RecipientSettingsPanelProps = Pick<DomainSettingsViewProps, 'displayName' | 'managedName'> & {
-  ownership: Pick<DomainSettingsViewProps['ownership'], 'canManageName' | 'confirmationInput' | 'managementError' | 'managementTxState' | 'onConfirmationInputChange' | 'onOwnershipUpdate' | 'viewerAuthority' | 'ownerAddresses' | 'onResolveRecipient'>
+  ownership: Pick<DomainSettingsViewProps['ownership'], 'canManageName' | 'confirmationInput' | 'managementError' | 'managementTxState' | 'onDismissFeedback' | 'onConfirmationInputChange' | 'onOwnershipUpdate' | 'viewerAuthority' | 'ownerAddresses' | 'onResolveRecipient'>
 }
 
 export type RenewalPanelProps = Pick<DomainSettingsViewProps, 'managedName'> & {
-  renewal: Pick<DomainSettingsViewProps['renewal'], 'canRenewName' | 'feeConfigError' | 'feeConfigLoading' | 'maxDurationYears' | 'minDurationYears' | 'onRenewName' | 'onRenewalYearsChange' | 'renewalBusy' | 'renewalError' | 'renewalFee' | 'renewalPreviewExpiresAt' | 'renewalTxState' | 'renewalYears'>
+  renewal: Pick<DomainSettingsViewProps['renewal'], 'canRenewName' | 'feeConfigError' | 'feeConfigLoading' | 'maxDurationYears' | 'minDurationYears' | 'onRenewName' | 'onRenewalYearsChange' | 'renewalBusy' | 'renewalError' | 'renewalFee' | 'renewalPreviewExpiresAt' | 'renewalTxState' | 'onDismissFeedback' | 'renewalYears'>
   clock: Pick<DomainSettingsViewProps['clock'], 'currentBlockHeight' | 'nowSeconds'>
 }
 

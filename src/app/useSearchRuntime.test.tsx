@@ -2,7 +2,7 @@
 import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { analyzeName, namehashHex, type DuskDomainsIndexerClient, type PendingNameReservation } from '../names/internal'
+import { analyzeName, namehashHex, type DuskDomainsIndexerClient, type DuskDomainTxState, type PendingNameReservation } from '../names/internal'
 import { useActivityFeed } from '../features/activity/useActivityFeed'
 import { safeNamehashHex } from '../features/domains/domainFormat'
 import { useDomainRecordState } from '../features/domains/useDomainRecordState'
@@ -112,6 +112,23 @@ it('clears the old workspace but preserves the chosen term, clock, and stranded 
   expect(model.activity).toMatchObject({ activityEntries: [], activityLoading: false, hasMoreActivity: false })
   await act(async () => model.runtime.handleSearchHome())
   expect(model.search).toMatchObject({ mainView: 'search', query: '', checked: false })
+})
+
+it('drops a confirmed write’s notice when another section opens, and keeps failures and writes under way', async () => {
+  await act(async () => root.render(<Probe />))
+  const notice = (status: DuskDomainTxState['status']) => ({ status, txId: 'tx', context: { title: 'alpha.dusk' } }) as DuskDomainTxState
+  await act(async () => {
+    model.search.setResultView('subnames')
+    model.domain.setSubnameTxState(notice('executed'))
+    model.domain.setRenewalTxState(notice('executed'))
+    model.domain.setRecordTxState(notice('failed'))
+    model.domain.setPrimaryTxState(notice('submitted'))
+    model.domain.setSubnameError('Connect the owner or manager of an active ancestor.')
+  })
+  await act(async () => model.runtime.showSection('records'))
+  expect(model.search.resultView).toBe('records')
+  expect(model.domain).toMatchObject({ subnameTxState: null, renewalTxState: null, recordTxState: { status: 'failed' },
+    primaryTxState: { status: 'submitted' }, subnameError: 'Connect the owner or manager of an active ancestor.' })
 })
 
 it.each([true, false])('restores saved reservation primary choice %s and its bounded term through search', async primary => {

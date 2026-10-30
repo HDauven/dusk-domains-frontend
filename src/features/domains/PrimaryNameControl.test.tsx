@@ -37,3 +37,15 @@ it('offers clearing for an unverified primary without enabling setting', () => {
   expect(html).toMatch(/<button[^>]*disabled=""[^>]*role="switch"/)
   expect(html).toContain('aria-checked="false"')
 })
+
+it('says before the switch is tried that the name needs the wallet’s Dusk address, with Records one click away', () => {
+  const description = (addressRecord: 'missing' | 'other' | null, onOpenRecords?: () => void) => renderToStaticMarkup(<PrimaryNameControl canSetPrimary canClearPrimary={false}
+    displayName="alpha.dusk" error="" txState={null} primaryVerification={{ verified: false, addressRecord }} onSetPrimary={vi.fn()} onClearPrimary={vi.fn()}
+    onOpenRecords={onOpenRecords} />).match(/<p id="[^"]+">([\s\S]*?)<\/p>/)?.[1]
+  const records = '<button type="button" class="button button-quiet inline-action">Records</button>'
+  expect(description('missing', vi.fn())).toBe(`Add your Dusk address under ${records} first, then turn this on.`)
+  expect(description('other', vi.fn())).toBe(`alpha.dusk points to another Dusk address. Change it to yours under ${records} first, then turn this on.`)
+  // Without a Records section to open, such as for a visitor clearing an old primary name, it is a word.
+  expect(description('missing')).toBe('Add your Dusk address under Records first, then turn this on.')
+  expect(description(null, vi.fn())).toBe('Turn on to use alpha.dusk as the primary name for your Dusk address.')
+})

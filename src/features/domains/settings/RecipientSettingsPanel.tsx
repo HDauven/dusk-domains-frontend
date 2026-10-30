@@ -15,6 +15,7 @@ export function RecipientSettingsPanel({ displayName, managedName, ownership }: 
     confirmationInput,
     managementError,
     managementTxState,
+    onDismissFeedback,
     onConfirmationInputChange,
     onResolveRecipient,
     onOwnershipUpdate,
@@ -62,7 +63,7 @@ export function RecipientSettingsPanel({ displayName, managedName, ownership }: 
       </>}
       {error ? <p role="alert" className="secure-note danger">{error}</p> : null}
     </form> : null}
-    <ManagementFeedback error={managementError} txState={managementTxState} />
+    <ManagementFeedback error={managementError} txState={managementTxState} onDismiss={onDismissFeedback} />
     <a className="button button-secondary" href={routePath({ view: 'marketplace', sellName: displayName })}>List for sale</a>
   </div>
 }

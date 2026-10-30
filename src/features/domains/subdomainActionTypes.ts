@@ -36,6 +36,7 @@ export type UseSubdomainActionsProps = {
   selectedAuthority: string
   setRecordError: Dispatch<SetStateAction<string>>
   setSubnameError: Dispatch<SetStateAction<string>>
+  setSubnameLabel: Dispatch<SetStateAction<string>>
   setSubnames: Dispatch<SetStateAction<SubnameState[]>>
   setSubnameTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>
   shouldApplyPreviewWriteFallback: ConfirmedWriteFallback

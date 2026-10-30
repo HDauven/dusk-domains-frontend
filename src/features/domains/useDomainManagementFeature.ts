@@ -1,7 +1,8 @@
 import { boundWebsiteVerification } from '../../names/http/verification'
 import { trustedDuskAddresses } from '../identity/addressTrust'
 import { reviewedListing } from '../../app/useHeldListing'
-import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef, type Dispatch, type SetStateAction } from 'react'
+import { isDuskDomainTxBusy, type DuskDomainTxState } from '../../names/internal'
 import { clampDurationYears, editableRecordKeys, maxDurationYears, minDurationYears } from '../../app/appConstants'
 import { canControlSubname } from './namespaceActions'
 import { resolveRecipient } from '../identity/resolveRecipient'
@@ -11,6 +12,14 @@ import { primarySwitchFor } from './setPrimaryDomainName'
 import { useDomainRecordActions } from './useDomainRecordActions'
 import { useDomainSettingsActions } from './useDomainSettingsActions'
 import { useSubdomainActions } from './useSubdomainActions'
+
+// Closing a notice clears its error and a finished transaction; a write under way keeps its notice.
+function dismissal(setError: Dispatch<SetStateAction<string>>, setTxState: Dispatch<SetStateAction<DuskDomainTxState | null>>) {
+  return () => {
+    setError('')
+    setTxState(current => isDuskDomainTxBusy(current) ? current : null)
+  }
+}
 
 export function useDomainManagementFeature({ activityFeed, appRuntime, derivedState, domainRecordState, domainState, economicsRuntime, heldListing, namePreview, searchRuntime, searchState, walletRuntime }: UseDomainManagementFeatureProps): DomainManagementFeatureProps {
   const addressRequest = useRef({ generation: 0 })
@@ -110,6 +119,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       selectedAddress: walletRuntime.selectedAddress,
       setRecordError: domainState.setRecordError,
       setSubnameError: domainState.setSubnameError,
+      setSubnameLabel: domainState.setSubnameLabel,
       setSubnames: domainState.setSubnames,
       setSubnameTxState: domainState.setSubnameTxState,
       subnameExpiryDate: domainState.subnameExpiryDate,
@@ -130,6 +140,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       primarySwitch: primarySwitchFor(domainState.primarySwitch, namePreview.displayName, walletRuntime.selectedAddress),
       onConfirmPrimarySwitch: () => void actions.handleConfirmPrimarySwitch(),
       onCancelPrimarySwitch: actions.handleCancelPrimarySwitch,
+      onDismissFeedback: dismissal(domainState.setPrimaryError, domainState.setPrimaryTxState),
       primaryVerification: derivedState.primaryVerification,
       txState: domainState.primaryTxState,
     },
@@ -142,6 +153,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         canSaveRecords: derivedState.canSaveRecords,
         error: domainState.recordError,
         onSaveRecords: () => { addressRequest.current.generation++; return actions.handleRecordsSave() },
+        onDismissFeedback: dismissal(domainState.setRecordError, domainState.setRecordTxState),
         recordBusy: derivedState.recordBusy,
         txState: domainState.recordTxState,
       },
@@ -206,6 +218,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         confirmationInput: domainState.confirmationInput,
         managementError: domainState.managementError,
         managementTxState: domainState.managementTxState,
+        onDismissFeedback: dismissal(domainState.setManagementError, domainState.setManagementTxState),
         onConfirmationInputChange: domainState.setConfirmationInput,
         viewerAuthority: walletRuntime.selectedAuthority,
         ownerAddresses: trustedDuskAddresses(domainRecordState.moonlightRecord ? [domainRecordState.moonlightRecord] : []),
@@ -226,6 +239,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
         renewalFee: namePreview.renewalFee,
         renewalPreviewExpiresAt: namePreview.renewalPreviewLifecycle.expiresAt,
         renewalTxState: domainState.renewalTxState,
+        onDismissFeedback: dismissal(domainState.setRenewalError, domainState.setRenewalTxState),
         renewalYears: namePreview.renewalYears,
       },
       clock: {
@@ -240,6 +254,7 @@ export function useDomainManagementFeature({ activityFeed, appRuntime, derivedSt
       onRecordTargetSelect: () => {},
       subnames: domainState.subnames,
       txState: domainState.subnameTxState,
+      onDismissFeedback: dismissal(domainState.setSubnameError, domainState.setSubnameTxState),
       authority: {
         canControlSubname: subname => canControlSubname({ managedName: domainState.managedName, subnames: domainState.subnames, selectedAuthority: walletRuntime.selectedAuthority, currentBlockHeight: searchState.currentBlockHeight }, subname),
         onReassignSubname: actions.handleReassignSubname,

@@ -54,9 +54,14 @@ export function derivePrimaryState({
       ? 'Your primary name is paused while this name is listed for sale. Check it again after cancellation, or clear it and choose another.'
       : 'This name no longer resolves as your primary; clear it or choose another.'
 
+  // Only the wallet of the address the name's own Dusk address record holds can make it its primary
+  // name: whether that record is missing or holds another address, from what the page read.
+  const recordAddress = trustedDuskAddressOf(moonlightRecord ? [moonlightRecord] : [])
+  const addressRecord = !selectedAddress || recordAddress === selectedAddress ? null : recordAddress ? 'other' as const : 'missing' as const
+
   return {
     primaryEndpoint,
     primaryEndpointErrors,
-    primaryVerification: { ...primaryVerification, cleanupDescription },
+    primaryVerification: { ...primaryVerification, cleanupDescription, addressRecord },
   }
 }

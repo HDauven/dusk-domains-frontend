@@ -7,7 +7,7 @@ import { SubdomainCreatePanel } from './subdomains/SubdomainCreatePanel'
 import { SubdomainList } from './subdomains/SubdomainList'
 import type { SubdomainsViewProps } from './subdomains/types'
 
-export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRecordTargetSelect, subnames, txState, authority, creation, clock }: SubdomainsViewProps) {
+export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRecordTargetSelect, subnames, txState, onDismissFeedback, authority, creation, clock }: SubdomainsViewProps) {
   const { canEdit = true } = authority
   const { subnameLabel } = creation
   const { currentBlockHeight, nowSeconds } = clock
@@ -42,7 +42,7 @@ export function SubdomainsView({ displayName, error, managedNameExpiresAt, onRec
           </div>
         )}
 
-        <ManagementFeedback error={error} txState={txState} />
+        <ManagementFeedback error={error} txState={txState} onDismiss={onDismissFeedback} />
       </div>
     </Panel>
   )

@@ -73,6 +73,13 @@ export function useDomainManagementAppState(recordSourceContractId: string, inde
         setSubnameExpiryDate('')
         setRenewalYears(1)
       },
+      // Another section of the name page: a confirmed write's notice stays behind, while a failure
+      // and a write under way keep theirs.
+      leaveSection: () => {
+        for (const setTxState of [setManagementTxState, setRenewalTxState, setRecordTxState, setPrimaryTxState, setSubnameTxState]) {
+          setTxState(current => current?.status === 'executed' ? null : current)
+        }
+      },
       hydrate: (snapshot: {
         managedName: ManagedNameState
         primaryEndpoint: string
