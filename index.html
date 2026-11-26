@@ -72,13 +72,31 @@
             },
             "sameAs": [
               "https://github.com/HDauven/dusk-domains-frontend"
-            ]
+            ],
+            "parentOrganization": {
+              "@type": "Organization",
+              "@id": "https://www.mochavi.com/#organization",
+              "name": "Mochavi",
+              "url": "https://www.mochavi.com/"
+            },
+            "founder": {
+              "@type": "Person",
+              "@id": "https://heindauven.com/#person",
+              "name": "Hein Dauven",
+              "url": "https://heindauven.com/"
+            }
           },
           {
             "@type": "WebSite",
             "@id": "%DUSK_DOMAINS_SITE_URL%/#website",
             "name": "Dusk Domains",
             "url": "%DUSK_DOMAINS_SITE_URL%/",
+            "about": {
+              "@type": "Organization",
+              "@id": "https://dusk.network/#organization",
+              "name": "Dusk",
+              "url": "https://dusk.network/"
+            },
             "publisher": {
               "@id": "%DUSK_DOMAINS_SITE_URL%/#organization"
             },
@@ -99,6 +117,9 @@
             "operatingSystem": "Web",
             "description": "Search, register and manage .dusk domains for Dusk wallets, contracts and apps.",
             "image": "%DUSK_DOMAINS_SITE_URL%/og-image.png",
+            "creator": {
+              "@id": "https://www.mochavi.com/#organization"
+            },
             "publisher": {
               "@id": "%DUSK_DOMAINS_SITE_URL%/#organization"
             }
