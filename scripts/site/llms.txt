@@ -1,6 +1,6 @@
 # Dusk Domains
 
-> Dusk Domains is a name service for the Dusk blockchain. It registers readable .dusk names, such as alice.dusk, that point to Dusk addresses, contracts and other public records.
+> Dusk Domains is a name service for the [Dusk](https://dusk.network/) blockchain. It registers readable .dusk names, such as alice.dusk, that point to Dusk addresses, contracts and other public records. Built by [Mochavi](https://www.mochavi.com/), founded by [Hein Dauven](https://heindauven.com/).
 
 - A root name has 1 to 63 characters: lowercase letters, digits and hyphens. It is registered for 1 to 10 years at a time, and its yearly price depends on its length.
 - Registration takes two transactions: a commitment that hides the name, then a reveal a short time later.
@@ -38,6 +38,7 @@
 - [Read API](https://github.com/HDauven/dusk-domains-indexer/blob/main/docs/indexer-api.md): the public indexer API at %DUSK_DOMAINS_SITE_URL%/api, for names, records, activity and the market.
 - [SDK](https://jsr.io/@duskdomains/sdk): TypeScript SDK on JSR to resolve names, verify primary names and build transactions ([source](https://github.com/HDauven/dusk-domains-sdk)).
 - [Frontend source](https://github.com/HDauven/dusk-domains-frontend): the code for this site.
+- [Dusklings](https://dusklings.com/): interactive Dusk developer curriculum for Rust contracts, dApps and zero-knowledge circuits.
 
 ## Optional
 
